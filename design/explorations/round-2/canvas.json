@@ -1,0 +1,99 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "Round 2 \u2014 Horizon",
+      "x": 0,
+      "y": 0,
+      "w": 1100,
+      "h": 900
+    },
+    {
+      "file": "Mark.dc.html",
+      "title": "Identity \u2014 two beats",
+      "x": 1200,
+      "y": 0,
+      "w": 1100,
+      "h": 820
+    },
+    {
+      "file": "Visual.dc.html",
+      "title": "Break \u2014 visual reset (dark)",
+      "x": 0,
+      "y": 1000,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "Movement.dc.html",
+      "title": "Break \u2014 movement (dark)",
+      "x": 1540,
+      "y": 1000,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "VisualLight.dc.html",
+      "title": "Break \u2014 visual reset (light)",
+      "x": 3080,
+      "y": 1000,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "Menu.dc.html",
+      "title": "Status menu",
+      "x": 0,
+      "y": 2000,
+      "w": 760,
+      "h": 620
+    },
+    {
+      "file": "Settings.dc.html",
+      "title": "Settings \u2014 Schedule",
+      "x": 860,
+      "y": 2000,
+      "w": 1000,
+      "h": 600
+    },
+    {
+      "file": "HeadsUp.dc.html",
+      "title": "Heads-up \u2014 the sun",
+      "x": 2400,
+      "y": 0,
+      "w": 1200,
+      "h": 880
+    },
+    {
+      "file": "Motion.dc.html",
+      "title": "Motion vocabulary",
+      "x": 3700,
+      "y": 0,
+      "w": 1200,
+      "h": 840
+    }
+  ],
+  "annotations": [
+    {
+      "id": "n1",
+      "x": -560,
+      "y": 1000,
+      "w": 480,
+      "text": "THE COMPOSITION\n\nSky = the instruction. Ground = your controls. The horizon between them is the progress indicator \u2014 it lights left to right, once, slowly, in one direction. No ring, no number ticking down, no pulse.\n\nOn the visual reset that matters twice over: the whole instruction is to look AWAY from the screen, so the screen must not hold a figure that changes every second. Round 1 proved that by drawing it. This fixes it."
+    },
+    {
+      "id": "n2",
+      "x": -560,
+      "y": 1560,
+      "w": 480,
+      "text": "TWO ATMOSPHERES, ONE LANDSCAPE\n\nVisual reset is far: deep dusk, low distant sun, vast sky.\nMovement is near: an hour later, sun close and low, coral and rose, more energy.\n\nHalf-second recognition without reading a word \u2014 the goal round 1 chased with band heights, achieved with colour temperature instead. Cheaper, prettier, and it can't collide with the text."
+    },
+    {
+      "id": "n3",
+      "x": 3200,
+      "y": 2000,
+      "w": 480,
+      "text": "STILL OWED\n\n\u00b7 Increase Contrast and Reduce Transparency fallbacks for every glass surface \u2014 if legibility depends on the blur, it is broken.\n\u00b7 Light appearance for the menu and Settings.\n\u00b7 Contrast audit of white-on-field type at the brightest point of each gradient.\n\u00b7 The 12-criterion score for this direction.\n\u00b7 Real renders in place of the CSS skies."
+    }
+  ]
+}

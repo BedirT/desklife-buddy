@@ -1,0 +1,540 @@
+#!/bin/bash -p
+# One visible entry point for the credential-free factory control plane.
+set -euo pipefail
+
+SCRIPT_DIR="${BASH_SOURCE[0]%/*}"
+[[ "$SCRIPT_DIR" != "${BASH_SOURCE[0]}" ]] || SCRIPT_DIR=.
+ROOT="$(cd "$SCRIPT_DIR/.." && /bin/pwd -P)"
+PACKAGE_ROOT="$ROOT/Packages/Factory"
+FIXTURE="$ROOT/.factory/bootstrap-fixture.json"
+ARTIFACT_ROOT="$ROOT/artifacts"
+CLI_BINARY=""
+CLI_SCRATCH=""
+CLI_LOCK=""
+CLI_LOCK_IDENTITY=""
+ACTIVE_TEMPORARY=""
+
+cleanup_factory() {
+  [[ -z "$ACTIVE_TEMPORARY" ]] || /bin/rm -rf "$ACTIVE_TEMPORARY"
+}
+
+trap cleanup_factory EXIT
+
+usage() {
+  /bin/cat <<'EOF'
+usage: scripts/factory <command> [arguments]
+
+Credential-free local commands:
+  bootstrap                         exercise the full inert v1 fixture loop
+  doctor clients                    verify supported client versions and flags
+  client profiles|compile           inspect or compile a provider-neutral invocation
+  client normalize <client>         normalize raw Codex, Claude, or Pi JSONL stdin
+  context compile                   compile canonical JSON stdin into a context packet
+  controller plan <operation>       compile an effect plan from canonical JSON stdin
+  design inspect|translate          validate a design contract from canonical JSON stdin
+  learn harvest|freeze              harvest episodes or freeze one bounded candidate
+  learn skillopt-policy|skillopt-proof
+                                    inspect the pin or run the mock-only upstream gate
+  prompt <role>                     print and verify the exact repository-owned role prompt
+  product policy|classify           inspect the disabled default or classify owner-approved input
+  repair evaluate                   apply the bounded repair circuit to canonical history
+  skill migration                   audit all curated skill dispositions and qualification lanes
+  report render <input> [id]        write JSON, standalone HTML, and PR-summary artifacts
+  route policy|resolve|explain      inspect the immutable workflow ruler
+  validate <record>                 validate a canonical typed record
+
+Production mutations remain denied until the exact merged trusted root is activated.
+EOF
+}
+
+require_acl_listing() {
+  local listing
+  if ! listing="$(/bin/ls -lde "$1")"; then
+    echo "factory: could not inspect cache ACLs: $1" >&2
+    exit 73
+  fi
+  /usr/bin/printf '%s\n' "$listing"
+}
+
+require_no_write_granting_acl() {
+  local listing
+  listing="$(require_acl_listing "$1")"
+  if /usr/bin/printf '%s\n' "$listing" | /usr/bin/awk '
+    NR > 1 && / allow / && /(write|delete|append|add_file|add_subdirectory|delete_child|writeattr|writeextattr|writeowner|chown)/ {
+      found = 1
+    }
+    END { exit(found ? 0 : 1) }
+  '
+  then
+    echo "factory: write-granting cache ACL: $1" >&2
+    exit 73
+  fi
+}
+
+require_no_acl() {
+  local listing
+  listing="$(require_acl_listing "$1")"
+  if /usr/bin/printf '%s\n' "$listing" | /usr/bin/awk 'NR > 1 { found = 1 } END { exit(found ? 0 : 1) }'; then
+    echo "factory: cache node has an extended ACL: $1" >&2
+    exit 73
+  fi
+}
+
+require_owned_directory() {
+  local directory="$1"
+  local mode owner
+  [[ -d "$directory" && ! -L "$directory" ]] \
+    || { echo "factory: unsafe cache directory: $directory" >&2; exit 73; }
+  owner="$(/usr/bin/stat -f '%u' "$directory")"
+  mode="$(/usr/bin/stat -f '%Lp' "$directory")"
+  [[ "$owner" == "$(/usr/bin/id -u)" && $((8#$mode & 8#22)) -eq 0 ]] \
+    || { echo "factory: unsafe cache directory ownership or mode: $directory" >&2; exit 73; }
+  require_no_write_granting_acl "$directory"
+}
+
+prepare_private_directory() {
+  local directory="$1"
+  local created=false
+  if [[ -e "$directory" || -L "$directory" ]]; then
+    require_owned_directory "$directory"
+    require_no_acl "$directory"
+  else
+    if /bin/mkdir "$directory" 2>/dev/null; then
+      created=true
+    else
+      require_owned_directory "$directory"
+      require_no_acl "$directory"
+    fi
+  fi
+  [[ "$created" != true ]] || /bin/chmod -N "$directory"
+  /bin/chmod 700 "$directory"
+  require_owned_directory "$directory"
+}
+
+prepare_private_lock() {
+  local lock_path="$1"
+  if [[ -e "$lock_path" || -L "$lock_path" ]]; then
+    require_owned_regular_file "$lock_path" false
+  else
+    if ! ( set -o noclobber; : > "$lock_path" ) 2>/dev/null; then
+      require_owned_regular_file "$lock_path" false
+    fi
+  fi
+  /bin/chmod -N "$lock_path"
+  /bin/chmod 600 "$lock_path"
+  require_owned_regular_file "$lock_path" false
+}
+
+require_owned_regular_file() {
+  local executable="$2"
+  local file="$1"
+  local links mode owner
+  [[ -f "$file" && ! -L "$file" ]] \
+    || { echo "factory: unsafe cached file: $file" >&2; exit 73; }
+  owner="$(/usr/bin/stat -f '%u' "$file")"
+  mode="$(/usr/bin/stat -f '%Lp' "$file")"
+  links="$(/usr/bin/stat -f '%l' "$file")"
+  [[ "$owner" == "$(/usr/bin/id -u)" && "$links" == 1 && $((8#$mode & 8#22)) -eq 0 ]] \
+    || { echo "factory: unsafe cached file ownership, mode, or links: $file" >&2; exit 73; }
+  require_no_acl "$file"
+  [[ "$executable" != true || -x "$file" ]] \
+    || { echo "factory: cached FactoryCLI is not executable" >&2; exit 70; }
+}
+
+lock_identity() {
+  /usr/bin/stat -f '%d:%i' "$1"
+}
+
+validate_cli_binary() {
+  local directory
+  directory="${CLI_BINARY%/*}"
+  while [[ "$directory" != "$CLI_SCRATCH" ]]; do
+    [[ "$directory" == "$CLI_SCRATCH"/* ]] \
+      || { echo "factory: FactoryCLI escaped its cache scratch path" >&2; exit 73; }
+    require_owned_directory "$directory"
+    require_no_acl "$directory"
+    directory="${directory%/*}"
+  done
+  require_owned_regular_file "$CLI_BINARY" true
+}
+
+prune_cache_generations() {
+  local cache_home="$1"
+  local candidate candidates generation lock_path status
+  if ! candidates="$(/usr/bin/python3 -I - "$cache_home" "${CLI_SCRATCH##*/}" <<'PY'
+import os
+import re
+import stat
+import sys
+
+root, current = sys.argv[1:]
+entries = []
+for entry in os.scandir(root):
+    if entry.name == current or re.fullmatch(r"[0-9a-f]{64}", entry.name) is None:
+        continue
+    lock_path = entry.path + ".lock"
+    try:
+        metadata = entry.stat(follow_symlinks=False)
+        lock_metadata = os.lstat(lock_path)
+    except FileNotFoundError:
+        continue
+    if stat.S_ISDIR(metadata.st_mode) and stat.S_ISREG(lock_metadata.st_mode):
+        entries.append((metadata.st_mtime_ns, entry.name))
+entries.sort(reverse=True)
+for _, name in entries[2:]:
+    print(name)
+PY
+  )"
+  then
+    echo "factory: could not enumerate stale FactoryCLI caches" >&2
+    exit 73
+  fi
+  while IFS= read -r generation; do
+    [[ -n "$generation" ]] || continue
+    candidate="$cache_home/$generation"
+    lock_path="$candidate.lock"
+    require_owned_regular_file "$lock_path" false
+    status=0
+    FACTORY_LIBRARY_ONLY=1 /usr/bin/lockf -k -t 0 "$lock_path" \
+      /bin/bash -p -c '
+        source "$1"
+        candidate="$2"
+        if [[ -e "$candidate" || -L "$candidate" ]]; then
+          require_owned_directory "$candidate"
+          require_no_acl "$candidate"
+          /usr/bin/find "$candidate" -depth -delete
+        fi
+      ' factory-cache-pruner "$ROOT/scripts/factory" "$candidate" \
+      >/dev/null 2>&1 || status=$?
+    if [[ "$status" -ne 0 && "$status" -ne 75 ]]; then
+      echo "factory: could not prune stale FactoryCLI cache: $candidate" >&2
+    fi
+  done <<<"$candidates"
+}
+
+prepare_cli() {
+  local bin_path build_status cache_base cache_home cache_key cache_parent home mode old_umask toolchain_identity
+  mode="${1:-paths}"
+  if [[ "$mode" == paths && -n "$CLI_LOCK" ]]; then
+    return
+  elif [[ "$mode" == locked && -n "$CLI_BINARY" ]]; then
+    return
+  fi
+  old_umask="$(umask)"
+  umask 077
+  home="$(/usr/bin/python3 -I -c 'import os, pwd; print(pwd.getpwuid(os.getuid()).pw_dir)')"
+  if [[ -n "${FACTORY_CLI_CACHE_ROOT:-}" ]]; then
+    cache_home="$FACTORY_CLI_CACHE_ROOT"
+  else
+    require_owned_directory "$home"
+    require_owned_directory "$home/Library"
+    require_owned_directory "$home/Library/Caches"
+    cache_base="$home/Library/Caches/swiftmac-base"
+    prepare_private_directory "$cache_base"
+    cache_home="$cache_base/factory-cli"
+  fi
+  [[ "$cache_home" == /* && "$cache_home" != */.. && "$cache_home" != */. ]] \
+    || { echo "factory: FactoryCLI cache override must be an absolute leaf path" >&2; exit 64; }
+  cache_parent="${cache_home%/*}"
+  [[ -n "$cache_parent" ]] || cache_parent=/
+  cache_parent="$(cd "$cache_parent" && /bin/pwd -P)"
+  cache_home="$cache_parent/${cache_home##*/}"
+  [[ "$cache_home" != "$ROOT" && "$cache_home" != "$ROOT"/* ]] \
+    || { echo "factory: FactoryCLI cache cannot be inside the checkout" >&2; exit 73; }
+  require_owned_directory "$cache_parent"
+  prepare_private_directory "$cache_home"
+  toolchain_identity="$(/usr/bin/xcrun swift --version 2>&1)"
+  cache_key="$(/usr/bin/printf '%s\0%s' "$PACKAGE_ROOT" "$toolchain_identity" \
+    | /usr/bin/shasum -a 256 | /usr/bin/awk '{print $1}')"
+  CLI_SCRATCH="$cache_home/$cache_key"
+  CLI_LOCK="$cache_home/$cache_key.lock"
+  prepare_private_directory "$CLI_SCRATCH"
+  prepare_private_lock "$CLI_LOCK"
+  CLI_LOCK_IDENTITY="$(lock_identity "$CLI_LOCK")"
+  if [[ "$mode" == locked ]]; then
+    [[ -n "${FACTORY_EXPECTED_CLI_LOCK:-}" \
+      && "$CLI_LOCK" == "$FACTORY_EXPECTED_CLI_LOCK" \
+      && "$CLI_SCRATCH" == "${FACTORY_EXPECTED_CLI_SCRATCH:-}" \
+      && "$CLI_LOCK_IDENTITY" == "${FACTORY_EXPECTED_CLI_LOCK_IDENTITY:-}" ]] \
+      || { echo "factory: FactoryCLI generation changed before locked execution" >&2; exit 73; }
+  fi
+  if [[ "$mode" != locked ]]; then
+    umask "$old_umask"
+    return
+  fi
+  build_status=0
+  /usr/bin/xcrun swift build \
+    --package-path "$PACKAGE_ROOT" \
+    --scratch-path "$CLI_SCRATCH" \
+    --product FactoryCLI \
+    >/dev/null || build_status=$?
+  if [[ "$build_status" -ne 0 ]]; then
+    echo "factory: FactoryCLI build failed with status $build_status" >&2
+    exit "$build_status"
+  fi
+  prune_cache_generations "$cache_home"
+  bin_path="$(/usr/bin/xcrun swift build \
+      --package-path "$PACKAGE_ROOT" \
+      --scratch-path "$CLI_SCRATCH" \
+      --show-bin-path)"
+  CLI_BINARY="$bin_path/FactoryCLI"
+  validate_cli_binary
+  umask "$old_umask"
+}
+
+run_cli() {
+  prepare_cli paths
+  FACTORY_EXPECTED_CLI_LOCK="$CLI_LOCK" \
+    FACTORY_EXPECTED_CLI_SCRATCH="$CLI_SCRATCH" \
+    FACTORY_EXPECTED_CLI_LOCK_IDENTITY="$CLI_LOCK_IDENTITY" \
+    FACTORY_LIBRARY_ONLY=1 /usr/bin/lockf -k -t 120 "$CLI_LOCK" \
+    /bin/bash -p -c 'source "$1"; shift; prepare_cli locked; exec "$CLI_BINARY" "$@"' \
+    factory-cache-runner "$ROOT/scripts/factory" "$@"
+}
+
+canonical_fragment() {
+  local key="$1"
+  /usr/bin/python3 -I - "$FIXTURE" "$key" <<'PY'
+import json
+import pathlib
+import sys
+
+document = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+value = document[sys.argv[2]]
+sys.stdout.write(json.dumps(value, ensure_ascii=True, separators=(",", ":"), sort_keys=True))
+PY
+}
+
+canonical_transcript() {
+  local client="$1"
+  /usr/bin/python3 -I - "$FIXTURE" "$client" <<'PY'
+import json
+import pathlib
+import sys
+
+document = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+events = document["client_transcripts"][sys.argv[2]]
+for event in events:
+    print(json.dumps(event, ensure_ascii=True, separators=(",", ":"), sort_keys=True))
+PY
+}
+
+print_prompt() {
+  local role="$1"
+  /usr/bin/python3 -I - "$ROOT" "$role" <<'PY'
+import hashlib
+import json
+import pathlib
+import stat
+import sys
+
+root = pathlib.Path(sys.argv[1]).resolve()
+role = sys.argv[2]
+registry_path = root / ".factory/prompts/registry.json"
+registry = json.loads(registry_path.read_text(encoding="utf-8"))
+record = next((item for item in registry["roles"] if item["id"] == role), None)
+if record is None:
+    raise SystemExit(f"factory prompt: unknown role {role!r}")
+path = root / record["path"]
+metadata = path.lstat()
+if not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1 or path.resolve() != path:
+    raise SystemExit("factory prompt: prompt path is not one regular repository file")
+data = path.read_bytes()
+if len(data) != record["size_bytes"] or hashlib.sha256(data).hexdigest() != record["sha256"]:
+    raise SystemExit("factory prompt: prompt bytes do not match the frozen registry")
+sys.stdout.buffer.write(data)
+PY
+}
+
+doctor_clients() {
+  /usr/bin/python3 -I - "$ROOT/.factory/clients.json" <<'PY'
+import hashlib
+import json
+import os
+import pathlib
+import re
+import shutil
+import subprocess
+import sys
+
+profiles = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+required_flags = {
+    "claude": ["--allowedTools", "--fork-session", "--json-schema", "--output-format", "--permission-mode", "--resume", "--safe-mode", "--system-prompt"],
+    "codex": ["--cd", "--ignore-user-config", "--json", "--output-schema", "--sandbox"],
+    "pi": ["--fork", "--mode", "--no-context-files", "--no-extensions", "--no-skills", "--offline", "--session", "--system-prompt", "--tools"],
+}
+
+def version_tuple(value):
+    match = re.search(r"(\d+)\.(\d+)\.(\d+)", value)
+    if not match:
+        raise SystemExit(f"factory doctor: cannot parse version from {value!r}")
+    return tuple(map(int, match.groups()))
+
+results = []
+for profile in profiles:
+    executable = shutil.which(profile["executable"])
+    if executable is None:
+        raise SystemExit(f"factory doctor: missing {profile['executable']}")
+    environment = {"HOME": os.environ.get("HOME", ""), "PATH": os.environ.get("PATH", "")}
+    version = subprocess.run([executable, "--version"], check=True, capture_output=True, text=True, env=environment)
+    observed = (version.stdout + version.stderr).strip()
+    if version_tuple(observed) < version_tuple(profile["minimum_version"]):
+        raise SystemExit(f"factory doctor: {profile['client']} {observed} is below {profile['minimum_version']}")
+    help_command = [executable, "exec", "--help"] if profile["client"] == "codex" else [executable, "--help"]
+    help_result = subprocess.run(help_command, check=True, capture_output=True, text=True, env=environment)
+    help_text = help_result.stdout + help_result.stderr
+    missing = [flag for flag in required_flags[profile["client"]] if flag not in help_text]
+    if missing:
+        raise SystemExit(f"factory doctor: {profile['client']} lacks {', '.join(missing)}")
+    real_executable = pathlib.Path(executable).resolve()
+    results.append({
+        "client": profile["client"],
+        "executable_sha256": hashlib.sha256(real_executable.read_bytes()).hexdigest(),
+        "observed_version": observed,
+        "profile_id": profile["profile_id"],
+        "status": "passed",
+    })
+sys.stdout.write(json.dumps({"clients": results, "status": "passed"}, separators=(",", ":"), sort_keys=True))
+PY
+}
+
+render_report() {
+  local input="$1"
+  local report_id="${2:-factory-report}"
+  local output="$ARTIFACT_ROOT/factory-reports/$report_id"
+  local canonical_input temporary
+  [[ -f "$input" && ! -L "$input" ]] || { echo "factory report: input must be a regular file" >&2; exit 2; }
+  [[ "$report_id" =~ ^[a-z0-9][a-z0-9._-]{0,127}$ ]] || { echo "factory report: invalid report id" >&2; exit 2; }
+  /bin/mkdir -p "$ARTIFACT_ROOT/factory-reports"
+  temporary="$(/usr/bin/mktemp -d "$ARTIFACT_ROOT/factory-reports/.render.XXXXXX")"
+  ACTIVE_TEMPORARY="$temporary"
+  prepare_cli
+  canonical_input="$(/usr/bin/jq -cS . "$input")"
+  /usr/bin/printf '%s' "$canonical_input" >"$temporary/input.json"
+  run_cli report json <"$temporary/input.json" >"$temporary/report.json"
+  run_cli report html <"$temporary/input.json" >"$temporary/report.html"
+  run_cli report pr-summary <"$temporary/input.json" >"$temporary/pr-summary.md"
+  /bin/rm "$temporary/input.json"
+  /bin/rm -rf "$output"
+  /bin/mv "$temporary" "$output"
+  ACTIVE_TEMPORARY=""
+  /bin/echo "$output"
+}
+
+audit_skill_migration() {
+  local payload
+  payload="$(/usr/bin/jq -cS -n \
+    --slurpfile migration "$ROOT/.factory/skills/migration.json" \
+    --slurpfile registry "$ROOT/.factory/skills/registry.json" \
+    '{migration:$migration[0],registry:$registry[0]}')"
+  /usr/bin/printf '%s' "$payload" | run_cli skill migration
+}
+
+bootstrap() {
+  local output="$ARTIFACT_ROOT/factory-bootstrap"
+  local temporary controller context_request route invocation request client
+  [[ -f "$FIXTURE" && ! -L "$FIXTURE" ]] || { echo "factory bootstrap: missing safe fixture" >&2; exit 2; }
+  /bin/mkdir -p "$ARTIFACT_ROOT"
+  temporary="$(/usr/bin/mktemp -d "$ARTIFACT_ROOT/.factory-bootstrap.XXXXXX")"
+  ACTIVE_TEMPORARY="$temporary"
+  prepare_cli
+
+  doctor_clients >"$temporary/client-doctor.json"
+  controller="$(canonical_fragment controller_input)"
+  /usr/bin/printf '%s' "$controller" | run_cli controller plan start >"$temporary/controller-plan.json"
+  context_request="$(canonical_fragment context_request)"
+  /usr/bin/printf '%s' "$context_request" | run_cli context compile >"$temporary/context-packet.json"
+  route="$(canonical_fragment route_request)"
+  /usr/bin/printf '%s' "$route" | run_cli route resolve >"$temporary/route.json"
+  invocation="$(canonical_fragment invocation)"
+  for client in claude codex pi; do
+    schema_json=null
+    if [[ "$client" == "claude" ]]; then
+      schema_path="$(/usr/bin/printf '%s' "$invocation" | /usr/bin/jq -er '.output_schema.repository_path')"
+      schema_json="$(/usr/bin/jq -cS . "$ROOT/$schema_path" | /usr/bin/jq -Rs .)"
+    fi
+    request="$(/usr/bin/printf '%s' "$invocation" | /usr/bin/jq -cS --arg client "$client" --argjson schema "$schema_json" '{client:$client,invocation:.,output_schema_text:$schema}')"
+    /usr/bin/printf '%s' "$request" | run_cli client compile >"$temporary/client-$client-plan.json"
+    canonical_transcript "$client" | run_cli client normalize "$client" >"$temporary/client-$client-result.json"
+  done
+  canonical_fragment episodes | run_cli learn harvest >"$temporary/episode-ledger.json"
+  canonical_fragment skill_freeze_request | run_cli learn freeze >"$temporary/frozen-skill-candidate.json"
+  run_cli learn skillopt-policy >"$temporary/skillopt-policy.json"
+  audit_skill_migration >"$temporary/skill-migration.json"
+  canonical_fragment repair_history | run_cli repair evaluate >"$temporary/repair-outcome.json"
+  run_cli product policy >"$temporary/product-adapter-policy.json"
+  canonical_fragment report >"$temporary/report-input.json"
+  run_cli report json <"$temporary/report-input.json" >"$temporary/report.json"
+  run_cli report html <"$temporary/report-input.json" >"$temporary/report.html"
+  run_cli report pr-summary <"$temporary/report-input.json" >"$temporary/pr-summary.md"
+  /usr/bin/python3 -I - "$temporary" <<'PY' >"$temporary/manifest.json"
+import hashlib
+import json
+import pathlib
+import sys
+
+root = pathlib.Path(sys.argv[1])
+files = []
+for path in sorted(root.iterdir(), key=lambda value: value.name):
+    if path.name == "manifest.json" or not path.is_file():
+        continue
+    data = path.read_bytes()
+    files.append({"path": path.name, "sha256": hashlib.sha256(data).hexdigest(), "size_bytes": len(data)})
+sys.stdout.write(json.dumps({"files": files, "qualification": "nonqualifying-bootstrap", "status": "passed"}, separators=(",", ":"), sort_keys=True))
+PY
+  /bin/rm -rf "$output"
+  /bin/mv "$temporary" "$output"
+  ACTIVE_TEMPORARY=""
+  /bin/echo "$output"
+}
+
+if [[ "${FACTORY_LIBRARY_ONLY:-}" == 1 ]]; then
+  return 0 2>/dev/null || exit 0
+fi
+
+[[ "$#" -gt 0 ]] || { usage; exit 2; }
+case "$1" in
+  bootstrap)
+    [[ "$#" -eq 1 ]] || { usage >&2; exit 2; }
+    bootstrap
+    ;;
+  doctor)
+    [[ "$#" -eq 2 && "$2" == "clients" ]] || { usage >&2; exit 2; }
+    doctor_clients
+    ;;
+  design)
+    [[ "$#" -eq 2 && ( "$2" == "inspect" || "$2" == "translate" ) ]] || { usage >&2; exit 2; }
+    run_cli "$1" "$2" "$ROOT"
+    ;;
+  learn)
+    if [[ "$#" -eq 2 && "$2" == "skillopt-proof" ]]; then
+      exec "$ROOT/scripts/skillopt.sh" mock-proof
+    fi
+    run_cli "$@"
+    ;;
+  report)
+    if [[ "$#" -ge 2 && "$2" == "render" ]]; then
+      [[ "$#" -ge 3 && "$#" -le 4 ]] || { usage >&2; exit 2; }
+      render_report "$3" "${4:-factory-report}"
+      exit 0
+    fi
+    run_cli "$@"
+    ;;
+  prompt)
+    [[ "$#" -eq 2 ]] || { usage >&2; exit 2; }
+    print_prompt "$2"
+    ;;
+  skill)
+    if [[ "$#" -eq 2 && "$2" == "migration" ]]; then
+      audit_skill_migration
+      exit 0
+    fi
+    run_cli "$@"
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    run_cli "$@"
+    ;;
+esac

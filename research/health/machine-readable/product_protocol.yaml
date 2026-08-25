@@ -1,0 +1,132 @@
+meta:
+  name: desktop-wellness-balanced-v1
+  research_snapshot: 2026-08-24
+  positioning: general_wellness
+  population: adults_18_plus
+  authoritative_document: 03_PRODUCT_HEALTH_PROTOCOL_SPEC.md
+principles:
+  - estimate_active_computer_use_not_sitting
+  - separate_visual_movement_and_position_change
+  - never_infer_movement_from_idle
+  - every_break_is_dismissible
+  - accessibility_alternatives_are_equal_status
+  - local_first_no_account_required
+  - no_medical_or_blue_light_or_posture_claims
+profiles:
+  gentle:
+    visual:
+      soft_due_seconds: 1500
+      target_seconds: 1800
+      latest_preferred_seconds: 2100
+      duration_seconds: 20
+    movement:
+      soft_due_seconds: 4200
+      target_seconds: 4500
+      latest_preferred_seconds: 5400
+      recommended_duration_seconds: 300
+      quick_duration_seconds: 120
+  balanced:
+    default: true
+    visual:
+      soft_due_seconds: 1200
+      target_seconds: 1500
+      latest_preferred_seconds: 1800
+      duration_seconds: 20
+    movement:
+      soft_due_seconds: 3000
+      target_seconds: 3600
+      latest_preferred_seconds: 4200
+      recommended_duration_seconds: 300
+      quick_duration_seconds: 120
+    recovery:
+      eligible_after_seconds: 5400
+      latest_typical_seconds: 7200
+      suggested_duration_min_seconds: 300
+      suggested_duration_max_seconds: 600
+  frequent_movement:
+    visual:
+      soft_due_seconds: 1200
+      target_seconds: 1500
+      latest_preferred_seconds: 1800
+      duration_seconds: 20
+    movement:
+      soft_due_seconds: 1800
+      target_seconds: 2100
+      latest_preferred_seconds: 2400
+      recommended_duration_seconds: 300
+      quick_duration_seconds: 120
+  research_informed_high_frequency:
+    label: high_burden_acute_evidence
+    visual:
+      soft_due_seconds: 1200
+      target_seconds: 1200
+      latest_preferred_seconds: 1500
+      duration_seconds: 20
+    movement:
+      soft_due_seconds: 1500
+      target_seconds: 1800
+      latest_preferred_seconds: 2100
+      recommended_duration_seconds: 300
+      quick_duration_seconds: 120
+activity_estimator:
+  recent_input_window_seconds: 60
+  long_idle_reset_seconds: 300
+  wake_unlock_grace_seconds: 90
+  terminology: estimated_active_computer_use
+  limitations:
+    - passive_reading_may_be_undercounted
+    - input_does_not_indicate_body_position
+    - idle_does_not_indicate_movement
+opportunity_delivery:
+  wait_for_low_friction_moment: true
+  merge_window_seconds: 300
+  heads_up_default: true
+  heads_up_seconds_before_target: 45
+  snooze_options_seconds: [300, 600, 900]
+  max_repeated_escalations_per_opportunity: 1
+  lockout_allowed: false
+suppression_precedence:
+  - manual_pause
+  - system_inactive_or_locked
+  - explicit_presentation_mode
+  - focus_filter
+  - calendar_busy
+  - excluded_application
+  - outside_working_hours
+  - snooze
+  - low_friction_wait
+completion_semantics:
+  visual:
+    accepted_events: [timer_finished, user_declared_done]
+    camera_verification: false
+  movement:
+    accepted_events: [user_started_5_min, user_started_2_min, user_declared_already_moved, companion_event_future]
+    inferred_from_idle: false
+  position_change:
+    resets_movement_clock: false
+  likely_natural_interruption:
+    counts_as_movement: false
+content:
+  default_movement: easy_walking_or_equivalent
+  equal_alternatives: [wheel_or_self_propel, seated_active_movement, position_change_only]
+  prohibited: [ballistic_movement, aggressive_neck_circles, forceful_breathwork, pain_through_it, unreviewed_ai_generated_exercise]
+permissions:
+  required_for_core: []
+  optional:
+    notifications: heads_up_only
+    calendar: busy_free_suppression
+    focus_filter: user_configured
+    launch_at_login: user_opt_in
+  prohibited_for_mvp: [camera, microphone, screen_recording, accessibility_permission, direct_macos_healthkit]
+privacy:
+  account_required: false
+  analytics_default: off
+  retain_calendar_content: false
+  collect_keystrokes: false
+  collect_window_titles: false
+  collect_urls: false
+  collect_screenshots: false
+  symptom_tracking_default: off
+copy_guardrails:
+  allowed_concepts: [comfort, recovery, movement, variation, estimated_active_computer_use]
+  prohibited_concepts: [diagnosis, treatment, prevention, blue_light_damage, perfect_posture, sitting_detected, movement_verified_from_idle, disease_risk_score]

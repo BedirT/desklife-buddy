@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  body { margin: 0; }
+  .rt { position: relative; width: 1200px; height: 840px; overflow: hidden; box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased; color: #f4eee8; padding: 44px 54px;
+        background:
+          radial-gradient(80% 60% at 78% 112%, rgba(255,168,110,0.16) 0%, rgba(14,12,26,0) 68%),
+          linear-gradient(170deg, #0e0c1e 0%, #191530 60%, #241a30 100%); }
+  .eb { font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,196,150,0.70); }
+  h1 { margin: 10px 0 0; font-size: 34px; font-weight: 600; letter-spacing: -0.022em; }
+  h1 em { font-family: ui-serif,'New York',Georgia,serif; font-style: italic; font-weight: 500; }
+  .p { margin-top: 12px; width: 860px; font-size: 15px; line-height: 1.52; color: rgba(244,238,232,0.66); }
+  .p b { color: rgba(244,238,232,0.92); font-weight: 590; }
+
+  .hdr { display: flex; gap: 18px; margin-top: 26px; padding-bottom: 8px;
+         border-bottom: 1px solid rgba(255,255,255,0.10);
+         font-size: 10.5px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
+         color: rgba(255,255,255,0.36); }
+  .row { display: flex; gap: 18px; align-items: baseline; padding: 11px 0;
+         border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .c1 { flex: none; width: 158px; font-size: 13.5px; font-weight: 590; color: rgba(244,238,232,0.94); }
+  .c2 { flex: 1; font-size: 13px; line-height: 1.45; color: rgba(244,238,232,0.62); }
+  .c2 b { color: rgba(244,238,232,0.88); font-weight: 590; }
+  .c3 { flex: none; width: 148px; font-size: 12px; font-variant-numeric: tabular-nums; color: rgba(255,206,164,0.85); }
+  .c4 { flex: none; width: 172px; font-size: 12px; color: rgba(255,255,255,0.46); }
+
+  .never { margin-top: 18px; padding: 14px 18px; border-radius: 12px;
+           background: rgba(255,150,140,0.06); border: 1px solid rgba(255,150,140,0.16);
+           font-size: 13px; line-height: 1.5; color: rgba(244,238,232,0.66); }
+  .never b { color: rgba(255,170,158,0.95); font-weight: 600; }
+</style>
+</helmet>
+
+<div class="rt">
+  <div class="eb">Every surface · The motion vocabulary</div>
+  <h1>Nothing moves that wasn't <em>choreographed</em>.</h1>
+  <div class="p">
+    The premium feel is precision, not spectacle: a small, fixed set of moments, each played
+    <b>once</b>, eased, and each with a static equivalent under Reduce Motion. This is the whole
+    list — a motion that isn't on it doesn't exist.
+  </div>
+
+  <div class="hdr"><span style="width:158px;flex:none">Moment</span><span style="flex:1">What happens</span><span style="width:148px;flex:none">Timing</span><span style="width:172px;flex:none">Reduce Motion</span></div>
+
+  <div class="row"><div class="c1">Capsule arrives</div><div class="c2">Slides out from under the notch and settles — one soft overshoot, then still.</div><div class="c3">320 ms · ease-out</div><div class="c4">Fades in</div></div>
+  <div class="row"><div class="c1">The sun sinks</div><div class="c2">One continuous descent across the whole 45-second heads-up. <b>Height is the time.</b></div><div class="c3">45 s · linear</div><div class="c4">Three stepped positions, no tween</div></div>
+  <div class="row"><div class="c1">Keeps station</div><div class="c2">The sun's place along its tiny sky mirrors your pointer's place on screen — damped, unhurried, input-driven. It moves only when you move.</div><div class="c3">follows input only</div><div class="c4">Off — sun stays centered</div></div>
+  <div class="row"><div class="c1">Noticing you</div><div class="c2">Pointer reaches the capsule: the sun's glow warms once and the exits fade in beside it.</div><div class="c3">180 ms · ease-out</div><div class="c4">Instant</div></div>
+  <div class="row"><div class="c1">Touchdown</div><div class="c2">The sun meets its little horizon and settles — a single soft landing, no bounce.</div><div class="c3">260 ms · ease-out</div><div class="c4">Instant rest</div></div>
+  <div class="row"><div class="c1">The sky comes up</div><div class="c2">The break opens by rising from the bottom of the screen, like dusk arriving over the desktop — never a modal popping on. It arrives at about 60% brightness and ramps up as it rises, so the light change is part of the same single motion.</div><div class="c3">280 ms · ease-out</div><div class="c4">400 ms crossfade</div></div>
+  <div class="row"><div class="c1">Numerals</div><div class="c2">Deliberately <b>not animated</b>. Tabular figures change in place, no tween — the stillness is what lets the one moving thing on screen (the horizon) read.</div><div class="c3">—</div><div class="c4">Same</div></div>
+  <div class="row"><div class="c1">Horizon fills</div><div class="c2">The progress line lights left to right, once, continuously, across the whole break.</div><div class="c3">break-long · linear</div><div class="c4">Quiet stepped updates</div></div>
+  <div class="row"><div class="c1">The day ends</div><div class="c2">The sky lowers and your work returns, focus restored where it was. The capsule re-presents for about two seconds so the sun can give one slow, contented eye-crinkle — then it leaves too.</div><div class="c3">240 ms + ~2 s</div><div class="c4">Crossfade out only — no re-present, no crinkle</div></div>
+  <div class="row" style="border-bottom:none"><div class="c1">Everything else</div><div class="c2">Menus, Settings, the weekly window: standard system motion, untouched.</div><div class="c3">system</div><div class="c4">System behavior</div></div>
+
+  <div class="never"><b>Never:</b> loops · pulses · shimmer · parallax · animated backgrounds · anything that
+    replays while you read · anything you must wait out to leave. The no-loop rule is
+    photosensitivity safety, not taste — it holds in every mode, on every surface, at every level.</div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

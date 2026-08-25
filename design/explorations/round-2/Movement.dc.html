@@ -1,0 +1,197 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  body { margin: 0; }
+  .rt { position: relative; width: 1440px; height: 900px; overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased; background: #1a0d14; }
+
+  /* same landscape. closer, warmer, lower sun — a different time of day, so you know
+     which break it is before you read a word. */
+  .sky { position: absolute; inset: 0 0 260px 0;
+         background:
+           radial-gradient(30% 17% at 50% 100%, rgba(255,242,214,0.98) 0%, rgba(255,206,140,0.78) 34%, rgba(255,158,104,0.34) 62%, rgba(255,140,96,0) 84%),
+           radial-gradient(64% 40% at 50% 101%, rgba(255,164,102,0.62) 0%, rgba(255,116,96,0.32) 30%, rgba(226,84,124,0.18) 54%, rgba(26,13,20,0) 80%),
+           radial-gradient(150% 92% at 50% 106%, rgba(226,92,120,0.34) 0%, rgba(150,62,132,0.20) 30%, rgba(26,13,20,0) 72%),
+           radial-gradient(80% 62% at 86% -4%, rgba(140,62,152,0.30) 0%, rgba(26,13,20,0) 66%),
+           linear-gradient(178deg, #150818 0%, #260f24 42%, #46182e 74%, #6b2432 100%);
+         overflow: hidden; }
+  /* real render, graded from crimson back toward coral/rose — a whole red field reads as
+     urgency, and red is reserved. horizon (y 761 of 960) lands exactly on the 640px line. */
+  .skyimg { position: absolute; left: 0; top: -121px; width: 1440px; height: 960px;
+            filter: hue-rotate(14deg) saturate(0.84) brightness(0.97); }
+  .grd { position: absolute; left: 0; right: 0; top: 640px; bottom: 0;
+         background:
+           radial-gradient(44% 74% at 50% -8%, rgba(255,186,130,0.46) 0%, rgba(255,132,96,0.16) 42%, rgba(20,9,15,0) 76%),
+           linear-gradient(180deg, #2a1220 0%, #160913 58%, #0f0710 100%); }
+  .grain { position: absolute; inset: 0; opacity: 0.05; pointer-events: none; mix-blend-mode: overlay;
+           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  .hz  { position: absolute; left: 0; right: 0; top: 640px; height: 1px; background: rgba(255,255,255,0.28);
+         box-shadow: 0 1px 0 rgba(0,0,0,0.35); }
+  .hzf { position: absolute; left: 0; top: 640px; height: 1px; width: 16%;
+         background: linear-gradient(90deg, rgba(255,180,140,0.15), rgba(255,206,164,0.95));
+         box-shadow: 0 0 22px 2px rgba(255,178,120,0.55); }
+
+  .mb { position: absolute; top: 0; left: 0; right: 0; height: 24px; z-index: 9;
+        background: rgba(26,12,20,0.58); backdrop-filter: blur(30px) saturate(1.5);
+        display: flex; align-items: center; padding: 0 14px; gap: 18px;
+        font-size: 13px; color: rgba(255,255,255,0.88); }
+  .mb .ap { display: flex; align-items: center; gap: 17px; }
+  .mb .rr { margin-left: auto; display: flex; align-items: center; gap: 15px; }
+  .mb .cl { font-variant-numeric: tabular-nums; }
+
+  .eyebrow { position: absolute; top: 226px; left: 50%; transform: translateX(-50%);
+             font-size: 13px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase;
+             color: rgba(255,222,200,0.78); }
+  .disp { position: absolute; top: 268px; left: 50%; transform: translateX(-50%);
+          width: 1100px; text-align: center;
+          font-size: 58px; line-height: 1.14; font-weight: 590; letter-spacing: -0.024em;
+          color: #fff5ee; text-shadow: 0 2px 40px rgba(0,0,0,0.28); }
+  .disp em { font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif;
+             font-style: italic; font-weight: 500; letter-spacing: -0.012em; }
+
+  /* three ways, strictly equal: one glyph, one title, one key. nothing to study. */
+  .opts { position: absolute; top: 396px; left: 50%; transform: translateX(-50%);
+          display: flex; gap: 14px; }
+  .opt { display: flex; align-items: center; gap: 13px; height: 64px; padding: 0 22px 0 14px;
+         border-radius: 999px;
+         background: linear-gradient(rgba(255,255,255,0.07), rgba(255,255,255,0.07)), rgba(24,10,22,0.45);
+         border: 1px solid rgba(255,255,255,0.13);
+         backdrop-filter: blur(26px) saturate(1.5);
+         box-shadow: inset 0 1px 0 rgba(255,255,255,0.13), 0 14px 44px rgba(0,0,0,0.30); }
+  .opt.sel { background: linear-gradient(rgba(255,255,255,0.13), rgba(255,255,255,0.13)), rgba(24,10,22,0.45);
+             border-color: rgba(255,224,196,0.62);
+             box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 16px 48px rgba(0,0,0,0.34), 0 0 0 1px rgba(255,206,164,0.30); }
+  .gl { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex: none;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.32), 0 4px 14px rgba(0,0,0,0.26); }
+  .g1 { background: linear-gradient(160deg, #ffc074, #f0743f); }
+  .g2 { background: linear-gradient(160deg, #ff9ec0, #e0487e); }
+  .g3 { background: linear-gradient(160deg, #b39bff, #6f4fd8); }
+  .ot { font-size: 18px; font-weight: 590; letter-spacing: -0.012em; color: #fff5ee; white-space: nowrap; }
+  .chk { width: 16px; height: 16px; flex: none; margin-left: -3px; }
+  .ok { display: inline-flex; align-items: center; justify-content: center;
+        height: 20px; min-width: 20px; padding: 0 5px; border-radius: 5px;
+        font-size: 11px; font-weight: 500; letter-spacing: 0.04em;
+        background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.13);
+        color: rgba(255,247,242,0.90); }
+
+  /* the one sentence on the page, bound to whichever way is chosen. */
+  .how { position: absolute; top: 492px; left: 50%; transform: translateX(-50%);
+         font-size: 18px; color: rgba(255,245,238,0.88); text-shadow: 0 1px 18px rgba(0,0,0,0.55); }
+  .how b { font-weight: 590; }
+
+  /* ---- ground ---- */
+  .cdrow { position: absolute; top: 658px; left: 50%; transform: translateX(-50%);
+           display: flex; align-items: center; gap: 16px; }
+  .cd  { font-size: 27px; font-weight: 500; letter-spacing: 0.02em; font-variant-numeric: tabular-nums;
+         color: rgba(255,240,222,0.92); text-shadow: 0 0 24px rgba(255,180,120,0.35); }
+  .qk  { display: inline-flex; align-items: center; gap: 9px; height: 44px; padding: 0 18px; border-radius: 999px;
+         font-size: 15px; font-weight: 500; color: rgba(255,255,255,0.90);
+         background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14);
+         backdrop-filter: blur(24px) saturate(1.6);
+         box-shadow: inset 0 1px 0 rgba(255,255,255,0.13), 0 10px 34px rgba(0,0,0,0.30); }
+  .rem { position: absolute; top: 706px; left: 50%; transform: translateX(-50%);
+         font-size: 13px; color: rgba(255,255,255,0.56); letter-spacing: 0.01em; }
+
+  .pills { position: absolute; top: 738px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; }
+  .pill { display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 22px;
+          border-radius: 999px; font-size: 15px; font-weight: 500; color: rgba(255,255,255,0.90);
+          background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+          backdrop-filter: blur(24px) saturate(1.6);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 10px 34px rgba(0,0,0,0.34); }
+  .kc { display: inline-flex; align-items: center; justify-content: center; height: 20px; min-width: 24px;
+        padding: 0 6px; border-radius: 5px; font-size: 11px; letter-spacing: 0.04em;
+        background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.10); color: rgba(255,255,255,0.72); }
+
+  .pc { position: absolute; top: 802px; left: 50%; transform: translateX(-50%);
+        display: inline-flex; align-items: center; gap: 9px; height: 44px; padding: 0 18px;
+        border-radius: 999px; font-size: 13.5px; color: rgba(255,255,255,0.90);
+        border: 1px solid rgba(255,255,255,0.18); background: transparent; }
+  .pc span { color: rgba(255,255,255,0.58); }
+
+  .safe { position: absolute; top: 860px; left: 50%; transform: translateX(-50%);
+          width: 1160px; text-align: center; font-size: 12.5px; line-height: 1.5; color: rgba(255,255,255,0.62); }
+</style>
+</helmet>
+
+<div class="rt">
+  <div class="sky"><img class="skyimg" src="sky-warm.jpg"></div>
+  <div class="grd"></div>
+  <div class="hz"></div>
+  <div class="hzf"></div>
+  <div class="grain"></div>
+
+  <div class="mb">
+    <span class="ap">
+      <svg width="14" height="16" viewBox="0 0 14 17" fill="rgba(255,255,255,0.92)"><path d="M11.2 8.9c0-1.9 1.5-2.8 1.6-2.9-.9-1.3-2.3-1.5-2.8-1.5-1.2-.1-2.3.7-2.9.7-.6 0-1.5-.7-2.5-.7C3.3 4.5 2.1 5.3 1.4 6.5c-1.3 2.3-.3 5.7 1 7.6.6.9 1.4 1.9 2.4 1.9.9 0 1.3-.6 2.4-.6s1.4.6 2.4.6c1 0 1.6-.9 2.2-1.8.7-1 1-2 1-2.1 0 0-1.9-.8-1.9-3zM9.4 3.3c.5-.6.9-1.5.8-2.4-.8 0-1.7.5-2.2 1.2-.5.5-.9 1.5-.8 2.3.9.1 1.7-.4 2.2-1.1z"/></svg>
+      <b style="font-weight:600">Xcode</b><span>File</span><span>Edit</span><span>View</span><span>Product</span>
+    </span>
+    <span class="rr">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="rgba(255,255,255,0.88)" stroke-width="1.3" stroke-linecap="round"><path d="M2 6.2a9 9 0 0 1 12 0M4.4 8.7a5.6 5.6 0 0 1 7.2 0"/><circle cx="8" cy="11.6" r="0.95" fill="rgba(255,255,255,0.88)" stroke="none"/></svg>
+      <svg width="24" height="13" viewBox="0 0 26 13" fill="none"><rect x="0.6" y="1.6" width="20" height="10" rx="3" stroke="rgba(255,255,255,0.55)" stroke-width="1.1"/><rect x="2.2" y="3.2" width="11" height="6.8" rx="1.6" fill="rgba(255,255,255,0.88)"/><path d="M22.4 5v3.2c1-.3 1.5-.9 1.5-1.6s-.5-1.3-1.5-1.6z" fill="rgba(255,255,255,0.55)"/></svg>
+      <span class="cl">Tue 3:38 PM</span>
+    </span>
+  </div>
+
+  <div class="eyebrow">Movement opportunity</div>
+  <div class="disp">Move in a way that <em>works for you</em>.</div>
+
+  <div class="opts">
+    <div class="opt sel">
+      <div class="gl g1">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M3 17c4-9 14-9 18 0" opacity="0.55"/><circle cx="17.5" cy="10" r="2.4" fill="#fff" stroke="none"/></svg>
+      </div>
+      <div class="ot">Walk or wheel</div>
+      <svg class="chk" viewBox="0 0 16 16" fill="none" stroke="rgba(255,224,196,0.95)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"/></svg>
+      <div class="ok">1</div>
+    </div>
+    <div class="opt">
+      <div class="gl g2">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="6.5" opacity="0.55"/><circle cx="12" cy="5.5" r="2.2" fill="#fff" stroke="none"/></svg>
+      </div>
+      <div class="ot">Small space</div>
+      <div class="ok">2</div>
+    </div>
+    <div class="opt">
+      <div class="gl g3">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 15a8 8 0 0 1 16 0" opacity="0.55"/><path d="M3 19h18"/><circle cx="12" cy="7" r="2.2" fill="#fff" stroke="none"/></svg>
+      </div>
+      <div class="ot">Seated</div>
+      <div class="ok">3</div>
+    </div>
+  </div>
+
+  <div class="how"><b>Walk or wheel</b> — away from the desk, at an easy, comfortable pace.</div>
+
+  <div class="cdrow">
+    <span class="cd">4:12</span>
+    <span class="qk">2 minutes instead<span class="kc">Q</span></span>
+  </div>
+  <div class="rem">Ends on its own.</div>
+
+  <div class="pills">
+    <span class="pill">Done early<span class="kc">↩</span></span>
+    <span class="pill">I already moved<span class="kc">A</span></span>
+    <span class="pill">Skip<span class="kc">esc</span></span>
+  </div>
+
+  <div class="pc">Change position instead <span>· logged separately</span><span class="kc">P</span></div>
+
+  <div class="safe">Move comfortably and use support if needed. Stop or choose another option if you feel pain, dizziness, unusual shortness of breath, weakness, or instability.</div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

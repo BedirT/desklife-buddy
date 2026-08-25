@@ -1,0 +1,63 @@
+{
+  "id": "feature.animationName",
+  "kind": "staticVector",
+  "intent": "interactionFeedback",
+  "status": "placeholder",
+  "files": {
+    "runtime": "",
+    "fallbackStatic": "",
+    "source": "",
+    "previewReference": ""
+  },
+  "runtime": {
+    "engine": "native",
+    "packageVersion": "",
+    "minVersion": "",
+    "featureFlags": []
+  },
+  "playback": {
+    "durationMs": 600,
+    "fps": 60,
+    "loop": "never",
+    "autoplay": false,
+    "speed": 1,
+    "markers": [],
+    "segments": [],
+    "reducedMotion": "staticPoster"
+  },
+  "interactivity": {
+    "artboard": "",
+    "stateMachine": "",
+    "inputs": [],
+    "events": []
+  },
+  "layout": {
+    "intrinsicSize": [640, 420],
+    "fit": "contain",
+    "background": "transparent",
+    "lightDarkVariants": false,
+    "safeBounds": [32, 32, 576, 356]
+  },
+  "accessibility": {
+    "identifier": "feature.animationName",
+    "decorative": true,
+    "labelKey": "",
+    "reduceMotionBehavior": "staticPoster"
+  },
+  "provenance": {
+    "creator": "agent-placeholder",
+    "toolChain": "SwiftUI",
+    "exportDate": "",
+    "license": "project-owned",
+    "sourceUrl": "",
+    "aiModel": "",
+    "promptHash": "",
+    "c2pa": ""
+  },
+  "verification": {
+    "previewStates": ["start", "triggered", "reducedMotion"],
+    "snapshotTargets": [],
+    "perfBudget": "no-obvious-hitches",
+    "testedRuntime": ""
+  }
+}

@@ -1,0 +1,72 @@
+# Lint = mechanical law enforcement, so design/concurrency rules don't consume
+# agent attention. If a custom rule fires, fix the cause — never appease it.
+
+included:
+  - App
+  - Packages
+
+excluded:
+  - .build
+  - artifacts
+  - "**/.build"
+  - "**/__Snapshots__"
+
+disabled_rules:
+  - todo
+  - line_length          # swiftformat owns layout
+  - trailing_whitespace  # swiftformat owns layout
+  - trailing_comma       # swiftformat ADDS trailing commas; don't fight it
+
+identifier_name:
+  min_length: 2          # design tokens (xs/sm/md/lg/xl) are the vocabulary
+
+nesting:
+  type_level: 2          # Phase enums in models, helper types in test suites
+
+custom_rules:
+  ds_raw_color:
+    name: "Design token: color"
+    regex: 'Color\(\s*(hex:|red:|\.sRGB|uiColor:|nsColor:|#colorLiteral)'
+    message: "Raw colors are DesignSystem-internal — use Color.ds* tokens (catalog: DSGallery)."
+    severity: error
+    included: "(App|Packages/Features)/.*\\.swift"
+
+  ds_raw_font:
+    name: "Design token: font"
+    regex: 'Font\.system\(|\.font\(\s*\.system\('
+    message: "Raw fonts are DesignSystem-internal — use DSTypography."
+    severity: error
+    included: "(App|Packages/Features)/.*\\.swift"
+
+  ds_raw_animation:
+    name: "Design token: motion"
+    regex: '(withAnimation|\.animation)\(\s*\.(spring|interactiveSpring|interpolatingSpring|easeIn|easeOut|easeInOut|linear|bouncy|snappy|smooth)'
+    message: "Inline animation curves drift — use DSMotion tokens ($motion)."
+    severity: error
+    included: "(App|Packages/Features)/.*\\.swift"
+
+  no_dispatch_queue:
+    name: "Structured concurrency"
+    regex: '\bDispatchQueue\b'
+    message: "MainActor-by-default codebase: plain code runs on main; use @concurrent for real parallelism (ask-first)."
+    severity: error
+    excluded: ".*Tests.*"
+
+  no_task_detached:
+    name: "Task.detached"
+    regex: 'Task\.detached'
+    message: "Needs a written justification — prefer plain Task or @concurrent."
+    severity: warning
+
+  no_unchecked_sendable:
+    name: "Unchecked Sendable"
+    regex: '@unchecked\s+Sendable'
+    message: "Never silence a data race — this is an ask-first item."
+    severity: error
+
+  no_print:
+    name: "Logger over print"
+    regex: '^\s*print\('
+    message: "Use os.Logger so log capture (scripts/run.sh) sees it."
+    severity: warning
+    included: "(App|Packages/[^/]+/Sources)/.*\\.swift"

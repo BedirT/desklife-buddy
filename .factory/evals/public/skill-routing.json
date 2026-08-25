@@ -1,0 +1,995 @@
+{
+  "fixtures": [
+    {
+      "expected_selected_skill_ids": [
+        "factory-run"
+      ],
+      "fixture_id": "adopt-app-negative-1",
+      "forbidden_skill_id": "adopt-app",
+      "kind": "confusable-negative",
+      "prompt": "Build a brand-new item tagging feature in the current app.",
+      "target_skill_id": "adopt-app",
+      "unselected_canary": "UNSELECTED_ADOPT_APP_1"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "release"
+      ],
+      "fixture_id": "adopt-app-negative-2",
+      "forbidden_skill_id": "adopt-app",
+      "kind": "confusable-negative",
+      "prompt": "Prepare the current app for an App Store release.",
+      "target_skill_id": "adopt-app",
+      "unselected_canary": "UNSELECTED_ADOPT_APP_2"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "review-swarm"
+      ],
+      "fixture_id": "adopt-app-negative-3",
+      "forbidden_skill_id": "adopt-app",
+      "kind": "confusable-negative",
+      "prompt": "Run a parallel regression review of the adoption diff without editing it.",
+      "target_skill_id": "adopt-app",
+      "unselected_canary": "UNSELECTED_ADOPT_APP_3"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "adopt-app"
+      ],
+      "fixture_id": "adopt-app-positive-1",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Move my existing SwiftUI app into this harness without touching the original repository.",
+      "target_skill_id": "adopt-app",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "adopt-app"
+      ],
+      "fixture_id": "adopt-app-positive-2",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Continue the staged brownfield adoption from docs/plans/adopt-myapp.md.",
+      "target_skill_id": "adopt-app",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "adopt-app"
+      ],
+      "fixture_id": "adopt-app-positive-3",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Onboard this existing macOS app into the template and preserve its behavior.",
+      "target_skill_id": "adopt-app",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "factory-run"
+      ],
+      "fixture_id": "bug-hunt-swarm-negative-1",
+      "forbidden_skill_id": "bug-hunt-swarm",
+      "kind": "confusable-negative",
+      "prompt": "The failing test already proves the bug; implement the bounded fix.",
+      "target_skill_id": "bug-hunt-swarm",
+      "unselected_canary": "UNSELECTED_BUG_HUNT_SWARM_1"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "review-swarm"
+      ],
+      "fixture_id": "bug-hunt-swarm-negative-2",
+      "forbidden_skill_id": "bug-hunt-swarm",
+      "kind": "confusable-negative",
+      "prompt": "Review the current diff for security and reliability regressions.",
+      "target_skill_id": "bug-hunt-swarm",
+      "unselected_canary": "UNSELECTED_BUG_HUNT_SWARM_2"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "perf-audit"
+      ],
+      "fixture_id": "bug-hunt-swarm-negative-3",
+      "forbidden_skill_id": "bug-hunt-swarm",
+      "kind": "confusable-negative",
+      "prompt": "The app scrolls with visible jank; record Instruments evidence and find the hot path.",
+      "target_skill_id": "bug-hunt-swarm",
+      "unselected_canary": "UNSELECTED_BUG_HUNT_SWARM_3"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "bug-hunt-swarm"
+      ],
+      "fixture_id": "bug-hunt-swarm-positive-1",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Investigate why the app crashes after reopening a deleted item and rank the likely root causes.",
+      "target_skill_id": "bug-hunt-swarm",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "bug-hunt-swarm"
+      ],
+      "fixture_id": "bug-hunt-swarm-positive-2",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Trace the regression that made this test flaky; do not edit files yet.",
+      "target_skill_id": "bug-hunt-swarm",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "bug-hunt-swarm"
+      ],
+      "fixture_id": "bug-hunt-swarm-positive-3",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Use parallel investigators to find why this unexplained failure occurs.",
+      "target_skill_id": "bug-hunt-swarm",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "design-system"
+      ],
+      "fixture_id": "design-ingest-negative-1",
+      "forbidden_skill_id": "design-ingest",
+      "kind": "confusable-negative",
+      "prompt": "Build a SwiftUI settings screen from the accepted written product contract using existing design tokens.",
+      "target_skill_id": "design-ingest",
+      "unselected_canary": "UNSELECTED_DESIGN_INGEST_1"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "motion"
+      ],
+      "fixture_id": "design-ingest-negative-2",
+      "forbidden_skill_id": "design-ingest",
+      "kind": "confusable-negative",
+      "prompt": "Create a new reduced-motion-aware success animation without an external visual reference.",
+      "target_skill_id": "design-ingest",
+      "unselected_canary": "UNSELECTED_DESIGN_INGEST_2"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "snapshot-verify"
+      ],
+      "fixture_id": "design-ingest-negative-3",
+      "forbidden_skill_id": "design-ingest",
+      "kind": "confusable-negative",
+      "prompt": "Render and inspect the current implementation's existing Preview snapshot matrix.",
+      "target_skill_id": "design-ingest",
+      "unselected_canary": "UNSELECTED_DESIGN_INGEST_3"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "design-ingest"
+      ],
+      "fixture_id": "design-ingest-positive-1",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Replicate this owner-provided Figma frame canonically as a native macOS screen.",
+      "target_skill_id": "design-ingest",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "design-ingest"
+      ],
+      "fixture_id": "design-ingest-positive-2",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Use this Claude Design standalone HTML export as native-adaptation input for the feature.",
+      "target_skill_id": "design-ingest",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "design-ingest"
+      ],
+      "fixture_id": "design-ingest-positive-3",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Match the supplied reference video's endpoints, timing, and motion while preserving reduced-motion behavior.",
+      "target_skill_id": "design-ingest",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "swiftui-liquid-glass"
+      ],
+      "fixture_id": "design-system-negative-1",
+      "forbidden_skill_id": "design-system",
+      "kind": "confusable-negative",
+      "prompt": "Adopt Liquid Glass chrome for this macOS toolbar.",
+      "target_skill_id": "design-system",
+      "unselected_canary": "UNSELECTED_DESIGN_SYSTEM_1"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "motion"
+      ],
+      "fixture_id": "design-system-negative-2",
+      "forbidden_skill_id": "design-system",
+      "kind": "confusable-negative",
+      "prompt": "Create a reduced-motion-aware success animation.",
+      "target_skill_id": "design-system",
+      "unselected_canary": "UNSELECTED_DESIGN_SYSTEM_2"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "snapshot-verify"
+      ],
+      "fixture_id": "design-system-negative-3",
+      "forbidden_skill_id": "design-system",
+      "kind": "confusable-negative",
+      "prompt": "Render and inspect the existing SwiftUI Preview snapshot states.",
+      "target_skill_id": "design-system",
+      "unselected_canary": "UNSELECTED_DESIGN_SYSTEM_3"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "design-system"
+      ],
+      "fixture_id": "design-system-positive-1",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Build this SwiftUI screen using the repository's existing design tokens and components.",
+      "target_skill_id": "design-system",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "design-system"
+      ],
+      "fixture_id": "design-system-positive-2",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Check DSGallery before choosing spacing, typography, colors, and card components.",
+      "target_skill_id": "design-system",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "design-system"
+      ],
+      "fixture_id": "design-system-positive-3",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "The UI needs a reusable design-system component; determine whether the vocabulary already covers it.",
+      "target_skill_id": "design-system",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "snapshot-verify"
+      ],
+      "fixture_id": "evidence-pack-negative-1",
+      "forbidden_skill_id": "evidence-pack",
+      "kind": "confusable-negative",
+      "prompt": "Render and inspect the feature's Preview snapshots before integration.",
+      "target_skill_id": "evidence-pack",
+      "unselected_canary": "UNSELECTED_EVIDENCE_PACK_1"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "perf-audit"
+      ],
+      "fixture_id": "evidence-pack-negative-2",
+      "forbidden_skill_id": "evidence-pack",
+      "kind": "confusable-negative",
+      "prompt": "Investigate the reported CPU spike with an Instruments trace.",
+      "target_skill_id": "evidence-pack",
+      "unselected_canary": "UNSELECTED_EVIDENCE_PACK_2"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "release"
+      ],
+      "fixture_id": "evidence-pack-negative-3",
+      "forbidden_skill_id": "evidence-pack",
+      "kind": "confusable-negative",
+      "prompt": "Ship version 1.2.0 and prepare release notes and archive evidence.",
+      "target_skill_id": "evidence-pack",
+      "unselected_canary": "UNSELECTED_EVIDENCE_PACK_3"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "evidence-pack"
+      ],
+      "fixture_id": "evidence-pack-positive-1",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Assemble the proof-of-done handoff for this completed task.",
+      "target_skill_id": "evidence-pack",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "evidence-pack"
+      ],
+      "fixture_id": "evidence-pack-positive-2",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "The task is blocked; report the exact failing proof, risk, and follow-up in the required evidence format.",
+      "target_skill_id": "evidence-pack",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "evidence-pack"
+      ],
+      "fixture_id": "evidence-pack-positive-3",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Summarize current-SHA tests, visual artifacts, accessibility proof, and residual risks for handoff.",
+      "target_skill_id": "evidence-pack",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "grill-me"
+      ],
+      "fixture_id": "factory-run-negative-1",
+      "forbidden_skill_id": "factory-run",
+      "kind": "confusable-negative",
+      "prompt": "I have a new macOS app idea; grill me once before anything is built.",
+      "target_skill_id": "factory-run",
+      "unselected_canary": "UNSELECTED_FACTORY_RUN_1"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "plan-feature"
+      ],
+      "fixture_id": "factory-run-negative-2",
+      "forbidden_skill_id": "factory-run",
+      "kind": "confusable-negative",
+      "prompt": "Plan this multi-screen feature and stop for approval before implementation.",
+      "target_skill_id": "factory-run",
+      "unselected_canary": "UNSELECTED_FACTORY_RUN_2"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "review-swarm"
+      ],
+      "fixture_id": "factory-run-negative-3",
+      "forbidden_skill_id": "factory-run",
+      "kind": "confusable-negative",
+      "prompt": "Review the current PR diff in parallel without making changes.",
+      "target_skill_id": "factory-run",
+      "unselected_canary": "UNSELECTED_FACTORY_RUN_3"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "factory-run"
+      ],
+      "fixture_id": "factory-run-positive-1",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Execute the approved vertical slice through commits, evidence, and a draft PR.",
+      "target_skill_id": "factory-run",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "factory-run"
+      ],
+      "fixture_id": "factory-run-positive-2",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Continue the current factory transaction from its durable issue, plan, and contract state.",
+      "target_skill_id": "factory-run",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "factory-run"
+      ],
+      "fixture_id": "factory-run-positive-3",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Recover the interrupted issue-to-PR run, reconcile GitHub state, and finish the bounded work.",
+      "target_skill_id": "factory-run",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "factory-run"
+      ],
+      "fixture_id": "grill-me-negative-1",
+      "forbidden_skill_id": "grill-me",
+      "kind": "confusable-negative",
+      "prompt": "The product brief and contract are approved; implement the next vertical slice.",
+      "target_skill_id": "grill-me",
+      "unselected_canary": "UNSELECTED_GRILL_ME_1"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "plan-feature"
+      ],
+      "fixture_id": "grill-me-negative-2",
+      "forbidden_skill_id": "grill-me",
+      "kind": "confusable-negative",
+      "prompt": "Plan the already-defined multi-window feature and derive feature-local choices from accepted product context.",
+      "target_skill_id": "grill-me",
+      "unselected_canary": "UNSELECTED_GRILL_ME_2"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "review-swarm"
+      ],
+      "fixture_id": "grill-me-negative-3",
+      "forbidden_skill_id": "grill-me",
+      "kind": "confusable-negative",
+      "prompt": "Audit the current implementation diff for regressions without editing it.",
+      "target_skill_id": "grill-me",
+      "unselected_canary": "UNSELECTED_GRILL_ME_3"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "grill-me"
+      ],
+      "fixture_id": "grill-me-positive-1",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "I have a new macOS app idea. Grill me once and capture everything the factory needs.",
+      "target_skill_id": "grill-me",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "grill-me"
+      ],
+      "fixture_id": "grill-me-positive-2",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Define this product, audience, privacy posture, design direction, and release intent before building.",
+      "target_skill_id": "grill-me",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "grill-me"
+      ],
+      "fixture_id": "grill-me-positive-3",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Our product direction has materially reset; run one batched owner intake and persist the new intent.",
+      "target_skill_id": "grill-me",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "design-system"
+      ],
+      "fixture_id": "motion-negative-1",
+      "forbidden_skill_id": "motion",
+      "kind": "confusable-negative",
+      "prompt": "Compose this static settings screen from design tokens and components.",
+      "target_skill_id": "motion",
+      "unselected_canary": "UNSELECTED_MOTION_1"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "perf-audit"
+      ],
+      "fixture_id": "motion-negative-2",
+      "forbidden_skill_id": "motion",
+      "kind": "confusable-negative",
+      "prompt": "The animation stutters; record Instruments evidence and find the performance cause.",
+      "target_skill_id": "motion",
+      "unselected_canary": "UNSELECTED_MOTION_2"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "swiftui-liquid-glass"
+      ],
+      "fixture_id": "motion-negative-3",
+      "forbidden_skill_id": "motion",
+      "kind": "confusable-negative",
+      "prompt": "Refactor the toolbar to use system Liquid Glass chrome.",
+      "target_skill_id": "motion",
+      "unselected_canary": "UNSELECTED_MOTION_3"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "motion"
+      ],
+      "fixture_id": "motion-positive-1",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Add a choreographed SwiftUI success moment with a reduced-motion fallback.",
+      "target_skill_id": "motion",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "motion"
+      ],
+      "fixture_id": "motion-positive-2",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Choose the correct native, Rive, or Lottie lane for this interaction animation.",
+      "target_skill_id": "motion",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "motion"
+      ],
+      "fixture_id": "motion-positive-3",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Review this macOS motion change with video, contact-sheet, and reduced-motion proof.",
+      "target_skill_id": "motion",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "motion"
+      ],
+      "fixture_id": "perf-audit-negative-1",
+      "forbidden_skill_id": "perf-audit",
+      "kind": "confusable-negative",
+      "prompt": "Design a smooth state transition and reduced-motion behavior.",
+      "target_skill_id": "perf-audit",
+      "unselected_canary": "UNSELECTED_PERF_AUDIT_1"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "snapshot-verify"
+      ],
+      "fixture_id": "perf-audit-negative-2",
+      "forbidden_skill_id": "perf-audit",
+      "kind": "confusable-negative",
+      "prompt": "Render the view's deterministic Preview states and inspect the contact sheet.",
+      "target_skill_id": "perf-audit",
+      "unselected_canary": "UNSELECTED_PERF_AUDIT_2"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "review-swarm"
+      ],
+      "fixture_id": "perf-audit-negative-3",
+      "forbidden_skill_id": "perf-audit",
+      "kind": "confusable-negative",
+      "prompt": "Review the current diff for reliability and concurrency risks.",
+      "target_skill_id": "perf-audit",
+      "unselected_canary": "UNSELECTED_PERF_AUDIT_3"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "perf-audit"
+      ],
+      "fixture_id": "perf-audit-positive-1",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Investigate this scrolling jank with an app-attached Instruments trace.",
+      "target_skill_id": "perf-audit",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "perf-audit"
+      ],
+      "fixture_id": "perf-audit-positive-2",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "The app hangs for two seconds after import; measure and name the top cause.",
+      "target_skill_id": "perf-audit",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "perf-audit"
+      ],
+      "fixture_id": "perf-audit-positive-3",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Find the source of this memory growth and provide before-and-after performance evidence.",
+      "target_skill_id": "perf-audit",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "factory-run"
+      ],
+      "fixture_id": "plan-feature-negative-1",
+      "forbidden_skill_id": "plan-feature",
+      "kind": "confusable-negative",
+      "prompt": "Execute the already-approved contract and deliver its draft PR.",
+      "target_skill_id": "plan-feature",
+      "unselected_canary": "UNSELECTED_PLAN_FEATURE_1"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "grill-me"
+      ],
+      "fixture_id": "plan-feature-negative-2",
+      "forbidden_skill_id": "plan-feature",
+      "kind": "confusable-negative",
+      "prompt": "This is a new app idea; run the full product intake first.",
+      "target_skill_id": "plan-feature",
+      "unselected_canary": "UNSELECTED_PLAN_FEATURE_2"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "release"
+      ],
+      "fixture_id": "plan-feature-negative-3",
+      "forbidden_skill_id": "plan-feature",
+      "kind": "confusable-negative",
+      "prompt": "Prepare the finished app for notarization and distribution handoff.",
+      "target_skill_id": "plan-feature",
+      "unselected_canary": "UNSELECTED_PLAN_FEATURE_3"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "plan-feature"
+      ],
+      "fixture_id": "plan-feature-positive-1",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Plan this multi-screen feature in a living docs/plans file and record reversible decisions without a second owner approval round.",
+      "target_skill_id": "plan-feature",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "plan-feature"
+      ],
+      "fixture_id": "plan-feature-positive-2",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Continue the in-progress feature plan from its first unchecked verified step.",
+      "target_skill_id": "plan-feature",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "plan-feature"
+      ],
+      "fixture_id": "plan-feature-positive-3",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Create a multi-session implementation plan with scope, non-goals, decisions, and verification gates.",
+      "target_skill_id": "plan-feature",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "review-swarm"
+      ],
+      "fixture_id": "project-skill-audit-negative-1",
+      "forbidden_skill_id": "project-skill-audit",
+      "kind": "confusable-negative",
+      "prompt": "Run a parallel code review of the current diff.",
+      "target_skill_id": "project-skill-audit",
+      "unselected_canary": "UNSELECTED_PROJECT_SKILL_AUDIT_1"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "bug-hunt-swarm"
+      ],
+      "fixture_id": "project-skill-audit-negative-2",
+      "forbidden_skill_id": "project-skill-audit",
+      "kind": "confusable-negative",
+      "prompt": "Diagnose why this crash started after the last commit.",
+      "target_skill_id": "project-skill-audit",
+      "unselected_canary": "UNSELECTED_PROJECT_SKILL_AUDIT_2"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "factory-run"
+      ],
+      "fixture_id": "project-skill-audit-negative-3",
+      "forbidden_skill_id": "project-skill-audit",
+      "kind": "confusable-negative",
+      "prompt": "Execute the approved product slice through a draft PR.",
+      "target_skill_id": "project-skill-audit",
+      "unselected_canary": "UNSELECTED_PROJECT_SKILL_AUDIT_3"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "project-skill-audit"
+      ],
+      "fixture_id": "project-skill-audit-positive-1",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Audit this project's sessions and current local skills, then recommend the highest-value updates.",
+      "target_skill_id": "project-skill-audit",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "project-skill-audit"
+      ],
+      "fixture_id": "project-skill-audit-positive-2",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Which skills does this repository actually need based on recurring work and memory evidence?",
+      "target_skill_id": "project-skill-audit",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "project-skill-audit"
+      ],
+      "fixture_id": "project-skill-audit-positive-3",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Find stale or duplicate project skills before proposing any new ones.",
+      "target_skill_id": "project-skill-audit",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "factory-run"
+      ],
+      "fixture_id": "release-negative-1",
+      "forbidden_skill_id": "release",
+      "kind": "confusable-negative",
+      "prompt": "Build and verify the next ordinary product feature.",
+      "target_skill_id": "release",
+      "unselected_canary": "UNSELECTED_RELEASE_1"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "perf-audit"
+      ],
+      "fixture_id": "release-negative-2",
+      "forbidden_skill_id": "release",
+      "kind": "confusable-negative",
+      "prompt": "Investigate the app's startup CPU spike.",
+      "target_skill_id": "release",
+      "unselected_canary": "UNSELECTED_RELEASE_2"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "review-swarm"
+      ],
+      "fixture_id": "release-negative-3",
+      "forbidden_skill_id": "release",
+      "kind": "confusable-negative",
+      "prompt": "Review the current release-related diff without authorizing distribution.",
+      "target_skill_id": "release",
+      "unselected_canary": "UNSELECTED_RELEASE_3"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "release"
+      ],
+      "fixture_id": "release-positive-1",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Ship version 2.1.0 of this macOS app and prepare the release handoff.",
+      "target_skill_id": "release",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "release"
+      ],
+      "fixture_id": "release-positive-2",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Run the App Store release preflight, bump the version, and create the archive.",
+      "target_skill_id": "release",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "release"
+      ],
+      "fixture_id": "release-positive-3",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Prepare a Developer ID distribution with release notes and signing handoff.",
+      "target_skill_id": "release",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "bug-hunt-swarm"
+      ],
+      "fixture_id": "review-swarm-negative-1",
+      "forbidden_skill_id": "review-swarm",
+      "kind": "confusable-negative",
+      "prompt": "Investigate the unexplained crash and rank root-cause hypotheses.",
+      "target_skill_id": "review-swarm",
+      "unselected_canary": "UNSELECTED_REVIEW_SWARM_1"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "factory-run"
+      ],
+      "fixture_id": "review-swarm-negative-2",
+      "forbidden_skill_id": "review-swarm",
+      "kind": "confusable-negative",
+      "prompt": "Implement the already-reproduced fix and deliver its PR.",
+      "target_skill_id": "review-swarm",
+      "unselected_canary": "UNSELECTED_REVIEW_SWARM_2"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "evidence-pack"
+      ],
+      "fixture_id": "review-swarm-negative-3",
+      "forbidden_skill_id": "review-swarm",
+      "kind": "confusable-negative",
+      "prompt": "Assemble final test and artifact proof for the handoff.",
+      "target_skill_id": "review-swarm",
+      "unselected_canary": "UNSELECTED_REVIEW_SWARM_3"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "review-swarm"
+      ],
+      "fixture_id": "review-swarm-positive-1",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Run a parallel read-only review of the current git diff.",
+      "target_skill_id": "review-swarm",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "review-swarm"
+      ],
+      "fixture_id": "review-swarm-positive-2",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Review this PR for security, privacy, reliability, and regression risks without editing files.",
+      "target_skill_id": "review-swarm",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "review-swarm"
+      ],
+      "fixture_id": "review-swarm-positive-3",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Use independent reviewers to find high-signal issues in this explicit file scope.",
+      "target_skill_id": "review-swarm",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "design-system"
+      ],
+      "fixture_id": "snapshot-verify-negative-1",
+      "forbidden_skill_id": "snapshot-verify",
+      "kind": "confusable-negative",
+      "prompt": "Choose design tokens and components for a new static screen.",
+      "target_skill_id": "snapshot-verify",
+      "unselected_canary": "UNSELECTED_SNAPSHOT_VERIFY_1"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "motion"
+      ],
+      "fixture_id": "snapshot-verify-negative-2",
+      "forbidden_skill_id": "snapshot-verify",
+      "kind": "confusable-negative",
+      "prompt": "Capture a motion-review video for the new animation.",
+      "target_skill_id": "snapshot-verify",
+      "unselected_canary": "UNSELECTED_SNAPSHOT_VERIFY_2"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "perf-audit"
+      ],
+      "fixture_id": "snapshot-verify-negative-3",
+      "forbidden_skill_id": "snapshot-verify",
+      "kind": "confusable-negative",
+      "prompt": "Investigate a scrolling hitch with Instruments.",
+      "target_skill_id": "snapshot-verify",
+      "unselected_canary": "UNSELECTED_SNAPSHOT_VERIFY_3"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "snapshot-verify"
+      ],
+      "fixture_id": "snapshot-verify-positive-1",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Render and inspect every reachable SwiftUI Preview state for this view.",
+      "target_skill_id": "snapshot-verify",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "snapshot-verify"
+      ],
+      "fixture_id": "snapshot-verify-positive-2",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Run the deterministic snapshot loop for the changed feature and open the contact sheet.",
+      "target_skill_id": "snapshot-verify",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "snapshot-verify"
+      ],
+      "fixture_id": "snapshot-verify-positive-3",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Verify the light, dark, and accessibility Preview baselines before launching the app.",
+      "target_skill_id": "snapshot-verify",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "design-system"
+      ],
+      "fixture_id": "swiftui-liquid-glass-negative-1",
+      "forbidden_skill_id": "swiftui-liquid-glass",
+      "kind": "confusable-negative",
+      "prompt": "Build a normal content card from existing design tokens.",
+      "target_skill_id": "swiftui-liquid-glass",
+      "unselected_canary": "UNSELECTED_SWIFTUI_LIQUID_GLASS_1"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "motion"
+      ],
+      "fixture_id": "swiftui-liquid-glass-negative-2",
+      "forbidden_skill_id": "swiftui-liquid-glass",
+      "kind": "confusable-negative",
+      "prompt": "Create a keyframed success animation with reduced-motion behavior.",
+      "target_skill_id": "swiftui-liquid-glass",
+      "unselected_canary": "UNSELECTED_SWIFTUI_LIQUID_GLASS_2"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "snapshot-verify"
+      ],
+      "fixture_id": "swiftui-liquid-glass-negative-3",
+      "forbidden_skill_id": "swiftui-liquid-glass",
+      "kind": "confusable-negative",
+      "prompt": "Render and inspect the unchanged toolbar's Preview snapshots.",
+      "target_skill_id": "swiftui-liquid-glass",
+      "unselected_canary": "UNSELECTED_SWIFTUI_LIQUID_GLASS_3"
+    },
+    {
+      "expected_selected_skill_ids": [
+        "swiftui-liquid-glass"
+      ],
+      "fixture_id": "swiftui-liquid-glass-positive-1",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Adopt native Liquid Glass chrome for this macOS SwiftUI toolbar.",
+      "target_skill_id": "swiftui-liquid-glass",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "swiftui-liquid-glass"
+      ],
+      "fixture_id": "swiftui-liquid-glass-positive-2",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Review whether this custom glass overlay follows the repository's macOS glass rules.",
+      "target_skill_id": "swiftui-liquid-glass",
+      "unselected_canary": null
+    },
+    {
+      "expected_selected_skill_ids": [
+        "swiftui-liquid-glass"
+      ],
+      "fixture_id": "swiftui-liquid-glass-positive-3",
+      "forbidden_skill_id": null,
+      "kind": "positive",
+      "prompt": "Refactor this floating control surface to system glass while preserving contrast.",
+      "target_skill_id": "swiftui-liquid-glass",
+      "unselected_canary": null
+    }
+  ],
+  "schema_version": 1
+}

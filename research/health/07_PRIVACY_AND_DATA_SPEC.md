@@ -1,0 +1,337 @@
+# 07 — Privacy and Data Specification
+
+## 1. Privacy objective
+
+The product should feel private because it **is** private, not because the privacy copy is reassuring.
+
+Core scheduling must run locally without an account, server, advertising identifier, camera, microphone, Screen Recording, Accessibility permission, Calendar, HealthKit, or analytics.
+
+The privacy design follows data minimization, purpose limitation, meaningful consent, and privacy by default [S059–S063].
+
+## 2. Data classification
+
+### Class 0 — Ephemeral operational state
+
+Examples:
+
+- seconds since input;
+- current suppression reason;
+- frontmost bundle ID for matching a local exclusion;
+- current Calendar busy interval;
+- active overlay state.
+
+Requirements:
+
+- memory only unless necessary for crash recovery;
+- discard quickly;
+- no analytics;
+- no server transmission.
+
+### Class 1 — Local routine data
+
+Examples:
+
+- protocol profile;
+- working hours;
+- break responses;
+- daily aggregate active-use estimate;
+- longest estimated run;
+- content preference;
+- skip/snooze categories.
+
+Requirements:
+
+- local by default;
+- export/delete available;
+- bounded retention;
+- no third-party advertising use;
+- clear schema and migration.
+
+### Class 2 — Sensitive contextual data
+
+Examples:
+
+- selected Calendar IDs;
+- app exclusion list;
+- exact timestamps;
+- inferred work pattern;
+- accessibility preferences.
+
+Requirements:
+
+- collect only when required;
+- local only unless user explicitly enables sync;
+- do not use to infer employment, disability, or productivity;
+- minimize granularity.
+
+### Class 3 — Health-adjacent or health data
+
+Examples:
+
+- symptom check-ins;
+- pain/fatigue ratings;
+- HealthKit/Watch data;
+- camera-derived blink, gaze, posture, or face presence;
+- medical-condition preferences.
+
+Requirements:
+
+- excluded from core MVP except optional minimal subjective check-ins;
+- separate explicit consent and purpose;
+- no sale, advertising, or broad analytics;
+- stricter retention and access controls;
+- privacy impact assessment before expansion;
+- regulatory review when function or claim changes.
+
+## 3. Data the MVP must never collect
+
+- keystrokes or typed content;
+- pointer paths or click coordinates;
+- window titles;
+- browser URLs or history;
+- document/file names;
+- screenshots or screen recordings;
+- camera images/video;
+- microphone/audio;
+- Calendar titles, notes, attendees, organizer, location, or meeting links;
+- contact lists;
+- employer identity inferred from app use;
+- cross-app advertising identifiers;
+- raw precise location;
+- biometric templates;
+- free-text medical history;
+- diagnostic labels.
+
+## 4. Local-first architecture
+
+### Core mode
+
+- no account;
+- no network required after installation/update;
+- local database stores aggregate/event data;
+- local preferences;
+- signed app/content updates only;
+- user can inspect/export/delete data.
+
+### Optional sync later
+
+If iCloud/CloudKit sync is added:
+
+- opt-in, not default;
+- clearly separate preferences from health-adjacent data;
+- sync minimum fields;
+- use Apple account infrastructure rather than creating a parallel identity where possible;
+- document deletion semantics across devices;
+- do not enable symptom or HealthKit-derived sync without separate review.
+
+## 5. Calendar privacy
+
+Purpose: suppress reminders during selected busy intervals.
+
+Implementation:
+
+1. ask only after user enables the feature;
+2. explain purpose and alternatives;
+3. allow calendar selection;
+4. query a narrow time horizon;
+5. map events to busy/free intervals in memory;
+6. discard all content fields;
+7. retain only settings and optional coarse suppression counts;
+8. provide immediate disable/revoke guidance.
+
+Do not send event data to analytics. Do not build a meeting-history database.
+
+## 6. Application exclusions
+
+Store bundle IDs locally only. The default summary must not reveal an app-by-app work history.
+
+If analytics is enabled, never transmit raw bundle IDs, app names, categories inferred from usage, or timestamps that could reconstruct usage.
+
+## 7. Subjective check-ins
+
+Optional and disabled by default.
+
+Allowed fields:
+
+- eye comfort rating;
+- neck/shoulder comfort rating;
+- fatigue rating;
+- break usefulness;
+- a small controlled set of reasons.
+
+Avoid free text in the MVP because it can contain diagnoses, names, work secrets, or other sensitive information.
+
+UI must state:
+
+- ratings are subjective;
+- they are not diagnosis or medical measurement;
+- the feature can be deleted or disabled;
+- the core app works without it.
+
+Suggested retention: 90 days locally by default, configurable to shorter/none; keep longer only if the user explicitly chooses trend history.
+
+## 8. Analytics
+
+### Default
+
+Off, or separate explicit opt-in after core onboarding.
+
+### Allowed coarse events
+
+- app version and OS version;
+- profile type;
+- visual/movement opportunity category;
+- response: start, shorten, snooze, skip, not appropriate;
+- duration bucket;
+- generic suppression reason;
+- crash/performance metrics.
+
+### Prohibited analytics
+
+- exact work timeline;
+- raw active-use intervals;
+- app names/bundle IDs;
+- Calendar information;
+- symptom values unless a separately consented research study;
+- HealthKit data;
+- camera or biometric data;
+- unique behavioural fingerprinting;
+- employer or productivity inference;
+- advertising or data-broker sharing.
+
+### Aggregation
+
+Prefer:
+
+- local aggregation before transmission;
+- day/week buckets rather than exact timestamps;
+- minimum sample thresholds for dashboards;
+- short retention;
+- no user-level exploration unless required for consented support.
+
+## 9. Data retention
+
+Proposed defaults:
+
+| Data | Default retention |
+|---|---:|
+| Ephemeral input/activity signal | memory only |
+| Raw opportunity event | 30–90 days locally |
+| Daily aggregate | 12 months locally |
+| Settings/profile | until deletion |
+| Optional symptom check-ins | 90 days locally |
+| Analytics event | shortest practical period; document explicitly |
+| Calendar content | never retained |
+| Export files | user-controlled destination only |
+
+Provide “keep only the last 30 days” and “do not keep history” options.
+
+## 10. Export and deletion
+
+Users need:
+
+- export to human-readable CSV/JSON;
+- clear description of every field;
+- delete history without deleting settings;
+- reset all data;
+- disable analytics;
+- disable and clear Calendar/app integrations;
+- clear synced data if sync is later added;
+- confirmation of what remains after deletion.
+
+Deletion must be tested, including backups, caches, crash logs, and queued analytics.
+
+## 11. Consent design
+
+Meaningful consent requires:
+
+- purpose-specific requests;
+- plain language;
+- no bundled “accept all” for optional integrations;
+- no dark patterns;
+- refusal does not cripple unrelated core functionality;
+- easy reversal;
+- just-in-time explanation;
+- separate consent for research participation.
+
+Do not ask for Calendar or notifications on first launch unless the user just chose the dependent feature.
+
+## 12. HealthKit and companion privacy
+
+Future companion principles:
+
+- request only the exact HealthKit types needed;
+- explain read vs write separately;
+- do not write fabricated workouts, calories, symptoms, or completion;
+- sync minimal derived state to Mac;
+- do not make Watch ownership a wellness advantage in scoring;
+- absence/delay is unknown, not failure;
+- provide local data deletion and revoke guidance;
+- no server collection unless independently justified.
+
+## 13. Camera and posture sensing gate
+
+Camera remains out of MVP. Before reconsideration, require:
+
+- explicit product value that cannot be achieved less invasively;
+- accuracy validation across skin tones, glasses, lighting, facial differences, mobility aids, body types, and camera positions;
+- false-positive/negative impact analysis;
+- local-only processing design;
+- no raw storage;
+- visible active-use indicator;
+- easy pause and deletion;
+- privacy impact assessment;
+- biometric/privacy-law review;
+- claims/regulatory review;
+- user research showing value exceeds discomfort.
+
+A camera feature cannot be justified merely because a competitor offers one.
+
+## 14. Security controls
+
+- sandbox and hardened runtime;
+- code signing/notarization;
+- encrypted platform storage where appropriate;
+- least privilege;
+- no advertising SDK;
+- dependency inventory and update policy;
+- signed/versioned content;
+- secure export and temporary-file handling;
+- privacy-preserving crash reporting;
+- incident response plan before any cloud feature;
+- vulnerability-reporting channel;
+- no secrets in app bundle or analytics payload.
+
+## 15. Region-focused privacy considerations
+
+### Canada
+
+PIPEDA principles emphasize accountability, identifying purposes, consent, limiting collection/use/disclosure/retention, safeguards, access, and openness [S059, S060]. Provincial laws may also apply.
+
+### EU/EEA
+
+Health data and inferred health data can be special-category data. Data protection by design/default, minimization, lawful basis, transparency, rights, and potentially a DPIA are central [S061, S062].
+
+### UK
+
+UK GDPR and ICO guidance similarly treat health data as special category [S061].
+
+### California/US
+
+California sensitive-personal-information rules and expanding state consumer-health laws may apply even when HIPAA does not [S063]. Do not imply “not HIPAA-covered” means unregulated.
+
+Obtain current legal advice before launch; the product should be designed to exceed minimums through local processing.
+
+## 16. Privacy acceptance criteria
+
+- Core app works offline and without account.
+- No invasive permissions in MVP.
+- No keystroke/window/URL/screenshot collection.
+- Calendar is reduced to ephemeral busy/free.
+- App exclusions remain local.
+- Subjective data is optional and deletable.
+- Analytics is off or explicitly opted in.
+- Export/delete is complete and tested.
+- Public privacy copy matches actual code paths.
+- SDK/network traffic is documented.
+- No feature silently changes the data classification or intended purpose.

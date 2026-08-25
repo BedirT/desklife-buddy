@@ -1,0 +1,665 @@
+{
+  "$defs": {
+    "ClientId": {
+      "enum": [
+        "claude",
+        "codex",
+        "pi"
+      ]
+    },
+    "FactoryClientLaunchPlan": {
+      "additionalProperties": false,
+      "properties": {
+        "arguments": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "client": {
+          "$ref": "#/$defs/ClientId"
+        },
+        "context_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "environment_keys": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 0,
+          "type": "array"
+        },
+        "executable": {
+          "pattern": "^[a-z][a-z0-9-]{0,63}$",
+          "type": "string"
+        },
+        "invocation_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "mutation_mode": {
+          "$ref": "#/$defs/MutationMode"
+        },
+        "output_schema": {
+          "$ref": "#/$defs/FactoryOutputSchemaBinding"
+        },
+        "profile_id": {
+          "$ref": "#/$defs/StableId"
+        },
+        "prompt_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "schema_delivery": {
+          "enum": [
+            "downstream-validation",
+            "file-path",
+            "inline-json"
+          ]
+        },
+        "selected_skills": {
+          "items": {
+            "$ref": "#/$defs/SelectedSkillBinding"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "timeout_seconds": {
+          "maximum": 7200,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "tool_allowlist": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "arguments",
+        "client",
+        "context_sha256",
+        "environment_keys",
+        "executable",
+        "invocation_sha256",
+        "mutation_mode",
+        "output_schema",
+        "profile_id",
+        "prompt_sha256",
+        "schema_delivery",
+        "selected_skills",
+        "timeout_seconds",
+        "tool_allowlist"
+      ],
+      "type": "object"
+    },
+    "FactoryClientProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "base_arguments": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "client": {
+          "$ref": "#/$defs/ClientId"
+        },
+        "event_format": {
+          "enum": [
+            "json",
+            "stream-json"
+          ]
+        },
+        "executable": {
+          "pattern": "^[a-z][a-z0-9-]{0,63}$",
+          "type": "string"
+        },
+        "minimum_version": {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "type": "string"
+        },
+        "profile_id": {
+          "$ref": "#/$defs/StableId"
+        },
+        "read_only_tools": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "schema_delivery": {
+          "enum": [
+            "downstream-validation",
+            "file-path",
+            "inline-json"
+          ]
+        },
+        "supports_cancellation": {
+          "const": true
+        },
+        "supports_fork": {
+          "type": "boolean"
+        },
+        "supports_resume": {
+          "const": true
+        },
+        "system_prompt_mode": {
+          "enum": [
+            "append-visible-prompt",
+            "replace-visible-prompt"
+          ]
+        },
+        "writer_tools": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "base_arguments",
+        "client",
+        "event_format",
+        "executable",
+        "minimum_version",
+        "profile_id",
+        "read_only_tools",
+        "schema_delivery",
+        "supports_cancellation",
+        "supports_fork",
+        "supports_resume",
+        "system_prompt_mode",
+        "writer_tools"
+      ],
+      "type": "object"
+    },
+    "FactoryControllerPlan": {
+      "additionalProperties": false,
+      "properties": {
+        "contract_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "effects": {
+          "items": {
+            "$ref": "#/$defs/FactoryPlannedEffect"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "generation": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "head_sha": {
+          "$ref": "#/$defs/GitSha"
+        },
+        "operation": {
+          "$ref": "#/$defs/OperationId"
+        },
+        "qualification": {
+          "enum": [
+            "nonqualifying-bootstrap",
+            "qualifying"
+          ]
+        },
+        "route_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "run_id": {
+          "$ref": "#/$defs/StableId"
+        }
+      },
+      "required": [
+        "contract_sha256",
+        "effects",
+        "generation",
+        "head_sha",
+        "operation",
+        "qualification",
+        "route_sha256",
+        "run_id"
+      ],
+      "type": "object"
+    },
+    "FactoryControllerPlanningInput": {
+      "additionalProperties": false,
+      "properties": {
+        "authority": {
+          "enum": [
+            "activated",
+            "build-candidate",
+            "trusted-root-installed"
+          ]
+        },
+        "contract_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "generation": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "head_sha": {
+          "$ref": "#/$defs/GitSha"
+        },
+        "issue_number": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "mode": {
+          "enum": [
+            "bootstrap-fixture",
+            "production"
+          ]
+        },
+        "route_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "run_id": {
+          "$ref": "#/$defs/StableId"
+        },
+        "stop_requested": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "authority",
+        "contract_sha256",
+        "generation",
+        "head_sha",
+        "issue_number",
+        "mode",
+        "route_sha256",
+        "run_id",
+        "stop_requested"
+      ],
+      "type": "object"
+    },
+    "FactoryFinding": {
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "$ref": "#/$defs/StableId"
+        },
+        "evidence_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "finding_id": {
+          "$ref": "#/$defs/StableId"
+        },
+        "role": {
+          "$ref": "#/$defs/WorkflowRole"
+        },
+        "severity": {
+          "enum": [
+            "critical",
+            "high",
+            "low",
+            "medium"
+          ]
+        }
+      },
+      "required": [
+        "category",
+        "evidence_sha256",
+        "finding_id",
+        "role",
+        "severity"
+      ],
+      "type": "object"
+    },
+    "FactoryNormalizedClientResult": {
+      "additionalProperties": false,
+      "properties": {
+        "client": {
+          "$ref": "#/$defs/ClientId"
+        },
+        "cost_microusd": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "event_stream_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "output_text": {
+          "maxLength": 4000000,
+          "type": "string"
+        },
+        "session_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/StableId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "aborted",
+            "failed",
+            "succeeded"
+          ]
+        },
+        "tool_call_count": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "usage": {
+          "$ref": "#/$defs/FactoryNormalizedUsage"
+        }
+      },
+      "required": [
+        "client",
+        "cost_microusd",
+        "event_stream_sha256",
+        "output_text",
+        "session_id",
+        "status",
+        "tool_call_count",
+        "usage"
+      ],
+      "type": "object"
+    },
+    "FactoryNormalizedUsage": {
+      "additionalProperties": false,
+      "properties": {
+        "cache_read_tokens": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "cache_write_tokens": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "input_tokens": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "output_tokens": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "cache_read_tokens",
+        "cache_write_tokens",
+        "input_tokens",
+        "output_tokens"
+      ],
+      "type": "object"
+    },
+    "FactoryOutputSchemaBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "repository_path": {
+          "$ref": "#/$defs/RelativePath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/Sha256"
+        }
+      },
+      "required": [
+        "repository_path",
+        "sha256"
+      ],
+      "type": "object"
+    },
+    "FactoryPlannedEffect": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "broker-transaction",
+            "check-stop-token",
+            "compile-context",
+            "delete-worktree",
+            "launch-role",
+            "preserve-state",
+            "render-report",
+            "run-verification"
+          ]
+        },
+        "live_side_effect": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind",
+        "live_side_effect"
+      ],
+      "type": "object"
+    },
+    "FactoryRepairOutcome": {
+      "additionalProperties": false,
+      "properties": {
+        "disposition": {
+          "enum": [
+            "quarantine",
+            "repair",
+            "verified"
+          ]
+        },
+        "next_attempt": {
+          "oneOf": [
+            {
+              "maximum": 3,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "non_progress_cycles": {
+          "maximum": 2,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "preserve_state": {
+          "const": true
+        },
+        "unresolved_findings": {
+          "items": {
+            "$ref": "#/$defs/FactoryFinding"
+          },
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "disposition",
+        "next_attempt",
+        "non_progress_cycles",
+        "preserve_state",
+        "unresolved_findings"
+      ],
+      "type": "object"
+    },
+    "FactoryRoleInvocation": {
+      "additionalProperties": false,
+      "properties": {
+        "context_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "invocation_id": {
+          "$ref": "#/$defs/StableId"
+        },
+        "mutation_mode": {
+          "$ref": "#/$defs/MutationMode"
+        },
+        "output_schema": {
+          "$ref": "#/$defs/FactoryOutputSchemaBinding"
+        },
+        "prompt_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "role": {
+          "$ref": "#/$defs/WorkflowRole"
+        },
+        "run_id": {
+          "$ref": "#/$defs/StableId"
+        },
+        "selected_skills": {
+          "items": {
+            "$ref": "#/$defs/SelectedSkillBinding"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "session_action": {
+          "enum": [
+            "fork",
+            "new",
+            "resume"
+          ]
+        },
+        "session_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/StableId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "timeout_seconds": {
+          "maximum": 7200,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "working_directory": {
+          "$ref": "#/$defs/RelativePath"
+        }
+      },
+      "required": [
+        "context_sha256",
+        "invocation_id",
+        "mutation_mode",
+        "output_schema",
+        "prompt_sha256",
+        "role",
+        "run_id",
+        "session_action",
+        "session_id",
+        "selected_skills",
+        "timeout_seconds",
+        "working_directory"
+      ],
+      "type": "object"
+    },
+    "GitSha": {
+      "pattern": "^[a-f0-9]{40,64}$",
+      "type": "string"
+    },
+    "MutationMode": {
+      "enum": [
+        "proposal-only",
+        "read-only",
+        "scratch-write",
+        "trusted-controller"
+      ]
+    },
+    "OperationId": {
+      "enum": [
+        "abort",
+        "bootstrap",
+        "context",
+        "deliver",
+        "design-ingest",
+        "design-inspect",
+        "design-translate",
+        "learn-harvest",
+        "learn-status",
+        "learn-triage",
+        "pause",
+        "product-ingest",
+        "product-triage",
+        "prompt",
+        "report",
+        "resume",
+        "route-explain",
+        "route-resolve",
+        "skill-audit",
+        "skill-gap",
+        "skill-inventory",
+        "skill-resolve",
+        "start",
+        "status",
+        "verify",
+        "work-claim",
+        "work-complete",
+        "work-fail",
+        "work-list",
+        "work-reconcile"
+      ]
+    },
+    "RelativePath": {
+      "maxLength": 1024,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*(?:^|/)\\.git(?:/|$)).+$",
+      "type": "string"
+    },
+    "SelectedSkillBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "skill_id": {
+          "$ref": "#/$defs/StableId"
+        },
+        "source_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "version": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "skill_id",
+        "source_sha256",
+        "version"
+      ],
+      "type": "object"
+    },
+    "Sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "StableId": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{0,127}$",
+      "type": "string"
+    },
+    "WorkflowRole": {
+      "enum": [
+        "acceptance-author",
+        "builder",
+        "code-auditor",
+        "contract-author",
+        "contract-skeptic",
+        "design-ingestor",
+        "design-translator",
+        "deterministic-verifier",
+        "high-risk-council",
+        "motion-witness",
+        "performance-auditor",
+        "privacy-auditor",
+        "product-witness",
+        "pr-shepherd",
+        "release-auditor",
+        "repairer"
+      ]
+    }
+  },
+  "$id": "https://swiftmac-base.invalid/schemas/execution.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Factory controller and client execution records"
+}

@@ -1,0 +1,261 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "local://desk-wellness/event-schema-v1",
+  "title": "Privacy-minimized desk wellness event",
+  "description": "Schema for local product events. It intentionally excludes work content, app names, Calendar content, biometrics, and medical diagnoses.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "event_id",
+    "event_type",
+    "recorded_at",
+    "source"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "enum": [
+        "active_use_aggregate",
+        "opportunity_scheduled",
+        "opportunity_presented",
+        "break_started",
+        "timer_finished",
+        "user_declared_completed",
+        "user_declared_already_moved",
+        "position_changed",
+        "snoozed",
+        "skipped",
+        "not_appropriate",
+        "likely_natural_interruption",
+        "suppression_started",
+        "suppression_ended",
+        "subjective_checkin",
+        "settings_changed"
+      ]
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Stored locally; analytics should coarsen or omit exact time."
+    },
+    "source": {
+      "enum": [
+        "local_timer",
+        "user",
+        "system_context",
+        "calendar_busy_free",
+        "focus_filter",
+        "companion_future"
+      ]
+    },
+    "opportunity_type": {
+      "enum": [
+        "visual",
+        "movement",
+        "position_change",
+        "recovery",
+        null
+      ]
+    },
+    "response": {
+      "enum": [
+        "start_5_min",
+        "start_2_min",
+        "done",
+        "already_moved",
+        "position_only",
+        "snooze_5",
+        "snooze_10",
+        "snooze_15",
+        "skip",
+        "not_appropriate",
+        null
+      ]
+    },
+    "duration_seconds": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 86400
+    },
+    "estimated_active_seconds": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "description": "Estimate only; not sitting or gaze."
+    },
+    "suppression_reason": {
+      "enum": [
+        "manual_pause",
+        "system_inactive",
+        "presentation_mode",
+        "focus_filter",
+        "calendar_busy",
+        "excluded_application",
+        "outside_working_hours",
+        "snooze",
+        "low_friction_wait",
+        null
+      ]
+    },
+    "content_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 80
+    },
+    "content_version": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 40
+    },
+    "profile": {
+      "enum": [
+        "gentle",
+        "balanced",
+        "frequent_movement",
+        "research_informed_high_frequency",
+        "custom",
+        null
+      ]
+    },
+    "subjective": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "eye_comfort": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 10
+        },
+        "neck_shoulder_comfort": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 10
+        },
+        "fatigue": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 10
+        },
+        "usefulness": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 10
+        }
+      },
+      "description": "Optional local self-report; not diagnosis."
+    },
+    "metadata": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "os_major": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "app_version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 30
+        },
+        "coarse_hour_bucket": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 23
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "subjective_checkin"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "subjective"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "opportunity_scheduled",
+              "opportunity_presented",
+              "break_started",
+              "timer_finished",
+              "user_declared_completed"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "opportunity_type"
+        ]
+      }
+    }
+  ],
+  "prohibited_fields": [
+    "keystroke_content",
+    "pointer_coordinates",
+    "window_title",
+    "url",
+    "file_name",
+    "calendar_title",
+    "calendar_attendees",
+    "calendar_notes",
+    "camera_frame",
+    "audio",
+    "raw_healthkit_payload",
+    "diagnosis",
+    "employer",
+    "precise_location"
+  ]
+}

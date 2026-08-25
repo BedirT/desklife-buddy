@@ -1,0 +1,40 @@
+{
+  "snapshot": "2026-08-24",
+  "levels": {
+    "A": {
+      "label": "strong direction",
+      "definition": "Multiple high-quality sources or authoritative guidance support the direction, though exact dose may remain uncertain."
+    },
+    "B": {
+      "label": "moderate direction",
+      "definition": "Consistent but heterogeneous, acute, short, or population-specific evidence."
+    },
+    "C": {
+      "label": "limited or emerging",
+      "definition": "Small, mixed, indirect, or insufficient evidence for a default."
+    },
+    "D": {
+      "label": "product heuristic",
+      "definition": "Implementation choice derived from evidence direction, usability, accessibility, and risk; requires product validation."
+    },
+    "E": {
+      "label": "unsupported or contradicted",
+      "definition": "Credible evidence is absent or argues against the claim."
+    },
+    "X": {
+      "label": "out of scope or medical",
+      "definition": "Requires a different intended purpose, clinical validation, regulated pathway, or professional supervision."
+    }
+  },
+  "translation_rules": [
+    "association_is_not_causation",
+    "acute_biomarker_is_not_long_term_outcome",
+    "tested_dose_is_not_universal_optimum",
+    "desktop_signals_are_proxies",
+    "match_claim_to_population",
+    "behavioural_burden_matters",
+    "autonomy_is_a_safety_feature",
+    "accessibility_changes_completion",
+    "claims_are_product_functionality"
+  ]
+}

@@ -1,0 +1,273 @@
+{
+  "roles": [
+    {
+      "context_budget_bytes": 262144,
+      "id": "acceptance-author",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "proposal-only",
+      "output_schema": ".factory/schemas/factory.schema.json#/$defs/Verdict",
+      "path": ".factory/prompts/acceptance-author.md",
+      "preferred_provider": "fresh-independent",
+      "sha256": "3b6e6596b8277fff569bbd43a8194a311c0a225974f550cd7bccdd7f2d6751f0",
+      "size_bytes": 459,
+      "tool_allowlist": []
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "adjudicator",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "read-only",
+      "output_schema": ".factory/schemas/factory.schema.json#/$defs/Verdict",
+      "path": ".factory/prompts/adjudicator.md",
+      "preferred_provider": "fresh-independent",
+      "sha256": "1ce0909c0996eeb00bf072a86eb8c7d8e0c5450f8c5dd3e056eece74b8c8b7fc",
+      "size_bytes": 431,
+      "tool_allowlist": []
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "builder",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "scratch-write",
+      "output_schema": ".factory/schemas/kernel.schema.json#/$defs/PatchEnvelope",
+      "path": ".factory/prompts/builder.md",
+      "preferred_provider": "codex",
+      "sha256": "dbd6bc7e3eb2b3ea2e2524ae836a4544359eca656718167f71efe3b7f83856b9",
+      "size_bytes": 537,
+      "tool_allowlist": [
+        "shell"
+      ]
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "code-auditor",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "read-only",
+      "output_schema": ".factory/schemas/factory.schema.json#/$defs/Verdict",
+      "path": ".factory/prompts/code-auditor.md",
+      "preferred_provider": "claude",
+      "sha256": "ed023691ba5897525ac52fc57efe88f0156786a37bea96a1314e0a6b2e29b749",
+      "size_bytes": 436,
+      "tool_allowlist": [
+        "shell"
+      ]
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "contract-author",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "proposal-only",
+      "output_schema": ".factory/schemas/factory.schema.json#/$defs/FactoryContract",
+      "path": ".factory/prompts/contract-author.md",
+      "preferred_provider": "codex",
+      "sha256": "39884a1de1907cf68b754cb9b9684aad2f2ccc6ca745f86fd2b6ca2671a5c78b",
+      "size_bytes": 451,
+      "tool_allowlist": []
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "contract-skeptic",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "read-only",
+      "output_schema": ".factory/schemas/factory.schema.json#/$defs/Verdict",
+      "path": ".factory/prompts/contract-skeptic.md",
+      "preferred_provider": "claude",
+      "sha256": "6b6b80f0a8d4e99842954931e43752999ba7a6ab600b2a81cf74ad31ae6e828b",
+      "size_bytes": 480,
+      "tool_allowlist": []
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "design-ingestor",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "read-only",
+      "output_schema": ".factory/schemas/design.schema.json#/$defs/DesignSourceManifest",
+      "path": ".factory/prompts/design-ingestor.md",
+      "preferred_provider": "claude",
+      "sha256": "02a9b988007c3485fe2c13b1d137260c3c4fe710a31d0ff0e85fcadd13c6c704",
+      "size_bytes": 1021,
+      "tool_allowlist": [
+        "design-read"
+      ]
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "design-translator",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "proposal-only",
+      "output_schema": ".factory/schemas/design.schema.json#/$defs/DesignTranslationContract",
+      "path": ".factory/prompts/design-translator.md",
+      "preferred_provider": "claude",
+      "sha256": "e53566af68c89e5fd11f9b6f09bcb3c44ca1bba3047e5cfeaa46abbb6bf0afbd",
+      "size_bytes": 477,
+      "tool_allowlist": []
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "harness-curator",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "tool-less",
+      "output_schema": ".factory/schemas/learning.schema.json#/$defs/CandidateSpec",
+      "path": ".factory/prompts/harness-curator.md",
+      "preferred_provider": "claude",
+      "sha256": "981f32fb34642d525f805b148a1a3f2b4bb85665f880fcbe6190b1207d019104",
+      "size_bytes": 467,
+      "tool_allowlist": []
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "high-risk-council",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "read-only",
+      "output_schema": ".factory/schemas/factory.schema.json#/$defs/Verdict",
+      "path": ".factory/prompts/high-risk-council.md",
+      "preferred_provider": "pi-different-provider",
+      "sha256": "1da8198160b75102559e18e5eb1c1d8529dc06e6869f691c214d0b4386df1620",
+      "size_bytes": 464,
+      "tool_allowlist": [
+        "shell"
+      ]
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "motion-witness",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "read-only",
+      "output_schema": ".factory/schemas/factory.schema.json#/$defs/Verdict",
+      "path": ".factory/prompts/motion-witness.md",
+      "preferred_provider": "claude",
+      "sha256": "9d20dd429e2e25323c19a5f82fa18cac7008fddd840ab65bdb5be483cdd1f438",
+      "size_bytes": 451,
+      "tool_allowlist": [
+        "visual-inspection"
+      ]
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "performance-auditor",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "read-only",
+      "output_schema": ".factory/schemas/factory.schema.json#/$defs/Verdict",
+      "path": ".factory/prompts/performance-auditor.md",
+      "preferred_provider": "fresh-independent",
+      "sha256": "1cc0264a94f3b424846127d1cf37dbbce13f8216eafc1dc38d2c35b9efee0cb4",
+      "size_bytes": 426,
+      "tool_allowlist": [
+        "shell"
+      ]
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "privacy-auditor",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "read-only",
+      "output_schema": ".factory/schemas/factory.schema.json#/$defs/Verdict",
+      "path": ".factory/prompts/privacy-auditor.md",
+      "preferred_provider": "fresh-independent",
+      "sha256": "4dbb6dada7a998e23a7d85ca1c24184ec27d3e66760bbf06d7bb18b5ffc5002e",
+      "size_bytes": 454,
+      "tool_allowlist": [
+        "shell"
+      ]
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "product-director",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "proposal-only",
+      "output_schema": ".factory/schemas/kernel.schema.json#/$defs/PatchEnvelope",
+      "path": ".factory/prompts/product-director.md",
+      "preferred_provider": "claude",
+      "sha256": "13aa0c66d50e70becbb0dd19dfe992bf19c9f6f4eb129078d8ff0ba79fee3c13",
+      "size_bytes": 497,
+      "tool_allowlist": []
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "product-signal-analyst",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "read-only",
+      "output_schema": ".factory/schemas/product.schema.json#/$defs/ExpertDisposition",
+      "path": ".factory/prompts/product-signal-analyst.md",
+      "preferred_provider": "claude",
+      "sha256": "57eb5a67d4d37ac55cdb93163ce4596b209640323ab918d7edbcb37dc7622426",
+      "size_bytes": 492,
+      "tool_allowlist": []
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "product-witness",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "read-only",
+      "output_schema": ".factory/schemas/factory.schema.json#/$defs/Verdict",
+      "path": ".factory/prompts/product-witness.md",
+      "preferred_provider": "claude",
+      "sha256": "d107138b242e2fedda1bbebc1bf2ef719e4130bb43e24f99c1d65bdd05eb391a",
+      "size_bytes": 476,
+      "tool_allowlist": [
+        "accessibility",
+        "visual-inspection"
+      ]
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "release-auditor",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "read-only",
+      "output_schema": ".factory/schemas/factory.schema.json#/$defs/Verdict",
+      "path": ".factory/prompts/release-auditor.md",
+      "preferred_provider": "fresh-independent",
+      "sha256": "32c13ed1c4be5d161068f37fa67033dad0d0373692939dd709d9bfc5545a2485",
+      "size_bytes": 439,
+      "tool_allowlist": [
+        "shell"
+      ]
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "repairer",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "scratch-write",
+      "output_schema": ".factory/schemas/kernel.schema.json#/$defs/PatchEnvelope",
+      "path": ".factory/prompts/repairer.md",
+      "preferred_provider": "codex",
+      "sha256": "bae7c8a3ec240dbd960a2c32b13e04a04cd8a7b0833ea13c2cf86495300d56e1",
+      "size_bytes": 422,
+      "tool_allowlist": [
+        "shell"
+      ]
+    },
+    {
+      "context_budget_bytes": 262144,
+      "id": "skill-curator",
+      "invalid_output_retry": "one-structure-correction",
+      "max_prompt_bytes": 1024,
+      "mutation_mode": "tool-less",
+      "output_schema": ".factory/schemas/learning.schema.json#/$defs/CandidateSpec",
+      "path": ".factory/prompts/skill-curator.md",
+      "preferred_provider": "claude",
+      "sha256": "d4c63d0f308edf3206b12c1acd2f53df341a567cc6ec0b48da63395141ddf7ea",
+      "size_bytes": 493,
+      "tool_allowlist": []
+    }
+  ],
+  "schema_version": 1
+}

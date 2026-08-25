@@ -1,0 +1,47 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html",     "title": "Three directions",              "x": 0,    "y": -1040, "w": 1000, "h": 900 },
+
+    { "file": "A-Menu.dc.html",     "title": "A · Status menu",             "x": 0,    "y": 0,    "w": 720,  "h": 560 },
+    { "file": "A-HeadsUp.dc.html",  "title": "A · Heads-up",                "x": 800,  "y": 0,    "w": 720,  "h": 560 },
+    { "file": "A-Visual.dc.html",   "title": "A · Visual reset",            "x": 1600, "y": 0,    "w": 1440, "h": 900 },
+    { "file": "A-Movement.dc.html", "title": "A · Movement opportunity",    "x": 3120, "y": 0,    "w": 1440, "h": 900 },
+    { "file": "A-Settings.dc.html", "title": "A · Settings — Schedule",     "x": 4640, "y": 0,    "w": 1000, "h": 700 },
+
+    { "file": "B-Menu.dc.html",     "title": "B · Status menu",             "x": 0,    "y": 1040, "w": 720,  "h": 560 },
+    { "file": "B-HeadsUp.dc.html",  "title": "B · Heads-up",                "x": 800,  "y": 1040, "w": 720,  "h": 560 },
+    { "file": "B-Visual.dc.html",   "title": "B · Visual reset",            "x": 1600, "y": 1040, "w": 1440, "h": 900 },
+    { "file": "B-Movement.dc.html", "title": "B · Movement opportunity",    "x": 3120, "y": 1040, "w": 1440, "h": 900 },
+    { "file": "B-Settings.dc.html", "title": "B · Settings — Schedule",     "x": 4640, "y": 1040, "w": 1000, "h": 700 },
+
+    { "file": "C-Menu.dc.html",     "title": "C · Status menu",             "x": 0,    "y": 2080, "w": 720,  "h": 560 },
+    { "file": "C-HeadsUp.dc.html",  "title": "C · Heads-up",                "x": 800,  "y": 2080, "w": 720,  "h": 560 },
+    { "file": "C-Visual.dc.html",   "title": "C · Visual reset",            "x": 1600, "y": 2080, "w": 1440, "h": 900 },
+    { "file": "C-Movement.dc.html", "title": "C · Movement opportunity",    "x": 3120, "y": 2080, "w": 1440, "h": 900 },
+    { "file": "C-Settings.dc.html", "title": "C · Settings — Schedule",     "x": 4640, "y": 2080, "w": 1000, "h": 700 },
+
+    { "file": "DarkCheck.dc.html",  "title": "Dark appearance check",       "x": 1600, "y": 3120, "w": 1560, "h": 660 }
+  ],
+  "annotations": [
+    {
+      "id": "note-a",
+      "x": -520, "y": 0, "w": 440,
+      "text": "A · MARGIN\n\nThe bet: give the break no container at all. The desktop recedes, one line of type sits in the space, and there is nothing to get tired of on the 500th viewing.\n\nThe cost: structure has to be earned back later. Three equal movement options, a duration choice, a position-change line and a mandated safety footer are a lot to hold up with spacing alone — look at A · Movement and judge whether it holds.\n\nWatch for: A's overlay is light type on a dim field in BOTH appearances. It barely changes between light and dark. See the dark check."
+    },
+    {
+      "id": "note-b",
+      "x": -520, "y": 1040, "w": 440,
+      "text": "B · FIELD\n\nThe bet: half-second recognition without reading. A band crosses the whole screen, and its HEIGHT tells you which break it is — 176 pt for a visual reset, 432 pt for a movement opportunity — before any word is read.\n\nThe cost: this is the heaviest treatment and the closest to what the category already does. It is also the only direction that introduces app-drawn chrome for the heads-up rather than a system notification (see B · Heads-up) — which avoids the notification permission but spends screen to do it.\n\nWatch for: the band is a large material surface. Reduce Transparency has to be answered, not assumed."
+    },
+    {
+      "id": "note-c",
+      "x": -520, "y": 2080, "w": 440,
+      "text": "C · INSTRUMENT\n\nThe bet: the most obviously native and the least intrusive. A compact panel in the corner, the desktop dimmed only ~20%, hairline rules, small-caps labels, tabular figures, and the real numbers exposed rather than rounded away (see C · Settings).\n\nThe cost: it is the easiest of the three to look straight past. Density under interruption is also the wrong direction for cognitive load.\n\nWatch for: C is the only direction that shows a per-second countdown. On a break whose entire instruction is to look away from the screen, a number that changes every second is arguing with the copy. This is the finding this round exists to produce."
+    },
+    {
+      "id": "note-fixed",
+      "x": -520, "y": 3120, "w": 440,
+      "text": "FIXED IN ALL THREE\n\nEscape is present and visible on every break surface. The menu bar stays lit and usable behind the overlay — none of these is a lockout.\n\nNo numeric grading, no streak, no score, no red for a skipped break. Movement options carry equal weight, equal type size and equal position; none is framed as a fallback. Position change is offered and kept honestly separate from the movement clock.\n\nThe safety footer is verbatim from the content library in every direction. Progress is coarse and static everywhere except C, deliberately.\n\nAll numbers come from the balanced profile: visual ~25 min / 20 s, movement ~60 min / 5 min with a 2-minute quick option."
+    }
+  ]
+}

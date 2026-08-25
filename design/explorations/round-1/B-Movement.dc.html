@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; }
+    .win { position: absolute; border-radius: 10px; background: #fbfbfc; box-shadow: 0 26px 60px rgba(28,25,36,0.34); overflow: hidden; }
+    .wbar { height: 32px; background: #f0eff3; border-bottom: 1px solid #e0dee5; display: flex; align-items: center; padding: 0 12px; gap: 7px; }
+    .dot { width: 11px; height: 11px; border-radius: 50%; background: #d5d3dc; }
+    .ln { height: 8px; border-radius: 2px; background: #e8e6ee; }
+    .kc { display: inline-flex; align-items: center; justify-content: center; height: 18px; min-width: 30px; padding: 0 6px; border-radius: 4px; border: 1px solid rgba(60,54,78,0.24); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #6f6b79; }
+    .eyebrow { font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: #8d6b96; font-weight: 600; }
+    .btn { height: 36px; padding: 0 20px; border-radius: 9px; display: inline-flex; align-items: center; font-size: 14px; }
+    .opt { width: 268px; }
+    .opt .t { font-size: 18px; font-weight: 500; letter-spacing: -0.012em; color: #201f24; }
+    .opt .d { margin-top: 7px; font-size: 13px; line-height: 1.5; color: #6f6b79; }
+    .opt .m { margin-bottom: 14px; width: 26px; height: 26px; border-radius: 7px; background: rgba(141,107,150,0.14); display: flex; align-items: center; justify-content: center; }
+  </style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; -webkit-font-smoothing: antialiased;">
+
+  <div style="position: absolute; inset: 0; background: linear-gradient(163deg, #9d9ab0 0%, #7d7b91 46%, #5d5c6e 100%);"></div>
+
+  <div class="win" style="left: 96px; top: 108px; width: 720px; height: 560px;">
+    <div class="wbar"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div style="padding: 22px 26px; display: flex; flex-direction: column; gap: 10px;">
+      <div class="ln" style="width: 58%;"></div><div class="ln" style="width: 81%;"></div>
+      <div class="ln" style="width: 44%;"></div><div class="ln" style="width: 73%;"></div>
+      <div class="ln" style="width: 66%;"></div><div class="ln" style="width: 30%;"></div>
+    </div>
+  </div>
+  <div class="win" style="left: 640px; top: 250px; width: 660px; height: 520px;">
+    <div class="wbar"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div style="padding: 22px 26px; display: flex; flex-direction: column; gap: 10px;">
+      <div class="ln" style="width: 40%; height: 12px;"></div>
+      <div class="ln" style="width: 88%;"></div><div class="ln" style="width: 70%;"></div>
+      <div class="ln" style="width: 83%;"></div><div class="ln" style="width: 47%;"></div>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 0; top: 24px; right: 0; bottom: 0; background: rgba(24,21,32,0.46);"></div>
+
+  <div style="position: absolute; left: 0; top: 0; right: 0; height: 24px; background: rgba(248,247,250,0.72); backdrop-filter: blur(28px); display: flex; align-items: center; padding: 0 12px 0 14px; z-index: 5;">
+    <div style="display: flex; align-items: center; gap: 17px;">
+      <span style="font-size: 13px; font-weight: 700; color: #201f24; letter-spacing: -0.01em;">Finder</span>
+      <span style="font-size: 13px; color: #201f24;">File</span>
+      <span style="font-size: 13px; color: #201f24;">Edit</span>
+      <span style="font-size: 13px; color: #201f24;">View</span>
+    </div>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 13px;">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+        <rect x="5" y="5" width="6" height="1.6" rx="0.8" fill="#201f24"></rect>
+        <rect x="1.5" y="9.4" width="13" height="1.6" rx="0.8" fill="#201f24"></rect>
+      </svg>
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6.2a8.6 8.6 0 0 1 12 0M4.4 8.9a5.2 5.2 0 0 1 7.2 0M8 12.2h.01" stroke="#201f24" stroke-width="1.4" fill="none" stroke-linecap="round"></path></svg>
+      <svg width="24" height="16" viewBox="0 0 24 16" aria-hidden="true"><rect x="1.4" y="4.4" width="18" height="8.2" rx="2.6" stroke="#201f24" stroke-width="1.2" fill="none"></rect><rect x="3.2" y="6.2" width="12" height="4.6" rx="1.2" fill="#201f24"></rect><path d="M21.2 7.2v2.4" stroke="#201f24" stroke-width="1.6" stroke-linecap="round"></path></svg>
+      <span style="font-size: 13px; color: #201f24; font-variant-numeric: tabular-nums;">Tue 3:38 PM</span>
+    </div>
+  </div>
+
+  <!-- the same band, taller. the height is the recognition cue. -->
+  <div style="position: absolute; left: 0; top: 234px; width: 1440px; height: 432px; background: rgba(250,249,252,0.93); backdrop-filter: blur(60px); border-top: 0.5px solid rgba(255,255,255,0.5); border-bottom: 0.5px solid rgba(60,54,78,0.12); box-shadow: 0 30px 80px rgba(20,17,28,0.34); display: flex; padding: 44px 72px 0;">
+
+    <div style="flex: none; width: 210px;">
+      <div class="eyebrow">Movement</div>
+      <div style="margin-top: 6px; font-size: 12.5px; color: #8b8794;">About 5 minutes</div>
+    </div>
+
+    <div style="flex: 1; padding: 0 32px;">
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif; font-size: 30px; font-weight: 400; letter-spacing: -0.021em; color: #1c1b20;">
+        Move in a way that works for you.
+      </div>
+
+      <div style="margin-top: 30px; display: flex; gap: 36px;">
+        <div class="opt">
+          <div class="m"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M6.2 2.8a1.1 1.1 0 1 0 0-.02M6.6 5.2l-2 2.6.9 1.8-1.4 3.4M6.6 5.2l2.6 1 .8 2.6 1.9.6M6.6 5.2L4.4 6" stroke="#8d6b96" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="t">Walk or wheel</div>
+          <div class="d">Move away from the desk at an easy, comfortable pace.</div>
+        </div>
+        <div class="opt">
+          <div class="m"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M8 2.4v3.4M4.6 4.4l2 2.6M11.4 4.4l-2 2.6M3.2 8.6h9.6M5 11.4l1.4-2.4M11 11.4L9.6 9" stroke="#8d6b96" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg></div>
+          <div class="t">Small-space movement</div>
+          <div class="d">March or step gently in place, or use a seated equivalent.</div>
+        </div>
+        <div class="opt">
+          <div class="m"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M4.4 3.2v4.4h4.2M8.6 7.6l2.8 3M4.4 12.8h7.6M3 12.8v-1.4" stroke="#8d6b96" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="t">Seated movement</div>
+          <div class="d">Alternate lifting each foot, move the ankles, reach the arms easily.</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 34px; display: flex; align-items: center; gap: 12px;">
+        <span class="btn" style="background: #8d6b96; color: #fff; font-weight: 500;">Start 5 minutes</span>
+        <span class="btn" style="border: 1px solid rgba(60,54,78,0.22); color: #201f24;">2 minutes</span>
+        <span style="margin-left: 4px; font-size: 13px; color: #8b8794;">Two minutes is a useful quick option.</span>
+        <span style="margin-left: auto; font-size: 13.5px; color: #4a4655;">I already moved</span>
+      </div>
+
+      <div style="margin-top: 26px; padding-top: 16px; border-top: 1px solid rgba(60,54,78,0.10); display: flex; align-items: baseline; gap: 12px;">
+        <span style="font-size: 13.5px; color: #4a4655;">Change position instead</span>
+        <span style="font-size: 12.5px; color: #8b8794;">Logged on its own — it doesn’t complete this movement opportunity.</span>
+      </div>
+
+      <div style="margin-top: 16px; font-size: 11.5px; line-height: 1.55; color: #97929f; max-width: 760px;">
+        Move comfortably and use support if needed. Stop or choose another option if you feel pain, dizziness, unusual shortness of breath, weakness, or instability.
+      </div>
+    </div>
+
+    <div style="flex: none; width: 210px; display: flex; align-items: flex-start; justify-content: flex-end; gap: 10px;">
+      <span style="font-size: 14px; color: #4a4655;">Not now</span>
+      <span class="kc">esc</span>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

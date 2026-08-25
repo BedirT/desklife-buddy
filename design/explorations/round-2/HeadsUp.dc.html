@@ -1,0 +1,162 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  body { margin: 0; }
+  .rt { position: relative; width: 1200px; height: 880px; overflow: hidden; box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased; color: #f4eee8; padding: 44px 54px;
+        background:
+          radial-gradient(80% 60% at 22% 112%, rgba(255,168,110,0.20) 0%, rgba(14,12,26,0) 68%),
+          linear-gradient(170deg, #0e0c1e 0%, #191530 60%, #241a30 100%); }
+  .eb { font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,196,150,0.70); }
+  h1 { margin: 10px 0 0; font-size: 34px; font-weight: 600; letter-spacing: -0.022em; }
+  h1 em { font-family: ui-serif,'New York',Georgia,serif; font-style: italic; font-weight: 500; }
+  .p { margin-top: 12px; width: 780px; font-size: 15px; line-height: 1.52; color: rgba(244,238,232,0.66); }
+  .p b { color: rgba(244,238,232,0.92); font-weight: 590; }
+
+  .lab { font-size: 10.5px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
+         color: rgba(255,255,255,0.36); }
+  .cap { font-size: 12.5px; color: rgba(244,238,232,0.55); line-height: 1.5; }
+  .cap b { color: rgba(244,238,232,0.85); font-weight: 590; }
+
+  /* ---- notch + capsule mocks ---- */
+  .mrow { display: flex; gap: 26px; margin-top: 20px; align-items: center; }
+  .mock { position: relative; width: 560px; height: 88px; border-radius: 12px; overflow: hidden; flex: none;
+          background: linear-gradient(174deg, #171331 0%, #251a38 70%, #322040 100%);
+          box-shadow: inset 0 0 0 0.5px rgba(255,255,255,0.09); }
+  .mbar { position: absolute; top: 0; left: 0; right: 0; height: 24px;
+          background: rgba(14,12,26,0.62); backdrop-filter: blur(20px);
+          display: flex; align-items: center; padding: 0 12px; gap: 12px;
+          font-size: 11px; color: rgba(255,255,255,0.82); }
+  .mbar .rr { margin-left: auto; font-variant-numeric: tabular-nums; }
+  .notch { position: absolute; top: 0; left: 50%; width: 148px; height: 27px; margin-left: -74px;
+           background: #06060c; border-radius: 0 0 10px 10px; }
+  .capsule { position: absolute; top: 33px; left: 50%; transform: translateX(-50%);
+             height: 34px; display: flex; align-items: center; gap: 9px; padding: 0 13px 0 6px;
+             border-radius: 999px; background: rgba(18,14,30,0.88);
+             border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(24px) saturate(1.5);
+             box-shadow: inset 0 1px 0 rgba(255,255,255,0.09), 0 10px 28px rgba(0,0,0,0.5); }
+  .csky { position: relative; width: 24px; height: 24px; border-radius: 50%; overflow: hidden; flex: none;
+          background: linear-gradient(178deg, #0b0c20 0%, #241a38 55%, #4c2c40 100%); }
+  .csky .ch { position: absolute; left: 0; right: 0; bottom: 5px; height: 1px; background: rgba(255,214,178,0.55); }
+  .csun { position: absolute; left: 50%; width: 11px; height: 11px; margin-left: -5.5px; border-radius: 50%;
+          background: radial-gradient(circle at 38% 34%, #fff6e0 0%, #ffd9a0 46%, #ff9e62 100%);
+          box-shadow: 0 0 8px 1.5px rgba(255,190,130,0.6); }
+  .ctxt { font-size: 12.5px; font-weight: 500; color: rgba(253,246,239,0.92); white-space: nowrap; }
+  .ctxt span { color: rgba(253,246,239,0.55); font-variant-numeric: tabular-nums; }
+  .cbtn { height: 24px; display: inline-flex; align-items: center; padding: 0 10px; border-radius: 999px;
+          font-size: 11.5px; font-weight: 500; white-space: nowrap; color: rgba(255,224,198,0.95);
+          background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.10); }
+  .cbtn.q { color: rgba(255,255,255,0.55); background: transparent; border-color: transparent; }
+  .hold { width: 12px; height: 12px; border-radius: 50%; flex: none; margin-left: 6px;
+          border: 1.5px dashed rgba(255,214,178,0.6); }
+
+  /* ---- the character spec ---- */
+  .spec { display: flex; gap: 36px; margin-top: 30px; align-items: flex-start; }
+  .orbwrap { position: relative; width: 200px; height: 182px; flex: none; border-radius: 16px;
+             background: linear-gradient(178deg, #0b0c20 0%, #201a38 52%, #46283e 100%);
+             box-shadow: inset 0 0 0 0.5px rgba(255,255,255,0.10); overflow: hidden; }
+  .orbwrap .mh { position: absolute; left: 0; right: 0; bottom: 42px; height: 1px; background: rgba(255,214,178,0.5);
+                 box-shadow: 0 0 8px 1px rgba(255,178,120,0.45); }
+  .orbwrap .mg { position: absolute; left: 0; right: 0; bottom: 0; height: 42px; background: #171126; }
+  .orbimg { position: absolute; left: 2px; top: -18px; width: 196px; mix-blend-mode: screen; }
+  .glint { position: absolute; left: 112px; top: 62px; width: 13px; height: 13px; border-radius: 50%;
+           background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 72%); }
+  .cursor { position: absolute; left: 150px; top: 48px; }
+  .rules { flex: 1; }
+  .rule { display: flex; gap: 10px; margin-top: 8px; font-size: 13px; line-height: 1.48; color: rgba(244,238,232,0.66); }
+  .rule .no { flex: none; color: rgba(255,150,140,0.85); font-weight: 600; width: 34px; }
+  .rule .yes { flex: none; color: rgba(255,199,154,0.95); font-weight: 600; width: 34px; }
+  .rule b { color: rgba(244,238,232,0.92); font-weight: 590; }
+</style>
+</helmet>
+
+<div class="rt">
+  <div class="eb">Level 1 · The approach</div>
+  <h1>A sunset in the <em>notch</em>.</h1>
+  <div class="p">
+    Forty-five seconds before a break is due, a small capsule slides out from under the notch —
+    always the same place, top-center. Inside it is a tiny sky, and the sun in it carries two
+    things at once. <b>Its height is the time</b>: it starts high and sinks for the whole 45
+    seconds. <b>Its place is you</b>: it drifts along the tiny sky to keep station above wherever
+    your pointer is on the screen — it doesn't chase you, it accompanies you, and it moves only
+    when you move. When it touches its little horizon, the break opens, and the full-screen sky
+    continues the same sunset at full size.
+  </div>
+
+  <div class="mrow">
+    <div class="mock">
+      <div class="mbar"><span>&#63743;</span><b style="font-weight:600">Keynote</b><span>File</span><span>Edit</span><span class="rr">Tue 2:41 PM</span></div>
+      <div class="notch"></div>
+      <div class="capsule">
+        <div class="csky"><div class="csun" style="top:2px; margin-left:-9px"></div><div class="ch"></div></div>
+        <div class="ctxt">Visual reset <span>· in 45 s</span></div>
+      </div>
+    </div>
+    <div class="cap"><span class="lab">45 s out</span><br>The capsule slides out once, softly. The sun rests high — and a little
+      left of center, because your pointer is on the left of the screen right now. Nothing ticks,
+      nothing pulses: <b>height is the time, place is you</b>.</div>
+  </div>
+
+  <div class="mrow">
+    <div class="mock">
+      <div class="mbar"><span>&#63743;</span><b style="font-weight:600">Keynote</b><span>File</span><span>Edit</span><span class="rr">Tue 2:41 PM</span></div>
+      <div class="notch"></div>
+      <div class="capsule" style="border-color: rgba(255,206,164,0.28)">
+        <div class="csky"><div class="csun" style="top:11px; margin-left:-2px"></div><div class="ch"></div></div>
+        <div class="ctxt">Visual reset <span>· in 15 s</span></div>
+        <span class="cbtn">Now</span><span class="cbtn q">Later &#9662;</span>
+      </div>
+    </div>
+    <div class="cap"><span class="lab">Pointer over — the exits appear</span><br><b>Now</b> starts the break; <b>Later</b> opens
+      5 · 10 · 15 min, <b>After this meeting</b> (only if Calendar is on), and <b>Presenting for
+      1 hour</b>. Esc waves the capsule off for this cycle. One click, zero hunting.</div>
+  </div>
+
+  <div class="mrow">
+    <div class="mock">
+      <div class="mbar"><span>&#63743;</span><b style="font-weight:600">Zoom</b><span>Meeting</span><span>Edit</span><span class="rr">Tue 2:41 PM</span></div>
+      <div class="notch"></div>
+      <div class="capsule">
+        <div class="hold"></div>
+        <div class="ctxt">On hold <span>· busy until 3:00</span></div>
+      </div>
+    </div>
+    <div class="cap"><span class="lab">Held — nothing will interrupt</span><br>Holds come only from things the app can honestly
+      know: your manual hold, working hours, optional Calendar busy time, a Focus filter, or apps
+      you named yourself. It never watches other apps to guess. On displays without a notch the
+      capsule docks under the menu-bar clock; if you prefer notifications, that stays first-class.</div>
+  </div>
+
+  <div class="spec">
+    <div class="orbwrap">
+      <img class="orbimg" src="sun-closed-eyes.jpg">
+      <div class="glint"></div>
+      <svg class="cursor" width="17" height="24" viewBox="0 0 17 24"><path d="M1 1 L1 19 L5.6 14.9 L8.6 21.8 L11.8 20.4 L8.8 13.6 L15 13.4 Z" fill="#fff" stroke="rgba(0,0,0,0.4)" stroke-width="1"/></svg>
+      <div class="mh"></div><div class="mg"></div>
+    </div>
+    <div class="rules">
+      <div class="lab">The character, in five rules</div>
+      <div class="rule"><span class="yes">Does</span><span>Sink once, slowly, for the whole heads-up — a single eased motion that carries the time. And <b>keep station over you</b>: its place along the tiny sky mirrors your pointer's place on the screen, so a glance up always finds it right above where you're working. It moves only when you move — never on its own.</span></div>
+      <div class="rule"><span class="yes">Does</span><span>Keep its <b>two closed eyes</b> — resting is the whole character. The app's own posture is calm company, someone dozing in the corner of the room while you work, and that reads as care.</span></div>
+      <div class="rule"><span class="yes">Does</span><span>Have small one-shot moments: a soft settle when it lands on the horizon, a slow, contented eye-crinkle when a break runs its course — the capsule returns for about two seconds at the end to play it, then leaves. Each plays once, eased, with a static Reduce Motion equivalent. <b>Premium is precise, not busy.</b></span></div>
+      <div class="rule"><span class="no">Never</span><span>Wears the face on the break surfaces — there the instruction is to look <b>away</b>, and a face invites eye contact. On the break horizon the sun is the plain render.</span></div>
+      <div class="rule"><span class="no">Never</span><span>Loops, pulses, or gets louder as time runs out. And a plain text-only heads-up remains a first-class setting, not a fallback.</span></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

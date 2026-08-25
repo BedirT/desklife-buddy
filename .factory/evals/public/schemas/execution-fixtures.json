@@ -1,0 +1,336 @@
+{
+  "fixtures": [
+    {
+      "expected_invalid_reason": "client profiles bind all required compatibility capabilities",
+      "invalid": {
+        "base_arguments": [
+          "--print"
+        ],
+        "client": "claude",
+        "event_format": "stream-json",
+        "executable": "claude",
+        "minimum_version": "2.1.197",
+        "profile_id": "claude-code-v1",
+        "read_only_tools": [
+          "Glob",
+          "Grep",
+          "Read"
+        ],
+        "schema_delivery": "inline-json",
+        "supports_cancellation": true,
+        "supports_fork": true,
+        "supports_resume": false,
+        "system_prompt_mode": "replace-visible-prompt",
+        "writer_tools": [
+          "Bash",
+          "Edit",
+          "Glob",
+          "Grep",
+          "Read",
+          "Write"
+        ]
+      },
+      "record_name": "FactoryClientProfile",
+      "schema_path": ".factory/schemas/execution.schema.json",
+      "schema_pointer": "#/$defs/FactoryClientProfile",
+      "valid": {
+        "base_arguments": [
+          "--print",
+          "--output-format",
+          "stream-json",
+          "--permission-mode",
+          "dontAsk",
+          "--safe-mode"
+        ],
+        "client": "claude",
+        "event_format": "stream-json",
+        "executable": "claude",
+        "minimum_version": "2.1.197",
+        "profile_id": "claude-code-v1",
+        "read_only_tools": [
+          "Glob",
+          "Grep",
+          "Read"
+        ],
+        "schema_delivery": "inline-json",
+        "supports_cancellation": true,
+        "supports_fork": true,
+        "supports_resume": true,
+        "system_prompt_mode": "replace-visible-prompt",
+        "writer_tools": [
+          "Bash",
+          "Edit",
+          "Glob",
+          "Grep",
+          "Read",
+          "Write"
+        ]
+      }
+    },
+    {
+      "expected_invalid_reason": "launch plans never inherit ambient environment keys",
+      "invalid": {
+        "arguments": [
+          "exec",
+          "--json"
+        ],
+        "client": "codex",
+        "context_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "environment_keys": [
+          "OPENAI_API_KEY"
+        ],
+        "executable": "codex",
+        "invocation_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "mutation_mode": "scratch-write",
+        "output_schema": {
+          "repository_path": ".factory/schemas/kernel.schema.json",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "profile_id": "codex-cli-v1",
+        "prompt_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "schema_delivery": "file-path",
+        "selected_skills": [],
+        "timeout_seconds": 900,
+        "tool_allowlist": [
+          "read"
+        ]
+      },
+      "record_name": "FactoryClientLaunchPlan",
+      "schema_path": ".factory/schemas/execution.schema.json",
+      "schema_pointer": "#/$defs/FactoryClientLaunchPlan",
+      "valid": {
+        "arguments": [
+          "exec",
+          "--json",
+          "--output-schema",
+          ".factory/schemas/kernel.schema.json",
+          "--sandbox",
+          "workspace-write",
+          "--cd",
+          "scratch/run-42"
+        ],
+        "client": "codex",
+        "context_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "environment_keys": [],
+        "executable": "codex",
+        "invocation_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "mutation_mode": "scratch-write",
+        "output_schema": {
+          "repository_path": ".factory/schemas/kernel.schema.json",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "profile_id": "codex-cli-v1",
+        "prompt_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "schema_delivery": "file-path",
+        "selected_skills": [],
+        "timeout_seconds": 900,
+        "tool_allowlist": [
+          "edit",
+          "read",
+          "search",
+          "shell"
+        ]
+      }
+    },
+    {
+      "expected_invalid_reason": "controller plans always contain at least one effect",
+      "invalid": {
+        "contract_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "effects": [],
+        "generation": 3,
+        "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "operation": "start",
+        "qualification": "nonqualifying-bootstrap",
+        "route_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "run_id": "run-42"
+      },
+      "record_name": "FactoryControllerPlan",
+      "schema_path": ".factory/schemas/execution.schema.json",
+      "schema_pointer": "#/$defs/FactoryControllerPlan",
+      "valid": {
+        "contract_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "effects": [
+          {
+            "kind": "check-stop-token",
+            "live_side_effect": false
+          },
+          {
+            "kind": "compile-context",
+            "live_side_effect": false
+          },
+          {
+            "kind": "launch-role",
+            "live_side_effect": false
+          },
+          {
+            "kind": "run-verification",
+            "live_side_effect": false
+          },
+          {
+            "kind": "render-report",
+            "live_side_effect": false
+          }
+        ],
+        "generation": 3,
+        "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "operation": "start",
+        "qualification": "nonqualifying-bootstrap",
+        "route_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "run_id": "run-42"
+      }
+    },
+    {
+      "expected_invalid_reason": "controller planning requires a positive issue number",
+      "invalid": {
+        "authority": "build-candidate",
+        "contract_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "generation": 3,
+        "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "issue_number": 0,
+        "mode": "bootstrap-fixture",
+        "route_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "run_id": "run-42",
+        "stop_requested": false
+      },
+      "record_name": "FactoryControllerPlanningInput",
+      "schema_path": ".factory/schemas/execution.schema.json",
+      "schema_pointer": "#/$defs/FactoryControllerPlanningInput",
+      "valid": {
+        "authority": "build-candidate",
+        "contract_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "generation": 3,
+        "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "issue_number": 42,
+        "mode": "bootstrap-fixture",
+        "route_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "run_id": "run-42",
+        "stop_requested": false
+      }
+    },
+    {
+      "expected_invalid_reason": "role invocations require a positive timeout",
+      "invalid": {
+        "context_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_id": "invoke-builder-1",
+        "mutation_mode": "scratch-write",
+        "output_schema": {
+          "repository_path": ".factory/schemas/kernel.schema.json",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "prompt_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "role": "builder",
+        "run_id": "run-42",
+        "selected_skills": [],
+        "session_action": "new",
+        "session_id": null,
+        "timeout_seconds": 0,
+        "working_directory": "scratch/run-42"
+      },
+      "record_name": "FactoryRoleInvocation",
+      "schema_path": ".factory/schemas/execution.schema.json",
+      "schema_pointer": "#/$defs/FactoryRoleInvocation",
+      "valid": {
+        "context_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_id": "invoke-builder-1",
+        "mutation_mode": "scratch-write",
+        "output_schema": {
+          "repository_path": ".factory/schemas/kernel.schema.json",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "prompt_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "role": "builder",
+        "run_id": "run-42",
+        "selected_skills": [],
+        "session_action": "new",
+        "session_id": null,
+        "timeout_seconds": 900,
+        "working_directory": "scratch/run-42"
+      }
+    },
+    {
+      "expected_invalid_reason": "finding severity is a closed vocabulary",
+      "invalid": {
+        "category": "review",
+        "evidence_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "finding_id": "a11y-label",
+        "role": "code-auditor",
+        "severity": "urgent"
+      },
+      "record_name": "FactoryFinding",
+      "schema_path": ".factory/schemas/execution.schema.json",
+      "schema_pointer": "#/$defs/FactoryFinding",
+      "valid": {
+        "category": "review",
+        "evidence_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "finding_id": "a11y-label",
+        "role": "code-auditor",
+        "severity": "high"
+      }
+    },
+    {
+      "expected_invalid_reason": "repair disposition is a closed vocabulary",
+      "invalid": {
+        "disposition": "keep-going",
+        "next_attempt": null,
+        "non_progress_cycles": 2,
+        "preserve_state": true,
+        "unresolved_findings": []
+      },
+      "record_name": "FactoryRepairOutcome",
+      "schema_path": ".factory/schemas/execution.schema.json",
+      "schema_pointer": "#/$defs/FactoryRepairOutcome",
+      "valid": {
+        "disposition": "repair",
+        "next_attempt": 2,
+        "non_progress_cycles": 0,
+        "preserve_state": true,
+        "unresolved_findings": [
+          {
+            "category": "review",
+            "evidence_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "finding_id": "a11y-label",
+            "role": "code-auditor",
+            "severity": "high"
+          }
+        ]
+      }
+    },
+    {
+      "expected_invalid_reason": "normalized usage counters cannot be negative",
+      "invalid": {
+        "client": "codex",
+        "cost_microusd": 0,
+        "event_stream_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "output_text": "{\"status\":\"passed\"}",
+        "session_id": "codex-session-1",
+        "status": "succeeded",
+        "tool_call_count": 0,
+        "usage": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "input_tokens": -1,
+          "output_tokens": 5
+        }
+      },
+      "record_name": "FactoryNormalizedClientResult",
+      "schema_path": ".factory/schemas/execution.schema.json",
+      "schema_pointer": "#/$defs/FactoryNormalizedClientResult",
+      "valid": {
+        "client": "codex",
+        "cost_microusd": 0,
+        "event_stream_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "output_text": "{\"status\":\"passed\"}",
+        "session_id": "codex-session-1",
+        "status": "succeeded",
+        "tool_call_count": 0,
+        "usage": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "input_tokens": 10,
+          "output_tokens": 5
+        }
+      }
+    }
+  ],
+  "schema_version": 1
+}

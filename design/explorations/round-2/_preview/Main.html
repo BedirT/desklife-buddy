@@ -1,0 +1,85 @@
+<!doctype html><meta charset="utf-8">
+<style>
+  body { margin: 0; }
+  .rt { position: relative; width: 1100px; height: 900px; overflow: hidden; box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased; color: #f4eee8;
+        background:
+          radial-gradient(90% 60% at 50% 112%, rgba(255,168,110,0.34) 0%, rgba(226,96,120,0.16) 34%, rgba(14,12,26,0) 70%),
+          radial-gradient(70% 50% at 12% -4%, rgba(110,88,206,0.26) 0%, rgba(14,12,26,0) 68%),
+          linear-gradient(176deg, #0d0c1e 0%, #17142c 56%, #2a1a2e 100%);
+        padding: 62px 74px; }
+  .grain { position: absolute; inset: 0; opacity: 0.05; pointer-events: none; mix-blend-mode: overlay;
+           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .in { position: relative; }
+  .eb { font-size: 12px; font-weight: 600; letter-spacing: 0.17em; text-transform: uppercase; color: rgba(255,196,150,0.72); }
+  h1 { margin: 12px 0 0; font-size: 56px; line-height: 1.06; font-weight: 600; letter-spacing: -0.028em; }
+  h1 em { font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-style: italic; font-weight: 500; }
+  .lede { margin-top: 20px; width: 720px; font-size: 18.5px; line-height: 1.56; color: rgba(244,238,232,0.68); }
+  .lede b { color: #f8f2ec; font-weight: 590; }
+
+  .cols { display: flex; gap: 22px; margin-top: 40px; }
+  .card { flex: 1; border-radius: 16px; padding: 20px 20px 22px; border: 1px solid rgba(255,255,255,0.11);
+          background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); }
+  .sw { height: 92px; border-radius: 10px; margin-bottom: 15px; position: relative; overflow: hidden; }
+  .sw::after { content:''; position:absolute; left:0; right:0; bottom:26px; height:1px; background:rgba(255,255,255,0.42); }
+  .swa { background: radial-gradient(46% 32% at 50% 100%, rgba(255,232,196,0.92) 0%, rgba(255,186,124,0.60) 26%, rgba(255,140,96,0.26) 52%, rgba(255,120,90,0) 78%), radial-gradient(130% 86% at 50% 104%, rgba(255,158,110,0.42) 0%, rgba(226,110,132,0.22) 24%, rgba(150,96,178,0.14) 44%, rgba(13,15,34,0) 74%), linear-gradient(178deg,#08091b 0%,#14132e 42%,#33203c 74%,#55303f 100%); }
+  .swb { background: radial-gradient(30% 16% at 50% 100%, rgba(255,242,214,0.98) 0%, rgba(255,206,140,0.76) 34%, rgba(255,158,104,0.32) 62%, rgba(255,140,96,0) 84%), radial-gradient(64% 38% at 50% 101%, rgba(255,164,102,0.60) 0%, rgba(255,116,96,0.30) 30%, rgba(226,84,124,0.16) 54%, rgba(26,13,20,0) 80%), linear-gradient(178deg,#150818 0%,#260f24 42%,#46182e 74%,#6b2432 100%); }
+  .ct { font-size: 17px; font-weight: 590; letter-spacing: -0.01em; }
+  .cd { margin-top: 7px; font-size: 14px; line-height: 1.5; color: rgba(244,238,232,0.60); }
+
+  h2 { margin: 44px 0 0; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+       color: rgba(255,196,150,0.62); }
+  ul { margin: 14px 0 0; padding: 0; list-style: none; }
+  li { position: relative; padding-left: 20px; margin-bottom: 11px; font-size: 15px; line-height: 1.55;
+       color: rgba(244,238,232,0.74); width: 940px; }
+  li::before { content:''; position:absolute; left:0; top:9px; width:8px; height:8px; border-radius:50%;
+               background: linear-gradient(160deg,#ffc074,#ee7a3c); }
+  li.no::before { background: rgba(255,255,255,0.20); }
+  li b { color: #f8f2ec; font-weight: 590; }
+</style>
+
+
+<div class="rt">
+  <div class="grain"></div>
+  <div class="in">
+    <div class="eb">Cadence · Round 2</div>
+    <h1>A break is a <em>place</em>,<br>not a dialog.</h1>
+
+    <p class="lede">Round 1 mistook <b>calm</b> for <b>joyless</b> — three shades of grey type on a dim field. This one keeps every honesty rule and throws out the austerity. Each break surface is a <b>landscape</b>: the instruction sits in the sky, your controls sit on the ground, and the <b>horizon line is the progress</b>. Nothing pulses, nothing loops, nothing counts down at you.</p>
+
+    <div class="cols">
+      <div class="card">
+        <div class="sw swa"></div>
+        <div class="ct">Visual reset — far</div>
+        <div class="cd">Deep dusk, a low distant sun, vast sky. The field itself depicts the instruction: look at something a long way off. 20 seconds, about every 25 minutes.</div>
+      </div>
+      <div class="card">
+        <div class="sw swb"></div>
+        <div class="ct">Movement — near</div>
+        <div class="cd">The same landscape an hour later. Closer, warmer, more saturated. You know which break it is from the colour temperature alone, before you read a word.</div>
+      </div>
+      <div class="card">
+        <div class="sw" style="background:radial-gradient(40% 24% at 50% 100%, rgba(255,246,226,0.96) 0%, rgba(255,220,176,0.64) 32%, rgba(255,202,168,0.26) 62%, rgba(255,198,166,0) 84%), radial-gradient(120% 70% at 50% 102%, rgba(255,204,168,0.54) 0%, rgba(238,190,198,0.28) 26%, rgba(206,198,236,0.18) 48%, rgba(238,240,248,0) 78%), linear-gradient(178deg,#dbe1f6 0%,#e7e5f2 42%,#f5e4e2 74%,#fde9d8 100%)"></div>
+        <div class="ct">Light appearance</div>
+        <div class="cd">The same composition at a different hour, not an inversion. This is the answer to the round-1 question of whether the break screen should track the system appearance: yes, by changing key.</div>
+      </div>
+    </div>
+
+    <h2>Taken from LookAway</h2>
+    <ul>
+      <li>Warmth and saturation. A break screen should be a pleasant place to arrive, and theirs is. Ours is warmer still and, unlike theirs, <b>says which clock it belongs to</b>.</li>
+      <li>Colourful glyph tiles in Settings — which is not their invention, it is what <b>System Settings itself does</b>. Native, and it makes a preferences list enjoyable to scroll.</li>
+      <li>One italic serif word per headline. Apple ships <b>New York</b> as a system serif, so this costs nothing and reads unmistakably Mac.</li>
+      <li>Glass pill controls floating over the field, with their shortcut printed on them.</li>
+    </ul>
+
+    <h2>Deliberately not taken</h2>
+    <ul>
+      <li class="no">Their two headline features are <b>posture nudges and blink reminders</b> — camera-adjacent sensing our research puts out of scope entirely. Their differentiation is perception; ours is honesty.</li>
+      <li class="no">Their strictest enforcement tier locks the Mac and forbids skipping. <b>Cadence cannot ever do that</b> — the menu bar stays lit above every break surface as proof.</li>
+      <li class="no">One gradient for every break. We have two clocks, so we get two atmospheres — the thing they can't do.</li>
+      <li class="no">Their <b>eye character</b> that follows the cursor. The mechanic is honest — the pointer is the only thing either app can perceive — but the eye is their signature, and on this product it would whisper gaze sensing. Ours is the <b>sun</b>: it descends to the horizon through the heads-up window and leans its glint toward your pointer while it waits. See the Heads-up artboard.</li>
+    </ul>
+  </div>
+</div>

@@ -1,0 +1,140 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  body { margin: 0; }
+  .rt { position: relative; width: 760px; height: 620px; overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        background: linear-gradient(158deg, #3b2f52 0%, #55405e 38%, #7a5560 68%, #a8705e 100%); }
+  .dk { position: absolute; inset: 0;
+        background: radial-gradient(70% 60% at 78% 84%, rgba(255,170,110,0.30), rgba(0,0,0,0) 70%); }
+
+  .mb { position: absolute; top: 0; left: 0; right: 0; height: 24px;
+        background: rgba(22,18,32,0.46); backdrop-filter: blur(30px) saturate(1.5);
+        display: flex; align-items: center; padding: 0 14px; gap: 18px;
+        font-size: 13px; color: rgba(255,255,255,0.90); }
+  .mb .rr { margin-left: auto; display: flex; align-items: center; gap: 15px; }
+  .mb .cl { font-variant-numeric: tabular-nums; }
+  .act { position: absolute; top: 3px; left: 512px; width: 30px; height: 19px; border-radius: 5px;
+         background: rgba(255,255,255,0.20); display: flex; align-items: center; justify-content: center; }
+
+  /* the status menu. menu-shaped, with a compact status region on top — not a mini-app popover. */
+  .menu { position: absolute; top: 28px; left: 402px; width: 300px; border-radius: 12px;
+          background: rgba(38,32,52,0.72); backdrop-filter: blur(46px) saturate(1.8);
+          border: 1px solid rgba(255,255,255,0.13);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.13), 0 22px 64px rgba(0,0,0,0.46), 0 2px 8px rgba(0,0,0,0.28);
+          padding: 6px 0 6px; color: #fff; overflow: hidden; }
+
+  .stat { padding: 12px 14px 14px; }
+  .row { display: flex; align-items: baseline; justify-content: space-between; }
+  .rl { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.94); }
+  .rv { font-size: 12.5px; color: rgba(255,255,255,0.52); font-variant-numeric: tabular-nums; }
+  /* the two clocks read as two horizons — same language as the break screen */
+  .bar { margin-top: 7px; height: 2px; border-radius: 2px; background: rgba(255,255,255,0.13); position: relative; }
+  .bar i { position: absolute; left: 0; top: 0; height: 2px; border-radius: 2px; display: block; }
+  .b1 i { width: 64%; background: linear-gradient(90deg, rgba(255,190,140,0.35), #ffc98f); box-shadow: 0 0 10px rgba(255,180,120,0.6); }
+  .b2 i { width: 43%; background: linear-gradient(90deg, rgba(255,150,170,0.30), #ff9ec0); box-shadow: 0 0 10px rgba(255,140,170,0.5); }
+  .gap { height: 14px; }
+  .est { margin-top: 14px; padding-top: 11px; border-top: 1px solid rgba(255,255,255,0.10);
+         font-size: 12px; color: rgba(255,255,255,0.62); display: flex; justify-content: space-between; }
+  .est b { font-weight: 500; color: rgba(255,255,255,0.70); font-variant-numeric: tabular-nums; }
+
+  .sep { height: 1px; background: rgba(255,255,255,0.10); margin: 5px 0; }
+  .mi { display: flex; align-items: center; gap: 9px; height: 24px; padding: 0 12px; font-size: 13.5px;
+        color: rgba(255,255,255,0.94); }
+  /* highlighted item: warm stand-in for the user's accent color — ships as the system
+     menu highlight (selectedContentBackground), which tracks the accent setting. D-028. */
+  .mi.hl { background: linear-gradient(180deg, rgba(179,81,42,0.95), rgba(150,64,36,0.95)); border-radius: 6px; margin: 0 5px; padding: 0 7px; }
+  .mi .ic { width: 15px; display: flex; justify-content: center; opacity: 0.72; }
+  .mi.hl .ic { opacity: 1; }
+  .mi .sh { margin-left: auto; font-size: 12.5px; color: rgba(255,255,255,0.42); }
+  .mi.hl .sh { color: rgba(255,255,255,0.78); }
+  .ch { margin-left: auto; opacity: 0.5; }
+</style>
+</helmet>
+
+<div class="rt">
+  <div class="dk"></div>
+
+  <div class="mb">
+    <span style="display:flex;align-items:center;gap:17px">
+      <svg width="14" height="16" viewBox="0 0 14 17" fill="rgba(255,255,255,0.94)"><path d="M11.2 8.9c0-1.9 1.5-2.8 1.6-2.9-.9-1.3-2.3-1.5-2.8-1.5-1.2-.1-2.3.7-2.9.7-.6 0-1.5-.7-2.5-.7C3.3 4.5 2.1 5.3 1.4 6.5c-1.3 2.3-.3 5.7 1 7.6.6.9 1.4 1.9 2.4 1.9.9 0 1.3-.6 2.4-.6s1.4.6 2.4.6c1 0 1.6-.9 2.2-1.8.7-1 1-2 1-2.1 0 0-1.9-.8-1.9-3zM9.4 3.3c.5-.6.9-1.5.8-2.4-.8 0-1.7.5-2.2 1.2-.5.5-.9 1.5-.8 2.3.9.1 1.7-.4 2.2-1.1z"/></svg>
+      <b style="font-weight:600">Xcode</b><span>File</span><span>Edit</span><span>View</span>
+    </span>
+    <span class="rr">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.3" stroke-linecap="round"><path d="M2 6.2a9 9 0 0 1 12 0M4.4 8.7a5.6 5.6 0 0 1 7.2 0"/><circle cx="8" cy="11.6" r="0.95" fill="rgba(255,255,255,0.9)" stroke="none"/></svg>
+      <svg width="24" height="13" viewBox="0 0 26 13" fill="none"><rect x="0.6" y="1.6" width="20" height="10" rx="3" stroke="rgba(255,255,255,0.55)" stroke-width="1.1"/><rect x="2.2" y="3.2" width="12" height="6.8" rx="1.6" fill="rgba(255,255,255,0.9)"/><path d="M22.4 5v3.2c1-.3 1.5-.9 1.5-1.6s-.5-1.3-1.5-1.6z" fill="rgba(255,255,255,0.55)"/></svg>
+      <span class="cl">Tue 2:41 PM</span>
+    </span>
+  </div>
+
+  <!-- template glyph: monochrome, system-recolored. the mark survives at 16pt. -->
+  <div class="act">
+    <svg width="17" height="17" viewBox="0 0 100 100" fill="none">
+      <path d="M12 66 H 88" stroke="#fff" stroke-width="11" stroke-linecap="round" opacity="0.55"/><path d="M18 66 A 21 18 0 0 1 60 66" stroke="#fff" stroke-width="11" stroke-linecap="round" opacity="0.55"/><path d="M64 66 A 11 27 0 0 1 86 66" stroke="#fff" stroke-width="11" stroke-linecap="round" opacity="0.55"/>
+    </svg>
+  </div>
+
+  <div class="menu">
+    <div class="stat">
+      <div class="row"><span class="rl">Visual reset</span><span class="rv">in about 9 min</span></div>
+      <div class="bar b1"><i></i></div>
+      <div class="gap"></div>
+      <div class="row"><span class="rl">Movement</span><span class="rv">in about 34 min</span></div>
+      <div class="bar b2"><i></i></div>
+      <div class="est"><span>Estimated active use today</span><b>1:03</b></div>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="mi hl">
+      <span class="ic"><svg width="14" height="14" viewBox="0 0 100 100" fill="none"><path d="M12 66 H 88" stroke="#fff" stroke-width="10" stroke-linecap="round"/><path d="M18 66 A 21 18 0 0 1 60 66" stroke="#fff" stroke-width="10" stroke-linecap="round"/></svg></span>
+      Start a visual reset
+    </div>
+    <div class="mi">
+      <span class="ic"><svg width="14" height="14" viewBox="0 0 100 100" fill="none"><path d="M12 66 H 88" stroke="#fff" stroke-width="10" stroke-linecap="round"/><path d="M64 66 A 11 27 0 0 1 86 66" stroke="#fff" stroke-width="10" stroke-linecap="round"/></svg></span>
+      Start movement
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="mi">
+      <span class="ic"><svg width="13" height="13" viewBox="0 0 16 16" fill="rgba(255,255,255,0.9)"><rect x="3" y="2.5" width="3.4" height="11" rx="1.2"/><rect x="9.6" y="2.5" width="3.4" height="11" rx="1.2"/></svg></span>
+      Pause <span class="ch"><svg width="9" height="9" viewBox="0 0 8 12" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M2 1.5 6 6l-4 4.5"/></svg></span>
+    </div>
+    <div class="mi">
+      <span class="ic"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="rgba(255,255,255,0.94)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8.6 6 12l7.5-8"/></svg></span>
+      Only during working hours
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="mi">
+      <span class="ic"><svg width="13" height="13" viewBox="0 0 16 16" fill="rgba(255,255,255,0.9)"><rect x="1.4" y="8" width="2.6" height="6" rx="1"/><rect x="6.7" y="4.6" width="2.6" height="9.4" rx="1"/><rect x="12" y="6.6" width="2.6" height="7.4" rx="1"/></svg></span>
+      Weekly rhythm…
+    </div>
+    <div class="mi">
+      <span class="ic"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.35"><circle cx="8" cy="8" r="2.4"/><path d="M8 1.3v2.1M8 12.6v2.1M14.7 8h-2.1M3.4 8H1.3M12.7 3.3l-1.5 1.5M4.8 11.2l-1.5 1.5M12.7 12.7l-1.5-1.5M4.8 4.8 3.3 3.3" stroke-linecap="round"/></svg></span>
+      Settings… <span class="sh">⌘,</span>
+    </div>
+    <div class="mi">
+      <span class="ic"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.4" stroke-linecap="round"><path d="M6.2 2.6H3.4A1.4 1.4 0 0 0 2 4v8a1.4 1.4 0 0 0 1.4 1.4h2.8"/><path d="M10.4 11 13.8 8l-3.4-3M13.4 8H6"/></svg></span>
+      Quit Cadence
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

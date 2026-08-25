@@ -1,0 +1,465 @@
+{
+  "fixtures": [
+    {
+      "expected_invalid_reason": "episodes require at least one exact component exposure",
+      "invalid": {
+        "component_exposure_ids": [],
+        "contract_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "episode_id": "episode-success",
+        "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "incident_ids": [],
+        "outcome": "success",
+        "route_id": "route-logic",
+        "run_id": "run-42",
+        "skill_exposure_ids": [
+          "design-system-v1"
+        ]
+      },
+      "record_name": "FactoryEpisode",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/FactoryEpisode",
+      "valid": {
+        "component_exposure_ids": [
+          "prompt-builder-v1"
+        ],
+        "contract_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "episode_id": "episode-success",
+        "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "incident_ids": [],
+        "outcome": "success",
+        "route_id": "route-logic",
+        "run_id": "run-42",
+        "skill_exposure_ids": [
+          "design-system-v1"
+        ]
+      }
+    },
+    {
+      "expected_invalid_reason": "build-candidate SkillOpt policy forbids provider backends",
+      "invalid": {
+        "allow_provider_backends": true,
+        "automatic_adoption": false,
+        "maximum_edits": 4,
+        "package": "skillopt",
+        "package_version": "0.2.0",
+        "status": "build-candidate-mock-only",
+        "upstream_commit": "e4ea6a6771e797ef820cdd8bfea64c57e0481065",
+        "upstream_repository": "https://github.com/microsoft/SkillOpt",
+        "uv_version": "0.7.13"
+      },
+      "record_name": "SkillOptAdapterPolicy",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/SkillOptAdapterPolicy",
+      "valid": {
+        "allow_provider_backends": false,
+        "automatic_adoption": false,
+        "maximum_edits": 4,
+        "package": "skillopt",
+        "package_version": "0.2.0",
+        "status": "build-candidate-mock-only",
+        "upstream_commit": "e4ea6a6771e797ef820cdd8bfea64c57e0481065",
+        "upstream_repository": "https://github.com/microsoft/SkillOpt",
+        "uv_version": "0.7.13"
+      }
+    },
+    {
+      "expected_invalid_reason": "frozen reflection candidates contain at most four atomic edits",
+      "invalid": {
+        "allowed_paths": [
+          "artifacts/factory-learning/candidate-one.json"
+        ],
+        "baseline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "candidate_id": "candidate-one",
+        "edits": [
+          {
+            "operation": "replace",
+            "replacement": "one",
+            "target": "target-1"
+          },
+          {
+            "operation": "replace",
+            "replacement": "two",
+            "target": "target-2"
+          },
+          {
+            "operation": "replace",
+            "replacement": "three",
+            "target": "target-3"
+          },
+          {
+            "operation": "replace",
+            "replacement": "four",
+            "target": "target-4"
+          },
+          {
+            "operation": "replace",
+            "replacement": "five",
+            "target": "target-5"
+          }
+        ],
+        "maximum_revision_rounds": 1,
+        "prior_regression_id": "regression-one",
+        "status": "frozen-for-evaluation",
+        "target_component_id": "skill-one"
+      },
+      "record_name": "FrozenSkillCandidate",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/FrozenSkillCandidate",
+      "valid": {
+        "allowed_paths": [
+          "artifacts/factory-learning/candidate-one.json"
+        ],
+        "baseline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "candidate_id": "candidate-one",
+        "edits": [
+          {
+            "operation": "replace",
+            "replacement": "one",
+            "target": "target-1"
+          }
+        ],
+        "maximum_revision_rounds": 1,
+        "prior_regression_id": "regression-one",
+        "status": "frozen-for-evaluation",
+        "target_component_id": "skill-one"
+      }
+    },
+    {
+      "expected_invalid_reason": "signal fingerprint must be full lowercase SHA-256",
+      "invalid": {
+        "affected_surface": "factory-runner",
+        "evidence_refs": [
+          "artifacts/sanitized/failure.json"
+        ],
+        "fingerprint": "short",
+        "gate_or_criterion_id": "runner-isolation",
+        "phase": "verifying",
+        "schema_version": 1,
+        "severity": "critical",
+        "signal_id": "signal-1",
+        "signal_kind": "canary-readable",
+        "source": "check"
+      },
+      "record_name": "LearningSignal",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/LearningSignal",
+      "valid": {
+        "affected_surface": "factory-runner",
+        "evidence_refs": [
+          "artifacts/sanitized/failure.json"
+        ],
+        "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "gate_or_criterion_id": "runner-isolation",
+        "phase": "verifying",
+        "schema_version": 1,
+        "severity": "critical",
+        "signal_id": "signal-1",
+        "signal_kind": "canary-readable",
+        "source": "check"
+      }
+    },
+    {
+      "expected_invalid_reason": "incidents require at least one affected run",
+      "invalid": {
+        "affected_run_ids": [],
+        "evidence_refs": [
+          "artifacts/sanitized/failure.json"
+        ],
+        "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "incident_id": "incident-1",
+        "reproduction_state": "confirmed",
+        "schema_version": 1,
+        "signal_ids": [
+          "signal-1"
+        ]
+      },
+      "record_name": "Incident",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/Incident",
+      "valid": {
+        "affected_run_ids": [
+          "run-1"
+        ],
+        "evidence_refs": [
+          "artifacts/sanitized/failure.json"
+        ],
+        "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "incident_id": "incident-1",
+        "reproduction_state": "confirmed",
+        "schema_version": 1,
+        "signal_ids": [
+          "signal-1"
+        ]
+      }
+    },
+    {
+      "expected_invalid_reason": "component exposure order cannot be negative",
+      "invalid": {
+        "blob_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "component_id": "skill-grill-me",
+        "component_kind": "skill",
+        "component_version": "1",
+        "context_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "exposure_id": "exposure-1",
+        "invocation_id": "invocation-1",
+        "order": -1,
+        "role_id": "product-director",
+        "schema_version": 1
+      },
+      "record_name": "ComponentExposure",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/ComponentExposure",
+      "valid": {
+        "blob_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "component_id": "skill-grill-me",
+        "component_kind": "skill",
+        "component_version": "1",
+        "context_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "exposure_id": "exposure-1",
+        "invocation_id": "invocation-1",
+        "order": 0,
+        "role_id": "product-director",
+        "schema_version": 1
+      }
+    },
+    {
+      "expected_invalid_reason": "attribution confidence uses confirmed probable or suspected",
+      "invalid": {
+        "ablation": {
+          "component_removed_or_changed": "skill-grill-me",
+          "outcome_changed_twice": true,
+          "reproduction_refs": [
+            "artifacts/sanitized/ablation.json"
+          ]
+        },
+        "attribution_id": "attribution-1",
+        "confidence": "certain",
+        "counter_evidence_refs": [],
+        "incident_id": "incident-1",
+        "schema_version": 1,
+        "supporting_evidence_refs": [
+          "artifacts/sanitized/ablation.json"
+        ],
+        "suspect_component_id": "skill-grill-me"
+      },
+      "record_name": "Attribution",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/Attribution",
+      "valid": {
+        "ablation": {
+          "component_removed_or_changed": "skill-grill-me",
+          "outcome_changed_twice": true,
+          "reproduction_refs": [
+            "artifacts/sanitized/ablation.json"
+          ]
+        },
+        "attribution_id": "attribution-1",
+        "confidence": "confirmed",
+        "counter_evidence_refs": [],
+        "incident_id": "incident-1",
+        "schema_version": 1,
+        "supporting_evidence_refs": [
+          "artifacts/sanitized/ablation.json"
+        ],
+        "suspect_component_id": "skill-grill-me"
+      }
+    },
+    {
+      "expected_invalid_reason": "candidate default scope cannot exceed three files",
+      "invalid": {
+        "attribution_id": "attribution-1",
+        "base_component_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "candidate_id": "candidate-1",
+        "component_id": "skill-grill-me",
+        "component_kind": "skill",
+        "hypothesis": "Clarify the negative trigger to reduce false activation.",
+        "max_added_context_bytes": 128,
+        "max_changed_files": 4,
+        "max_changed_lines": 20,
+        "public_regression_id": "routing-regression-1",
+        "schema_version": 1,
+        "status": "candidate",
+        "trusted_base_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "record_name": "CandidateSpec",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/CandidateSpec",
+      "valid": {
+        "attribution_id": "attribution-1",
+        "base_component_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "candidate_id": "candidate-1",
+        "component_id": "skill-grill-me",
+        "component_kind": "skill",
+        "hypothesis": "Clarify the negative trigger to reduce false activation.",
+        "max_added_context_bytes": 128,
+        "max_changed_files": 1,
+        "max_changed_lines": 20,
+        "public_regression_id": "routing-regression-1",
+        "schema_version": 1,
+        "status": "candidate",
+        "trusted_base_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    },
+    {
+      "expected_invalid_reason": "sealed evaluation permits exactly one query",
+      "invalid": {
+        "candidate_id": "candidate-1",
+        "confidence_requirement": 0.95,
+        "error_bound": 0.05,
+        "eval_plan_id": "eval-plan-1",
+        "independent_task_families": [
+          "routing",
+          "workflow"
+        ],
+        "minimum_effect": 0.1,
+        "multiplicity_correction": "none-single-hypothesis",
+        "paired_repeats": 3,
+        "provider_identities": [
+          "provider-a",
+          "provider-b"
+        ],
+        "schema_version": 1,
+        "sealed_query_budget": 2,
+        "seeds": [
+          1,
+          2
+        ],
+        "selection_query_budget": 3,
+        "sentinel_set_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "strata": [
+          "simple",
+          "complex"
+        ],
+        "target_metric": "routing-precision"
+      },
+      "record_name": "EvalPlan",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/EvalPlan",
+      "valid": {
+        "candidate_id": "candidate-1",
+        "confidence_requirement": 0.95,
+        "error_bound": 0.05,
+        "eval_plan_id": "eval-plan-1",
+        "independent_task_families": [
+          "routing",
+          "workflow"
+        ],
+        "minimum_effect": 0.1,
+        "multiplicity_correction": "none-single-hypothesis",
+        "paired_repeats": 3,
+        "provider_identities": [
+          "provider-a",
+          "provider-b"
+        ],
+        "schema_version": 1,
+        "sealed_query_budget": 1,
+        "seeds": [
+          1,
+          2
+        ],
+        "selection_query_budget": 3,
+        "sentinel_set_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "strata": [
+          "simple",
+          "complex"
+        ],
+        "target_metric": "routing-precision"
+      }
+    },
+    {
+      "expected_invalid_reason": "variant partition is public selection or sealed",
+      "invalid": {
+        "blocker_codes": [],
+        "candidate_id": "candidate-1",
+        "decision": "accept",
+        "eval_plan_id": "eval-plan-1",
+        "metrics": [
+          {
+            "name": "accuracy",
+            "value": 1
+          }
+        ],
+        "partition": "train",
+        "schema_version": 1,
+        "variant_result_id": "variant-result-1"
+      },
+      "record_name": "VariantResult",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/VariantResult",
+      "valid": {
+        "blocker_codes": [],
+        "candidate_id": "candidate-1",
+        "decision": "accept",
+        "eval_plan_id": "eval-plan-1",
+        "metrics": [
+          {
+            "name": "accuracy",
+            "value": 1
+          }
+        ],
+        "partition": "selection",
+        "schema_version": 1,
+        "variant_result_id": "variant-result-1"
+      }
+    },
+    {
+      "expected_invalid_reason": "promotion decision is probation or reject and never direct active",
+      "invalid": {
+        "blocker_codes": [],
+        "candidate_id": "candidate-1",
+        "decision": "active",
+        "efficiency_passed": true,
+        "promotion_decision_id": "promotion-1",
+        "schema_version": 1,
+        "sealed_attestation_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "statistical_gate_passed": true,
+        "zero_critical_regressions": true
+      },
+      "record_name": "PromotionDecision",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/PromotionDecision",
+      "valid": {
+        "blocker_codes": [],
+        "candidate_id": "candidate-1",
+        "decision": "probation",
+        "efficiency_passed": true,
+        "promotion_decision_id": "promotion-1",
+        "schema_version": 1,
+        "sealed_attestation_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "statistical_gate_passed": true,
+        "zero_critical_regressions": true
+      }
+    },
+    {
+      "expected_invalid_reason": "monitoring status cannot silently promote",
+      "invalid": {
+        "activated_component_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "canary_exposure_ids": [
+          "exposure-1"
+        ],
+        "monitoring_id": "monitoring-1",
+        "promotion_decision_id": "promotion-1",
+        "rollback_predecessor_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "schema_version": 1,
+        "status": "promoted",
+        "triggered_incident_ids": []
+      },
+      "record_name": "MonitoringRecord",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/MonitoringRecord",
+      "valid": {
+        "activated_component_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "canary_exposure_ids": [
+          "exposure-1"
+        ],
+        "monitoring_id": "monitoring-1",
+        "promotion_decision_id": "promotion-1",
+        "rollback_predecessor_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "schema_version": 1,
+        "status": "monitoring",
+        "triggered_incident_ids": []
+      }
+    }
+  ],
+  "schema_version": 1
+}

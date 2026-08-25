@@ -1,0 +1,51 @@
+claim_id,status,topic,example_copy,reason_or_condition,source_ids,required_review
+C001,allowed,Product,Schedules optional visual and movement breaks.,Factual if implemented.,,Product QA
+C002,allowed,Privacy,Works without an account.,Factual if core operation is local.,S059;S060;S062,Privacy QA
+C003,allowed,Accessibility,Includes seated and limited-mobility alternatives.,Factual only after accessibility testing.,S045;S046;S080,Accessibility QA
+C004,allowed,Visual,A short break from near focus.,Neutral description.,S012;S013;S014,Content review
+C005,allowed,Visual,Look comfortably far away and blink slowly.,Low-risk instruction.,S014;S015;S017,Clinical content review
+C006,qualified,Visual,Visual breaks may help some people feel more comfortable during long screen sessions.,Use may/help/some; no prevention.,S014,Claims review
+C007,prohibited,Visual,Clinically proven 20-20-20 treatment.,Evidence does not establish treatment or unique optimum.,S014,Regulatory/claims
+C008,prohibited,Blue light,Protects your retina from screen blue light.,Unsupported retinal-damage/protection claim.,S018;S019;S021;S022,Regulatory/claims
+C009,prohibited,Blue light,Blue-light mode treats digital eye strain.,Filtering benefit is not established.,S018;S019,Regulatory/claims
+C010,allowed,Movement,Break up a long computer-use run.,Accurate behavioural framing.,S001;S002,Content review
+C011,allowed,Movement,Try five minutes of easy movement.,"Recommendation, not outcome promise.",S003;S004;S006,Content review
+C012,allowed,Movement,Two minutes is a useful quick option.,Adherence framing; do not claim equivalence.,S001;S002,Content review
+C013,prohibited,Movement,You have been sitting for 60 minutes.,Mac does not measure posture.,S065,Claims review
+C014,prohibited,Movement,This break lowers your blood sugar.,Acute studies do not validate individual product outcome.,S003;S004;S005,Regulatory/claims
+C015,prohibited,Movement,Undo the damage of sitting.,Overstated and misleading.,S001;S003,Regulatory/claims
+C016,validation_required,Movement,Reduces uninterrupted computer-use time by X%.,Requires direct product study with defined estimator.,,Evidence lead
+C017,qualified,Fatigue,A short reset may help you feel less fatigued.,Heterogeneous evidence; use may.,S008;S009,Content review
+C018,prohibited,Productivity,Scientifically proven to increase productivity.,Pooled performance effect not significant overall.,S008,Claims review
+C019,validation_required,Productivity,Improves focus over four weeks.,Requires product-specific trial.,,Evidence lead
+C020,allowed,Posture,Try a different comfortable position.,Variation framing.,S024;S028,Content review
+C021,allowed,Posture,No single position needs to be held all day.,Evidence-aligned.,S024;S028,Content review
+C022,prohibited,Posture,Bad posture detected.,No validated sensing/ideal posture.,S024,Claims review
+C023,prohibited,Posture,Corrects your spine and prevents pain.,Medical/prevention claim.,S023;S024,Regulatory/claims
+C024,qualified,Ergonomics,Some workstation adjustments may improve comfort.,Avoid injury prevention certainty.,S023;S028;S030,Content review
+C025,allowed,Breathing,Optional calm/reset exercise.,Non-medical framing.,S039;S040,Content review
+C026,prohibited,Breathing,Treats anxiety.,Medical treatment claim.,S039,Regulatory/claims
+C027,allowed,Sleep,Set a reminder to wind down work before your intended bedtime.,User-defined routine.,S041;S043,Content review
+C028,prohibited,Sleep,Blue-light mode fixes insomnia.,Unsupported treatment claim.,S018;S041;S043,Regulatory/claims
+C029,allowed,Hydration,Create your own hydration reminder.,No quantity prescribed.,S047;S048,Content review
+C030,prohibited,Hydration,Everyone needs eight glasses a day.,Needs vary; universal quota unsupported.,S047;S048,Claims review
+C031,allowed,Hearing,Take a listening break if you choose.,Generic optional reminder.,S049,Content review
+C032,prohibited,Hearing,Your volume is safe.,System volume is not acoustic dose.,S049,Claims review
+C033,allowed,Data,63 minutes of estimated active computer use.,Accurate proxy label.,S065,Product/claims QA
+C034,prohibited,Data,Movement verified.,Idle or timer does not verify movement.,,Product/claims QA
+C035,allowed,Data,You reported lower eye discomfort.,Describes self-report only.,,Privacy/claims QA
+C036,prohibited,Data,Eye strain reduced.,Implies measured causal outcome.,,Evidence lead
+C037,allowed,Control,Not a good moment? Snooze or skip.,Autonomy.,,UX QA
+C038,prohibited,Gamification,You failed your health break.,Shaming and unsupported.,,UX/claims QA
+C039,prohibited,Gamification,Your wellness score is 82.,No validated weighting.,,Evidence/claims
+C040,allowed,Safety,"Stop or choose another option if you feel pain, dizziness, or instability.",General safety.,S050,Clinical content review
+C041,allowed,Safety,Seek urgent help for sudden vision loss or another sudden serious symptom.,Appropriate escalation with localization.,S050;S051;S052;S053;S078,Clinical/localization review
+C042,prohibited,Safety,The app can tell whether your symptoms are serious.,No triage capability.,,Regulatory/claims
+C043,allowed,Regulatory,Supports general wellness and healthier work-break routines.,Aligned intended purpose.,S054;S055;S056;S057;S058,Regulatory review
+C044,prohibited,Regulatory,"Prevents diabetes, RSI, migraine, dry eye, or cardiovascular disease.",Medical prevention claims.,S054;S055;S056;S057;S058,Regulatory review
+C045,validation_required,Comparative,Less disruptive than fixed timers.,Requires direct comparative study.,,Evidence lead
+C046,validation_required,Outcome,Reduces end-of-day eye discomfort.,Requires product-specific outcome study.,,Evidence/clinical review
+C047,allowed,Accessibility,Move in a way that works for you.,Inclusive and neutral.,S045;S046;S080,Accessibility review
+C048,prohibited,Accessibility,Stand goal failed.,Exclusionary and false movement equivalence.,S045;S046,Accessibility/claims
+C049,allowed,Calendar,Uses selected Calendar busy times locally when enabled.,Factual if implemented.,S070,Privacy QA
+C050,prohibited,Calendar,Understands every meeting automatically.,No universal reliable signal.,S068;S070,Product/claims QA

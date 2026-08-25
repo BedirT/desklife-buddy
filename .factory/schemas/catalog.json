@@ -1,0 +1,419 @@
+{
+  "records": [
+    {
+      "fixture_path": ".factory/evals/public/schemas/evaluator-fixtures.json",
+      "record_name": "AggregateAttestation",
+      "schema_path": ".factory/schemas/evaluator.schema.json",
+      "schema_pointer": "#/$defs/AggregateAttestation"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/kernel-fixtures.json",
+      "record_name": "AssetProvenance",
+      "schema_path": ".factory/schemas/kernel.schema.json",
+      "schema_pointer": "#/$defs/AssetProvenance"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/learning-fixtures.json",
+      "record_name": "Attribution",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/Attribution"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/kernel-fixtures.json",
+      "record_name": "AuditEntry",
+      "schema_path": ".factory/schemas/kernel.schema.json",
+      "schema_pointer": "#/$defs/AuditEntry"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/kernel-fixtures.json",
+      "record_name": "BrokerActivationReceipt",
+      "schema_path": ".factory/schemas/kernel.schema.json",
+      "schema_pointer": "#/$defs/BrokerActivationReceipt"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/kernel-fixtures.json",
+      "record_name": "BrokerRequest",
+      "schema_path": ".factory/schemas/kernel.schema.json",
+      "schema_pointer": "#/$defs/BrokerRequest"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/kernel-fixtures.json",
+      "record_name": "BrokerResponse",
+      "schema_path": ".factory/schemas/kernel.schema.json",
+      "schema_pointer": "#/$defs/BrokerResponse"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/kernel-fixtures.json",
+      "record_name": "BrokerTrustAnchor",
+      "schema_path": ".factory/schemas/kernel.schema.json",
+      "schema_pointer": "#/$defs/BrokerTrustAnchor"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/learning-fixtures.json",
+      "record_name": "CandidateSpec",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/CandidateSpec"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/skills-fixtures.json",
+      "record_name": "CapabilityMap",
+      "schema_path": ".factory/schemas/skills.schema.json",
+      "schema_pointer": "#/$defs/CapabilityMap"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/factory-fixtures.json",
+      "record_name": "ClientLaunchManifest",
+      "schema_path": ".factory/schemas/factory.schema.json",
+      "schema_pointer": "#/$defs/ClientLaunchManifest"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/routing-fixtures.json",
+      "record_name": "CompiledWorkflowRoute",
+      "schema_path": ".factory/schemas/routing.schema.json",
+      "schema_pointer": "#/$defs/CompiledWorkflowRoute"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/learning-fixtures.json",
+      "record_name": "ComponentExposure",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/ComponentExposure"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/factory-fixtures.json",
+      "record_name": "ContextPacket",
+      "schema_path": ".factory/schemas/factory.schema.json",
+      "schema_pointer": "#/$defs/ContextPacket"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/product-fixtures.json",
+      "record_name": "Correction",
+      "schema_path": ".factory/schemas/product.schema.json",
+      "schema_pointer": "#/$defs/Correction"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/design-fixtures.json",
+      "record_name": "DesignSourceManifest",
+      "schema_path": ".factory/schemas/design.schema.json",
+      "schema_pointer": "#/$defs/DesignSourceManifest"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/design-fixtures.json",
+      "record_name": "DesignTranslationContract",
+      "schema_path": ".factory/schemas/design.schema.json",
+      "schema_pointer": "#/$defs/DesignTranslationContract"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/design-fixtures.json",
+      "record_name": "DesignTranslationValidationInput",
+      "schema_path": ".factory/schemas/design.schema.json",
+      "schema_pointer": "#/$defs/DesignTranslationValidationInput"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/learning-fixtures.json",
+      "record_name": "EvalPlan",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/EvalPlan"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/product-fixtures.json",
+      "record_name": "EvalTarget",
+      "schema_path": ".factory/schemas/product.schema.json",
+      "schema_pointer": "#/$defs/EvalTarget"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/evaluator-fixtures.json",
+      "record_name": "EvaluationRequest",
+      "schema_path": ".factory/schemas/evaluator.schema.json",
+      "schema_pointer": "#/$defs/EvaluationRequest"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/factory-fixtures.json",
+      "record_name": "EvidenceManifest",
+      "schema_path": ".factory/schemas/factory.schema.json",
+      "schema_pointer": "#/$defs/EvidenceManifest"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/public-eval-fixtures.json",
+      "record_name": "EvolutionAcceptance",
+      "schema_path": ".factory/schemas/public-evals.schema.json",
+      "schema_pointer": "#/$defs/EvolutionAcceptance"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/evaluator-fixtures.json",
+      "record_name": "EvolutionAcceptancePolicy",
+      "schema_path": ".factory/schemas/evaluator.schema.json",
+      "schema_pointer": "#/$defs/EvolutionAcceptancePolicy"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/product-fixtures.json",
+      "record_name": "ExpertDisposition",
+      "schema_path": ".factory/schemas/product.schema.json",
+      "schema_pointer": "#/$defs/ExpertDisposition"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/execution-fixtures.json",
+      "record_name": "FactoryClientLaunchPlan",
+      "schema_path": ".factory/schemas/execution.schema.json",
+      "schema_pointer": "#/$defs/FactoryClientLaunchPlan"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/execution-fixtures.json",
+      "record_name": "FactoryClientProfile",
+      "schema_path": ".factory/schemas/execution.schema.json",
+      "schema_pointer": "#/$defs/FactoryClientProfile"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/factory-fixtures.json",
+      "record_name": "FactoryContract",
+      "schema_path": ".factory/schemas/factory.schema.json",
+      "schema_pointer": "#/$defs/FactoryContract"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/execution-fixtures.json",
+      "record_name": "FactoryControllerPlan",
+      "schema_path": ".factory/schemas/execution.schema.json",
+      "schema_pointer": "#/$defs/FactoryControllerPlan"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/execution-fixtures.json",
+      "record_name": "FactoryControllerPlanningInput",
+      "schema_path": ".factory/schemas/execution.schema.json",
+      "schema_pointer": "#/$defs/FactoryControllerPlanningInput"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/learning-fixtures.json",
+      "record_name": "FactoryEpisode",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/FactoryEpisode"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/execution-fixtures.json",
+      "record_name": "FactoryFinding",
+      "schema_path": ".factory/schemas/execution.schema.json",
+      "schema_pointer": "#/$defs/FactoryFinding"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/execution-fixtures.json",
+      "record_name": "FactoryNormalizedClientResult",
+      "schema_path": ".factory/schemas/execution.schema.json",
+      "schema_pointer": "#/$defs/FactoryNormalizedClientResult"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/execution-fixtures.json",
+      "record_name": "FactoryRepairOutcome",
+      "schema_path": ".factory/schemas/execution.schema.json",
+      "schema_pointer": "#/$defs/FactoryRepairOutcome"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/report-fixtures.json",
+      "record_name": "FactoryReport",
+      "schema_path": ".factory/schemas/report.schema.json",
+      "schema_pointer": "#/$defs/FactoryReport"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/execution-fixtures.json",
+      "record_name": "FactoryRoleInvocation",
+      "schema_path": ".factory/schemas/execution.schema.json",
+      "schema_pointer": "#/$defs/FactoryRoleInvocation"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/factory-fixtures.json",
+      "record_name": "FactoryState",
+      "schema_path": ".factory/schemas/factory.schema.json",
+      "schema_pointer": "#/$defs/FactoryState"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/factory-fixtures.json",
+      "record_name": "FeatureLedger",
+      "schema_path": ".factory/schemas/factory.schema.json",
+      "schema_pointer": "#/$defs/FeatureLedger"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/learning-fixtures.json",
+      "record_name": "FrozenSkillCandidate",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/FrozenSkillCandidate"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/learning-fixtures.json",
+      "record_name": "Incident",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/Incident"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/learning-fixtures.json",
+      "record_name": "LearningSignal",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/LearningSignal"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/learning-fixtures.json",
+      "record_name": "MonitoringRecord",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/MonitoringRecord"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/kernel-fixtures.json",
+      "record_name": "PatchEnvelope",
+      "schema_path": ".factory/schemas/kernel.schema.json",
+      "schema_pointer": "#/$defs/PatchEnvelope"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/factory-fixtures.json",
+      "record_name": "Policy",
+      "schema_path": ".factory/schemas/factory.schema.json",
+      "schema_pointer": "#/$defs/Policy"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/evaluator-fixtures.json",
+      "record_name": "PrivateEvaluationRootManifest",
+      "schema_path": ".factory/schemas/evaluator.schema.json",
+      "schema_pointer": "#/$defs/PrivateEvaluationRootManifest"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/product-fixtures.json",
+      "record_name": "ProductAdapterPolicy",
+      "schema_path": ".factory/schemas/product.schema.json",
+      "schema_pointer": "#/$defs/ProductAdapterPolicy"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/product-fixtures.json",
+      "record_name": "ProductFinding",
+      "schema_path": ".factory/schemas/product.schema.json",
+      "schema_pointer": "#/$defs/ProductFinding"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/product-fixtures.json",
+      "record_name": "ProductTrace",
+      "schema_path": ".factory/schemas/product.schema.json",
+      "schema_pointer": "#/$defs/ProductTrace"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/learning-fixtures.json",
+      "record_name": "PromotionDecision",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/PromotionDecision"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/factory-fixtures.json",
+      "record_name": "PromptRegistry",
+      "schema_path": ".factory/schemas/factory.schema.json",
+      "schema_pointer": "#/$defs/PromptRegistry"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/public-eval-fixtures.json",
+      "record_name": "PublicEvalCorpus",
+      "schema_path": ".factory/schemas/public-evals.schema.json",
+      "schema_pointer": "#/$defs/PublicEvalCorpus"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/kernel-fixtures.json",
+      "record_name": "RunnerIsolation",
+      "schema_path": ".factory/schemas/kernel.schema.json",
+      "schema_pointer": "#/$defs/RunnerIsolation"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/factory-fixtures.json",
+      "record_name": "RunSummary",
+      "schema_path": ".factory/schemas/factory.schema.json",
+      "schema_pointer": "#/$defs/RunSummary"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/kernel-fixtures.json",
+      "record_name": "ScratchProjectionInventory",
+      "schema_path": ".factory/schemas/kernel.schema.json",
+      "schema_pointer": "#/$defs/ScratchProjectionInventory"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/factory-fixtures.json",
+      "record_name": "SkillExposure",
+      "schema_path": ".factory/schemas/factory.schema.json",
+      "schema_pointer": "#/$defs/SkillExposure"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/skills-fixtures.json",
+      "record_name": "SkillManifest",
+      "schema_path": ".factory/schemas/skills.schema.json",
+      "schema_pointer": "#/$defs/SkillManifest"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/skills-fixtures.json",
+      "record_name": "SkillMigrationPortfolio",
+      "schema_path": ".factory/schemas/skills.schema.json",
+      "schema_pointer": "#/$defs/SkillMigrationPortfolio"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/learning-fixtures.json",
+      "record_name": "SkillOptAdapterPolicy",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/SkillOptAdapterPolicy"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/skills-fixtures.json",
+      "record_name": "SkillQualification",
+      "schema_path": ".factory/schemas/skills.schema.json",
+      "schema_pointer": "#/$defs/SkillQualification"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/skills-fixtures.json",
+      "record_name": "SkillRegistry",
+      "schema_path": ".factory/schemas/skills.schema.json",
+      "schema_pointer": "#/$defs/SkillRegistry"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/public-eval-fixtures.json",
+      "record_name": "SkillRoutingFixtureSet",
+      "schema_path": ".factory/schemas/public-evals.schema.json",
+      "schema_pointer": "#/$defs/SkillRoutingFixtureSet"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/factory-fixtures.json",
+      "record_name": "StateCAS",
+      "schema_path": ".factory/schemas/factory.schema.json",
+      "schema_pointer": "#/$defs/StateCAS"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/factory-fixtures.json",
+      "record_name": "TransitionRequest",
+      "schema_path": ".factory/schemas/factory.schema.json",
+      "schema_pointer": "#/$defs/TransitionRequest"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/learning-fixtures.json",
+      "record_name": "VariantResult",
+      "schema_path": ".factory/schemas/learning.schema.json",
+      "schema_pointer": "#/$defs/VariantResult"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/factory-fixtures.json",
+      "record_name": "Verdict",
+      "schema_path": ".factory/schemas/factory.schema.json",
+      "schema_pointer": "#/$defs/Verdict"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/routing-fixtures.json",
+      "record_name": "WorkflowRoutePolicy",
+      "schema_path": ".factory/schemas/routing.schema.json",
+      "schema_pointer": "#/$defs/WorkflowRoutePolicy"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/routing-fixtures.json",
+      "record_name": "WorkflowRouteRequest",
+      "schema_path": ".factory/schemas/routing.schema.json",
+      "schema_pointer": "#/$defs/WorkflowRouteRequest"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/factory-fixtures.json",
+      "record_name": "WorkItem",
+      "schema_path": ".factory/schemas/factory.schema.json",
+      "schema_pointer": "#/$defs/WorkItem"
+    },
+    {
+      "fixture_path": ".factory/evals/public/schemas/factory-fixtures.json",
+      "record_name": "WorkItemGraph",
+      "schema_path": ".factory/schemas/factory.schema.json",
+      "schema_pointer": "#/$defs/WorkItemGraph"
+    }
+  ],
+  "schema_version": 1
+}

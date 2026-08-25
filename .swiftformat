@@ -1,0 +1,11 @@
+# Layout/style is the formatter's job; agents and humans never argue with it.
+--swiftversion 6.2
+--indent 4
+--maxwidth 120
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--self remove
+--importgrouping testable-last
+--stripunusedargs closure-only
+--exclude .build,artifacts,**/.build,**/__Snapshots__

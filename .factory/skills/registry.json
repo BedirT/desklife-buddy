@@ -1,0 +1,1691 @@
+{
+  "portfolio_status": "legacy-migration-required",
+  "schema_version": 1,
+  "skills": [
+    {
+      "allowed_tools": [
+        "git",
+        "shell"
+      ],
+      "client_qualification": [
+        {
+          "client_id": "claude",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "codex",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "pi",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        }
+      ],
+      "conflicts_with": [],
+      "context_budget": {
+        "body_bytes": 4096,
+        "metadata_bytes": 1024,
+        "reference_bytes": 0,
+        "resource_bytes": 0,
+        "total_bytes": 5120
+      },
+      "declared_cost_ceiling": {
+        "max_context_tokens": 1280,
+        "max_tool_calls": 24
+      },
+      "dependency_skill_ids": [
+        "plan-feature"
+      ],
+      "expected_inputs": [
+        "Existing SwiftUI app path",
+        "adoption plan or requested migration"
+      ],
+      "expected_outputs": [
+        "Staged brownfield migration plan and verified imported app"
+      ],
+      "handoff_skill_ids": [
+        "evidence-pack"
+      ],
+      "id": "adopt-app",
+      "non_capabilities": [
+        "greenfield-feature-delivery",
+        "product-intake",
+        "release-distribution"
+      ],
+      "owner": "repository-harness",
+      "prerequisites": [
+        "Existing app remains untouched",
+        "Target can adopt macOS 26"
+      ],
+      "primary_capability_id": "brownfield-app-adoption",
+      "progressive_disclosure_paths": [],
+      "provenance": {
+        "introduction": "inherited-at-base",
+        "kind": "repository-inherited",
+        "license": "NOASSERTION",
+        "repository_path": ".agents/skills/adopt-app",
+        "source_commit": "15f2db7cc3773581a41b36190e40ec3dbc3d8734",
+        "upstream_pin": null
+      },
+      "public_eval_tags": [
+        "brownfield-app-adoption",
+        "skill-routing"
+      ],
+      "qualification_path": ".factory/skills/qualification/adopt-app.json",
+      "qualification_sha256": "23b07d80f5ea7858a2b76208f2a6e91ec7088a38840fb3a2bfb486eb3513ee8f",
+      "resources": [],
+      "risk_tiers": [
+        "high",
+        "medium"
+      ],
+      "rollback_predecessor": null,
+      "sealed_partition_id": "skill-adopt-app-instruction-v1",
+      "source_path": ".agents/skills/adopt-app/SKILL.md",
+      "source_sha256": "ec2e19f4e340664416109b1cc985f68ac6c6f500a86ced8bed1866ac7c698b31",
+      "status": "legacy",
+      "supersedes": [],
+      "supported_phases": [
+        "building",
+        "planning",
+        "verifying"
+      ],
+      "supported_roles": [
+        "builder"
+      ],
+      "trigger_fixture_ids": {
+        "negative": [
+          "adopt-app-negative-1",
+          "adopt-app-negative-2",
+          "adopt-app-negative-3"
+        ],
+        "positive": [
+          "adopt-app-positive-1",
+          "adopt-app-positive-2",
+          "adopt-app-positive-3"
+        ]
+      },
+      "verification_command": "scripts/check-factory-contract.sh --skill adopt-app",
+      "version": 1
+    },
+    {
+      "allowed_tools": [
+        "collaboration",
+        "git",
+        "shell"
+      ],
+      "client_qualification": [
+        {
+          "client_id": "claude",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "codex",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "pi",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        }
+      ],
+      "conflicts_with": [],
+      "context_budget": {
+        "body_bytes": 8192,
+        "metadata_bytes": 1024,
+        "reference_bytes": 0,
+        "resource_bytes": 1024,
+        "total_bytes": 10240
+      },
+      "declared_cost_ceiling": {
+        "max_context_tokens": 2560,
+        "max_tool_calls": 24
+      },
+      "dependency_skill_ids": [],
+      "expected_inputs": [
+        "Bug packet and available evidence"
+      ],
+      "expected_outputs": [
+        "Ranked hypotheses and smallest proof paths"
+      ],
+      "handoff_skill_ids": [],
+      "id": "bug-hunt-swarm",
+      "non_capabilities": [
+        "diff-review",
+        "performance-tracing",
+        "source-fix-implementation"
+      ],
+      "owner": "repository-harness",
+      "prerequisites": [
+        "Investigation remains read-only"
+      ],
+      "primary_capability_id": "parallel-root-cause-investigation",
+      "progressive_disclosure_paths": [],
+      "provenance": {
+        "introduction": "inherited-at-base",
+        "kind": "repository-inherited",
+        "license": "NOASSERTION",
+        "repository_path": ".agents/skills/bug-hunt-swarm",
+        "source_commit": "d62035e1fa6cd03c025d793408792650b24ff097",
+        "upstream_pin": null
+      },
+      "public_eval_tags": [
+        "parallel-root-cause-investigation",
+        "skill-routing"
+      ],
+      "qualification_path": ".factory/skills/qualification/bug-hunt-swarm.json",
+      "qualification_sha256": "6bccd1d0b1eeb70f610e4d368feccfa82ff46bd0a78add23a1d064be4135678e",
+      "resources": [
+        {
+          "path": ".agents/skills/bug-hunt-swarm/agents/openai.yaml",
+          "sha256": "b9926dce1b2b6b08d0a916a852610fcddfd818b2574742f890568780c8f02628",
+          "size_bytes": 261
+        }
+      ],
+      "risk_tiers": [
+        "control-plane",
+        "high",
+        "low",
+        "medium"
+      ],
+      "rollback_predecessor": null,
+      "sealed_partition_id": "skill-bug-hunt-swarm-instruction-v1",
+      "source_path": ".agents/skills/bug-hunt-swarm/SKILL.md",
+      "source_sha256": "c066356eab838666c2c7c706d103e323b8a08f032880746e5727a6bd897dfc29",
+      "status": "legacy",
+      "supersedes": [],
+      "supported_phases": [
+        "repairing",
+        "reviewing"
+      ],
+      "supported_roles": [
+        "code-auditor"
+      ],
+      "trigger_fixture_ids": {
+        "negative": [
+          "bug-hunt-swarm-negative-1",
+          "bug-hunt-swarm-negative-2",
+          "bug-hunt-swarm-negative-3"
+        ],
+        "positive": [
+          "bug-hunt-swarm-positive-1",
+          "bug-hunt-swarm-positive-2",
+          "bug-hunt-swarm-positive-3"
+        ]
+      },
+      "verification_command": "scripts/check-factory-contract.sh --skill bug-hunt-swarm",
+      "version": 1
+    },
+    {
+      "allowed_tools": [
+        "design-read",
+        "repository-read"
+      ],
+      "client_qualification": [
+        {
+          "client_id": "claude",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "codex",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "pi",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        }
+      ],
+      "conflicts_with": [],
+      "context_budget": {
+        "body_bytes": 4096,
+        "metadata_bytes": 1024,
+        "reference_bytes": 8192,
+        "resource_bytes": 1024,
+        "total_bytes": 14336
+      },
+      "declared_cost_ceiling": {
+        "max_context_tokens": 3584,
+        "max_tool_calls": 16
+      },
+      "dependency_skill_ids": [
+        "motion",
+        "snapshot-verify"
+      ],
+      "expected_inputs": [
+        "Owner-provided external design source and authority mode"
+      ],
+      "expected_outputs": [
+        "Content-addressed source manifest and native translation contract"
+      ],
+      "handoff_skill_ids": [
+        "design-system"
+      ],
+      "id": "design-ingest",
+      "non_capabilities": [
+        "design-token-creation",
+        "local-media-decoder-execution",
+        "production-art-approval",
+        "source-code-execution",
+        "swiftui-implementation"
+      ],
+      "owner": "repository-harness",
+      "prerequisites": [
+        "Source authority mode is owner-selected",
+        "Source bytes or owner-provided render are available"
+      ],
+      "primary_capability_id": "external-design-ingestion",
+      "progressive_disclosure_paths": [
+        ".agents/skills/design-ingest/references/figma.md",
+        ".agents/skills/design-ingest/references/html.md",
+        ".agents/skills/design-ingest/references/images-and-video.md",
+        ".agents/skills/design-ingest/references/react.md"
+      ],
+      "provenance": {
+        "introduction": "introduced-in-current-change",
+        "kind": "repository-authored",
+        "license": "repository-owned",
+        "repository_path": ".agents/skills/design-ingest",
+        "source_commit": null,
+        "upstream_pin": null
+      },
+      "public_eval_tags": [
+        "external-design-ingestion",
+        "skill-routing"
+      ],
+      "qualification_path": ".factory/skills/qualification/design-ingest.json",
+      "qualification_sha256": "bebfff9249f535b530139bf9b3ecb08f853433bcc56131e814e1367f64b1cc02",
+      "resources": [
+        {
+          "path": ".agents/skills/design-ingest/agents/openai.yaml",
+          "sha256": "f2d6051da0b8db12f7477200a05ecbfb341c824bdff81b7fcb106c6ae957e66c",
+          "size_bytes": 265
+        }
+      ],
+      "risk_tiers": [
+        "control-plane",
+        "high",
+        "medium"
+      ],
+      "rollback_predecessor": null,
+      "sealed_partition_id": "skill-design-ingest-instruction-v1",
+      "source_path": ".agents/skills/design-ingest/SKILL.md",
+      "source_sha256": "d70cef3b8c272ce507ac257d757fb2283fe7d9a0137c649fcf4ef19562c47f45",
+      "status": "legacy",
+      "supersedes": [],
+      "supported_phases": [
+        "building",
+        "planning",
+        "witnessing"
+      ],
+      "supported_roles": [
+        "design-ingestor",
+        "design-translator",
+        "product-witness"
+      ],
+      "trigger_fixture_ids": {
+        "negative": [
+          "design-ingest-negative-1",
+          "design-ingest-negative-2",
+          "design-ingest-negative-3"
+        ],
+        "positive": [
+          "design-ingest-positive-1",
+          "design-ingest-positive-2",
+          "design-ingest-positive-3"
+        ]
+      },
+      "verification_command": "scripts/check-factory-contract.sh --skill design-ingest",
+      "version": 1
+    },
+    {
+      "allowed_tools": [
+        "repository-read"
+      ],
+      "client_qualification": [
+        {
+          "client_id": "claude",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "codex",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "pi",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        }
+      ],
+      "conflicts_with": [],
+      "context_budget": {
+        "body_bytes": 4096,
+        "metadata_bytes": 1024,
+        "reference_bytes": 0,
+        "resource_bytes": 0,
+        "total_bytes": 5120
+      },
+      "declared_cost_ceiling": {
+        "max_context_tokens": 1280,
+        "max_tool_calls": 8
+      },
+      "dependency_skill_ids": [],
+      "expected_inputs": [
+        "UI intent and existing design-system catalog"
+      ],
+      "expected_outputs": [
+        "Token and component composition decision"
+      ],
+      "handoff_skill_ids": [
+        "snapshot-verify"
+      ],
+      "id": "design-system",
+      "non_capabilities": [
+        "liquid-glass-specialization",
+        "motion-production",
+        "snapshot-execution"
+      ],
+      "owner": "repository-harness",
+      "prerequisites": [
+        "Accepted experience and quality contract exists"
+      ],
+      "primary_capability_id": "design-token-composition",
+      "progressive_disclosure_paths": [],
+      "provenance": {
+        "introduction": "inherited-at-base",
+        "kind": "repository-inherited",
+        "license": "NOASSERTION",
+        "repository_path": ".agents/skills/design-system",
+        "source_commit": "d62035e1fa6cd03c025d793408792650b24ff097",
+        "upstream_pin": null
+      },
+      "public_eval_tags": [
+        "design-token-composition",
+        "skill-routing"
+      ],
+      "qualification_path": ".factory/skills/qualification/design-system.json",
+      "qualification_sha256": "46ecf85c18fd2e9fc0366732ecdeb6a041fbaea5225857129917900f8cc90191",
+      "resources": [],
+      "risk_tiers": [
+        "high",
+        "medium"
+      ],
+      "rollback_predecessor": null,
+      "sealed_partition_id": "skill-design-system-instruction-v1",
+      "source_path": ".agents/skills/design-system/SKILL.md",
+      "source_sha256": "1f333a8971304a8230ff0233b67b1755b3492111414228972994298be1729a41",
+      "status": "legacy",
+      "supersedes": [],
+      "supported_phases": [
+        "building",
+        "witnessing"
+      ],
+      "supported_roles": [
+        "builder",
+        "product-witness"
+      ],
+      "trigger_fixture_ids": {
+        "negative": [
+          "design-system-negative-1",
+          "design-system-negative-2",
+          "design-system-negative-3"
+        ],
+        "positive": [
+          "design-system-positive-1",
+          "design-system-positive-2",
+          "design-system-positive-3"
+        ]
+      },
+      "verification_command": "scripts/check-factory-contract.sh --skill design-system",
+      "version": 1
+    },
+    {
+      "allowed_tools": [
+        "artifact-read",
+        "git-read"
+      ],
+      "client_qualification": [
+        {
+          "client_id": "claude",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "codex",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "pi",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        }
+      ],
+      "conflicts_with": [],
+      "context_budget": {
+        "body_bytes": 4096,
+        "metadata_bytes": 1024,
+        "reference_bytes": 0,
+        "resource_bytes": 0,
+        "total_bytes": 5120
+      },
+      "declared_cost_ceiling": {
+        "max_context_tokens": 1280,
+        "max_tool_calls": 24
+      },
+      "dependency_skill_ids": [],
+      "expected_inputs": [
+        "Current-SHA command results and artifact manifests"
+      ],
+      "expected_outputs": [
+        "Proof, risks, and follow-up handoff"
+      ],
+      "handoff_skill_ids": [],
+      "id": "evidence-pack",
+      "non_capabilities": [
+        "evidence-generation",
+        "release-authorization",
+        "source-implementation"
+      ],
+      "owner": "repository-harness",
+      "prerequisites": [
+        "Evidence is fresh and source-bound"
+      ],
+      "primary_capability_id": "proof-of-done-handoff",
+      "progressive_disclosure_paths": [],
+      "provenance": {
+        "introduction": "inherited-at-base",
+        "kind": "repository-inherited",
+        "license": "NOASSERTION",
+        "repository_path": ".agents/skills/evidence-pack",
+        "source_commit": "d62035e1fa6cd03c025d793408792650b24ff097",
+        "upstream_pin": null
+      },
+      "public_eval_tags": [
+        "proof-of-done-handoff",
+        "skill-routing"
+      ],
+      "qualification_path": ".factory/skills/qualification/evidence-pack.json",
+      "qualification_sha256": "c0c7ac17b0f4266d5c88994dcace741689c107e9fc3b4dd9e0b81f8cb06feaa4",
+      "resources": [],
+      "risk_tiers": [
+        "control-plane",
+        "high",
+        "low",
+        "medium"
+      ],
+      "rollback_predecessor": null,
+      "sealed_partition_id": "skill-evidence-pack-instruction-v1",
+      "source_path": ".agents/skills/evidence-pack/SKILL.md",
+      "source_sha256": "9a222e08e663fa685644baace3364ee8ba7da40f5c60490ef89328eaa7359712",
+      "status": "legacy",
+      "supersedes": [],
+      "supported_phases": [
+        "ready-for-owner",
+        "retrospective",
+        "reviewing",
+        "witnessing"
+      ],
+      "supported_roles": [
+        "builder",
+        "code-auditor",
+        "product-witness"
+      ],
+      "trigger_fixture_ids": {
+        "negative": [
+          "evidence-pack-negative-1",
+          "evidence-pack-negative-2",
+          "evidence-pack-negative-3"
+        ],
+        "positive": [
+          "evidence-pack-positive-1",
+          "evidence-pack-positive-2",
+          "evidence-pack-positive-3"
+        ]
+      },
+      "verification_command": "scripts/check-factory-contract.sh --skill evidence-pack",
+      "version": 1
+    },
+    {
+      "allowed_tools": [
+        "git",
+        "github",
+        "shell"
+      ],
+      "client_qualification": [
+        {
+          "client_id": "claude",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "codex",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "pi",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        }
+      ],
+      "conflicts_with": [],
+      "context_budget": {
+        "body_bytes": 4096,
+        "metadata_bytes": 1024,
+        "reference_bytes": 0,
+        "resource_bytes": 1024,
+        "total_bytes": 6144
+      },
+      "declared_cost_ceiling": {
+        "max_context_tokens": 1536,
+        "max_tool_calls": 24
+      },
+      "dependency_skill_ids": [],
+      "expected_inputs": [
+        "Durable issue, plan, accepted contract, and GitHub state"
+      ],
+      "expected_outputs": [
+        "Verified commits and maintained draft PR"
+      ],
+      "handoff_skill_ids": [
+        "evidence-pack"
+      ],
+      "id": "factory-run",
+      "non_capabilities": [
+        "planning-only",
+        "product-intake",
+        "read-only-review"
+      ],
+      "owner": "repository-harness",
+      "prerequisites": [
+        "Accepted contract",
+        "Isolated worktree",
+        "Owner-only merge"
+      ],
+      "primary_capability_id": "factory-transaction-execution",
+      "progressive_disclosure_paths": [],
+      "provenance": {
+        "introduction": "introduced-in-current-change",
+        "kind": "repository-authored",
+        "license": "NOASSERTION",
+        "repository_path": ".agents/skills/factory-run",
+        "source_commit": null,
+        "upstream_pin": null
+      },
+      "public_eval_tags": [
+        "factory-transaction-execution",
+        "skill-routing"
+      ],
+      "qualification_path": ".factory/skills/qualification/factory-run.json",
+      "qualification_sha256": "a5fe48ca0fa3c03b9c726b4ff02704272404c074d26747012328692974135140",
+      "resources": [
+        {
+          "path": ".agents/skills/factory-run/agents/openai.yaml",
+          "sha256": "61cefa8dcff1798ab19ec91084951f46d1706ed06e12e16b891c9c269cf91d33",
+          "size_bytes": 207
+        }
+      ],
+      "risk_tiers": [
+        "control-plane",
+        "high",
+        "low",
+        "medium"
+      ],
+      "rollback_predecessor": null,
+      "sealed_partition_id": "skill-factory-run-instruction-v1",
+      "source_path": ".agents/skills/factory-run/SKILL.md",
+      "source_sha256": "ff05ebfdbe65543f585ee0226ea7047d0d4fcce0791a15daf05fffa9260b07ed",
+      "status": "legacy",
+      "supersedes": [],
+      "supported_phases": [
+        "building",
+        "pr-checks",
+        "ready-to-build",
+        "reviewing",
+        "verifying",
+        "witnessing"
+      ],
+      "supported_roles": [
+        "builder"
+      ],
+      "trigger_fixture_ids": {
+        "negative": [
+          "factory-run-negative-1",
+          "factory-run-negative-2",
+          "factory-run-negative-3"
+        ],
+        "positive": [
+          "factory-run-positive-1",
+          "factory-run-positive-2",
+          "factory-run-positive-3"
+        ]
+      },
+      "verification_command": "scripts/check-factory-contract.sh --skill factory-run",
+      "version": 1
+    },
+    {
+      "allowed_tools": [
+        "owner-input",
+        "repository-read",
+        "repository-write-product-docs"
+      ],
+      "client_qualification": [
+        {
+          "client_id": "claude",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "codex",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "pi",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        }
+      ],
+      "conflicts_with": [],
+      "context_budget": {
+        "body_bytes": 4096,
+        "metadata_bytes": 1024,
+        "reference_bytes": 0,
+        "resource_bytes": 1024,
+        "total_bytes": 6144
+      },
+      "declared_cost_ceiling": {
+        "max_context_tokens": 1536,
+        "max_tool_calls": 24
+      },
+      "dependency_skill_ids": [],
+      "expected_inputs": [
+        "New app idea or materially incomplete product intent"
+      ],
+      "expected_outputs": [
+        "Durable brief, experience, quality, and preferences"
+      ],
+      "handoff_skill_ids": [
+        "plan-feature"
+      ],
+      "id": "grill-me",
+      "non_capabilities": [
+        "code-review",
+        "implementation-detail-selection",
+        "source-delivery"
+      ],
+      "owner": "repository-harness",
+      "prerequisites": [
+        "Implementation details researched before asking"
+      ],
+      "primary_capability_id": "product-intake",
+      "progressive_disclosure_paths": [],
+      "provenance": {
+        "introduction": "introduced-in-current-change",
+        "kind": "repository-authored",
+        "license": "NOASSERTION",
+        "repository_path": ".agents/skills/grill-me",
+        "source_commit": null,
+        "upstream_pin": null
+      },
+      "public_eval_tags": [
+        "product-intake",
+        "skill-routing"
+      ],
+      "qualification_path": ".factory/skills/qualification/grill-me.json",
+      "qualification_sha256": "d4c05d2d182b19f41f61e9aff30288dc46f3d249f1091b131432c896df825f8d",
+      "resources": [
+        {
+          "path": ".agents/skills/grill-me/agents/openai.yaml",
+          "sha256": "d344a0f5c7cdbd9c2a1e4e141586cdee507fd14e2e9695fddf861856616c8a56",
+          "size_bytes": 187
+        }
+      ],
+      "risk_tiers": [
+        "high",
+        "low",
+        "medium"
+      ],
+      "rollback_predecessor": null,
+      "sealed_partition_id": "skill-grill-me-instruction-v1",
+      "source_path": ".agents/skills/grill-me/SKILL.md",
+      "source_sha256": "56cf2e2d1db75fa8066371022b21f84521dbbe925f8f4524a52ea560a0a32675",
+      "status": "legacy",
+      "supersedes": [],
+      "supported_phases": [
+        "intake-required",
+        "planning"
+      ],
+      "supported_roles": [
+        "product-director"
+      ],
+      "trigger_fixture_ids": {
+        "negative": [
+          "grill-me-negative-1",
+          "grill-me-negative-2",
+          "grill-me-negative-3"
+        ],
+        "positive": [
+          "grill-me-positive-1",
+          "grill-me-positive-2",
+          "grill-me-positive-3"
+        ]
+      },
+      "verification_command": "scripts/check-factory-contract.sh --skill grill-me",
+      "version": 1
+    },
+    {
+      "allowed_tools": [
+        "shell",
+        "visual-inspection",
+        "xcode"
+      ],
+      "client_qualification": [
+        {
+          "client_id": "claude",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "codex",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "pi",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        }
+      ],
+      "conflicts_with": [],
+      "context_budget": {
+        "body_bytes": 8192,
+        "metadata_bytes": 1024,
+        "reference_bytes": 0,
+        "resource_bytes": 0,
+        "total_bytes": 9216
+      },
+      "declared_cost_ceiling": {
+        "max_context_tokens": 2304,
+        "max_tool_calls": 24
+      },
+      "dependency_skill_ids": [
+        "snapshot-verify"
+      ],
+      "expected_inputs": [
+        "Motion intent and product state"
+      ],
+      "expected_outputs": [
+        "Reduced-motion-aware implementation and motion proof"
+      ],
+      "handoff_skill_ids": [
+        "evidence-pack"
+      ],
+      "id": "motion",
+      "non_capabilities": [
+        "liquid-glass-specialization",
+        "performance-root-cause",
+        "static-design-composition"
+      ],
+      "owner": "repository-harness",
+      "prerequisites": [
+        "Design-system vocabulary",
+        "Optional runtime and final-art scope already authorized when applicable"
+      ],
+      "primary_capability_id": "macos-motion-production",
+      "progressive_disclosure_paths": [],
+      "provenance": {
+        "introduction": "inherited-at-base",
+        "kind": "repository-inherited",
+        "license": "NOASSERTION",
+        "repository_path": ".agents/skills/motion",
+        "source_commit": "a58b8b3a41edc509d9dc0ade41e3aaa1f49c60ef",
+        "upstream_pin": null
+      },
+      "public_eval_tags": [
+        "macos-motion-production",
+        "skill-routing"
+      ],
+      "qualification_path": ".factory/skills/qualification/motion.json",
+      "qualification_sha256": "6a3978403d30991c30e44dee41abf30f49f255c79d3a02622aa9cb3ffcbd3d3a",
+      "resources": [],
+      "risk_tiers": [
+        "high",
+        "medium"
+      ],
+      "rollback_predecessor": null,
+      "sealed_partition_id": "skill-motion-instruction-v1",
+      "source_path": ".agents/skills/motion/SKILL.md",
+      "source_sha256": "d8a5ae5997d28dde399272bfc9aa66d5edfed231d4f8a0a1f55731193c99a5c9",
+      "status": "legacy",
+      "supersedes": [],
+      "supported_phases": [
+        "building",
+        "witnessing"
+      ],
+      "supported_roles": [
+        "builder",
+        "product-witness"
+      ],
+      "trigger_fixture_ids": {
+        "negative": [
+          "motion-negative-1",
+          "motion-negative-2",
+          "motion-negative-3"
+        ],
+        "positive": [
+          "motion-positive-1",
+          "motion-positive-2",
+          "motion-positive-3"
+        ]
+      },
+      "verification_command": "scripts/check-factory-contract.sh --skill motion",
+      "version": 1
+    },
+    {
+      "allowed_tools": [
+        "instruments",
+        "shell",
+        "visual-inspection"
+      ],
+      "client_qualification": [
+        {
+          "client_id": "claude",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "codex",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "pi",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        }
+      ],
+      "conflicts_with": [],
+      "context_budget": {
+        "body_bytes": 4096,
+        "metadata_bytes": 1024,
+        "reference_bytes": 0,
+        "resource_bytes": 0,
+        "total_bytes": 5120
+      },
+      "declared_cost_ceiling": {
+        "max_context_tokens": 1280,
+        "max_tool_calls": 24
+      },
+      "dependency_skill_ids": [],
+      "expected_inputs": [
+        "Named performance symptom and reproducible flow"
+      ],
+      "expected_outputs": [
+        "App-attached trace, measured cause, and comparison evidence"
+      ],
+      "handoff_skill_ids": [
+        "evidence-pack"
+      ],
+      "id": "perf-audit",
+      "non_capabilities": [
+        "generic-diff-review",
+        "motion-design",
+        "static-snapshot-proof"
+      ],
+      "owner": "repository-harness",
+      "prerequisites": [
+        "Reproduction is defined"
+      ],
+      "primary_capability_id": "instruments-performance-investigation",
+      "progressive_disclosure_paths": [],
+      "provenance": {
+        "introduction": "inherited-at-base",
+        "kind": "repository-inherited",
+        "license": "NOASSERTION",
+        "repository_path": ".agents/skills/perf-audit",
+        "source_commit": "15f2db7cc3773581a41b36190e40ec3dbc3d8734",
+        "upstream_pin": null
+      },
+      "public_eval_tags": [
+        "instruments-performance-investigation",
+        "skill-routing"
+      ],
+      "qualification_path": ".factory/skills/qualification/perf-audit.json",
+      "qualification_sha256": "f69fbc71ae94483d3e4c09e136332a5bebc30901acaaba48304d6b12983135e1",
+      "resources": [],
+      "risk_tiers": [
+        "high",
+        "medium"
+      ],
+      "rollback_predecessor": null,
+      "sealed_partition_id": "skill-perf-audit-instruction-v1",
+      "source_path": ".agents/skills/perf-audit/SKILL.md",
+      "source_sha256": "afe012befb6e0dfd54a29652e8f617e6b5a4d7fba43a5b498b45fd06e3cd6d6b",
+      "status": "legacy",
+      "supersedes": [],
+      "supported_phases": [
+        "repairing",
+        "verifying"
+      ],
+      "supported_roles": [
+        "builder",
+        "code-auditor"
+      ],
+      "trigger_fixture_ids": {
+        "negative": [
+          "perf-audit-negative-1",
+          "perf-audit-negative-2",
+          "perf-audit-negative-3"
+        ],
+        "positive": [
+          "perf-audit-positive-1",
+          "perf-audit-positive-2",
+          "perf-audit-positive-3"
+        ]
+      },
+      "verification_command": "scripts/check-factory-contract.sh --skill perf-audit",
+      "version": 1
+    },
+    {
+      "allowed_tools": [
+        "git-read",
+        "repository-write-plan"
+      ],
+      "client_qualification": [
+        {
+          "client_id": "claude",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "codex",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "pi",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        }
+      ],
+      "conflicts_with": [],
+      "context_budget": {
+        "body_bytes": 4096,
+        "metadata_bytes": 1024,
+        "reference_bytes": 0,
+        "resource_bytes": 0,
+        "total_bytes": 5120
+      },
+      "declared_cost_ceiling": {
+        "max_context_tokens": 1280,
+        "max_tool_calls": 24
+      },
+      "dependency_skill_ids": [],
+      "expected_inputs": [
+        "Defined feature intent and repository state"
+      ],
+      "expected_outputs": [
+        "Executable living plan with decisions and verification gates"
+      ],
+      "handoff_skill_ids": [
+        "factory-run"
+      ],
+      "id": "plan-feature",
+      "non_capabilities": [
+        "contract-execution",
+        "product-intake",
+        "release-distribution"
+      ],
+      "owner": "repository-harness",
+      "prerequisites": [
+        "Product-level intent exists"
+      ],
+      "primary_capability_id": "living-feature-planning",
+      "progressive_disclosure_paths": [],
+      "provenance": {
+        "introduction": "inherited-at-base",
+        "kind": "repository-inherited",
+        "license": "NOASSERTION",
+        "repository_path": ".agents/skills/plan-feature",
+        "source_commit": "d62035e1fa6cd03c025d793408792650b24ff097",
+        "upstream_pin": null
+      },
+      "public_eval_tags": [
+        "living-feature-planning",
+        "skill-routing"
+      ],
+      "qualification_path": ".factory/skills/qualification/plan-feature.json",
+      "qualification_sha256": "4688adc05dcb4b0a42c7da40ea45b618dcc3043f7e805fabebc6e0700ee7653e",
+      "resources": [],
+      "risk_tiers": [
+        "control-plane",
+        "high",
+        "low",
+        "medium"
+      ],
+      "rollback_predecessor": null,
+      "sealed_partition_id": "skill-plan-feature-instruction-v1",
+      "source_path": ".agents/skills/plan-feature/SKILL.md",
+      "source_sha256": "644d9068016b4e5a27aaa4a7fddbc5df6af22baeaacd0054ce92be0d62a0c53c",
+      "status": "legacy",
+      "supersedes": [],
+      "supported_phases": [
+        "contract-negotiation",
+        "planning"
+      ],
+      "supported_roles": [
+        "contract-author"
+      ],
+      "trigger_fixture_ids": {
+        "negative": [
+          "plan-feature-negative-1",
+          "plan-feature-negative-2",
+          "plan-feature-negative-3"
+        ],
+        "positive": [
+          "plan-feature-positive-1",
+          "plan-feature-positive-2",
+          "plan-feature-positive-3"
+        ]
+      },
+      "verification_command": "scripts/check-factory-contract.sh --skill plan-feature",
+      "version": 1
+    },
+    {
+      "allowed_tools": [
+        "memory-read",
+        "repository-read",
+        "session-read"
+      ],
+      "client_qualification": [
+        {
+          "client_id": "claude",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "codex",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "pi",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        }
+      ],
+      "conflicts_with": [],
+      "context_budget": {
+        "body_bytes": 12288,
+        "metadata_bytes": 1024,
+        "reference_bytes": 0,
+        "resource_bytes": 1024,
+        "total_bytes": 14336
+      },
+      "declared_cost_ceiling": {
+        "max_context_tokens": 3584,
+        "max_tool_calls": 24
+      },
+      "dependency_skill_ids": [],
+      "expected_inputs": [
+        "Project history, memory, and current local skills"
+      ],
+      "expected_outputs": [
+        "Evidence-backed skill updates, gaps, and consolidation recommendations"
+      ],
+      "handoff_skill_ids": [],
+      "id": "project-skill-audit",
+      "non_capabilities": [
+        "bug-root-cause",
+        "diff-review",
+        "factory-transaction-execution"
+      ],
+      "owner": "repository-harness",
+      "prerequisites": [
+        "Audit does not mutate active skills"
+      ],
+      "primary_capability_id": "project-skill-portfolio-audit",
+      "progressive_disclosure_paths": [],
+      "provenance": {
+        "introduction": "inherited-at-base",
+        "kind": "repository-inherited",
+        "license": "NOASSERTION",
+        "repository_path": ".agents/skills/project-skill-audit",
+        "source_commit": "d62035e1fa6cd03c025d793408792650b24ff097",
+        "upstream_pin": null
+      },
+      "public_eval_tags": [
+        "project-skill-portfolio-audit",
+        "skill-routing"
+      ],
+      "qualification_path": ".factory/skills/qualification/project-skill-audit.json",
+      "qualification_sha256": "9fd9d976ed980dcbe9881bb1e9cc1c6becc7e1bf595d73666108ba6146bfa3a0",
+      "resources": [
+        {
+          "path": ".agents/skills/project-skill-audit/agents/openai.yaml",
+          "sha256": "8a8fe226b1289763ee9eda82c125a0c5036d97bfc9aa2cfacdb9937e169daff1",
+          "size_bytes": 237
+        }
+      ],
+      "risk_tiers": [
+        "control-plane",
+        "high",
+        "low",
+        "medium"
+      ],
+      "rollback_predecessor": null,
+      "sealed_partition_id": "skill-project-skill-audit-instruction-v1",
+      "source_path": ".agents/skills/project-skill-audit/SKILL.md",
+      "source_sha256": "efcf47a321259a172920e407ac57ab3c626ed794909cc1818cf50fe236978ae6",
+      "status": "legacy",
+      "supersedes": [],
+      "supported_phases": [
+        "retrospective"
+      ],
+      "supported_roles": [
+        "skill-curator"
+      ],
+      "trigger_fixture_ids": {
+        "negative": [
+          "project-skill-audit-negative-1",
+          "project-skill-audit-negative-2",
+          "project-skill-audit-negative-3"
+        ],
+        "positive": [
+          "project-skill-audit-positive-1",
+          "project-skill-audit-positive-2",
+          "project-skill-audit-positive-3"
+        ]
+      },
+      "verification_command": "scripts/check-factory-contract.sh --skill project-skill-audit",
+      "version": 1
+    },
+    {
+      "allowed_tools": [
+        "shell",
+        "xcode"
+      ],
+      "client_qualification": [
+        {
+          "client_id": "claude",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "codex",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "pi",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        }
+      ],
+      "conflicts_with": [],
+      "context_budget": {
+        "body_bytes": 4096,
+        "metadata_bytes": 1024,
+        "reference_bytes": 0,
+        "resource_bytes": 0,
+        "total_bytes": 5120
+      },
+      "declared_cost_ceiling": {
+        "max_context_tokens": 1280,
+        "max_tool_calls": 24
+      },
+      "dependency_skill_ids": [],
+      "expected_inputs": [
+        "Finished app, target version, distribution intent"
+      ],
+      "expected_outputs": [
+        "Preflight, version bump, archive, notes, and owner handoff"
+      ],
+      "handoff_skill_ids": [
+        "evidence-pack"
+      ],
+      "id": "release",
+      "non_capabilities": [
+        "ordinary-feature-delivery",
+        "performance-investigation",
+        "production-upload-authorization"
+      ],
+      "owner": "repository-harness",
+      "prerequisites": [
+        "Owner supplies signing and distribution authorization"
+      ],
+      "primary_capability_id": "macos-release-handoff",
+      "progressive_disclosure_paths": [],
+      "provenance": {
+        "introduction": "inherited-at-base",
+        "kind": "repository-inherited",
+        "license": "NOASSERTION",
+        "repository_path": ".agents/skills/release",
+        "source_commit": "15f2db7cc3773581a41b36190e40ec3dbc3d8734",
+        "upstream_pin": null
+      },
+      "public_eval_tags": [
+        "macos-release-handoff",
+        "skill-routing"
+      ],
+      "qualification_path": ".factory/skills/qualification/release.json",
+      "qualification_sha256": "36f7fc5d52a28e2c8a6f8c9111af62061d31e1cda89ba892d6a64c164fe97751",
+      "resources": [],
+      "risk_tiers": [
+        "high"
+      ],
+      "rollback_predecessor": null,
+      "sealed_partition_id": "skill-release-instruction-v1",
+      "source_path": ".agents/skills/release/SKILL.md",
+      "source_sha256": "1d57178002f4ecba1e799722305099fb3a22ac74e380338b746af99631de4ae1",
+      "status": "legacy",
+      "supersedes": [],
+      "supported_phases": [
+        "ready-for-owner",
+        "verifying"
+      ],
+      "supported_roles": [
+        "builder",
+        "product-witness"
+      ],
+      "trigger_fixture_ids": {
+        "negative": [
+          "release-negative-1",
+          "release-negative-2",
+          "release-negative-3"
+        ],
+        "positive": [
+          "release-positive-1",
+          "release-positive-2",
+          "release-positive-3"
+        ]
+      },
+      "verification_command": "scripts/check-factory-contract.sh --skill release",
+      "version": 1
+    },
+    {
+      "allowed_tools": [
+        "collaboration",
+        "git",
+        "shell"
+      ],
+      "client_qualification": [
+        {
+          "client_id": "claude",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "codex",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "pi",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        }
+      ],
+      "conflicts_with": [],
+      "context_budget": {
+        "body_bytes": 8192,
+        "metadata_bytes": 1024,
+        "reference_bytes": 0,
+        "resource_bytes": 1024,
+        "total_bytes": 10240
+      },
+      "declared_cost_ceiling": {
+        "max_context_tokens": 2560,
+        "max_tool_calls": 24
+      },
+      "dependency_skill_ids": [],
+      "expected_inputs": [
+        "Explicit diff scope and intended behavior"
+      ],
+      "expected_outputs": [
+        "Prioritized evidence-backed review findings"
+      ],
+      "handoff_skill_ids": [],
+      "id": "review-swarm",
+      "non_capabilities": [
+        "bug-root-cause",
+        "evidence-packaging",
+        "source-fix-implementation"
+      ],
+      "owner": "repository-harness",
+      "prerequisites": [
+        "All agents remain read-only"
+      ],
+      "primary_capability_id": "parallel-diff-review",
+      "progressive_disclosure_paths": [],
+      "provenance": {
+        "introduction": "inherited-at-base",
+        "kind": "repository-inherited",
+        "license": "NOASSERTION",
+        "repository_path": ".agents/skills/review-swarm",
+        "source_commit": "d62035e1fa6cd03c025d793408792650b24ff097",
+        "upstream_pin": null
+      },
+      "public_eval_tags": [
+        "parallel-diff-review",
+        "skill-routing"
+      ],
+      "qualification_path": ".factory/skills/qualification/review-swarm.json",
+      "qualification_sha256": "f8d2c0ab3750eb39643fe6025eb5f1296277970faf0530785a2286cd68e17700",
+      "resources": [
+        {
+          "path": ".agents/skills/review-swarm/agents/openai.yaml",
+          "sha256": "4221ebcc950ab8037f39d64bd2ee5e360f5603d9bf9c63926b3f5d56699c0caa",
+          "size_bytes": 248
+        }
+      ],
+      "risk_tiers": [
+        "control-plane",
+        "high",
+        "low",
+        "medium"
+      ],
+      "rollback_predecessor": null,
+      "sealed_partition_id": "skill-review-swarm-instruction-v1",
+      "source_path": ".agents/skills/review-swarm/SKILL.md",
+      "source_sha256": "5a88b5c3f7520a31a9ab667a72ecb83d2ba850f4de0d2285006166857626ad93",
+      "status": "legacy",
+      "supersedes": [],
+      "supported_phases": [
+        "reviewing"
+      ],
+      "supported_roles": [
+        "code-auditor"
+      ],
+      "trigger_fixture_ids": {
+        "negative": [
+          "review-swarm-negative-1",
+          "review-swarm-negative-2",
+          "review-swarm-negative-3"
+        ],
+        "positive": [
+          "review-swarm-positive-1",
+          "review-swarm-positive-2",
+          "review-swarm-positive-3"
+        ]
+      },
+      "verification_command": "scripts/check-factory-contract.sh --skill review-swarm",
+      "version": 1
+    },
+    {
+      "allowed_tools": [
+        "shell",
+        "visual-inspection",
+        "xcode"
+      ],
+      "client_qualification": [
+        {
+          "client_id": "claude",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "codex",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "pi",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        }
+      ],
+      "conflicts_with": [],
+      "context_budget": {
+        "body_bytes": 8192,
+        "metadata_bytes": 1024,
+        "reference_bytes": 0,
+        "resource_bytes": 0,
+        "total_bytes": 9216
+      },
+      "declared_cost_ceiling": {
+        "max_context_tokens": 2304,
+        "max_tool_calls": 24
+      },
+      "dependency_skill_ids": [],
+      "expected_inputs": [
+        "Reachable Preview states and snapshot filter"
+      ],
+      "expected_outputs": [
+        "Strict snapshot result and inspected contact sheet"
+      ],
+      "handoff_skill_ids": [
+        "evidence-pack"
+      ],
+      "id": "snapshot-verify",
+      "non_capabilities": [
+        "design-token-selection",
+        "motion-video-proof",
+        "performance-tracing"
+      ],
+      "owner": "repository-harness",
+      "prerequisites": [
+        "Preview states are deterministic"
+      ],
+      "primary_capability_id": "swiftui-preview-snapshot-proof",
+      "progressive_disclosure_paths": [],
+      "provenance": {
+        "introduction": "inherited-at-base",
+        "kind": "repository-inherited",
+        "license": "NOASSERTION",
+        "repository_path": ".agents/skills/snapshot-verify",
+        "source_commit": "264167b0d926cf6edd05c16fd2ac61fc090bc93d",
+        "upstream_pin": null
+      },
+      "public_eval_tags": [
+        "skill-routing",
+        "swiftui-preview-snapshot-proof"
+      ],
+      "qualification_path": ".factory/skills/qualification/snapshot-verify.json",
+      "qualification_sha256": "0823c882c91dfdad3d6426eb371b6add3948a614a5de6e82c25d2f5cb878f3d3",
+      "resources": [],
+      "risk_tiers": [
+        "high",
+        "medium"
+      ],
+      "rollback_predecessor": null,
+      "sealed_partition_id": "skill-snapshot-verify-instruction-v1",
+      "source_path": ".agents/skills/snapshot-verify/SKILL.md",
+      "source_sha256": "4ca04831969b121e497318328986ac256c5aaa317b223847778aba32bb088529",
+      "status": "legacy",
+      "supersedes": [],
+      "supported_phases": [
+        "verifying",
+        "witnessing"
+      ],
+      "supported_roles": [
+        "builder",
+        "product-witness"
+      ],
+      "trigger_fixture_ids": {
+        "negative": [
+          "snapshot-verify-negative-1",
+          "snapshot-verify-negative-2",
+          "snapshot-verify-negative-3"
+        ],
+        "positive": [
+          "snapshot-verify-positive-1",
+          "snapshot-verify-positive-2",
+          "snapshot-verify-positive-3"
+        ]
+      },
+      "verification_command": "scripts/check-factory-contract.sh --skill snapshot-verify",
+      "version": 1
+    },
+    {
+      "allowed_tools": [
+        "repository-read",
+        "shell",
+        "visual-inspection",
+        "xcode"
+      ],
+      "client_qualification": [
+        {
+          "client_id": "claude",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "codex",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        },
+        {
+          "client_id": "pi",
+          "client_version": null,
+          "model_id": null,
+          "status": "unqualified"
+        }
+      ],
+      "conflicts_with": [],
+      "context_budget": {
+        "body_bytes": 4096,
+        "metadata_bytes": 1024,
+        "reference_bytes": 0,
+        "resource_bytes": 1024,
+        "total_bytes": 6144
+      },
+      "declared_cost_ceiling": {
+        "max_context_tokens": 1536,
+        "max_tool_calls": 24
+      },
+      "dependency_skill_ids": [
+        "design-system"
+      ],
+      "expected_inputs": [
+        "macOS glass/chrome intent and affected UI"
+      ],
+      "expected_outputs": [
+        "Native glass implementation or review against platform rules"
+      ],
+      "handoff_skill_ids": [
+        "snapshot-verify"
+      ],
+      "id": "swiftui-liquid-glass",
+      "non_capabilities": [
+        "general-design-system-composition",
+        "motion-production",
+        "snapshot-execution"
+      ],
+      "owner": "repository-harness",
+      "prerequisites": [
+        "Accepted experience and quality contract exists",
+        "Design-system rules read"
+      ],
+      "primary_capability_id": "swiftui-liquid-glass",
+      "progressive_disclosure_paths": [],
+      "provenance": {
+        "introduction": "inherited-at-base",
+        "kind": "repository-inherited",
+        "license": "NOASSERTION",
+        "repository_path": ".agents/skills/swiftui-liquid-glass",
+        "source_commit": "15f2db7cc3773581a41b36190e40ec3dbc3d8734",
+        "upstream_pin": null
+      },
+      "public_eval_tags": [
+        "skill-routing",
+        "swiftui-liquid-glass"
+      ],
+      "qualification_path": ".factory/skills/qualification/swiftui-liquid-glass.json",
+      "qualification_sha256": "35ec706305a37580c8ce8908a904f6a7c29d69a99a76b43972aa1c5481a7177c",
+      "resources": [
+        {
+          "path": ".agents/skills/swiftui-liquid-glass/agents/openai.yaml",
+          "sha256": "c0558fe64c07f3cef63a002c4dacaf32fd9424700356d2fdc1262a2b27481e56",
+          "size_bytes": 221
+        }
+      ],
+      "risk_tiers": [
+        "high",
+        "medium"
+      ],
+      "rollback_predecessor": null,
+      "sealed_partition_id": "skill-swiftui-liquid-glass-instruction-v1",
+      "source_path": ".agents/skills/swiftui-liquid-glass/SKILL.md",
+      "source_sha256": "aba10ce36631c5ddec9de84f1322d1658dc53b6c6517126739b26e932ac25406",
+      "status": "legacy",
+      "supersedes": [],
+      "supported_phases": [
+        "building",
+        "witnessing"
+      ],
+      "supported_roles": [
+        "builder",
+        "product-witness"
+      ],
+      "trigger_fixture_ids": {
+        "negative": [
+          "swiftui-liquid-glass-negative-1",
+          "swiftui-liquid-glass-negative-2",
+          "swiftui-liquid-glass-negative-3"
+        ],
+        "positive": [
+          "swiftui-liquid-glass-positive-1",
+          "swiftui-liquid-glass-positive-2",
+          "swiftui-liquid-glass-positive-3"
+        ]
+      },
+      "verification_command": "scripts/check-factory-contract.sh --skill swiftui-liquid-glass",
+      "version": 1
+    }
+  ]
+}

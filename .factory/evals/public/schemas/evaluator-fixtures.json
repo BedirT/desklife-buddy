@@ -1,0 +1,309 @@
+{
+  "fixtures": [
+    {
+      "expected_invalid_reason": "empty private scaffold must contain neither cases nor evaluator code",
+      "invalid": {
+        "acceptance_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "cases_present": true,
+        "epoch_zero_frozen": false,
+        "evaluator_code_present": false,
+        "schema_digests": [
+          {
+            "schema_id": "evaluator-v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ],
+        "schema_version": 1,
+        "trusted_root_sha": "1111111111111111111111111111111111111111"
+      },
+      "record_name": "PrivateEvaluationRootManifest",
+      "schema_path": ".factory/schemas/evaluator.schema.json",
+      "schema_pointer": "#/$defs/PrivateEvaluationRootManifest",
+      "valid": {
+        "acceptance_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "cases_present": false,
+        "epoch_zero_frozen": false,
+        "evaluator_code_present": false,
+        "schema_digests": [
+          {
+            "schema_id": "evaluator-v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ],
+        "schema_version": 1,
+        "trusted_root_sha": "1111111111111111111111111111111111111111"
+      }
+    },
+    {
+      "expected_invalid_reason": "Evolution acceptance policy permits only inert instruction-like candidate kinds",
+      "invalid": {
+        "components": [
+          {
+            "allowed_candidate_kinds": [
+              "executable-resource"
+            ],
+            "allowed_client_ids": [
+              "codex-1"
+            ],
+            "allowed_model_ids": [
+              "model-a"
+            ],
+            "allowed_paths": [
+              ".agents/skills/grill-me/SKILL.md"
+            ],
+            "base_component_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "budget_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "component_id": "skill-grill-me",
+            "maximum_candidate_bytes": 4096,
+            "maximum_changed_paths": 1,
+            "required_evidence": [
+              {
+                "kind": "trigger-proof",
+                "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+              }
+            ],
+            "required_schema_digests": [
+              {
+                "schema_id": "skills-v1",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            ],
+            "strata_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+          }
+        ],
+        "evaluator_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "maximum_selection_queries": 3,
+        "minimum_pass_rate": 1,
+        "schema_version": 1,
+        "sealed_epoch": {
+          "epoch_id": "sealed-0",
+          "partition": "sealed",
+          "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "selection_epoch": {
+          "epoch_id": "selection-0",
+          "partition": "selection",
+          "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        },
+        "trusted_root_sha": "1111111111111111111111111111111111111111"
+      },
+      "record_name": "EvolutionAcceptancePolicy",
+      "schema_path": ".factory/schemas/evaluator.schema.json",
+      "schema_pointer": "#/$defs/EvolutionAcceptancePolicy",
+      "valid": {
+        "components": [
+          {
+            "allowed_candidate_kinds": [
+              "instruction"
+            ],
+            "allowed_client_ids": [
+              "codex-1"
+            ],
+            "allowed_model_ids": [
+              "model-a"
+            ],
+            "allowed_paths": [
+              ".agents/skills/grill-me/SKILL.md"
+            ],
+            "base_component_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "budget_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "component_id": "skill-grill-me",
+            "maximum_candidate_bytes": 4096,
+            "maximum_changed_paths": 1,
+            "required_evidence": [
+              {
+                "kind": "trigger-proof",
+                "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+              }
+            ],
+            "required_schema_digests": [
+              {
+                "schema_id": "skills-v1",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            ],
+            "strata_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+          }
+        ],
+        "evaluator_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "maximum_selection_queries": 3,
+        "minimum_pass_rate": 1,
+        "schema_version": 1,
+        "sealed_epoch": {
+          "epoch_id": "sealed-0",
+          "partition": "sealed",
+          "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "selection_epoch": {
+          "epoch_id": "selection-0",
+          "partition": "selection",
+          "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        },
+        "trusted_root_sha": "1111111111111111111111111111111111111111"
+      }
+    },
+    {
+      "expected_invalid_reason": "private evaluator request partition is selection or sealed only",
+      "invalid": {
+        "base_component_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "budget_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "candidate_component_id": "skill-grill-me",
+        "candidate_head_sha": "3333333333333333333333333333333333333333",
+        "candidate_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "changed_paths": [
+          ".agents/skills/grill-me/SKILL.md"
+        ],
+        "client_id": "codex-1",
+        "component_kind": "skill-instruction",
+        "epoch": "sealed-0",
+        "epoch_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "evaluator_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "evidence": [
+          {
+            "kind": "trigger-proof",
+            "proven_at_head_sha": "3333333333333333333333333333333333333333",
+            "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+          }
+        ],
+        "frozen": true,
+        "model_id": "model-a",
+        "nonce": "0123456789abcdef0123456789abcdef",
+        "partition": "train",
+        "payload_ref": {
+          "media_type": "text/markdown",
+          "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "size_bytes": 128
+        },
+        "policy_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "query_ordinal": 1,
+        "request_id": "evaluation-request-1",
+        "schema_digests": [
+          {
+            "schema_id": "skills-v1",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        ],
+        "schema_version": 1,
+        "strata_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "trusted_base_sha": "1111111111111111111111111111111111111111"
+      },
+      "record_name": "EvaluationRequest",
+      "schema_path": ".factory/schemas/evaluator.schema.json",
+      "schema_pointer": "#/$defs/EvaluationRequest",
+      "valid": {
+        "base_component_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "budget_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "candidate_component_id": "skill-grill-me",
+        "candidate_head_sha": "3333333333333333333333333333333333333333",
+        "candidate_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "changed_paths": [
+          ".agents/skills/grill-me/SKILL.md"
+        ],
+        "client_id": "codex-1",
+        "component_kind": "skill-instruction",
+        "epoch": "sealed-0",
+        "epoch_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "evaluator_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "evidence": [
+          {
+            "kind": "trigger-proof",
+            "proven_at_head_sha": "3333333333333333333333333333333333333333",
+            "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+          }
+        ],
+        "frozen": true,
+        "model_id": "model-a",
+        "nonce": "0123456789abcdef0123456789abcdef",
+        "partition": "sealed",
+        "payload_ref": {
+          "media_type": "text/markdown",
+          "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "size_bytes": 128
+        },
+        "policy_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "query_ordinal": 1,
+        "request_id": "evaluation-request-1",
+        "schema_digests": [
+          {
+            "schema_id": "skills-v1",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        ],
+        "schema_version": 1,
+        "strata_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "trusted_base_sha": "1111111111111111111111111111111111111111"
+      }
+    },
+    {
+      "expected_invalid_reason": "aggregate attestation exposes only an action and sanitized failure class",
+      "invalid": {
+        "aggregate_metrics": [
+          {
+            "name": "accuracy",
+            "value": 1
+          }
+        ],
+        "budget_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "candidate_component_id": "skill-grill-me",
+        "candidate_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "client_id": "codex-1",
+        "decision": "accept",
+        "epoch": "sealed-0",
+        "epoch_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "evaluator_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "execution_receipt_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "expires_at": "2026-07-11T01:00:00Z",
+        "failure_class": "none",
+        "issued_at": "2026-07-11T00:00:00Z",
+        "model_id": "model-a",
+        "nonce_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "partition": "sealed",
+        "policy_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "query_ledger_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "query_ordinal": 1,
+        "raw_output_included": true,
+        "request_id": "evaluation-request-1",
+        "request_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "schema_version": 1,
+        "signature": "c3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzcw==",
+        "signature_algorithm": "ed25519",
+        "signing_key_id": "evaluator-key-1",
+        "strata_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "trusted_base_sha": "2222222222222222222222222222222222222222"
+      },
+      "record_name": "AggregateAttestation",
+      "schema_path": ".factory/schemas/evaluator.schema.json",
+      "schema_pointer": "#/$defs/AggregateAttestation",
+      "valid": {
+        "budget_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "candidate_component_id": "skill-grill-me",
+        "candidate_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "client_id": "codex-1",
+        "decision": "accept",
+        "epoch": "sealed-0",
+        "epoch_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "evaluator_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "execution_receipt_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "expires_at": "2026-07-11T01:00:00Z",
+        "failure_class": "none",
+        "issued_at": "2026-07-11T00:00:00Z",
+        "model_id": "model-a",
+        "nonce_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "partition": "sealed",
+        "policy_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "query_ledger_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "query_ordinal": 1,
+        "raw_output_included": false,
+        "request_id": "evaluation-request-1",
+        "request_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "schema_version": 1,
+        "signature": "c3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzcw==",
+        "signature_algorithm": "ed25519",
+        "signing_key_id": "evaluator-key-1",
+        "strata_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "trusted_base_sha": "2222222222222222222222222222222222222222"
+      }
+    }
+  ],
+  "schema_version": 1
+}

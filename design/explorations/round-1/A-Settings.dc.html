@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; }
+    .lbl { font-size: 13px; color: #6f6961; text-align: right; padding-top: 2px; }
+    .row { display: grid; grid-template-columns: 168px 1fr; gap: 20px; }
+    .radio { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #b8b1a7; background: #fff; flex: none; margin-top: 1px; }
+    .radio.on { border-color: #8e6323; background: #b07a2e; box-shadow: inset 0 0 0 3px #fdfcfa; }
+    .opt-t { font-size: 13px; color: #26241f; }
+    .opt-d { font-size: 12px; color: #8a837a; margin-top: 3px; font-variant-numeric: tabular-nums; }
+    .cbx { width: 14px; height: 14px; border-radius: 3.5px; border: 1px solid #b8b1a7; background: #fff; flex: none; }
+    .cbx.on { background: #b07a2e; border-color: #8e6323; }
+    .lnk { color: #a06f27; text-decoration: none; border-bottom: 1px solid rgba(160,111,39,0.35); }
+    .stp { height: 22px; border: 1px solid #cdc7bd; border-radius: 5px; background: #fff; display: inline-flex; align-items: center; padding: 0 8px; font-size: 13px; color: #26241f; font-variant-numeric: tabular-nums; }
+    .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 3px 12px 2px; border-radius: 6px; font-size: 11px; color: #55504a; }
+    .tab.on { background: rgba(60,53,44,0.11); color: #26241f; }
+  </style>
+</helmet>
+<div style="position: relative; width: 1000px; height: 700px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: linear-gradient(163deg, #bcae9a 0%, #a09684 100%);">
+
+  <div style="position: absolute; left: 60px; top: 46px; width: 880px; height: 610px; border-radius: 11px; background: #fdfcfa; box-shadow: 0 30px 70px rgba(30,25,18,0.34), 0 0 0 0.5px rgba(60,53,44,0.16); overflow: hidden;">
+
+    <!-- title bar + tab strip -->
+    <div style="height: 52px; background: #f3f0eb; border-bottom: 1px solid #e2ddd5; display: flex; align-items: center; padding: 0 14px;">
+      <div style="display: flex; gap: 8px;">
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: #e5695e;"></div>
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: #d6d1c9;"></div>
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: #d6d1c9;"></div>
+      </div>
+      <div style="margin-left: auto; margin-right: auto; display: flex; gap: 2px; transform: translateX(-26px);">
+        <div class="tab"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.6" stroke="#55504a" stroke-width="1.3" fill="none"/><path d="M8 4.9V8l2.1 1.4" stroke="#55504a" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg>General</div>
+        <div class="tab on"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2.2" y="3.4" width="11.6" height="10.2" rx="2" stroke="#26241f" stroke-width="1.3" fill="none"/><path d="M2.2 6.6h11.6M5.4 2.2v2.2M10.6 2.2v2.2" stroke="#26241f" stroke-width="1.3" stroke-linecap="round"/></svg>Schedule</div>
+        <div class="tab"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M2.4 8h3l1.6-3.4L9.6 12l1.4-4h2.6" stroke="#55504a" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Breaks</div>
+        <div class="tab"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 2.2l4.6 1.8v3.6c0 2.7-1.9 4.6-4.6 5.6-2.7-1-4.6-2.9-4.6-5.6V4z" stroke="#55504a" stroke-width="1.3" fill="none" stroke-linejoin="round"/></svg>Privacy</div>
+        <div class="tab"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.6" stroke="#55504a" stroke-width="1.3" fill="none"/><path d="M8 7.2v3.4M8 5.2v.2" stroke="#55504a" stroke-width="1.4" stroke-linecap="round"/></svg>About</div>
+      </div>
+    </div>
+
+    <div style="padding: 34px 44px 0 0;">
+
+      <!-- Rhythm -->
+      <div class="row">
+        <div class="lbl">Rhythm</div>
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; gap: 9px;">
+            <div class="radio"></div>
+            <div><div class="opt-t">Gentle</div><div class="opt-d">Visual reset about every 30 minutes · movement about every 75</div></div>
+          </div>
+          <div style="display: flex; gap: 9px;">
+            <div class="radio on"></div>
+            <div><div class="opt-t">Balanced</div><div class="opt-d">Visual reset about every 25 minutes · movement about every 60</div></div>
+          </div>
+          <div style="display: flex; gap: 9px;">
+            <div class="radio"></div>
+            <div><div class="opt-t">Frequent movement</div><div class="opt-d">Visual reset about every 25 minutes · movement about every 35</div></div>
+          </div>
+          <div style="margin-top: 2px; font-size: 12px; color: #8a837a; line-height: 1.5; max-width: 430px;">
+            The evidence supports a window, not an exact number. <a class="lnk" href="#">Why these defaults?</a>
+          </div>
+        </div>
+      </div>
+
+      <div style="height: 1px; background: #eae5de; margin: 28px 0 28px 168px;"></div>
+
+      <!-- Heads-up -->
+      <div class="row">
+        <div class="lbl">Heads-up</div>
+        <div>
+          <div style="display: flex; gap: 9px; align-items: flex-start;">
+            <div class="cbx on"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3.4 7.2l2.3 2.3 4.9-5" stroke="#fff" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div>
+              <div class="opt-t">Quiet notice about 45 seconds before a break</div>
+              <div class="opt-d">Uses notifications if you allow them. Without them, the menu-bar item changes instead.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height: 1px; background: #eae5de; margin: 28px 0 28px 168px;"></div>
+
+      <!-- Working hours -->
+      <div class="row">
+        <div class="lbl">Working hours</div>
+        <div>
+          <div style="display: flex; gap: 9px; align-items: flex-start;">
+            <div class="cbx on"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3.4 7.2l2.3 2.3 4.9-5" stroke="#fff" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="opt-t">Only remind me during working hours</div>
+          </div>
+          <div style="margin-top: 14px; margin-left: 23px; display: flex; align-items: center; gap: 8px;">
+            <span class="stp">9:00 AM</span>
+            <span style="font-size: 13px; color: #8a837a;">to</span>
+            <span class="stp">6:00 PM</span>
+            <span style="font-size: 13px; color: #8a837a; margin-left: 8px;">on</span>
+            <span class="stp">Weekdays<svg width="12" height="12" viewBox="0 0 12 12" style="margin-left: 6px;"><path d="M3.4 4.6L6 7.2l2.6-2.6" stroke="#8a837a" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+        </div>
+      </div>
+
+      <div style="height: 1px; background: #eae5de; margin: 28px 0 28px 168px;"></div>
+
+      <!-- Clocks -->
+      <div class="row">
+        <div class="lbl">Clocks</div>
+        <div style="font-size: 12.5px; color: #8a837a; line-height: 1.6; max-width: 440px;">
+          Timing is based on estimated active computer use — keyboard and pointer activity only.
+          It doesn’t know whether you are sitting, standing, or looking at the screen.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,794 @@
+{
+  "$defs": {
+    "CapabilityMap": {
+      "additionalProperties": false,
+      "properties": {
+        "capabilities": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/StableId"
+              },
+              "primary_skill_id": {
+                "$ref": "#/$defs/StableId"
+              }
+            },
+            "required": [
+              "id",
+              "primary_skill_id"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "composition_edges": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "from_skill_id": {
+                "$ref": "#/$defs/StableId"
+              },
+              "kind": {
+                "enum": [
+                  "hands_off_to",
+                  "uses"
+                ]
+              },
+              "to_skill_id": {
+                "$ref": "#/$defs/StableId"
+              }
+            },
+            "required": [
+              "from_skill_id",
+              "kind",
+              "to_skill_id"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "schema_version": {
+          "const": 1
+        }
+      },
+      "required": [
+        "capabilities",
+        "composition_edges",
+        "schema_version"
+      ],
+      "type": "object"
+    },
+    "ClientQualification": {
+      "additionalProperties": false,
+      "properties": {
+        "client_id": {
+          "enum": [
+            "claude",
+            "codex",
+            "pi"
+          ]
+        },
+        "client_version": {
+          "oneOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "model_id": {
+          "oneOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "failed",
+            "passed",
+            "pending",
+            "unqualified"
+          ]
+        }
+      },
+      "required": [
+        "client_id",
+        "client_version",
+        "model_id",
+        "status"
+      ],
+      "type": "object"
+    },
+    "ComponentHash": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/RelativePath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path",
+        "sha256",
+        "size_bytes"
+      ],
+      "type": "object"
+    },
+    "ContextBudget": {
+      "additionalProperties": false,
+      "properties": {
+        "body_bytes": {
+          "maximum": 16777216,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "metadata_bytes": {
+          "maximum": 16777216,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "reference_bytes": {
+          "maximum": 16777216,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "resource_bytes": {
+          "maximum": 16777216,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "total_bytes": {
+          "maximum": 16777216,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "body_bytes",
+        "metadata_bytes",
+        "reference_bytes",
+        "resource_bytes",
+        "total_bytes"
+      ],
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "introduction": {
+          "enum": [
+            "inherited-at-base",
+            "introduced-in-current-change"
+          ]
+        },
+        "kind": {
+          "enum": [
+            "repository-authored",
+            "repository-inherited"
+          ]
+        },
+        "license": {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        "repository_path": {
+          "$ref": "#/$defs/RelativePath"
+        },
+        "source_commit": {
+          "oneOf": [
+            {
+              "pattern": "^[a-f0-9]{40}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "upstream_pin": {
+          "oneOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "introduction",
+        "kind",
+        "license",
+        "repository_path",
+        "source_commit",
+        "upstream_pin"
+      ],
+      "type": "object"
+    },
+    "QualificationLane": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_refs": {
+          "items": {
+            "$ref": "#/$defs/RelativePath"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "id": {
+          "enum": [
+            "ablation",
+            "budget",
+            "cross-client",
+            "provenance",
+            "public-outcome",
+            "sealed-instruction",
+            "tool-resource",
+            "trigger"
+          ]
+        },
+        "status": {
+          "enum": [
+            "failed",
+            "inconclusive",
+            "passed",
+            "pending"
+          ]
+        }
+      },
+      "required": [
+        "evidence_refs",
+        "id",
+        "status"
+      ],
+      "type": "object"
+    },
+    "RelativePath": {
+      "maxLength": 1024,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*(?:^|/)\\.git(?:/|$)).+$",
+      "type": "string"
+    },
+    "Sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "SkillManifest": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_tools": {
+          "items": {
+            "$ref": "#/$defs/StableId"
+          },
+          "maxItems": 256,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "client_qualification": {
+          "items": {
+            "$ref": "#/$defs/ClientQualification"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "conflicts_with": {
+          "items": {
+            "$ref": "#/$defs/StableId"
+          },
+          "maxItems": 256,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "context_budget": {
+          "$ref": "#/$defs/ContextBudget"
+        },
+        "declared_cost_ceiling": {
+          "additionalProperties": false,
+          "properties": {
+            "max_context_tokens": {
+              "maximum": 1000000,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "max_tool_calls": {
+              "maximum": 100000,
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "max_context_tokens",
+            "max_tool_calls"
+          ],
+          "type": "object"
+        },
+        "dependency_skill_ids": {
+          "items": {
+            "$ref": "#/$defs/StableId"
+          },
+          "maxItems": 256,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "expected_inputs": {
+          "items": {
+            "maxLength": 512,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 256,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "expected_outputs": {
+          "items": {
+            "maxLength": 512,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 256,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "handoff_skill_ids": {
+          "items": {
+            "$ref": "#/$defs/StableId"
+          },
+          "maxItems": 256,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "id": {
+          "$ref": "#/$defs/StableId"
+        },
+        "non_capabilities": {
+          "items": {
+            "$ref": "#/$defs/StableId"
+          },
+          "maxItems": 256,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "owner": {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        "prerequisites": {
+          "items": {
+            "maxLength": 512,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 256,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "primary_capability_id": {
+          "$ref": "#/$defs/StableId"
+        },
+        "progressive_disclosure_paths": {
+          "items": {
+            "$ref": "#/$defs/RelativePath"
+          },
+          "maxItems": 256,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "public_eval_tags": {
+          "items": {
+            "$ref": "#/$defs/StableId"
+          },
+          "maxItems": 256,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "qualification_path": {
+          "$ref": "#/$defs/RelativePath"
+        },
+        "qualification_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "resources": {
+          "items": {
+            "$ref": "#/$defs/ComponentHash"
+          },
+          "maxItems": 256,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "risk_tiers": {
+          "items": {
+            "enum": [
+              "control-plane",
+              "high",
+              "low",
+              "medium"
+            ]
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "rollback_predecessor": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sealed_partition_id": {
+          "$ref": "#/$defs/StableId"
+        },
+        "source_path": {
+          "$ref": "#/$defs/RelativePath"
+        },
+        "source_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "candidate",
+            "deprecated",
+            "legacy",
+            "probation",
+            "quarantined"
+          ]
+        },
+        "supersedes": {
+          "items": {
+            "$ref": "#/$defs/StableId"
+          },
+          "maxItems": 256,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "supported_phases": {
+          "items": {
+            "$ref": "#/$defs/StableId"
+          },
+          "maxItems": 256,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "supported_roles": {
+          "items": {
+            "$ref": "#/$defs/StableId"
+          },
+          "maxItems": 256,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "trigger_fixture_ids": {
+          "additionalProperties": false,
+          "properties": {
+            "negative": {
+              "items": {
+                "$ref": "#/$defs/StableId"
+              },
+              "maxItems": 256,
+              "minItems": 3,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "positive": {
+              "items": {
+                "$ref": "#/$defs/StableId"
+              },
+              "maxItems": 256,
+              "minItems": 3,
+              "type": "array",
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "negative",
+            "positive"
+          ],
+          "type": "object"
+        },
+        "verification_command": {
+          "maxLength": 1024,
+          "minLength": 1,
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "allowed_tools",
+        "client_qualification",
+        "conflicts_with",
+        "context_budget",
+        "declared_cost_ceiling",
+        "dependency_skill_ids",
+        "expected_inputs",
+        "expected_outputs",
+        "handoff_skill_ids",
+        "id",
+        "non_capabilities",
+        "owner",
+        "prerequisites",
+        "primary_capability_id",
+        "progressive_disclosure_paths",
+        "provenance",
+        "public_eval_tags",
+        "qualification_path",
+        "qualification_sha256",
+        "resources",
+        "risk_tiers",
+        "rollback_predecessor",
+        "sealed_partition_id",
+        "source_path",
+        "source_sha256",
+        "status",
+        "supersedes",
+        "supported_phases",
+        "supported_roles",
+        "trigger_fixture_ids",
+        "verification_command",
+        "version"
+      ],
+      "type": "object"
+    },
+    "SkillMigrationEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "activation_status": {
+          "const": "pending-post-merge"
+        },
+        "disposition": {
+          "enum": [
+            "introduce",
+            "replace",
+            "retain",
+            "retire"
+          ]
+        },
+        "qualification_lanes": {
+          "items": {
+            "enum": [
+              "ablation",
+              "budget",
+              "cross-client",
+              "provenance",
+              "public-outcome",
+              "sealed-instruction",
+              "tool-resource",
+              "trigger"
+            ]
+          },
+          "maxItems": 8,
+          "minItems": 8,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "rationale": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "type": "string"
+        },
+        "replacement_skill_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/StableId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "skill_id": {
+          "$ref": "#/$defs/StableId"
+        },
+        "source_sha256": {
+          "$ref": "#/$defs/Sha256"
+        }
+      },
+      "required": [
+        "activation_status",
+        "disposition",
+        "qualification_lanes",
+        "rationale",
+        "replacement_skill_id",
+        "skill_id",
+        "source_sha256"
+      ],
+      "type": "object"
+    },
+    "SkillMigrationPortfolio": {
+      "additionalProperties": false,
+      "properties": {
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/SkillMigrationEntry"
+          },
+          "maxItems": 256,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "registry_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "status": {
+          "const": "inert-pending-activation"
+        },
+        "unclassified_skill_ids": {
+          "items": {
+            "$ref": "#/$defs/StableId"
+          },
+          "maxItems": 0,
+          "type": "array"
+        }
+      },
+      "required": [
+        "entries",
+        "registry_sha256",
+        "schema_version",
+        "status",
+        "unclassified_skill_ids"
+      ],
+      "type": "object"
+    },
+    "SkillQualification": {
+      "additionalProperties": false,
+      "properties": {
+        "blockers": {
+          "items": {
+            "maxLength": 1024,
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "client_results": {
+          "items": {
+            "$ref": "#/$defs/ClientQualification"
+          },
+          "minItems": 3,
+          "type": "array"
+        },
+        "component_hashes": {
+          "items": {
+            "$ref": "#/$defs/ComponentHash"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "frozen_at": {
+          "oneOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lanes": {
+          "items": {
+            "$ref": "#/$defs/QualificationLane"
+          },
+          "minItems": 8,
+          "type": "array"
+        },
+        "qualification_id": {
+          "$ref": "#/$defs/StableId"
+        },
+        "report_status": {
+          "enum": [
+            "placeholder",
+            "qualified",
+            "rejected"
+          ]
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "skill_id": {
+          "$ref": "#/$defs/StableId"
+        },
+        "trusted_base_sha": {
+          "oneOf": [
+            {
+              "pattern": "^[a-f0-9]{40}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "blockers",
+        "client_results",
+        "component_hashes",
+        "frozen_at",
+        "lanes",
+        "qualification_id",
+        "report_status",
+        "schema_version",
+        "skill_id",
+        "trusted_base_sha"
+      ],
+      "type": "object"
+    },
+    "SkillRegistry": {
+      "additionalProperties": false,
+      "properties": {
+        "portfolio_status": {
+          "const": "legacy-migration-required"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "skills": {
+          "items": {
+            "$ref": "#/$defs/SkillManifest"
+          },
+          "maxItems": 256,
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "portfolio_status",
+        "schema_version",
+        "skills"
+      ],
+      "type": "object"
+    },
+    "StableId": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{0,127}$",
+      "type": "string"
+    }
+  },
+  "$id": "https://swiftmac-base.invalid/schemas/skills.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Skill portfolio records"
+}

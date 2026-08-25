@@ -1,0 +1,85 @@
+{
+  "blockers": [
+    "Legacy skill has not passed the Evolution qualification migration."
+  ],
+  "client_results": [
+    {
+      "client_id": "claude",
+      "client_version": null,
+      "model_id": null,
+      "status": "unqualified"
+    },
+    {
+      "client_id": "codex",
+      "client_version": null,
+      "model_id": null,
+      "status": "unqualified"
+    },
+    {
+      "client_id": "pi",
+      "client_version": null,
+      "model_id": null,
+      "status": "unqualified"
+    }
+  ],
+  "component_hashes": [
+    {
+      "path": ".agents/skills/project-skill-audit/SKILL.md",
+      "sha256": "efcf47a321259a172920e407ac57ab3c626ed794909cc1818cf50fe236978ae6",
+      "size_bytes": 8311
+    },
+    {
+      "path": ".agents/skills/project-skill-audit/agents/openai.yaml",
+      "sha256": "8a8fe226b1289763ee9eda82c125a0c5036d97bfc9aa2cfacdb9937e169daff1",
+      "size_bytes": 237
+    }
+  ],
+  "frozen_at": null,
+  "lanes": [
+    {
+      "evidence_refs": [],
+      "id": "ablation",
+      "status": "pending"
+    },
+    {
+      "evidence_refs": [],
+      "id": "budget",
+      "status": "pending"
+    },
+    {
+      "evidence_refs": [],
+      "id": "cross-client",
+      "status": "pending"
+    },
+    {
+      "evidence_refs": [],
+      "id": "provenance",
+      "status": "pending"
+    },
+    {
+      "evidence_refs": [],
+      "id": "public-outcome",
+      "status": "pending"
+    },
+    {
+      "evidence_refs": [],
+      "id": "sealed-instruction",
+      "status": "pending"
+    },
+    {
+      "evidence_refs": [],
+      "id": "tool-resource",
+      "status": "pending"
+    },
+    {
+      "evidence_refs": [],
+      "id": "trigger",
+      "status": "pending"
+    }
+  ],
+  "qualification_id": "legacy-project-skill-audit-v1",
+  "report_status": "placeholder",
+  "schema_version": 1,
+  "skill_id": "project-skill-audit",
+  "trusted_base_sha": null
+}

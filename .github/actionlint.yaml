@@ -1,0 +1,11 @@
+self-hosted-runner:
+  labels:
+    - factory-evaluator-sealed
+    - factory-evaluator-selection
+
+config-variables:
+  - FACTORY_EVALUATOR_SHA256
+  - FACTORY_EVALUATOR_TEAM_ID
+  - FACTORY_SEALED_EVALUATOR_UID
+  - FACTORY_SELECTION_EVALUATOR_UID
+  - FACTORY_TRUSTED_ROOT_SHA

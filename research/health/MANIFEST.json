@@ -1,0 +1,133 @@
+{
+  "package": "desk_wellness_health_research",
+  "package_version": "1.0.0",
+  "research_snapshot": "2026-08-24",
+  "generated_for": "designer and developer agent handoff",
+  "positioning": "adult general-wellness macOS break and movement application",
+  "counts": {
+    "source_records": 80,
+    "evidence_ledger_rows": 60,
+    "claims_register_rows": 50,
+    "files_excluding_manifest": 22
+  },
+  "authoritative_order": [
+    "03_PRODUCT_HEALTH_PROTOCOL_SPEC.md",
+    "08_CLAIMS_SAFETY_REGULATORY_REGISTER.md",
+    "07_PRIVACY_AND_DATA_SPEC.md",
+    "05_DESIGNER_AGENT_BRIEF.md or 06_DEVELOPER_AGENT_BRIEF_MACOS.md",
+    "01_EXECUTIVE_PRODUCT_DECISIONS.md",
+    "02_MASTER_HEALTH_EVIDENCE_REVIEW.md"
+  ],
+  "files": [
+    {
+      "path": "00_RESEARCH_SCOPE_AND_METHOD.md",
+      "bytes": 9298,
+      "sha256": "6179052e74175d86d8a6471bfa5324fc1e450e6c2a816e5729e82c945f48aaf3"
+    },
+    {
+      "path": "01_EXECUTIVE_PRODUCT_DECISIONS.md",
+      "bytes": 10433,
+      "sha256": "67963d24f60a19b8d7c1681ff00c510d862e3623b7c12f7811d3c112a16c3f0b"
+    },
+    {
+      "path": "02_MASTER_HEALTH_EVIDENCE_REVIEW.md",
+      "bytes": 26340,
+      "sha256": "91fda345b0878fa4bdac23fd268858436361f8f6d5a4cf3d8b630317cadfed60"
+    },
+    {
+      "path": "03_PRODUCT_HEALTH_PROTOCOL_SPEC.md",
+      "bytes": 12050,
+      "sha256": "bd569a2741d320fc9eab5180093005acead474d7de1c1c74dcf1197512bcd3a7"
+    },
+    {
+      "path": "04_BREAK_AND_MOVEMENT_CONTENT_LIBRARY.md",
+      "bytes": 10637,
+      "sha256": "a280e509c1f93b51d5c31947d0e6053b651ab2b09cef5b6a6a4a4873a5abee66"
+    },
+    {
+      "path": "05_DESIGNER_AGENT_BRIEF.md",
+      "bytes": 8480,
+      "sha256": "704836cfbca50f10fa2ce36c5b455ba957b27200082955907f78f1f1fe81e0c8"
+    },
+    {
+      "path": "06_DEVELOPER_AGENT_BRIEF_MACOS.md",
+      "bytes": 14416,
+      "sha256": "1884a9bf3fd69ecb6100efebe4b3d7047ba3123337314c325b2f34a26bb0c9c2"
+    },
+    {
+      "path": "07_PRIVACY_AND_DATA_SPEC.md",
+      "bytes": 10051,
+      "sha256": "391c31d3501f04aa5b817b2195026a654d5c3f05bf107f75b58e3da4437fa6e2"
+    },
+    {
+      "path": "08_CLAIMS_SAFETY_REGULATORY_REGISTER.md",
+      "bytes": 11746,
+      "sha256": "dcdbd4a02e7eafb542cd12aa01c82744dc7831cbb4d85a8a40283101363aa1c4"
+    },
+    {
+      "path": "09_COMPETITOR_AND_PATTERN_AUDIT.md",
+      "bytes": 6409,
+      "sha256": "4fbfe5d8b62d23b957f73f8c0bdd029298a0dd582a0ccf0d884dd4b12e240921"
+    },
+    {
+      "path": "10_VALIDATION_AND_EXPERIMENT_PLAN.md",
+      "bytes": 10561,
+      "sha256": "14b28caadb4e22b02e766640af24df994cbaa7203a1a51145cfee7d6eeece19f"
+    },
+    {
+      "path": "11_EVIDENCE_LEDGER.csv",
+      "bytes": 21411,
+      "sha256": "f44d5adf46c79f52165b641b32db18323ded2f76ed7306427863473f81221773"
+    },
+    {
+      "path": "12_SOURCE_LIBRARY.md",
+      "bytes": 37403,
+      "sha256": "9e34a64325cceb1dd551d48b1c7b1e8590cf36c9af3960ce5b4ae1bb65b7f274"
+    },
+    {
+      "path": "13_AGENT_HANDOFF_PROMPT.md",
+      "bytes": 7400,
+      "sha256": "38ea030ebac24dde9788eb05cf3564c7f3d20feeb3c142743b7a2c20c39484bc"
+    },
+    {
+      "path": "14_OPEN_QUESTIONS_AND_VERSIONING.md",
+      "bytes": 9482,
+      "sha256": "ff62460a4e9ae8689c82ccfda53126e8fcdac034a94637a053858c5dd8ef88be"
+    },
+    {
+      "path": "ALL_RESEARCH_COMBINED.md",
+      "bytes": 195618,
+      "sha256": "2cd67c1c0fe4f061371aa9fa1846f9d453d1b7a676e80e455d0c1d076386954b"
+    },
+    {
+      "path": "README.md",
+      "bytes": 8608,
+      "sha256": "f753af48931fb166229a4d5d50c072c46b3e863c7959bf0514f5b147686bb144"
+    },
+    {
+      "path": "machine-readable/claims_register.csv",
+      "bytes": 6226,
+      "sha256": "6fb399ba22fa7f46bbb2c3aef24772f01b1216d5557b95e6ec7889016aaeeb91"
+    },
+    {
+      "path": "machine-readable/event_schema.json",
+      "bytes": 5373,
+      "sha256": "e406df5d5ecd4eea2967efb45b9f7df7a925b4681676e226e16180b8c80364e4"
+    },
+    {
+      "path": "machine-readable/evidence_scale.json",
+      "bytes": 1443,
+      "sha256": "195148c10aa14bb8b3a24444ba96b0324efd0c7ef7847e2665b46be4e950c1ca"
+    },
+    {
+      "path": "machine-readable/product_protocol.yaml",
+      "bytes": 4320,
+      "sha256": "02b6493a050b92c88c9c29cd291ac2800c85c824b808415382420ac356f51279"
+    },
+    {
+      "path": "machine-readable/sources.csv",
+      "bytes": 29058,
+      "sha256": "032619c84b41f64099238d5f7b46bab96742ca7b0d9b1b8118db900b26ba2302"
+    }
+  ]
+}

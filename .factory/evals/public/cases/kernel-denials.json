@@ -1,0 +1,56 @@
+{
+  "cases": [
+    {
+      "expected_decision": "reject",
+      "expected_reason_code": "broker-operation-not-allowlisted",
+      "fixture_id": "kernel-arbitrary-main-push",
+      "input": {
+        "argv": [
+          "git",
+          "push",
+          "origin",
+          "main"
+        ],
+        "operation": "arbitrary-command"
+      }
+    },
+    {
+      "expected_decision": "reject",
+      "expected_reason_code": "credential-inventory-nonempty",
+      "fixture_id": "kernel-runner-credential",
+      "input": {
+        "credential_inventory": [
+          "github-token"
+        ],
+        "qualifying": true
+      }
+    },
+    {
+      "expected_decision": "reject",
+      "expected_reason_code": "unsupported-file-kind",
+      "fixture_id": "kernel-symlink-import",
+      "input": {
+        "file_kind": "symlink",
+        "path": "Packages/Domain/Sources/link"
+      }
+    },
+    {
+      "expected_decision": "reject",
+      "expected_reason_code": "path-escape",
+      "fixture_id": "kernel-path-escape",
+      "input": {
+        "path": "../.git/config"
+      }
+    },
+    {
+      "expected_decision": "reject",
+      "expected_reason_code": "cas-head-mismatch",
+      "fixture_id": "kernel-stale-cas",
+      "input": {
+        "actual_head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "expected_head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  ],
+  "schema_version": 1
+}

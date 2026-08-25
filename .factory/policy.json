@@ -1,0 +1,103 @@
+{
+  "autonomous_start": "disabled_until_no_legacy_skills",
+  "control_plane_paths": [
+    "**/*.entitlements",
+    "**/*.xcconfig",
+    "**/*.xcodeproj/**",
+    "**/*.xctestplan",
+    "**/*.xcworkspace/**",
+    "**/.mcp.json",
+    "**/.npmrc",
+    "**/.swiftpm/**",
+    "**/AGENTS.md",
+    "**/AGENTS.override.md",
+    "**/CLAUDE.local.md",
+    "**/CLAUDE.md",
+    "**/ExportOptions.plist",
+    "**/Package.pins",
+    "**/Package.resolved",
+    "**/Package.swift",
+    "**/Package@swift-*.swift",
+    "**/Plugins/**",
+    "**/PrivacyInfo.xcprivacy",
+    "**/npm-shrinkwrap.json",
+    "**/package-lock.json",
+    "**/package.json",
+    "**/pnpm-lock.yaml",
+    "**/yarn.lock",
+    ".agents/**",
+    ".claude/**",
+    ".codex/**",
+    ".factory/**",
+    ".github/**",
+    ".gitignore",
+    ".mcp.json",
+    ".pi/**",
+    ".swiftformat",
+    ".swiftlint.yml",
+    ".xcodebuildmcp/**",
+    "AGENTS.md",
+    "AGENTS.override.md",
+    "CLAUDE.local.md",
+    "CLAUDE.md",
+    "Packages/Factory/**",
+    "Tools/XcodeBuildMCP/**",
+    "docs/factory/**",
+    "docs/preferences.md",
+    "docs/product/**",
+    "mise.lock",
+    "mise.toml",
+    "script/**",
+    "scripts/**"
+  ],
+  "execution": {
+    "agent_depth": 2,
+    "max_read_only_workers": 3,
+    "max_writers": 1,
+    "merge_actor": "owner",
+    "merge_method": "rebase",
+    "production_mode": "disabled",
+    "repair_non_progress_cycles": 2,
+    "repair_total_attempts": 3
+  },
+  "required_clients": [
+    "codex",
+    "claude",
+    "pi"
+  ],
+  "risk_tiers": [
+    {
+      "command_timeout_seconds": 600,
+      "context_bytes_per_role": 131072,
+      "id": "low",
+      "max_repair_rounds": 1,
+      "max_role_calls": 4,
+      "wall_time_seconds": 2700
+    },
+    {
+      "command_timeout_seconds": 1200,
+      "context_bytes_per_role": 262144,
+      "id": "medium",
+      "max_repair_rounds": 2,
+      "max_role_calls": 10,
+      "wall_time_seconds": 10800
+    },
+    {
+      "command_timeout_seconds": 1800,
+      "context_bytes_per_role": 262144,
+      "id": "high",
+      "max_repair_rounds": 3,
+      "max_role_calls": 20,
+      "wall_time_seconds": 28800
+    },
+    {
+      "command_timeout_seconds": 1800,
+      "context_bytes_per_role": 262144,
+      "id": "control-plane",
+      "max_repair_rounds": 3,
+      "max_role_calls": 20,
+      "wall_time_seconds": 28800
+    }
+  ],
+  "schema_version": 1
+}

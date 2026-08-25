@@ -1,0 +1,50 @@
+{
+  "cases": [
+    {
+      "expected_decision": "reject",
+      "expected_reason_code": "candidate-changed-ruler",
+      "fixture_id": "evaluator-candidate-policy-change",
+      "input": {
+        "candidate_paths": [
+          ".factory/schemas/evaluator.schema.json"
+        ]
+      }
+    },
+    {
+      "expected_decision": "reject",
+      "expected_reason_code": "attestation-replay",
+      "fixture_id": "evaluator-replayed-nonce",
+      "input": {
+        "nonce_seen": true,
+        "query_ordinal": 1
+      }
+    },
+    {
+      "expected_decision": "reject",
+      "expected_reason_code": "raw-output-included",
+      "fixture_id": "evaluator-raw-output",
+      "input": {
+        "raw_output_included": true
+      }
+    },
+    {
+      "expected_decision": "reject",
+      "expected_reason_code": "query-budget-exhausted",
+      "fixture_id": "evaluator-selection-over-budget",
+      "input": {
+        "allowed_queries": 3,
+        "query_ordinal": 4
+      }
+    },
+    {
+      "expected_decision": "reject",
+      "expected_reason_code": "executable-candidate-secret-domain",
+      "fixture_id": "evaluator-executable-with-sealed-credential",
+      "input": {
+        "candidate_kind": "executable-gate",
+        "secret_bearing_process": true
+      }
+    }
+  ],
+  "schema_version": 1
+}

@@ -1,0 +1,8 @@
+{
+  "authority": "disabled-by-default",
+  "automatic_mutation": false,
+  "enabled": false,
+  "minimum_actionable_recurrence": 3,
+  "retention": "sanitized-durable",
+  "schema_version": 1
+}

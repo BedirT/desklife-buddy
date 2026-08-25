@@ -1,0 +1,92 @@
+{
+  "fixtures": [
+    {
+      "expected_invalid_reason": "every acceptance criterion names at least one evidence record",
+      "invalid": {
+        "contract_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "criteria": [
+          {
+            "evidence_ids": [],
+            "id": "criterion-1",
+            "status": "failed"
+          }
+        ],
+        "design_comparisons": [],
+        "evidence": [
+          {
+            "id": "snapshot-review",
+            "kind": "visual",
+            "path": "artifacts/preview-review/contact-sheet.png",
+            "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "status": "passed"
+          }
+        ],
+        "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "issue_number": 42,
+        "phase": "READY_FOR_OWNER",
+        "pull_request_number": 7,
+        "qualification": "qualifying",
+        "repair_attempts": 1,
+        "report_id": "report-run-42",
+        "risks": [],
+        "role_results": [],
+        "route_id": "route-logic",
+        "run_id": "run-42"
+      },
+      "record_name": "FactoryReport",
+      "schema_path": ".factory/schemas/report.schema.json",
+      "schema_pointer": "#/$defs/FactoryReport",
+      "valid": {
+        "contract_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "criteria": [
+          {
+            "evidence_ids": [
+              "snapshot-review"
+            ],
+            "id": "criterion-1",
+            "status": "passed"
+          }
+        ],
+        "design_comparisons": [
+          {
+            "authority": "canonical",
+            "deviation_ids": [],
+            "result_evidence_id": "snapshot-review",
+            "source_evidence_id": "source-hero",
+            "source_id": "hero-reference"
+          }
+        ],
+        "evidence": [
+          {
+            "id": "snapshot-review",
+            "kind": "visual",
+            "path": "artifacts/preview-review/contact-sheet.png",
+            "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "status": "passed"
+          }
+        ],
+        "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "issue_number": 42,
+        "phase": "READY_FOR_OWNER",
+        "pull_request_number": 7,
+        "qualification": "nonqualifying-bootstrap",
+        "repair_attempts": 0,
+        "report_id": "report-run-42",
+        "risks": [
+          "Owner review remains required before merge."
+        ],
+        "role_results": [
+          {
+            "client": "claude",
+            "finding_ids": [],
+            "role": "product-witness",
+            "status": "passed"
+          }
+        ],
+        "route_id": "route-external-design-motion-ui",
+        "run_id": "run-42"
+      }
+    }
+  ],
+  "schema_version": 1
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Ingest"
+  short_description: "Translate external designs into native contracts"
+  default_prompt: "Use $design-ingest to translate this external design source into a native macOS contract while preserving its declared authority."

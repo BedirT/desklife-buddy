@@ -1,0 +1,356 @@
+{
+  "client_transcripts": {
+    "claude": [
+      {
+        "session_id": "claude-session-1",
+        "subtype": "init",
+        "type": "system"
+      },
+      {
+        "result": "{\"status\":\"passed\"}",
+        "subtype": "success",
+        "total_cost_usd": 0,
+        "type": "result",
+        "usage": {
+          "cache_read_input_tokens": 3,
+          "input_tokens": 10,
+          "output_tokens": 5
+        }
+      }
+    ],
+    "codex": [
+      {
+        "thread_id": "codex-session-1",
+        "type": "thread.started"
+      },
+      {
+        "item": {
+          "text": "{\"status\":\"passed\"}",
+          "type": "agent_message"
+        },
+        "type": "item.completed"
+      },
+      {
+        "total_cost_usd": 0,
+        "type": "turn.completed",
+        "usage": {
+          "cached_input_tokens": 3,
+          "input_tokens": 10,
+          "output_tokens": 5
+        }
+      }
+    ],
+    "pi": [
+      {
+        "cwd": "/scratch",
+        "id": "pi-session-1",
+        "timestamp": "2026-07-14T00:00:00Z",
+        "type": "session",
+        "version": 3
+      },
+      {
+        "message": {
+          "content": [
+            {
+              "text": "{\"status\":\"passed\"}",
+              "type": "text"
+            }
+          ],
+          "role": "assistant",
+          "stopReason": "stop",
+          "usage": {
+            "cacheRead": 3,
+            "cacheWrite": 0,
+            "cost": {
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "input": 0,
+              "output": 0,
+              "total": 0
+            },
+            "input": 10,
+            "output": 5,
+            "totalTokens": 18
+          }
+        },
+        "type": "message_end"
+      },
+      {
+        "messages": [],
+        "type": "agent_end",
+        "willRetry": false
+      }
+    ]
+  },
+  "context_request": {
+    "clean_worktree": true,
+    "client": "codex",
+    "client_version": "0.144.3",
+    "contract_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "excluded_context": [
+      {
+        "path_or_class": "raw-design-video",
+        "reason": "Private design media remains local and outside the prompt packet."
+      }
+    ],
+    "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "invocation_id": "invoke-builder-1",
+    "issue_number": 2,
+    "maximum_bytes": 8192,
+    "minimum_version": "0.144.3",
+    "network_policy": "brokered-provider-only",
+    "ordered_paths": [
+      ".factory/prompts/builder.md",
+      "docs/plans/2026-07-09-macos-software-factory.md",
+      ".agents/skills/design-ingest/SKILL.md"
+    ],
+    "ordered_prompt_paths": [
+      ".factory/prompts/builder.md"
+    ],
+    "output_schema": ".factory/schemas/report.schema.json",
+    "permission_mode": "scratch-write",
+    "plan_path": "docs/plans/2026-07-09-macos-software-factory.md",
+    "role": "builder",
+    "selected_skills": [
+      "design-ingest"
+    ],
+    "sources": [
+      {
+        "path": ".factory/prompts/builder.md",
+        "text": "Implement one accepted vertical slice and return typed evidence."
+      },
+      {
+        "path": "docs/plans/2026-07-09-macos-software-factory.md",
+        "text": "Build the approved external-design motion slice in an isolated worktree."
+      },
+      {
+        "path": ".agents/skills/design-ingest/SKILL.md",
+        "text": "Inspect the declared source and translate it through native macOS semantics."
+      }
+    ],
+    "timeout_seconds": 900,
+    "tool_allowlist": [
+      "read",
+      "shell"
+    ]
+  },
+  "controller_input": {
+    "authority": "build-candidate",
+    "contract_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "generation": 1,
+    "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "issue_number": 2,
+    "mode": "bootstrap-fixture",
+    "route_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "run_id": "bootstrap-run-1",
+    "stop_requested": false
+  },
+  "episodes": [
+    {
+      "component_exposure_ids": [
+        "skill-design-ingest-v1"
+      ],
+      "contract_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "episode_id": "episode-aborted",
+      "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "incident_ids": [],
+      "outcome": "aborted-operator",
+      "route_id": "route-external-design-motion-ui",
+      "run_id": "bootstrap-run-1",
+      "skill_exposure_ids": [
+        "design-ingest-v1"
+      ]
+    },
+    {
+      "component_exposure_ids": [
+        "skill-design-ingest-v1"
+      ],
+      "contract_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "episode_id": "episode-blocked",
+      "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "incident_ids": [],
+      "outcome": "blocked-owner",
+      "route_id": "route-external-design-motion-ui",
+      "run_id": "bootstrap-run-1",
+      "skill_exposure_ids": [
+        "design-ingest-v1"
+      ]
+    },
+    {
+      "component_exposure_ids": [
+        "skill-design-ingest-v1"
+      ],
+      "contract_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "episode_id": "episode-failure",
+      "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "incident_ids": [
+        "incident-missed-video-trigger"
+      ],
+      "outcome": "failure",
+      "route_id": "route-external-design-motion-ui",
+      "run_id": "bootstrap-run-1",
+      "skill_exposure_ids": [
+        "design-ingest-v1"
+      ]
+    },
+    {
+      "component_exposure_ids": [
+        "skill-design-ingest-v1"
+      ],
+      "contract_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "episode_id": "episode-success",
+      "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "incident_ids": [],
+      "outcome": "success",
+      "route_id": "route-external-design-motion-ui",
+      "run_id": "bootstrap-run-1",
+      "skill_exposure_ids": [
+        "design-ingest-v1"
+      ]
+    }
+  ],
+  "invocation": {
+    "context_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "invocation_id": "invoke-builder-1",
+    "mutation_mode": "scratch-write",
+    "output_schema": {
+      "repository_path": ".factory/schemas/report.schema.json",
+      "sha256": "362e85f895ba74d7067330e9f1be2e6d3a92f8e80103ce1f3679f3714ab426d4"
+    },
+    "prompt_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "role": "builder",
+    "run_id": "bootstrap-run-1",
+    "selected_skills": [
+      {
+        "skill_id": "design-ingest",
+        "source_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "version": 1
+      }
+    ],
+    "session_action": "new",
+    "session_id": null,
+    "timeout_seconds": 900,
+    "working_directory": "scratch/bootstrap-run-1"
+  },
+  "repair_history": [
+    [
+      {
+        "category": "review",
+        "evidence_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "finding_id": "motion-reduce",
+        "role": "motion-witness",
+        "severity": "medium"
+      },
+      {
+        "category": "review",
+        "evidence_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "finding_id": "visual-diff",
+        "role": "product-witness",
+        "severity": "high"
+      }
+    ],
+    [
+      {
+        "category": "review",
+        "evidence_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "finding_id": "visual-diff",
+        "role": "product-witness",
+        "severity": "high"
+      }
+    ]
+  ],
+  "report": {
+    "contract_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "criteria": [
+      {
+        "evidence_ids": [
+          "snapshot-review"
+        ],
+        "id": "criterion-design-replication",
+        "status": "passed"
+      }
+    ],
+    "design_comparisons": [
+      {
+        "authority": "canonical",
+        "deviation_ids": [],
+        "result_evidence_id": "snapshot-review",
+        "source_evidence_id": "source-video",
+        "source_id": "hero-video-reference"
+      }
+    ],
+    "evidence": [
+      {
+        "id": "snapshot-review",
+        "kind": "visual",
+        "path": "artifacts/preview-review/contact-sheet.png",
+        "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "status": "passed"
+      }
+    ],
+    "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "issue_number": 2,
+    "phase": "READY_FOR_OWNER",
+    "pull_request_number": 2,
+    "qualification": "nonqualifying-bootstrap",
+    "repair_attempts": 0,
+    "report_id": "report-bootstrap-run-1",
+    "risks": [
+      "Synthetic bootstrap evidence cannot qualify production activation."
+    ],
+    "role_results": [
+      {
+        "client": "claude",
+        "finding_ids": [],
+        "role": "product-witness",
+        "status": "passed"
+      }
+    ],
+    "route_id": "route-external-design-motion-ui",
+    "run_id": "bootstrap-run-1"
+  },
+  "route_request": {
+    "changed_paths": [
+      "Packages/Features/Sources/HeroView.swift"
+    ],
+    "design_source_ids": [
+      "hero-video-reference"
+    ],
+    "dimensions": [
+      "external-design",
+      "motion",
+      "ui"
+    ],
+    "requested_risk": "medium"
+  },
+  "skill_freeze_request": {
+    "baseline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "candidate_id": "candidate-design-ingest-v2",
+    "prior_regression_id": "regression-missed-video-trigger",
+    "samples": [
+      {
+        "episode_id": "episode-failure",
+        "failure_fingerprint": "missed-video-trigger",
+        "outcome": "failure",
+        "proposed_edits": [
+          {
+            "operation": "add",
+            "replacement": "Match supplied reference video.",
+            "target": "trigger-video-replication"
+          }
+        ],
+        "sample_id": "sample-failure",
+        "target_component_id": "skill-design-ingest-v1"
+      },
+      {
+        "episode_id": "episode-success",
+        "failure_fingerprint": null,
+        "outcome": "success",
+        "proposed_edits": [],
+        "sample_id": "sample-success",
+        "target_component_id": "skill-design-ingest-v1"
+      }
+    ],
+    "target_component_id": "skill-design-ingest-v1"
+  }
+}

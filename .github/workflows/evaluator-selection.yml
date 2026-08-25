@@ -1,0 +1,88 @@
+# Protected trusted-root selection evaluator. Post-merge activation installs the immutable binary,
+# state root, protected environment variables, and private local request files.
+name: Factory evaluator - selection
+
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: Reserve before private execution, then evaluate its signed receipt
+        required: true
+        type: choice
+        options:
+          - reserve
+          - evaluate
+
+permissions:
+  contents: read
+
+concurrency:
+  group: factory-evaluator-selection
+  cancel-in-progress: false
+
+jobs:
+  evaluate-selection:
+    name: evaluate-selection
+    if: github.ref == 'refs/tags/factory-v1-root'
+    environment: factory-evaluator-selection
+    runs-on: [self-hosted, macOS, factory-evaluator-selection]
+    timeout-minutes: 15
+    steps:
+      - name: Verify and run the installed selection evaluator
+        shell: /bin/bash --noprofile --norc -p -c 'exec /usr/bin/env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin EXPECTED_EVALUATOR_SHA256="$EXPECTED_EVALUATOR_SHA256" EXPECTED_EVALUATOR_TEAM_ID="$EXPECTED_EVALUATOR_TEAM_ID" EXPECTED_EVALUATOR_UID="$EXPECTED_EVALUATOR_UID" EXPECTED_TRUSTED_ROOT_SHA="$EXPECTED_TRUSTED_ROOT_SHA" PHASE="$PHASE" WORKFLOW_SHA="$WORKFLOW_SHA" /bin/bash --noprofile --norc -e -o pipefail "$1"' _ {0}
+        env:
+          EXPECTED_EVALUATOR_SHA256: ${{ vars.FACTORY_EVALUATOR_SHA256 }}
+          EXPECTED_EVALUATOR_TEAM_ID: ${{ vars.FACTORY_EVALUATOR_TEAM_ID }}
+          EXPECTED_EVALUATOR_UID: ${{ vars.FACTORY_SELECTION_EVALUATOR_UID }}
+          EXPECTED_TRUSTED_ROOT_SHA: ${{ vars.FACTORY_TRUSTED_ROOT_SHA }}
+          PHASE: ${{ inputs.phase }}
+          WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          binary=/usr/local/libexec/swiftmac-factory/FactoryEvaluator
+          root=/var/db/swiftmac-factory/evaluator/selection
+          execution="$root/inbox/execution.json"
+          reservation="$root/inbox/reservation.json"
+          signing_key="$root/attestation.key"
+          [[ "$EXPECTED_TRUSTED_ROOT_SHA" =~ ^[0-9a-f]{40}$|^[0-9a-f]{64}$ ]]
+          [[ "$EXPECTED_EVALUATOR_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$EXPECTED_EVALUATOR_TEAM_ID" =~ ^[A-Z0-9]{10}$ ]]
+          [[ "$EXPECTED_EVALUATOR_UID" =~ ^[1-9][0-9]{0,9}$ ]]
+          /usr/bin/test "$(/usr/bin/id -u)" != "0"
+          /usr/bin/test "$(/usr/bin/id -u)" = "$EXPECTED_EVALUATOR_UID"
+          /usr/bin/test "$WORKFLOW_SHA" = "$EXPECTED_TRUSTED_ROOT_SHA"
+          for directory in /usr/local /usr/local/libexec /usr/local/libexec/swiftmac-factory; do
+            /usr/bin/test ! -L "$directory"
+            /usr/bin/test "$(/usr/bin/stat -f %HT "$directory")" = "Directory"
+            /usr/bin/test "$(/usr/bin/stat -f %u "$directory")" = "0"
+            mode=$(/usr/bin/stat -f %Lp "$directory")
+            (( (8#$mode & 8#22) == 0 ))
+          done
+          /usr/bin/test -x "$binary"
+          /usr/bin/test ! -L "$binary"
+          /usr/bin/test "$(/usr/bin/stat -f %u "$binary")" = "0"
+          /usr/bin/test "$(/usr/bin/stat -f %l "$binary")" = "1"
+          /usr/bin/test "$(/usr/bin/stat -f %Lp "$binary")" = "555"
+          /usr/bin/test "$(/usr/bin/shasum -a 256 "$binary" | /usr/bin/awk '{print $1}')" = "$EXPECTED_EVALUATOR_SHA256"
+          /usr/bin/codesign --verify --strict "$binary"
+          /usr/bin/codesign -dvv "$binary" 2>&1 | /usr/bin/grep -Eq 'flags=.*runtime'
+          /usr/bin/codesign -dvv "$binary" 2>&1 \
+            | /usr/bin/grep -Eq "TeamIdentifier=$EXPECTED_EVALUATOR_TEAM_ID"
+          /usr/bin/test -z "$(/usr/bin/codesign -d --entitlements - "$binary" 2>/dev/null)"
+          /usr/sbin/spctl --assess --type execute --verbose=2 "$binary"
+          case "$PHASE" in
+            reserve) input="$reservation" ;;
+            evaluate) input="$execution" ;;
+            *) exit 64 ;;
+          esac
+          for input in "$input"; do
+            /usr/bin/test -f "$input"
+            /usr/bin/test "$(/usr/bin/stat -f %u "$input")" = "$(/usr/bin/id -u)"
+            /usr/bin/test "$(/usr/bin/stat -f %Lp "$input")" = "600"
+          done
+          /usr/bin/test -f "$signing_key"
+          /usr/bin/test "$(/usr/bin/stat -f %u "$signing_key")" = "$(/usr/bin/id -u)"
+          /usr/bin/test "$(/usr/bin/stat -f %Lp "$signing_key")" = "600"
+          case "$PHASE" in
+            reserve) "$binary" query reserve selection "$root/ledger" "$signing_key" "$reservation" ;;
+            evaluate) "$binary" query evaluate selection "$root/ledger" "$signing_key" "$execution" ;;
+          esac

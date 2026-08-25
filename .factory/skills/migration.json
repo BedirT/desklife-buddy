@@ -1,0 +1,278 @@
+{
+  "entries": [
+    {
+      "activation_status": "pending-post-merge",
+      "disposition": "retain",
+      "qualification_lanes": [
+        "ablation",
+        "budget",
+        "cross-client",
+        "provenance",
+        "public-outcome",
+        "sealed-instruction",
+        "tool-resource",
+        "trigger"
+      ],
+      "rationale": "Brownfield adoption is a distinct high-risk migration workflow and does not overlap greenfield delivery.",
+      "replacement_skill_id": null,
+      "skill_id": "adopt-app",
+      "source_sha256": "ec2e19f4e340664416109b1cc985f68ac6c6f500a86ced8bed1866ac7c698b31"
+    },
+    {
+      "activation_status": "pending-post-merge",
+      "disposition": "retain",
+      "qualification_lanes": [
+        "ablation",
+        "budget",
+        "cross-client",
+        "provenance",
+        "public-outcome",
+        "sealed-instruction",
+        "tool-resource",
+        "trigger"
+      ],
+      "rationale": "Root-cause investigation is read-only and hypothesis-driven, distinct from diff review and repair implementation.",
+      "replacement_skill_id": null,
+      "skill_id": "bug-hunt-swarm",
+      "source_sha256": "c066356eab838666c2c7c706d103e323b8a08f032880746e5727a6bd897dfc29"
+    },
+    {
+      "activation_status": "pending-post-merge",
+      "disposition": "introduce",
+      "qualification_lanes": [
+        "ablation",
+        "budget",
+        "cross-client",
+        "provenance",
+        "public-outcome",
+        "sealed-instruction",
+        "tool-resource",
+        "trigger"
+      ],
+      "rationale": "External Figma, React, HTML, image, screenshot, video, and asset sources need one static-only boundary; local decoder execution stays disabled pending a separately reviewed no-secret tier.",
+      "replacement_skill_id": null,
+      "skill_id": "design-ingest",
+      "source_sha256": "d70cef3b8c272ce507ac257d757fb2283fe7d9a0137c649fcf4ef19562c47f45"
+    },
+    {
+      "activation_status": "pending-post-merge",
+      "disposition": "retain",
+      "qualification_lanes": [
+        "ablation",
+        "budget",
+        "cross-client",
+        "provenance",
+        "public-outcome",
+        "sealed-instruction",
+        "tool-resource",
+        "trigger"
+      ],
+      "rationale": "Token and component composition remains the single design vocabulary for native UI implementation.",
+      "replacement_skill_id": null,
+      "skill_id": "design-system",
+      "source_sha256": "1f333a8971304a8230ff0233b67b1755b3492111414228972994298be1729a41"
+    },
+    {
+      "activation_status": "pending-post-merge",
+      "disposition": "retain",
+      "qualification_lanes": [
+        "ablation",
+        "budget",
+        "cross-client",
+        "provenance",
+        "public-outcome",
+        "sealed-instruction",
+        "tool-resource",
+        "trigger"
+      ],
+      "rationale": "Proof-of-done packaging is an independent terminal gate and must not be diluted into implementation skills.",
+      "replacement_skill_id": null,
+      "skill_id": "evidence-pack",
+      "source_sha256": "9a222e08e663fa685644baace3364ee8ba7da40f5c60490ef89328eaa7359712"
+    },
+    {
+      "activation_status": "pending-post-merge",
+      "disposition": "introduce",
+      "qualification_lanes": [
+        "ablation",
+        "budget",
+        "cross-client",
+        "provenance",
+        "public-outcome",
+        "sealed-instruction",
+        "tool-resource",
+        "trigger"
+      ],
+      "rationale": "The factory transaction lifecycle needs one operator-facing orchestration skill over the typed controller.",
+      "replacement_skill_id": null,
+      "skill_id": "factory-run",
+      "source_sha256": "ff05ebfdbe65543f585ee0226ea7047d0d4fcce0791a15daf05fffa9260b07ed"
+    },
+    {
+      "activation_status": "pending-post-merge",
+      "disposition": "introduce",
+      "qualification_lanes": [
+        "ablation",
+        "budget",
+        "cross-client",
+        "provenance",
+        "public-outcome",
+        "sealed-instruction",
+        "tool-resource",
+        "trigger"
+      ],
+      "rationale": "Owner preference discovery is the required human checkpoint before visible product choices are frozen.",
+      "replacement_skill_id": null,
+      "skill_id": "grill-me",
+      "source_sha256": "56cf2e2d1db75fa8066371022b21f84521dbbe925f8f4524a52ea560a0a32675"
+    },
+    {
+      "activation_status": "pending-post-merge",
+      "disposition": "retain",
+      "qualification_lanes": [
+        "ablation",
+        "budget",
+        "cross-client",
+        "provenance",
+        "public-outcome",
+        "sealed-instruction",
+        "tool-resource",
+        "trigger"
+      ],
+      "rationale": "Motion intent, native choreography, authored assets, reduced motion, and video evidence form one specialized lane.",
+      "replacement_skill_id": null,
+      "skill_id": "motion",
+      "source_sha256": "d8a5ae5997d28dde399272bfc9aa66d5edfed231d4f8a0a1f55731193c99a5c9"
+    },
+    {
+      "activation_status": "pending-post-merge",
+      "disposition": "retain",
+      "qualification_lanes": [
+        "ablation",
+        "budget",
+        "cross-client",
+        "provenance",
+        "public-outcome",
+        "sealed-instruction",
+        "tool-resource",
+        "trigger"
+      ],
+      "rationale": "Measured Instruments investigation is distinct from ordinary verification and visual motion review.",
+      "replacement_skill_id": null,
+      "skill_id": "perf-audit",
+      "source_sha256": "afe012befb6e0dfd54a29652e8f617e6b5a4d7fba43a5b498b45fd06e3cd6d6b"
+    },
+    {
+      "activation_status": "pending-post-merge",
+      "disposition": "retain",
+      "qualification_lanes": [
+        "ablation",
+        "budget",
+        "cross-client",
+        "provenance",
+        "public-outcome",
+        "sealed-instruction",
+        "tool-resource",
+        "trigger"
+      ],
+      "rationale": "A durable living plan is the minimum continuity mechanism for multi-step and resumed work.",
+      "replacement_skill_id": null,
+      "skill_id": "plan-feature",
+      "source_sha256": "644d9068016b4e5a27aaa4a7fddbc5df6af22baeaacd0054ce92be0d62a0c53c"
+    },
+    {
+      "activation_status": "pending-post-merge",
+      "disposition": "retain",
+      "qualification_lanes": [
+        "ablation",
+        "budget",
+        "cross-client",
+        "provenance",
+        "public-outcome",
+        "sealed-instruction",
+        "tool-resource",
+        "trigger"
+      ],
+      "rationale": "Portfolio-level skill gap and consolidation analysis is the bounded retrospective input to SkillOpt evolution.",
+      "replacement_skill_id": null,
+      "skill_id": "project-skill-audit",
+      "source_sha256": "efcf47a321259a172920e407ac57ab3c626ed794909cc1818cf50fe236978ae6"
+    },
+    {
+      "activation_status": "pending-post-merge",
+      "disposition": "retain",
+      "qualification_lanes": [
+        "ablation",
+        "budget",
+        "cross-client",
+        "provenance",
+        "public-outcome",
+        "sealed-instruction",
+        "tool-resource",
+        "trigger"
+      ],
+      "rationale": "Signing, archive, notarization, versioning, and distribution handoff require a dedicated owner-authorized release lane.",
+      "replacement_skill_id": null,
+      "skill_id": "release",
+      "source_sha256": "1d57178002f4ecba1e799722305099fb3a22ac74e380338b746af99631de4ae1"
+    },
+    {
+      "activation_status": "pending-post-merge",
+      "disposition": "retain",
+      "qualification_lanes": [
+        "ablation",
+        "budget",
+        "cross-client",
+        "provenance",
+        "public-outcome",
+        "sealed-instruction",
+        "tool-resource",
+        "trigger"
+      ],
+      "rationale": "Parallel read-only diff review is a bounded regression gate, not a root-cause or implementation workflow.",
+      "replacement_skill_id": null,
+      "skill_id": "review-swarm",
+      "source_sha256": "5a88b5c3f7520a31a9ab667a72ecb83d2ba850f4de0d2285006166857626ad93"
+    },
+    {
+      "activation_status": "pending-post-merge",
+      "disposition": "retain",
+      "qualification_lanes": [
+        "ablation",
+        "budget",
+        "cross-client",
+        "provenance",
+        "public-outcome",
+        "sealed-instruction",
+        "tool-resource",
+        "trigger"
+      ],
+      "rationale": "Deterministic Preview rendering and inspected contact sheets are the stable visual proof surface for every view.",
+      "replacement_skill_id": null,
+      "skill_id": "snapshot-verify",
+      "source_sha256": "4ca04831969b121e497318328986ac256c5aaa317b223847778aba32bb088529"
+    },
+    {
+      "activation_status": "pending-post-merge",
+      "disposition": "retain",
+      "qualification_lanes": [
+        "ablation",
+        "budget",
+        "cross-client",
+        "provenance",
+        "public-outcome",
+        "sealed-instruction",
+        "tool-resource",
+        "trigger"
+      ],
+      "rationale": "Liquid Glass is a narrow platform-API specialization that composes with, rather than duplicates, the design system.",
+      "replacement_skill_id": null,
+      "skill_id": "swiftui-liquid-glass",
+      "source_sha256": "aba10ce36631c5ddec9de84f1322d1658dc53b6c6517126739b26e932ac25406"
+    }
+  ],
+  "registry_sha256": "64c2c4fe9004e70055bf605afe42b148d8470103f9ce455ac861212ad2fadca6",
+  "schema_version": 1,
+  "status": "inert-pending-activation",
+  "unclassified_skill_ids": []
+}

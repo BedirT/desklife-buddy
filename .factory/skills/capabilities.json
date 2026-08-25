@@ -1,0 +1,147 @@
+{
+  "capabilities": [
+    {
+      "id": "brownfield-app-adoption",
+      "primary_skill_id": "adopt-app"
+    },
+    {
+      "id": "design-token-composition",
+      "primary_skill_id": "design-system"
+    },
+    {
+      "id": "external-design-ingestion",
+      "primary_skill_id": "design-ingest"
+    },
+    {
+      "id": "factory-transaction-execution",
+      "primary_skill_id": "factory-run"
+    },
+    {
+      "id": "instruments-performance-investigation",
+      "primary_skill_id": "perf-audit"
+    },
+    {
+      "id": "living-feature-planning",
+      "primary_skill_id": "plan-feature"
+    },
+    {
+      "id": "macos-motion-production",
+      "primary_skill_id": "motion"
+    },
+    {
+      "id": "macos-release-handoff",
+      "primary_skill_id": "release"
+    },
+    {
+      "id": "parallel-diff-review",
+      "primary_skill_id": "review-swarm"
+    },
+    {
+      "id": "parallel-root-cause-investigation",
+      "primary_skill_id": "bug-hunt-swarm"
+    },
+    {
+      "id": "product-intake",
+      "primary_skill_id": "grill-me"
+    },
+    {
+      "id": "project-skill-portfolio-audit",
+      "primary_skill_id": "project-skill-audit"
+    },
+    {
+      "id": "proof-of-done-handoff",
+      "primary_skill_id": "evidence-pack"
+    },
+    {
+      "id": "swiftui-liquid-glass",
+      "primary_skill_id": "swiftui-liquid-glass"
+    },
+    {
+      "id": "swiftui-preview-snapshot-proof",
+      "primary_skill_id": "snapshot-verify"
+    }
+  ],
+  "composition_edges": [
+    {
+      "from_skill_id": "adopt-app",
+      "kind": "hands_off_to",
+      "to_skill_id": "evidence-pack"
+    },
+    {
+      "from_skill_id": "adopt-app",
+      "kind": "uses",
+      "to_skill_id": "plan-feature"
+    },
+    {
+      "from_skill_id": "design-ingest",
+      "kind": "hands_off_to",
+      "to_skill_id": "design-system"
+    },
+    {
+      "from_skill_id": "design-ingest",
+      "kind": "uses",
+      "to_skill_id": "motion"
+    },
+    {
+      "from_skill_id": "design-ingest",
+      "kind": "uses",
+      "to_skill_id": "snapshot-verify"
+    },
+    {
+      "from_skill_id": "design-system",
+      "kind": "hands_off_to",
+      "to_skill_id": "snapshot-verify"
+    },
+    {
+      "from_skill_id": "factory-run",
+      "kind": "hands_off_to",
+      "to_skill_id": "evidence-pack"
+    },
+    {
+      "from_skill_id": "grill-me",
+      "kind": "hands_off_to",
+      "to_skill_id": "plan-feature"
+    },
+    {
+      "from_skill_id": "motion",
+      "kind": "hands_off_to",
+      "to_skill_id": "evidence-pack"
+    },
+    {
+      "from_skill_id": "motion",
+      "kind": "uses",
+      "to_skill_id": "snapshot-verify"
+    },
+    {
+      "from_skill_id": "perf-audit",
+      "kind": "hands_off_to",
+      "to_skill_id": "evidence-pack"
+    },
+    {
+      "from_skill_id": "plan-feature",
+      "kind": "hands_off_to",
+      "to_skill_id": "factory-run"
+    },
+    {
+      "from_skill_id": "release",
+      "kind": "hands_off_to",
+      "to_skill_id": "evidence-pack"
+    },
+    {
+      "from_skill_id": "snapshot-verify",
+      "kind": "hands_off_to",
+      "to_skill_id": "evidence-pack"
+    },
+    {
+      "from_skill_id": "swiftui-liquid-glass",
+      "kind": "hands_off_to",
+      "to_skill_id": "snapshot-verify"
+    },
+    {
+      "from_skill_id": "swiftui-liquid-glass",
+      "kind": "uses",
+      "to_skill_id": "design-system"
+    }
+  ],
+  "schema_version": 1
+}

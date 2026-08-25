@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; }
+    .grp { border-radius: 9px; background: #fff; box-shadow: 0 0 0 0.5px rgba(60,54,78,0.13), 0 1px 2px rgba(30,26,40,0.05); overflow: hidden; }
+    .r { display: flex; align-items: center; gap: 10px; padding: 11px 14px; }
+    .r + .r { box-shadow: inset 0 0.5px 0 rgba(60,54,78,0.10); }
+    .radio { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #b4b0bd; background: #fff; flex: none; }
+    .radio.on { border-color: #7a5b83; background: #8d6b96; box-shadow: inset 0 0 0 3px #fff; }
+    .t { font-size: 13px; color: #201f24; }
+    .d { font-size: 11.5px; color: #8b8794; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .sw { width: 38px; height: 22px; border-radius: 11px; background: #d8d5de; flex: none; position: relative; }
+    .sw.on { background: #8d6b96; }
+    .sw i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.22); }
+    .sw.on i { left: 18px; }
+    .sb { display: flex; align-items: center; gap: 9px; height: 28px; padding: 0 10px; border-radius: 7px; font-size: 13px; color: #201f24; }
+    .sb.on { background: #8d6b96; color: #fff; }
+    .stp { height: 22px; border: 1px solid #cbc7d3; border-radius: 5px; background: #fff; display: inline-flex; align-items: center; padding: 0 8px; font-size: 13px; color: #201f24; font-variant-numeric: tabular-nums; }
+    .gl { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #8b8794; margin: 0 0 8px 4px; }
+  </style>
+</helmet>
+<div style="position: relative; width: 1000px; height: 700px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: linear-gradient(163deg, #9d9ab0 0%, #83809a 100%);">
+
+  <div style="position: absolute; left: 60px; top: 46px; width: 880px; height: 610px; border-radius: 11px; box-shadow: 0 30px 70px rgba(24,20,32,0.36), 0 0 0 0.5px rgba(60,54,78,0.18); overflow: hidden; display: flex;">
+
+    <!-- sidebar -->
+    <div style="width: 186px; background: rgba(238,236,243,0.94); backdrop-filter: blur(40px); border-right: 0.5px solid rgba(60,54,78,0.12); padding: 12px 10px;">
+      <div style="display: flex; gap: 8px; padding: 0 4px 20px;">
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: #e5695e;"></div>
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: #d5d3dc;"></div>
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: #d5d3dc;"></div>
+      </div>
+      <div class="sb"><svg width="15" height="15" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.6" stroke="#55515e" stroke-width="1.3" fill="none"/><path d="M8 4.9V8l2.1 1.4" stroke="#55515e" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg>General</div>
+      <div class="sb on"><svg width="15" height="15" viewBox="0 0 16 16"><rect x="2.2" y="3.4" width="11.6" height="10.2" rx="2" stroke="#fff" stroke-width="1.3" fill="none"/><path d="M2.2 6.6h11.6M5.4 2.2v2.2M10.6 2.2v2.2" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/></svg>Schedule</div>
+      <div class="sb"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M2.4 8h3l1.6-3.4L9.6 12l1.4-4h2.6" stroke="#55515e" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Breaks</div>
+      <div class="sb"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M8 2.2l4.6 1.8v3.6c0 2.7-1.9 4.6-4.6 5.6-2.7-1-4.6-2.9-4.6-5.6V4z" stroke="#55515e" stroke-width="1.3" fill="none" stroke-linejoin="round"/></svg>Privacy</div>
+      <div class="sb"><svg width="15" height="15" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.6" stroke="#55515e" stroke-width="1.3" fill="none"/><path d="M8 7.2v3.4M8 5.2v.2" stroke="#55515e" stroke-width="1.4" stroke-linecap="round"/></svg>About</div>
+    </div>
+
+    <!-- content -->
+    <div style="flex: 1; background: #f5f4f7; padding: 26px 28px; overflow: hidden;">
+
+      <div class="gl">Rhythm</div>
+      <div class="grp">
+        <div class="r"><div class="radio"></div><div><div class="t">Gentle</div><div class="d">Visual reset about every 30 minutes · movement about every 75</div></div></div>
+        <div class="r"><div class="radio on"></div><div><div class="t">Balanced</div><div class="d">Visual reset about every 25 minutes · movement about every 60</div></div></div>
+        <div class="r"><div class="radio"></div><div><div class="t">Frequent movement</div><div class="d">Visual reset about every 25 minutes · movement about every 35</div></div></div>
+      </div>
+      <div style="margin: 8px 4px 0; font-size: 11.5px; color: #8b8794; line-height: 1.5;">
+        The evidence supports a window, not an exact number. <a href="#" style="color: #7a5b83;">Why these defaults?</a>
+      </div>
+
+      <div class="gl" style="margin-top: 22px;">Before a break</div>
+      <div class="grp">
+        <div class="r">
+          <div style="flex: 1;"><div class="t">Quiet notice about 45 seconds before</div><div class="d" style="font-variant-numeric: normal;">Uses notifications if you allow them. Without them, the menu-bar item changes instead.</div></div>
+          <div class="sw on"><i></i></div>
+        </div>
+      </div>
+
+      <div class="gl" style="margin-top: 22px;">Working hours</div>
+      <div class="grp">
+        <div class="r">
+          <div style="flex: 1;"><div class="t">Only remind me during working hours</div></div>
+          <div class="sw on"><i></i></div>
+        </div>
+        <div class="r">
+          <div style="flex: 1;"><div class="t">Hours</div></div>
+          <div style="display: flex; align-items: center; gap: 7px;">
+            <span class="stp">9:00 AM</span><span style="font-size: 12.5px; color: #8b8794;">to</span><span class="stp">6:00 PM</span>
+            <span class="stp" style="margin-left: 4px;">Weekdays<svg width="12" height="12" viewBox="0 0 12 12" style="margin-left: 6px;"><path d="M3.4 4.6L6 7.2l2.6-2.6" stroke="#8b8794" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin: 22px 4px 0; font-size: 11.5px; color: #8b8794; line-height: 1.55;">
+        Timing is based on estimated active computer use — keyboard and pointer activity only. It doesn’t know whether you are sitting, standing, or looking at the screen.
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

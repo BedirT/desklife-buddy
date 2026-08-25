@@ -1,0 +1,98 @@
+<!doctype html><meta charset="utf-8">
+<style>
+  body { margin: 0; }
+  .rt { position: relative; width: 1440px; height: 900px; overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased; background: #eef0f8; }
+
+  /* light appearance is the same landscape at a different hour — not an inversion.
+     this is the answer to DQ-14: the composition is constant, the key is not. */
+  .sky { position: absolute; inset: 0 0 340px 0;
+         background:
+           radial-gradient(40% 26% at 50% 100%, rgba(255,246,226,0.96) 0%, rgba(255,220,176,0.66) 32%, rgba(255,202,168,0.28) 62%, rgba(255,198,166,0) 84%),
+           radial-gradient(120% 72% at 50% 102%, rgba(255,204,168,0.56) 0%, rgba(238,190,198,0.30) 26%, rgba(206,198,236,0.20) 48%, rgba(238,240,248,0) 78%),
+           radial-gradient(90% 70% at 18% -4%, rgba(158,172,236,0.38) 0%, rgba(238,240,248,0) 68%),
+           linear-gradient(178deg, #dbe1f6 0%, #e7e5f2 42%, #f5e4e2 74%, #fde9d8 100%); }
+  .grd { position: absolute; left: 0; right: 0; top: 560px; bottom: 0;
+         background:
+           radial-gradient(48% 70% at 50% -8%, rgba(255,196,152,0.44) 0%, rgba(255,206,178,0.12) 42%, rgba(236,236,244,0) 74%),
+           linear-gradient(180deg, #f3ebe9 0%, #eae9f1 58%, #e2e4ee 100%); }
+  .grain { position: absolute; inset: 0; opacity: 0.045; pointer-events: none; mix-blend-mode: multiply;
+           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  .hz  { position: absolute; left: 0; right: 0; top: 560px; height: 1px; background: rgba(60,44,60,0.30); }
+  .hzf { position: absolute; left: 0; top: 560px; height: 1px; width: 40%;
+         background: linear-gradient(90deg, rgba(214,120,70,0.20) 0%, rgba(206,102,58,0.88) 88%, rgba(196,88,48,1) 100%);
+         box-shadow: 0 0 20px 1px rgba(240,150,100,0.42); }
+
+  .mb { position: absolute; top: 0; left: 0; right: 0; height: 24px; z-index: 9;
+        background: rgba(250,248,252,0.68); backdrop-filter: blur(30px) saturate(1.5);
+        display: flex; align-items: center; padding: 0 14px; gap: 18px;
+        font-size: 13px; color: rgba(28,24,36,0.88); }
+  .mb .ap { display: flex; align-items: center; gap: 17px; }
+  .mb .rr { margin-left: auto; display: flex; align-items: center; gap: 15px; }
+  .mb .cl { font-variant-numeric: tabular-nums; }
+  .eyebrow { position: absolute; top: 246px; left: 50%; transform: translateX(-50%);
+             font-size: 13px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+             color: rgba(122,66,52,0.72); }
+  .disp { position: absolute; top: 292px; left: 50%; transform: translateX(-50%);
+          width: 1000px; text-align: center;
+          font-size: 62px; line-height: 1.14; font-weight: 590; letter-spacing: -0.024em; color: #241d2e; }
+  .disp em { font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif;
+             font-style: italic; font-weight: 500; letter-spacing: -0.012em; }
+  .sub { position: absolute; top: 446px; left: 50%; transform: translateX(-50%);
+         width: 600px; text-align: center; font-size: 19px; line-height: 1.5; color: rgba(36,29,46,0.64); }
+
+  .cd  { position: absolute; top: 664px; left: 50%; transform: translateX(-50%);
+         font-size: 27px; font-weight: 500; letter-spacing: 0.02em; font-variant-numeric: tabular-nums;
+         color: rgba(58,36,56,0.92); text-shadow: 0 0 20px rgba(255,206,160,0.45); }
+  .rem { position: absolute; top: 706px; left: 50%; transform: translateX(-50%);
+         font-size: 13px; color: rgba(36,29,46,0.62); letter-spacing: 0.01em; }
+
+  .pills { position: absolute; top: 738px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; }
+  .pill { display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 22px;
+          border-radius: 999px; font-size: 15px; font-weight: 500; color: rgba(36,29,46,0.86);
+          background: rgba(255,255,255,0.62); border: 1px solid rgba(58,36,56,0.14);
+          backdrop-filter: blur(24px) saturate(1.6);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 26px rgba(80,60,70,0.10); }
+  .kc { display: inline-flex; align-items: center; justify-content: center; height: 20px; min-width: 24px;
+        padding: 0 6px; border-radius: 5px; font-size: 11px; letter-spacing: 0.04em;
+        background: rgba(60,44,60,0.08); border: 1px solid rgba(60,44,60,0.07); color: rgba(36,29,46,0.56); }
+
+  .foot { position: absolute; top: 802px; left: 50%; transform: translateX(-50%);
+          font-size: 13px; color: rgba(36,29,46,0.68); }
+</style>
+
+
+<div class="rt">
+  <div class="sky"></div>
+  <div class="grd"></div>
+  <div class="hz"></div>
+  <div class="hzf"></div>
+  <div class="grain"></div>
+
+  <div class="mb">
+    <span class="ap">
+      <svg width="14" height="16" viewBox="0 0 14 17" fill="rgba(28,24,36,0.92)"><path d="M11.2 8.9c0-1.9 1.5-2.8 1.6-2.9-.9-1.3-2.3-1.5-2.8-1.5-1.2-.1-2.3.7-2.9.7-.6 0-1.5-.7-2.5-.7C3.3 4.5 2.1 5.3 1.4 6.5c-1.3 2.3-.3 5.7 1 7.6.6.9 1.4 1.9 2.4 1.9.9 0 1.3-.6 2.4-.6s1.4.6 2.4.6c1 0 1.6-.9 2.2-1.8.7-1 1-2 1-2.1 0 0-1.9-.8-1.9-3zM9.4 3.3c.5-.6.9-1.5.8-2.4-.8 0-1.7.5-2.2 1.2-.5.5-.9 1.5-.8 2.3.9.1 1.7-.4 2.2-1.1z"/></svg>
+      <b style="font-weight:600">Figma</b><span>File</span><span>Edit</span><span>View</span><span>Object</span>
+    </span>
+    <span class="rr">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="rgba(28,24,36,0.88)" stroke-width="1.3" stroke-linecap="round"><path d="M2 6.2a9 9 0 0 1 12 0M4.4 8.7a5.6 5.6 0 0 1 7.2 0"/><circle cx="8" cy="11.6" r="0.95" fill="rgba(28,24,36,0.88)" stroke="none"/></svg>
+      <svg width="24" height="13" viewBox="0 0 26 13" fill="none"><rect x="0.6" y="1.6" width="20" height="10" rx="3" stroke="rgba(28,24,36,0.45)" stroke-width="1.1"/><rect x="2.2" y="3.2" width="13" height="6.8" rx="1.6" fill="rgba(28,24,36,0.88)"/><path d="M22.4 5v3.2c1-.3 1.5-.9 1.5-1.6s-.5-1.3-1.5-1.6z" fill="rgba(28,24,36,0.45)"/></svg>
+      <span class="cl">Tue 9:12 AM</span>
+    </span>
+  </div>
+
+  <div class="eyebrow">Visual reset</div>
+  <div class="disp">Look at something<br><em>comfortably</em> far away.</div>
+  <div class="sub">Let the small details come into view without forcing focus. Blink slowly two or three times.</div>
+  <div class="cd">0:12</div>
+  <div class="rem">Ends on its own.</div>
+
+  <div class="pills">
+    <span class="pill">Done early<span class="kc">↩</span></span>
+    <span class="pill">Skip<span class="kc">esc</span></span>
+  </div>
+
+  <div class="foot">If looking far away isn't practical, closing your eyes gently works too.</div>
+</div>

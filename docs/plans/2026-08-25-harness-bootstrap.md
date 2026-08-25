@@ -1,6 +1,6 @@
 # Full harness bootstrap
 
-Status: in progress
+Status: complete
 
 ## Objective
 
@@ -29,11 +29,11 @@ research package as the implementation authority, and keep product identity neut
 - [x] 5. Bind the durable product contracts and repository instructions to
   `design/HANDOFF.md`, the canonical design package, and the normative protocol YAML.
 - [x] 6. Install locked tools and run `scripts/doctor.sh`.
-- [ ] 7. Run the full bootstrap verification: lint, product/package tests, snapshots, app
+- [x] 7. Run the full bootstrap verification: lint, product/package tests, snapshots, app
   build/run proof where the environment permits, `scripts/test-template.sh`, and
   `scripts/test-harness.sh`.
-- [ ] 8. Record exact command evidence and leave the repository ready for its first clean
-  baseline commit. Product implementation remains explicitly not started.
+- [x] 8. Record exact command evidence and leave the repository with a clean local baseline.
+  Product implementation remains explicitly not started.
 
 ## Decisions
 

@@ -141,7 +141,6 @@ private enum RuntimeProbe {
             guard (entry[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value == pid,
                   (entry[kCGWindowLayer as String] as? NSNumber)?.intValue == 0,
                   (entry[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 0 > 0,
-                  (entry[kCGWindowSharingState as String] as? NSNumber)?.intValue ?? 0 > 0,
                   let number = entry[kCGWindowNumber as String] as? NSNumber,
                   let boundsDictionary = entry[kCGWindowBounds as String] as? [String: NSNumber],
                   let bounds = CGRect(dictionaryRepresentation: boundsDictionary as CFDictionary),
@@ -169,7 +168,7 @@ private enum RuntimeProbe {
             .compactMap(\.self)
             .joined(separator: ", ")
             fputs(
-                "Expected one shareable layer-0 window for pid \(pid)\(selector.isEmpty ? "" : " (\(selector))"); found \(candidates.count).\n",
+                "Expected one visible layer-0 window for pid \(pid)\(selector.isEmpty ? "" : " (\(selector))"); found \(candidates.count).\n",
                 stderr,
             )
             for candidate in eligibleCandidates {

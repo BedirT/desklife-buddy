@@ -5,7 +5,11 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TMP_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/swiftmac-template-tests.XXXXXX")"
 FAILURES=0
-trap 'rm -rf "$TMP_ROOT"' EXIT
+cleanup_tmp_root() {
+  /bin/chmod -R u+w "$TMP_ROOT" 2>/dev/null || true
+  /bin/rm -rf "$TMP_ROOT"
+}
+trap cleanup_tmp_root EXIT
 
 fixture() {
   local name="$1"
@@ -117,6 +121,25 @@ if bare_assertions:
         "Bash 3.2 assertions require explicit failure propagation at lines: "
         + ", ".join(map(str, bare_assertions))
     )
+PY
+}
+
+test_window_identity_does_not_require_capture_permission() {
+  /usr/bin/python3 -I - "$ROOT" <<'PY'
+import pathlib
+import sys
+
+root = pathlib.Path(sys.argv[1])
+probe = (root / "scripts/support/runtime_probe.swift").read_text()
+window_resolver = probe.split("private static func resolveWindow", 1)[1].split(
+    "private static func validateImage", 1
+)[0]
+if "kCGWindowSharingState" in window_resolver:
+    raise SystemExit("window identity must not require Screen Recording permission")
+
+for relative in ("scripts/shot.sh", "scripts/capture-matrix.sh", "scripts/record-video.sh"):
+    if "require_screen_capture_access" not in (root / relative).read_text():
+        raise SystemExit(f"{relative} lost its explicit Screen Recording gate")
 PY
 }
 
@@ -4216,6 +4239,7 @@ PY
 }
 
 run_test "shell assertions propagate failures" test_shell_assertions_are_explicit
+run_test "window identity is independent of capture permission" test_window_identity_does_not_require_capture_permission
 run_test "rename is target-aware and escaped" test_rename_is_target_aware_and_escaped
 run_test "feature linking survives sample removal" test_feature_linking_without_sample_anchor
 run_test "feature preflight failure is inert" test_feature_preflight_failure_is_inert

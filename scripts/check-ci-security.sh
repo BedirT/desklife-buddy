@@ -732,7 +732,7 @@ else:
 
 
 boundary_manifest = root / "scripts" / "security-boundary.sha256"
-boundary_manifest_digest = "f7e5463241a046599c0882e1c0a1eb4fec075db357e14d7472601378558509e7"
+boundary_manifest_digest = "df569f0f2da16ae4191069daa584a91195e50253af4900ca8f797a0ee7a9e606"
 try:
     manifest_metadata = boundary_manifest.lstat()
     manifest_content = boundary_manifest.read_bytes()

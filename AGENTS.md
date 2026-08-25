@@ -136,7 +136,11 @@ Ordinary app and harness tasks are agent-landed, not owner-only merges:
 
 Use `scripts/review.sh` rather than an ambient review client. It is bounded,
 ephemeral, read-only, and MCP-free. Use `scripts/test-harness.sh` when changing
-the lifecycle itself. Long gates must run as bare commands, not through output
+ordinary lifecycle-facing contracts; use `scripts/test-harness.sh --full` only when changing
+worktree, review, integration, landing, or recovery code. Use
+`scripts/test-template.sh --full` only when changing template setup, tool installation,
+capture, or security-boundary behavior. Neither exhaustive self-test belongs in an app change
+or an exact-head rerun solely because a commit was created. Long gates must run as bare commands, not through output
 filters or polling loops; the shared supervisor supplies heartbeat, timeout,
 process-group termination, and the real exit status. See
 `docs/agent-harness.md` and `docs/claude-long-gates.md`.

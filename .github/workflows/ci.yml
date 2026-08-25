@@ -164,10 +164,10 @@ jobs:
       - name: Format check
         run: ./scripts/format.sh --check
 
-      - name: Destructive template smoke
+      - name: Template contract smoke
         run: ./scripts/test-template.sh
 
-      - name: Harness lifecycle rehearsals
+      - name: Harness lifecycle smoke
         run: ./scripts/test-harness.sh
 
       - name: Factory and host tests (ladder rung 1)

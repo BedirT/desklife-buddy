@@ -79,13 +79,13 @@ finalizer, edit a receipt, delete a ticket, or broadly remove peer worktrees.
 
 ## Verification
 
-`scripts/test-harness.sh` is the canonical disposable rehearsal suite. It
-covers supervisor behavior, localization, preview-state reachability, MCP
+`scripts/test-harness.sh` is a quick smoke by default. `scripts/test-harness.sh --full` is the
+canonical disposable lifecycle rehearsal suite. It covers supervisor behavior, localization, preview-state reachability, MCP
 lifecycle, review receipts, worktree state and cleanup, integration recovery,
 issue linkage, landing, and queue behavior. Product tests remain in
 `scripts/test.sh`; visual proof remains in `scripts/snapshot.sh` and real-app
-scripts. Lifecycle changes require both the focused failed rehearsal before the
-fix and the complete harness suite afterward.
+scripts. Lifecycle implementation changes require both the focused failed rehearsal before the
+fix and the complete `--full` harness suite afterward. App changes never require it.
 
 Ordinary agent landing does not erase the separate escalation boundary for
 production credentials and distribution, paid/hosted/telemetry dependencies,

@@ -42,6 +42,9 @@ owner answers (or by the owner directly) — never invented.
 - (2026-08-25) Use one combined design and implementation repository with the full
   `swiftmac-base` harness.
 - (2026-08-25) Finish and verify the harness before beginning any app feature.
+- (2026-08-25) Preserve full harness capability without putting exhaustive template or
+  lifecycle self-tests in the app-development loop. Default checks are fast and scoped;
+  expensive harness rehearsals are explicit maintenance gates only.
 
 ## Visual & copy
 - (2026-08-25) Keep working product name and bundle identity deferred; do not rename the

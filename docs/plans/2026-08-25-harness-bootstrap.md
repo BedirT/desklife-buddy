@@ -42,3 +42,6 @@ research package as the implementation authority, and keep product identity neut
 - 2026-08-25: Product identity is deferred. Neutral template identity remains intentionally.
 - 2026-08-25: `design/HANDOFF.md` is the implementation entry point; existing research and
   design authority order remains unchanged.
+- 2026-08-25: Harness self-tests are tiered for development speed. Quick contract smoke is
+  the default; exhaustive repository-copy and Git/PR recovery suites require `--full` and run
+  only when their harness implementation changes. They are never ordinary app gates.

@@ -46,7 +46,7 @@ into shell-runnable, text-readable, deterministic evidence.
 
 ## Bootstrap this checkout
 
-Install the locked tools and prove the complete harness before product work:
+Install the locked tools and prove the app-facing harness before product work:
 
 ```sh
 brew install gh mise
@@ -57,14 +57,22 @@ MISE_OVERRIDE_CONFIG_FILENAMES=mise.toml \
 MISE_OVERRIDE_TOOL_VERSIONS_FILENAMES=none \
 MISE_TRUSTED_CONFIG_PATHS="$PWD/mise.toml" \
   mise install --locked
-scripts/doctor.sh && scripts/test.sh all && scripts/build.sh
-scripts/test-template.sh
-scripts/test-harness.sh
+scripts/doctor.sh
+scripts/test-template.sh && scripts/test-harness.sh
+scripts/test.sh all && scripts/build.sh
 ```
 
 Harness scripts execute only the checksum-locked `mise` tools. Run
 `mise trust mise.toml` too when you want automatic tool activation in an
 interactive shell; each new worktree otherwise needs no trust ceremony.
+
+The two harness self-tests default to a small contract smoke. Their exhaustive
+`--full` modes repeatedly clone/mutate the repository and rehearse Git/PR recovery; they are
+template-maintainer gates, not app-development gates. Run `scripts/test-template.sh --full`
+only after changing template setup/capture/install/security behavior, and
+`scripts/test-harness.sh --full` only after changing worktree, review, integration, or landing
+behavior. Normal app work runs only the package, snapshot, build, or real-app rung affected by
+the change.
 
 Do not run `scripts/rename-app.sh` yet. The `Item`/`ItemList` package remains
 only as a worked example for tests, previews, SwiftData seams, and desktop
@@ -115,7 +123,8 @@ Packages/TestSupport       SnapshotSupport macOS snapshot helpers
 |---|---|
 | `doctor.sh` | Environment audit: Xcode, git, pinned tools, macOS capture/perf tools |
 | `test.sh [Pkg\|App\|all]` | Host-side Swift Testing suites + App seam tests |
-| `test-harness.sh` | Disposable rehearsals for bounded gates, review, queues, issue receipts, merging, and cleanup |
+| `test-template.sh [--full]` | Fast template contract smoke; exhaustive copy/mutation regressions only with `--full` |
+| `test-harness.sh [--full]` | Fast lifecycle smoke; exhaustive Git/PR recovery rehearsals only with `--full` |
 | `snapshot.sh [--render-only] <Pkg> [filter]` | Strict local pixels plus current-state and colored diff reviews; hosted mode is non-baseline inventory only |
 | `preview-review.sh <Pkg> [filter] <export\|--baselines>` | Builds a manifest-checked contact sheet + markdown gallery |
 | `accept-snapshots.sh <run> --proposal-sha256 <digest>` | Installs exact candidate bytes bound to the inspected diff page |

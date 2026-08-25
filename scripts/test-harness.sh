@@ -6,7 +6,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 cd "$ROOT"
 
-rehearsals=(
+quick_rehearsals=(
+  claude-long-gate-rehearsal.sh
+  codex-mcp-lifecycle-rehearsal.sh
+  review-rehearsal.sh
+  worktree-list-rehearsal.sh
+)
+
+full_rehearsals=(
   build-rehearsal.sh
   check-observable-preview-wiring-rehearsal.sh
   sync-localization-catalogs-rehearsal.sh
@@ -22,6 +29,13 @@ rehearsals=(
   worktree-finalize-rehearsal.sh
 )
 
+MODE="quick"
+case "${1:-}" in
+  ""|--quick) rehearsals=("${quick_rehearsals[@]}") ;;
+  --full) MODE="full"; rehearsals=("${full_rehearsals[@]}") ;;
+  *) echo "usage: scripts/test-harness.sh [--quick|--full]" >&2; exit 2 ;;
+esac
+
 passed=0
 for rehearsal in "${rehearsals[@]}"; do
   printf '\n==> %s\n' "$rehearsal"
@@ -29,4 +43,4 @@ for rehearsal in "${rehearsals[@]}"; do
   passed=$((passed + 1))
 done
 
-printf '\nHarness rehearsals: %d/%d passed.\n' "$passed" "${#rehearsals[@]}"
+printf '\nHarness rehearsals (%s): %d/%d passed.\n' "$MODE" "$passed" "${#rehearsals[@]}"

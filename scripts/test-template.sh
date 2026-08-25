@@ -5,6 +5,13 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TMP_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/swiftmac-template-tests.XXXXXX")"
 FAILURES=0
+MODE="quick"
+case "${1:-}" in
+  "") ;;
+  --quick) MODE="quick" ;;
+  --full) MODE="full" ;;
+  *) echo "usage: scripts/test-template.sh [--quick|--full]" >&2; exit 2 ;;
+esac
 cleanup_tmp_root() {
   /bin/chmod -R u+w "$TMP_ROOT" 2>/dev/null || true
   /bin/rm -rf "$TMP_ROOT"
@@ -4240,38 +4247,41 @@ PY
 
 run_test "shell assertions propagate failures" test_shell_assertions_are_explicit
 run_test "window identity is independent of capture permission" test_window_identity_does_not_require_capture_permission
-run_test "rename is target-aware and escaped" test_rename_is_target_aware_and_escaped
-run_test "feature linking survives sample removal" test_feature_linking_without_sample_anchor
-run_test "feature preflight failure is inert" test_feature_preflight_failure_is_inert
-run_test "preview review requires fresh exports" test_preview_review_rejects_missing_fresh_export
-run_test "snapshot and record filters share one contract" test_snapshot_filter_contract
-run_test "hosted snapshot renders never claim pixel baselines" test_snapshot_render_only_contract
-run_test "snapshot diffs install only exact reviewed bytes" test_snapshot_diff_review_contract
-run_test "snapshot locks recover stale owners only" test_snapshot_lock_contract
-run_test "snapshot commands have a watchdog" test_snapshot_timeout_contract
-run_test "PID selection fails on ambiguity" test_pid_ambiguity_contract
-run_test "failed launches terminate their detached process" test_failed_launch_terminates_detached_process
-run_test "failed-launch cleanup revalidates exact process identity" test_failed_launch_cleanup_revalidates_process_identity
-run_test "evaluator shells isolate before Bash starts" test_evaluator_shell_starts_from_clean_environment
-run_test "same-tree commits invalidate build provenance" test_commit_invalidates_build_provenance
-run_test "XcodeBuildMCP installs from a clean reviewed lock" test_xcodebuildmcp_clean_install
-run_test "XcodeBuildMCP termination cleans an active install" test_xcodebuildmcp_install_signal_cleanup
-run_test "XcodeBuildMCP crash recovery preserves and reaps live installs" test_xcodebuildmcp_kill_recovery
-run_test "XcodeBuildMCP crash recovery leases live runtimes" test_xcodebuildmcp_runtime_kill_recovery
-run_test "artifact retention excludes ambient secrets" test_artifact_secret_boundary
-run_test "brownfield adoption rejects escape symlinks" test_adopt_rejects_escape_symlinks
-run_test "brownfield adoption without origin preserves source" test_adopt_without_origin_preserves_source
 run_test "capture commands require explicit approval" "$ROOT/scripts/check-capture-policy.sh"
-run_test "factory contract rejects seeded corruption" "$ROOT/scripts/test-factory-contract.sh"
-run_test "factory design entrypoint is repository-read-only" test_factory_design_entrypoint_is_repository_read_only
-run_test "Factory API freeze rejects package authority wrappers" test_factory_api_rejects_package_wrapper
 run_test "dependency control plane rejects executable and config drift" test_dependency_control_plane_rejects_mutations
 run_test "CI authority and dependencies are pinned" "$ROOT/scripts/check-ci-security.sh"
-run_test "CI policy rejects YAML bypass forms" test_ci_policy_rejects_yaml_bypasses
+
+if [[ "$MODE" == full ]]; then
+  run_test "rename is target-aware and escaped" test_rename_is_target_aware_and_escaped
+  run_test "feature linking survives sample removal" test_feature_linking_without_sample_anchor
+  run_test "feature preflight failure is inert" test_feature_preflight_failure_is_inert
+  run_test "preview review requires fresh exports" test_preview_review_rejects_missing_fresh_export
+  run_test "snapshot and record filters share one contract" test_snapshot_filter_contract
+  run_test "hosted snapshot renders never claim pixel baselines" test_snapshot_render_only_contract
+  run_test "snapshot diffs install only exact reviewed bytes" test_snapshot_diff_review_contract
+  run_test "snapshot locks recover stale owners only" test_snapshot_lock_contract
+  run_test "snapshot commands have a watchdog" test_snapshot_timeout_contract
+  run_test "PID selection fails on ambiguity" test_pid_ambiguity_contract
+  run_test "failed launches terminate their detached process" test_failed_launch_terminates_detached_process
+  run_test "failed-launch cleanup revalidates exact process identity" test_failed_launch_cleanup_revalidates_process_identity
+  run_test "evaluator shells isolate before Bash starts" test_evaluator_shell_starts_from_clean_environment
+  run_test "same-tree commits invalidate build provenance" test_commit_invalidates_build_provenance
+  run_test "XcodeBuildMCP installs from a clean reviewed lock" test_xcodebuildmcp_clean_install
+  run_test "XcodeBuildMCP termination cleans an active install" test_xcodebuildmcp_install_signal_cleanup
+  run_test "XcodeBuildMCP crash recovery preserves and reaps live installs" test_xcodebuildmcp_kill_recovery
+  run_test "XcodeBuildMCP crash recovery leases live runtimes" test_xcodebuildmcp_runtime_kill_recovery
+  run_test "artifact retention excludes ambient secrets" test_artifact_secret_boundary
+  run_test "brownfield adoption rejects escape symlinks" test_adopt_rejects_escape_symlinks
+  run_test "brownfield adoption without origin preserves source" test_adopt_without_origin_preserves_source
+  run_test "factory contract rejects seeded corruption" "$ROOT/scripts/test-factory-contract.sh"
+  run_test "factory design entrypoint is repository-read-only" test_factory_design_entrypoint_is_repository_read_only
+  run_test "Factory API freeze rejects package authority wrappers" test_factory_api_rejects_package_wrapper
+  run_test "CI policy rejects YAML bypass forms" test_ci_policy_rejects_yaml_bypasses
+fi
 
 if [[ "$FAILURES" -ne 0 ]]; then
   echo "template smoke: $FAILURES test(s) failed" >&2
   exit 1
 fi
 
-echo "template smoke: OK"
+echo "template smoke ($MODE): OK"

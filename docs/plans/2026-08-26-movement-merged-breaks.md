@@ -58,6 +58,11 @@ in place, or use a seated equivalent.” No copy or research escalation remains 
 
 ## Steps
 
+- [x] 0. Semantics-independent design enablement while intake is open: add the accepted
+      domain-neutral movement choice chip, movement glyph, quiet action, typography/color roles,
+      localized gallery states, and Previews without feature behavior - done = focused
+      DesignSystem tests and `scripts/snapshot.sh DesignSystem` green with exported light/dark
+      catalog PNGs inspected.
 - [ ] 1. Domain and runtime semantics first, after the three owner answers above: write and
       observe RED tests for accepted 5/2-minute `breakStarted`, movement `timerFinished` without
       inferred completion, Done early and already-moved declarations, resolved Skip behavior,
@@ -114,3 +119,13 @@ in place, or use a seated equivalent.” No copy or research escalation remains 
   the numeric recovery-deferral threshold. The plan moved back to intake-needed rather than
   encoding one interpretation into retained history. The older offered/Start screen remains
   superseded; this gate concerns clock effects, not restoring that UI.
+- 2026-08-26: DesignSystem vocabulary is independent of the three retained-history decisions
+  and may advance as Step 0 while intake remains open. This does not authorize Feature model,
+  runtime, or lifecycle work ahead of the owner answers.
+- 2026-08-26: Step 0 is retained. The catalog now proves equal movement choices plus isolated
+  selected, focused, Reduce Transparency, and Increase Contrast states in both appearances;
+  normal glass keeps its fixed scrim and 0.07/0.13 fills separate from the solid accessibility
+  fallback. Canvas glyph rendering was replaced after an immediate rerun exposed a 532-pixel
+  anti-aliasing flake; two consecutive strict DesignSystem snapshot runs then passed exactly.
+  The exported `movementControls` and `tokens` light/dark PNGs were inspected, and the final
+  implementation review reported no P1/P2 findings.

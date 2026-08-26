@@ -29,5 +29,15 @@
                 layout: .sizeThatFits,
             )
         }
+
+        @Test func movementControls() {
+            assertScreenSnapshot(
+                of: DSGallery.MovementControlsSection()
+                    .padding(DSSpacing.lg)
+                    .background(Color.dsBackground)
+                    .frame(width: 1120),
+                layout: .sizeThatFits,
+            )
+        }
     }
 #endif

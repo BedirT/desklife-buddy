@@ -15,6 +15,7 @@ public struct DSGallery: View {
             VStack(alignment: .leading, spacing: DSSpacing.xl) {
                 TokensSection()
                 ComponentsSection()
+                MovementControlsSection()
             }
             .padding(DSSpacing.lg)
         }
@@ -44,6 +45,25 @@ public struct DSGallery: View {
             ("breakGroundBottom", .dsBreakGroundBottom),
             ("breakHorizonFill", .dsBreakHorizonFill),
             ("breakHorizonTrackIC", .dsBreakHorizonTrackIncreased),
+            ("movementSkyTop", .dsMovementSkyTop),
+            ("movementSkyMiddle", .dsMovementSkyMiddle),
+            ("movementSkyHorizon", .dsMovementSkyHorizon),
+            ("movementGroundTop", .dsMovementGroundTop),
+            ("movementGroundBottom", .dsMovementGroundBottom),
+            ("movementGlow", .dsMovementGlow),
+            ("movementControlSolid", .dsMovementControlSolid),
+            ("movementChoiceScrim", .dsMovementChoiceScrim),
+            ("movementChoiceFill", .dsMovementChoiceGlassFill),
+            ("movementSelectedFill", .dsMovementChoiceSelectedFill),
+            ("movementSelected", .dsMovementChoiceSelected),
+            ("movementChoiceCheck", .dsMovementChoiceCheck),
+            ("movementGlyphInk", .dsMovementGlyphInk),
+            ("movementWalkTop", .dsMovementWalkTileTop),
+            ("movementWalkBottom", .dsMovementWalkTileBottom),
+            ("movementSmallTop", .dsMovementSmallSpaceTileTop),
+            ("movementSmallBottom", .dsMovementSmallSpaceTileBottom),
+            ("movementSeatedTop", .dsMovementSeatedTileTop),
+            ("movementSeatedBottom", .dsMovementSeatedTileBottom),
             ("accent", .dsAccent),
             ("positive", .dsPositive),
             ("warning", .dsWarning),
@@ -80,6 +100,13 @@ public struct DSGallery: View {
                     Text(DesignSystemL10n.Typography.body).font(DSTypography.body)
                     Text(DesignSystemL10n.Typography.subtext).font(DSTypography.subtext)
                     Text(DesignSystemL10n.Typography.caption).font(DSTypography.caption)
+                    Text(DesignSystemL10n.Typography.breakLongInstruction)
+                        .font(DSTypography.breakInstruction(pointSize: DSTypography.breakLongInstructionSize))
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(DesignSystemL10n.Typography.breakChoice)
+                        .font(DSTypography.breakChoice(pointSize: DSTypography.breakChoiceSize))
+                    Text(DesignSystemL10n.Typography.breakSafety)
+                        .font(DSTypography.breakSafety(pointSize: DSTypography.breakSafetySize))
                 }
                 .foregroundStyle(Color.dsTextPrimary)
 

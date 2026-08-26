@@ -21,6 +21,96 @@
         }
       }
     },
+    "break_field.walk_or_wheel" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Walk or wheel"
+          }
+        }
+      }
+    },
+    "break_field.walk_or_wheel_accessibility" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Walk or wheel, 1"
+          }
+        }
+      }
+    },
+    "break_field.small_space" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Small space"
+          }
+        }
+      }
+    },
+    "break_field.small_space_accessibility" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Small space, 2"
+          }
+        }
+      }
+    },
+    "break_field.seated" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seated"
+          }
+        }
+      }
+    },
+    "break_field.seated_accessibility" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seated, 3"
+          }
+        }
+      }
+    },
+    "break_field.change_position" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change position instead"
+          }
+        }
+      }
+    },
+    "break_field.logged_separately" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "· logged separately"
+          }
+        }
+      }
+    },
+    "break_field.change_position_accessibility" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change position instead, P — logged separately"
+          }
+        }
+      }
+    },
     "buttons.add_item" : {
       "localizations" : {
         "en" : {
@@ -181,6 +271,16 @@
         }
       }
     },
+    "sections.movement_choices" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Movement choices"
+          }
+        }
+      }
+    },
     "sections.card" : {
       "localizations" : {
         "en" : {
@@ -337,6 +437,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Caption"
+          }
+        }
+      }
+    },
+    "typography.break_long_instruction" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Long instruction"
+          }
+        }
+      }
+    },
+    "typography.break_choice" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Break choice"
+          }
+        }
+      }
+    },
+    "typography.break_safety" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Break safety"
           }
         }
       }

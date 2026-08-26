@@ -60,6 +60,35 @@ public extension Color {
         dark: Color(hex: 0x000000).opacity(0.72),
     )
 
+    // MARK: - Movement fields
+
+    /// Working-reference movement field. DQ-18 still gates final masters and light appearance.
+    static let dsMovementSkyTop = Color(light: Color(hex: 0xF0D2C7), dark: Color(hex: 0x150818))
+    static let dsMovementSkyMiddle = Color(light: Color(hex: 0xF5D8CA), dark: Color(hex: 0x260F24))
+    static let dsMovementSkyHorizon = Color(light: Color(hex: 0xFFD5AE), dark: Color(hex: 0x6B2432))
+    static let dsMovementGroundTop = Color(light: Color(hex: 0xEEDBD5), dark: Color(hex: 0x2A1220))
+    static let dsMovementGroundBottom = Color(light: Color(hex: 0xD8CED8), dark: Color(hex: 0x0F0710))
+    static let dsMovementGlow = Color(light: Color(hex: 0xFFC48F), dark: Color(hex: 0xFFCE8C))
+    static let dsMovementControlSolid = Color(
+        light: Color(hex: 0xF8E9E1).opacity(0.96),
+        dark: Color(hex: 0x2A121C).opacity(0.96),
+    )
+    static let dsMovementChoiceScrim = Color(
+        light: Color(hex: 0xFFF8F4).opacity(0.45),
+        dark: Color(hex: 0x180A16).opacity(0.45),
+    )
+    static let dsMovementChoiceGlassFill = Color(hex: 0xFFFFFF).opacity(0.07)
+    static let dsMovementChoiceSelectedFill = Color(hex: 0xFFFFFF).opacity(0.13)
+    static let dsMovementChoiceSelected = Color(light: Color(hex: 0x6E3B2C), dark: Color(hex: 0xFFE0C4))
+    static let dsMovementChoiceCheck = Color(light: Color(hex: 0x6E3B2C), dark: Color(hex: 0xFFE0C4))
+    static let dsMovementGlyphInk = Color(hex: 0xFFFFFF)
+    static let dsMovementWalkTileTop = Color(hex: 0xFFC074)
+    static let dsMovementWalkTileBottom = Color(hex: 0xF0743F)
+    static let dsMovementSmallSpaceTileTop = Color(hex: 0xFF9EC0)
+    static let dsMovementSmallSpaceTileBottom = Color(hex: 0xE0487E)
+    static let dsMovementSeatedTileTop = Color(hex: 0xB39BFF)
+    static let dsMovementSeatedTileBottom = Color(hex: 0x6F4FD8)
+
     // MARK: - Brand & status
 
     static let dsAccent = Color(light: Color(hex: 0x4F46E5), dark: Color(hex: 0x8B85F4))

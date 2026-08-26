@@ -53,6 +53,24 @@ enum DesignSystemL10n {
     enum BreakField {
         static let doneEarly = string("break_field.done_early", default: "Done early")
         static let skip = string("break_field.skip", default: "Skip")
+        static let walkOrWheel = string("break_field.walk_or_wheel", default: "Walk or wheel")
+        static let walkOrWheelAccessibility = string(
+            "break_field.walk_or_wheel_accessibility",
+            default: "Walk or wheel, 1",
+        )
+        static let smallSpace = string("break_field.small_space", default: "Small space")
+        static let smallSpaceAccessibility = string(
+            "break_field.small_space_accessibility",
+            default: "Small space, 2",
+        )
+        static let seated = string("break_field.seated", default: "Seated")
+        static let seatedAccessibility = string("break_field.seated_accessibility", default: "Seated, 3")
+        static let changePosition = string("break_field.change_position", default: "Change position instead")
+        static let loggedSeparately = string("break_field.logged_separately", default: "· logged separately")
+        static let changePositionAccessibility = string(
+            "break_field.change_position_accessibility",
+            default: "Change position instead, P — logged separately",
+        )
     }
 
     enum Typography {
@@ -62,6 +80,12 @@ enum DesignSystemL10n {
         static let body = string("typography.body", default: "Body")
         static let subtext = string("typography.subtext", default: "Subtext")
         static let caption = string("typography.caption", default: "Caption")
+        static let breakLongInstruction = string(
+            "typography.break_long_instruction",
+            default: "Long instruction",
+        )
+        static let breakChoice = string("typography.break_choice", default: "Break choice")
+        static let breakSafety = string("typography.break_safety", default: "Break safety")
     }
 
     enum Sections {
@@ -75,5 +99,6 @@ enum DesignSystemL10n {
         static let card = string("sections.card", default: "Card")
         static let emptyState = string("sections.empty_state", default: "Empty state")
         static let breakControls = string("sections.break_controls", default: "Break controls")
+        static let movementChoices = string("sections.movement_choices", default: "Movement choices")
     }
 }

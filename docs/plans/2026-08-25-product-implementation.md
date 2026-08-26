@@ -37,14 +37,17 @@ None blocks Phase 1. Later phases stop only at their explicit constitution-level
 - [x] 1. Clock engine and exhaustive event log - child plan:
       `docs/plans/2026-08-25-clock-engine-event-log.md` - done = Domain and App persistence
       seams green, `scripts/lint.sh` clean, and retained evidence recorded.
-- [ ] 2. Menu-bar item, status menu, and Dock fallback - child plan created at phase start -
+- [ ] 2. Menu-bar item, status menu, and Dock fallback - child plan:
+      `docs/plans/2026-08-25-status-menu-dock.md` - working implementation complete;
+      external AX traversal remains host-permission blocked -
       done = feature/App tests, inspected Preview snapshots, build/run, real accessibility tree,
       and focused real-window proof.
-- [ ] 3. Visual reset and reusable overlay coordinator - child plan created at phase start -
-      done = BR-02/03/04/14-18 and appearance variants designed, implemented, snapshotted,
-      and proven across focus, Escape, reduced motion, static mode, and multi-display.
-- [ ] 4. Movement, position change, merge, snooze, and recovery - child plan created at phase
-      start - done = all explicit event semantics, equal-status movement paths, snapshots,
+- [ ] 3. Visual reset and reusable overlay coordinator - child plan:
+      `docs/plans/2026-08-26-visual-reset-overlay.md` - working implementation complete;
+      final acceptance remains owner-gated on DQ-18 art and BR-04 static presentation.
+- [ ] 4. Movement, position change, merge, snooze, and recovery - child plan:
+      `docs/plans/2026-08-26-movement-merged-breaks.md` - done = all explicit event semantics,
+      equal-status movement paths, snapshots,
       keyboard/Escape, and real-flow proof pass.
 - [ ] 5. Notification-first heads-up, permission degradation, then capsule - child plan created
       at phase start - done = notification and no-permission paths, capsule/menu keyboard parity,
@@ -86,3 +89,8 @@ data, even if its query model is explored earlier.
 - 2026-08-25: Phase 1 closed at the retained Step 4 implementation commit `3be3f55`; its child
   plan records full verification and carries DQ-20/DQ-21 forward without importing the broader
   event schema or private lock-state signals.
+- 2026-08-26: Phase 2's working checkpoint is retained through `eb5f320`, with only its
+  predeclared external AX permission evidence open. Phase 3's working field and native overlay
+  are retained through `033f1c9`; only its DQ-18/BR-04 and external-evidence gates remain. Per
+  the build order, those gates do not prevent behavior and working-reference implementation of
+  Phase 4.

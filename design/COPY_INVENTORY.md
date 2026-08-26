@@ -273,7 +273,7 @@ Rejected in this pass: "Focus mode detected" (implies sensing beyond honest sour
 | CP-MV10 | Walk or wheel · Small space · Seated | A | Choice titles, equal tier; parity wording `[C047, C048]`. "Seated" not "Stay seated" — names a movement path, not an opt-out |
 | CP-MV11 | Walk or wheel — away from the desk, at an easy, comfortable pace. | A | Guidance sentence opens with the selected chip's name (D-027 — selection never color-only), then the card's first instruction line `[04 §4, L01]`. Swaps with selection |
 | CP-MV15 | Seated — alternate lifting each foot, move the ankles, reach the arms easily. | A | Same pattern; instruction verbatim from `M02` (matches CP-BR40) |
-| CP-MV16 ⚠ | Small space — *(sentence pending: draw verbatim from the governing `04` card; do not invent)* | A | Same pattern; the small-space card's first instruction line must come from `04_BREAK_AND_MOVEMENT_CONTENT_LIBRARY.md`, not from copywriting |
+| CP-MV16 | Small space — march or step gently in place, or use a seated equivalent. | A | Approved from the governing L03 card's first instruction; same title-first pattern as CP-MV11/15 |
 | CP-MV12 | 2 minutes instead | B | Quick option `[C012]` — offers, never equates 2 min with 5 |
 | CP-MV13 | I already moved | A | Maps to `userDeclaredAlreadyMoved`; user declaration, not verification `[C034]` |
 | CP-MV14 | Change position instead · logged separately | A | Position change never completes the movement clock `[01 §3.3]`; "logged separately" carries the honesty in three words |
@@ -299,6 +299,7 @@ Spoken strings are user-facing copy and follow the same claims discipline.
 | CP-VO08 | "Visual reset. Look at something comfortably far away. %d seconds." | A | Dynamic fallback when protocol configuration changes the timer; `%d` must equal the actual configured duration. Instruction + factual duration only `[V01]`, `[C004]` |
 | CP-VO09 | "Return" · "Escape" · visible keycaps "↩" · "esc" | A | Factual shortcut labels and VoiceOver hints; valid only while the corresponding Done early and Skip shortcuts operate |
 | CP-VO10 | "Skip this reset" | A | VoiceOver action name for the visible Skip control; maps only to `.skipped` and adds no outcome claim `[C037]` |
+| CP-VO11 | "Movement opportunity. Move in a way that works for you. Two minutes." | A | Factual quick-entry variant of CP-VO03; `%d` must equal the selected configured duration `[C010]`, `[C012]`, `[C047]` |
 
 Cadence rule (not a string): timers announce at coarse marks only (open, 10 s/1:00, end),
 polite live region — per-second announcement is an accessibility defect (`accessibility.md` §5).

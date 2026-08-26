@@ -39,7 +39,7 @@ App coordinator ready for the break surfaces that follow.
       only with DS tokens/system menu material, and add high-value snapshots - done =
       `scripts/snapshot.sh DesignSystem` and `scripts/snapshot.sh Features StatusMenuSnapshotTests`
       green, with exported light/dark review PNGs inspected.
-- [ ] 3. Native App integration: build one App-owned protocol runtime/coordinator, install the
+- [x] 3. Native App integration: build one App-owned protocol runtime/coordinator, install the
       template status item and native menu in canonical order, mirror Start/Pause/Settings/Quit
       through `applicationDockMenu`, keep menu dismissal platform-owned, and test action/state
       wiring before implementation - done = `scripts/test.sh App` green - gating suites:
@@ -77,3 +77,11 @@ App coordinator ready for the break surfaces that follow.
   `scripts/snapshot.sh DesignSystem` and
   `scripts/snapshot.sh Features StatusMenuSnapshotTests`; review artifacts live under
   `artifacts/preview-review/DesignSystem/` and `artifacts/preview-review/Features/`.
+- 2026-08-25: Step 3 RED was retained from a fresh App build where the new
+  `ProtocolRuntimeStore` and native menu types did not exist. The App now owns one runtime that
+  restores counters without offline catch-up, atomically commits each coarse observation,
+  updates the menu-bar mark, and routes Start actions without manufacturing completion events.
+  `StatusItemCoordinator` builds the canonical `NSMenu`; `DockMenuController` mirrors the
+  essential routes. Green proof: `DERIVED=/private/tmp/desklife-step3-integrated
+  scripts/test.sh App`, including `ProtocolRuntimeTests` (3), `StatusItemCoordinatorTests` (2),
+  and `DockMenuTests` (2), with every pre-existing App suite passing.

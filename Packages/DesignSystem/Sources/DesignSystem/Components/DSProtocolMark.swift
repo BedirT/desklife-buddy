@@ -39,8 +39,8 @@ public struct DSProtocolMark: View {
                     }
                 }
             }
-        .frame(width: size, height: size)
-        .accessibilityHidden(true)
+            .frame(width: size, height: size)
+            .accessibilityHidden(true)
     }
 
     private func dueDot(horizontal: CGFloat, vertical: CGFloat) -> some View {

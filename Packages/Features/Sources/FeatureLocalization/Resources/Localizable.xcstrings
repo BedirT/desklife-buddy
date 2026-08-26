@@ -191,6 +191,16 @@
         }
       }
     },
+    "status_menu.accessibility_label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Break status"
+          }
+        }
+      }
+    },
     "status_menu.both_due": {
       "localizations": {
         "en": {
@@ -417,6 +427,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Settings…"
+          }
+        }
+      }
+    },
+    "status_menu.snooze_fifteen_minutes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15 minutes"
+          }
+        }
+      }
+    },
+    "status_menu.snooze_five_minutes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 minutes"
+          }
+        }
+      }
+    },
+    "status_menu.snooze_ten_minutes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "10 minutes"
           }
         }
       }

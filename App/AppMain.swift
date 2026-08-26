@@ -3,6 +3,8 @@ import SwiftUI
 
 @main
 struct BaseMacApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     var body: some Scene {
         WindowGroup(AppL10n.appName, id: "main") {
             RootView()

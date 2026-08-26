@@ -10,6 +10,9 @@ enum StatusMenuL10n {
     static let due = string("status_menu.due", default: "Due")
     static let startNow = string("status_menu.start_now", default: "Start now")
     static let later = string("status_menu.later", default: "Later")
+    static let snoozeFiveMinutes = string("status_menu.snooze_five_minutes", default: "5 minutes")
+    static let snoozeTenMinutes = string("status_menu.snooze_ten_minutes", default: "10 minutes")
+    static let snoozeFifteenMinutes = string("status_menu.snooze_fifteen_minutes", default: "15 minutes")
     static let startVisualReset = string("status_menu.start_visual_reset", default: "Start a visual reset")
     static let startMovement = string("status_menu.start_movement", default: "Start movement")
     static let movementRecommended = string("status_menu.movement_recommended", default: "5 minutes")
@@ -26,6 +29,7 @@ enum StatusMenuL10n {
     static let weeklyRhythm = string("status_menu.weekly_rhythm", default: "Weekly rhythm…")
     static let settings = string("status_menu.settings", default: "Settings…")
     static let quit = string("status_menu.quit", default: "Quit")
+    static let accessibilityLabel = string("status_menu.accessibility_label", default: "Break status")
     static let nothingDue = string("status_menu.nothing_due", default: "Nothing due")
     static let paused = string("status_menu.paused", default: "Paused")
     static let visualDue = string("status_menu.visual_due", default: "Visual reset due")
@@ -74,4 +78,30 @@ enum StatusMenuL10n {
     private static func format(_ key: String, default value: String, _ argument: Int) -> String {
         String(format: string(key, default: value), locale: .current, argument)
     }
+}
+
+/// Localized labels shared with AppKit's native menu composition.
+public enum StatusMenuCopy {
+    public static let startNow = StatusMenuL10n.startNow
+    public static let later = StatusMenuL10n.later
+    public static let snoozeFiveMinutes = StatusMenuL10n.snoozeFiveMinutes
+    public static let snoozeTenMinutes = StatusMenuL10n.snoozeTenMinutes
+    public static let snoozeFifteenMinutes = StatusMenuL10n.snoozeFifteenMinutes
+    public static let startVisualReset = StatusMenuL10n.startVisualReset
+    public static let startMovement = StatusMenuL10n.startMovement
+    public static let movementRecommended = StatusMenuL10n.movementRecommended
+    public static let movementQuick = StatusMenuL10n.movementQuick
+    public static let movementPosition = StatusMenuL10n.movementPosition
+    public static let pause = StatusMenuL10n.pause
+    public static let resume = StatusMenuL10n.resume
+    public static let pauseThirtyMinutes = StatusMenuL10n.pauseThirtyMinutes
+    public static let pauseOneHour = StatusMenuL10n.pauseOneHour
+    public static let pauseRestOfDay = StatusMenuL10n.pauseRestOfDay
+    public static let pauseUntilResume = StatusMenuL10n.pauseUntilResume
+    public static let presenting = StatusMenuL10n.presenting
+    public static let workingHoursOnly = StatusMenuL10n.workingHoursOnly
+    public static let weeklyRhythm = StatusMenuL10n.weeklyRhythm
+    public static let settings = StatusMenuL10n.settings
+    public static let quit = StatusMenuL10n.quit
+    public static let accessibilityLabel = StatusMenuL10n.accessibilityLabel
 }

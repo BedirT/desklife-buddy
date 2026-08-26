@@ -1,6 +1,6 @@
 # Lean harness bootstrap
 
-Status: in progress
+Status: complete
 
 ## Objective
 
@@ -31,7 +31,8 @@ control plane.
 - [x] 6. Rewrite repository guidance to describe the resulting harness, not
   `swiftmac-base`.
 - [x] 7. Verify every retained command and record measured timings.
-- [ ] 8. Commit and publish the clean baseline to a private repository.
+- [x] 8. Commit and publish the clean baseline to the private
+  `BedirT/desklife-design` repository.
 
 ## Decisions
 
@@ -59,4 +60,6 @@ control plane.
 - `scripts/new-feature.sh HarnessProbe`: disposable scaffold and generated
   `Package.swift` validation passed.
 - Harness script surface: reduced from roughly 29,700 lines to 1,403 lines.
-- Tracked repository surface: reduced from 533 files to approximately 242 files.
+- Tracked repository surface: reduced from 533 files to 242 files.
+- Private repository publication: `main` created at
+  `https://github.com/BedirT/desklife-design` from verified commit `030335b`.

@@ -63,11 +63,6 @@ public struct ActivityEstimator: Sendable {
 
     /// Reduces one observation using monotonic elapsed time only.
     public mutating func assess(_ sample: ActivitySample) -> ActivityAssessment {
-        defer {
-            previousUptimeSeconds = sample.uptimeSeconds
-            previousSystemAvailable = sample.systemAvailable
-        }
-
         guard sample.uptimeSeconds.isFinite,
               sample.secondsSinceInput.isFinite,
               sample.uptimeSeconds >= 0,
@@ -75,6 +70,11 @@ public struct ActivityEstimator: Sendable {
         else {
             resetMonotonicBaseline()
             return noAccumulation()
+        }
+
+        defer {
+            previousUptimeSeconds = sample.uptimeSeconds
+            previousSystemAvailable = sample.systemAvailable
         }
 
         let didBeginLongIdle = assessLongIdle(for: sample)

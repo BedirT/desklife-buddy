@@ -34,7 +34,7 @@ system signal adapters, and SwiftData persistence without changing Domain semant
       resolver, exhaustive event record/store, and tests written first and observed RED - done
       = `scripts/test.sh Domain` green - gating suites: `ProtocolConfigurationTests`,
       `ActivityEstimatorTests`, `SuppressionResolverTests`, `OpportunityEventTests`.
-- [ ] 2. Domain protocol engine: monotonic sample reducer, independent clocks, due boundaries,
+- [x] 2. Domain protocol engine: monotonic sample reducer, independent clocks, due boundaries,
       explicit action/event effects, snooze/skip, merge decision, and invariant tests written
       first and observed RED - done = `scripts/test.sh Domain` green - gating suites:
       `ProtocolEngineTests`, `ProtocolEngineInvariantTests`.
@@ -57,6 +57,9 @@ system signal adapters, and SwiftData persistence without changing Domain semant
 - 2026-08-25: Step 1 red was observed with `scripts/test.sh Domain` failing because the four
   new Domain contracts did not exist. Green proof: 21 tests in 5 suites passed; format check
   and `scripts/lint.sh` were clean.
+- 2026-08-25: Step 2 red was observed with `scripts/test.sh Domain` failing because
+  `ProtocolEngine` and its state/output types did not exist. Green proof: 34 tests in 7 suites
+  passed; format check and `scripts/lint.sh` were clean.
 
 - 2026-08-25: Domain models exactly the ten events in `INTERACTION_SPEC.md` section 6. The
   broader `event_schema.json` vocabulary is not imported into product semantics (DQ-20).

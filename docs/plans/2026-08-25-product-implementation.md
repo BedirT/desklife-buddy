@@ -34,7 +34,7 @@ None blocks Phase 1. Later phases stop only at their explicit constitution-level
 
 ## Phases
 
-- [ ] 1. Clock engine and exhaustive event log - child plan:
+- [x] 1. Clock engine and exhaustive event log - child plan:
       `docs/plans/2026-08-25-clock-engine-event-log.md` - done = Domain and App persistence
       seams green, `scripts/lint.sh` clean, and retained evidence recorded.
 - [ ] 2. Menu-bar item, status menu, and Dock fallback - child plan created at phase start -
@@ -83,3 +83,6 @@ data, even if its query model is explored earlier.
   and variants are reviewable.
 - 2026-08-25: The complete local app is the current objective. Identity, signing,
   distribution, paid/hosted dependencies, and privacy expansion remain explicit owner gates.
+- 2026-08-25: Phase 1 closed at the retained Step 4 implementation commit `3be3f55`; its child
+  plan records full verification and carries DQ-20/DQ-21 forward without importing the broader
+  event schema or private lock-state signals.

@@ -1,6 +1,6 @@
 # Clock engine and exhaustive event log - plan
 
-Status: in-progress
+Status: complete
 Intake/escalation status: clear
 
 ## Outcome
@@ -48,7 +48,7 @@ system signal adapters, and SwiftData persistence without changing Domain semant
       and no prohibited permission/content capture - done = `scripts/test.sh App` green - gating
       suites: `SwiftDataOpportunityEventStoreTests`, `ProtocolStateStoreTests`,
       `SystemActivitySourceTests`.
-- [ ] 5. Phase closeout: format/lint, full retained verification, DQ-20 status review, evidence
+- [x] 5. Phase closeout: format/lint, full retained verification, DQ-20 status review, evidence
       pack, and phase/umbrella checkboxes updated - done = `scripts/lint.sh` and
       `scripts/verify.sh` green.
 
@@ -79,6 +79,12 @@ system signal adapters, and SwiftData persistence without changing Domain semant
 - 2026-08-25: DQ-21 records the public-platform gap for distinct immediate lock/unlock state.
   The adapter reports only what sanctioned public APIs establish instead of mislabeling
   display sleep/session switching or adopting private distributed notifications.
+- 2026-08-25: Phase closeout passed
+  `DERIVED=/private/tmp/desklife-debug-tests-fresh scripts/verify.sh`: formatting required no
+  changes, lint and all generated-contract checks passed, Domain passed 34 tests, Features
+  passed 9 tests, App passed 18 declared tests / 27 parameterized executions, and the command
+  ended `VERIFY OK`. DQ-20 remains centralized and unresolved; DQ-21 is the only new platform
+  limitation carried forward.
 
 - 2026-08-25: Domain models exactly the ten events in `INTERACTION_SPEC.md` section 6. The
   broader `event_schema.json` vocabulary is not imported into product semantics (DQ-20).

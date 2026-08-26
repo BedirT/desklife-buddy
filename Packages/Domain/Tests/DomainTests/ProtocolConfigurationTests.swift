@@ -24,10 +24,13 @@ struct ProtocolConfigurationTests {
                 wakeUnlockGraceSeconds: 3,
             ),
             delivery: OpportunityDeliveryConfiguration(
+                waitForLowFrictionMoment: true,
                 mergeWindowSeconds: 7,
+                headsUpDefault: true,
                 headsUpSecondsBeforeTarget: 2,
                 snoozeOptionsSeconds: [3, 6, 9],
                 maximumRepeatedEscalations: 1,
+                lockoutAllowed: false,
             ),
         )
 
@@ -35,6 +38,8 @@ struct ProtocolConfigurationTests {
         #expect(configuration.movement.durationOptionsSeconds == [12, 6])
         #expect(configuration.activityEstimator.longIdleResetSeconds == 9)
         #expect(configuration.delivery.snoozeOptionsSeconds == [3, 6, 9])
+        #expect(configuration.delivery.waitForLowFrictionMoment)
+        #expect(!configuration.delivery.lockoutAllowed)
     }
 
     @Test("Invalid timing order is rejected")

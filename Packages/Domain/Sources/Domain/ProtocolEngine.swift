@@ -246,7 +246,10 @@ private extension ProtocolEngine {
             return .readyToPresent
         }
         if elapsed >= schedule.targetSeconds {
-            return isLowFrictionMoment ? .readyToPresent : .waitingForLowFrictionMoment
+            if !configuration.delivery.waitForLowFrictionMoment || isLowFrictionMoment {
+                return .readyToPresent
+            }
+            return .waitingForLowFrictionMoment
         }
         if elapsed >= schedule.targetSeconds - configuration.delivery.headsUpSecondsBeforeTarget {
             return .headsUpPresented

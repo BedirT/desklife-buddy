@@ -71,32 +71,59 @@ public struct ActivityEstimatorConfiguration: Equatable, Sendable {
 
 /// Injected scheduling policy shared by visual and movement opportunities.
 public struct OpportunityDeliveryConfiguration: Equatable, Sendable {
+    public let waitForLowFrictionMoment: Bool
     public let mergeWindowSeconds: TimeInterval
+    public let headsUpDefault: Bool
     public let headsUpSecondsBeforeTarget: TimeInterval
     public let snoozeOptionsSeconds: [TimeInterval]
     public let maximumRepeatedEscalations: Int
+    public let lockoutAllowed: Bool
 
     /// Creates delivery policy without assuming any profile or UI representation.
     public init(
+        waitForLowFrictionMoment: Bool,
         mergeWindowSeconds: TimeInterval,
+        headsUpDefault: Bool,
         headsUpSecondsBeforeTarget: TimeInterval,
         snoozeOptionsSeconds: [TimeInterval],
         maximumRepeatedEscalations: Int,
+        lockoutAllowed: Bool,
     ) throws {
         guard mergeWindowSeconds >= 0,
               headsUpSecondsBeforeTarget >= 0,
               !snoozeOptionsSeconds.isEmpty,
               snoozeOptionsSeconds.allSatisfy({ $0 > 0 }),
-              maximumRepeatedEscalations >= 0
+              maximumRepeatedEscalations >= 0,
+              !lockoutAllowed
         else {
             throw ProtocolConfigurationError.invalidDeliveryOptions
         }
 
+        self.waitForLowFrictionMoment = waitForLowFrictionMoment
         self.mergeWindowSeconds = mergeWindowSeconds
+        self.headsUpDefault = headsUpDefault
         self.headsUpSecondsBeforeTarget = headsUpSecondsBeforeTarget
         self.snoozeOptionsSeconds = snoozeOptionsSeconds
         self.maximumRepeatedEscalations = maximumRepeatedEscalations
+        self.lockoutAllowed = lockoutAllowed
     }
+}
+
+/// Stable identifiers for machine-readable built-in profiles and user-supplied custom timing.
+public enum ProtocolProfileID: String, CaseIterable, Codable, Sendable {
+    case gentle
+    case balanced
+    case frequentMovement = "frequent_movement"
+    case researchInformedHighFrequency = "research_informed_high_frequency"
+    case custom
+
+    /// Profiles whose timings are projected directly from the normative YAML.
+    public static let builtInCases: [ProtocolProfileID] = [
+        .gentle,
+        .balanced,
+        .frequentMovement,
+        .researchInformedHighFrequency,
+    ]
 }
 
 /// Complete typed input to the protocol engine, supplied by the App composition root.

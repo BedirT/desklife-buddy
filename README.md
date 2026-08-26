@@ -70,6 +70,7 @@ Packages/TestSupport       SnapshotSupport macOS snapshot helpers
 | `lint.sh` / `format.sh` | Run the app-specific lint and formatting rules |
 | `check-previews.sh` | Require Previews and snapshot coverage for public feature views |
 | `check-localization.sh` | Keep production UI copy in localization catalogs |
+| `check-protocol-configuration.sh` | Verify generated profiles match the normative YAML |
 | `check-motion-contract.sh` | Check motion manifests and reduced-motion handling |
 
 `ui.sh` needs Accessibility permission for the invoking terminal or agent.

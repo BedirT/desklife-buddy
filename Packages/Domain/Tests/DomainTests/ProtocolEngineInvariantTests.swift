@@ -26,10 +26,13 @@ struct ProtocolEngineInvariantTests {
                 wakeUnlockGraceSeconds: 90,
             ),
             delivery: OpportunityDeliveryConfiguration(
+                waitForLowFrictionMoment: true,
                 mergeWindowSeconds: 5,
+                headsUpDefault: true,
                 headsUpSecondsBeforeTarget: 2,
                 snoozeOptionsSeconds: [3, 6, 9],
                 maximumRepeatedEscalations: 1,
+                lockoutAllowed: false,
             ),
         )
     }

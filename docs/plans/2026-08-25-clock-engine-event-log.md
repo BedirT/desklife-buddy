@@ -38,7 +38,7 @@ system signal adapters, and SwiftData persistence without changing Domain semant
       explicit action/event effects, snooze/skip, merge decision, and invariant tests written
       first and observed RED - done = `scripts/test.sh Domain` green - gating suites:
       `ProtocolEngineTests`, `ProtocolEngineInvariantTests`.
-- [ ] 3. Machine-readable profile projection: add a structured, build-safe App composition
+- [x] 3. Machine-readable profile projection: add a structured, build-safe App composition
       path from `product_protocol.yaml` into typed Domain configuration, with exact-profile
       validation and no production numbers in views - done = focused loader tests plus
       `scripts/test.sh App` green. A new parsing dependency is an owner gate; prefer an existing
@@ -60,6 +60,13 @@ system signal adapters, and SwiftData persistence without changing Domain semant
 - 2026-08-25: Step 2 red was observed with `scripts/test.sh Domain` failing because
   `ProtocolEngine` and its state/output types did not exist. Green proof: 34 tests in 7 suites
   passed; format check and `scripts/lint.sh` were clean.
+- 2026-08-25: Step 3 red was observed with `scripts/test.sh App` failing to compile because the
+  profile projection types did not exist. The deterministic Ruby/YAML generator now projects
+  every built-in profile and global delivery/activity values into typed App composition, and
+  lint rejects stale generated output. Green proof: `scripts/test.sh Domain` passed 34 tests,
+  `DERIVED=/private/tmp/desklife-debug-tests-fresh scripts/test.sh App` passed all four App
+  tests, and `scripts/lint.sh` was clean. The temporary DerivedData override avoided a corrupt
+  repository-local Xcode cache; an entirely fresh Debug test run independently passed first.
 
 - 2026-08-25: Domain models exactly the ten events in `INTERACTION_SPEC.md` section 6. The
   broader `event_schema.json` vocabulary is not imported into product semantics (DQ-20).

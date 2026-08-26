@@ -416,7 +416,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Settings…"
+            "value": "Settings\u2026"
           }
         }
       }
@@ -566,7 +566,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Presenting — reminders off"
+            "value": "Presenting \u2014 reminders off"
           }
         }
       }
@@ -606,7 +606,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Weekly rhythm…"
+            "value": "Weekly rhythm\u2026"
           }
         }
       }
@@ -617,6 +617,66 @@
           "stringUnit": {
             "state": "translated",
             "value": "Only during working hours"
+          }
+        }
+      }
+    },
+    "visualReset.error_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong"
+          }
+        }
+      }
+    },
+    "visualReset.navigation_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VisualReset"
+          }
+        }
+      }
+    },
+    "visualReset.preview_error": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't load."
+          }
+        }
+      }
+    },
+    "visualReset.primary_action": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New"
+          }
+        }
+      }
+    },
+    "visualReset.ready_message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replace this placeholder with the real macOS surface."
+          }
+        }
+      }
+    },
+    "visualReset.ready_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VisualReset"
           }
         }
       }

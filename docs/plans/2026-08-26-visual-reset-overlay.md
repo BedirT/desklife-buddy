@@ -48,7 +48,7 @@ art package and the still-undesigned BR-04 static/migraine presentation.
       visual-only clock reset; implement the narrow runtime session-event API - done =
       `scripts/test.sh Domain` and `scripts/test.sh App` green - gating suites:
       `ProtocolEngineTests`, `ProtocolRuntimeTests`.
-- [ ] 2. Feature model first: scaffold `VisualReset`; write and observe RED model tests for the
+- [x] 2. Feature model first: scaffold `VisualReset`; write and observe RED model tests for the
       YAML-derived duration, self-start, injected monotonic countdown, declaration-key arming,
       immediate Escape, once-only terminal action, coarse VoiceOver milestones, live Reduce
       Motion/Increase Contrast/Reduce Transparency changes, and static-presentation selection;
@@ -99,3 +99,12 @@ art package and the still-undesigned BR-04 static/migraine presentation.
 - 2026-08-26: Before writing the AppKit coordinator, add a current official-API brief for
   `NSPanel`, window levels, Spaces behavior, screen changes/mirroring, activation, and focus
   restoration. The existing local API briefs do not cover those seams.
+- 2026-08-26: Step 2 RED was observed with the focused Features command failing because the
+  scaffold had no action, announcement, countdown, terminal-state, declaration-arm, or live
+  accessibility contracts. `VisualResetModel` now derives remaining time from an injected
+  monotonic source, emits terminal actions once, gates Done early at 800 ms while Skip stays
+  immediate, announces only open/10/terminal milestones, and switches continuous progress to
+  a stepped reduced/static representation without restarting. Green proof:
+  `scripts/test.sh Features --filter VisualResetModelTests` passed 7 tests and the complete
+  `scripts/test.sh Features` suite passed 22 tests; lint passed and the repository formatter
+  normalized the new sources.

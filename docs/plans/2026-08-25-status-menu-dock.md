@@ -30,7 +30,7 @@ App coordinator ready for the break surfaces that follow.
 
 ## Steps
 
-- [ ] 1. Status model and action contract: scaffold the `StatusMenu` feature; write model tests
+- [x] 1. Status model and action contract: scaffold the `StatusMenu` feature; write model tests
       first and observe RED for normal, visual due, movement due, paused, suppression-reason,
       live-heads-up, working-hours, and action-routing states - done =
       `scripts/test.sh Features --filter StatusMenuModelTests` green.
@@ -65,3 +65,8 @@ App coordinator ready for the break surfaces that follow.
 - 2026-08-25: Phase 2 action routes may precede their Phase 3/4 visual destinations, but they
   must be observable/tested intents rather than fake completion events or placeholder success
   UI. No event is logged until the corresponding real break lifecycle begins.
+- 2026-08-25: Step 1 RED was observed with the focused Features command failing because the
+  snapshot, glyph, clock summary, and action-intent contracts did not exist. Green proof:
+  `scripts/test.sh Features --filter StatusMenuModelTests` passed 6 tests / 7 executions and
+  `scripts/lint.sh` was clean. Scaffold placeholder UI/copy was removed rather than retained;
+  Step 2 begins from the declared preview-state enum and the round-2 working reference.

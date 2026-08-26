@@ -17,6 +17,7 @@ let package = Package(
             targets: [
                 "FeatureLocalization",
                 "ItemList",
+                "StatusMenu",
                 // agent:app-feature-targets
             ],
         ),
@@ -45,6 +46,24 @@ let package = Package(
             name: "ItemListTests",
             dependencies: [
                 "ItemList",
+                .product(name: "SnapshotSupport", package: "TestSupport"),
+            ],
+            exclude: ["__Snapshots__"],
+            swiftSettings: featureSettings,
+        ),
+        .target(
+            name: "StatusMenu",
+            dependencies: [
+                "FeatureLocalization",
+                .product(name: "Domain", package: "Domain"),
+                .product(name: "DesignSystem", package: "DesignSystem"),
+            ],
+            swiftSettings: featureSettings,
+        ),
+        .testTarget(
+            name: "StatusMenuTests",
+            dependencies: [
+                "StatusMenu",
                 .product(name: "SnapshotSupport", package: "TestSupport"),
             ],
             exclude: ["__Snapshots__"],

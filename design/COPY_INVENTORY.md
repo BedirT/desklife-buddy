@@ -43,19 +43,19 @@ duration (`.claude/rules/health-and-claims.md`).
 
 | ID | String | Claim basis | Status |
 |---|---|---|---|
-| CP-MB01 | Nothing due | neutral UI | draft |
-| CP-MB02 | Visual reset due | neutral UI (no health assertion) | draft |
-| CP-MB03 | Movement due | neutral UI | draft |
-| CP-MB04 ⚠ | 63 minutes of estimated active computer use | `[C033]` allowed — **exact phrase matters** | draft |
-| CP-MB05 | Next: about 12 minutes | neutral UI; "about" is required, the estimate is not precise | draft |
-| CP-MB06 | Paused until 3:40 PM | neutral UI | draft |
-| CP-MB07 | Quiet during Calendar busy time | neutral UI; must not imply meeting comprehension `[C050]` | draft |
-| CP-MB08 | Outside working hours | neutral UI | draft |
-| CP-MB09 | Start a visual reset | neutral UI | draft |
-| CP-MB10 | Start movement | neutral UI | draft |
-| CP-MB11 | Pause | neutral UI | draft |
-| CP-MB12 | Weekly rhythm | neutral UI | draft |
-| CP-MB13 | Settings… | neutral UI | draft |
+| CP-MB01 | Nothing due | neutral UI | superseded — redundant state title is not shipped |
+| CP-MB02 | Visual reset due | neutral UI (no health assertion); visible composition is `Visual reset` + `Due` | approved |
+| CP-MB03 | Movement due | neutral UI; visible composition is `Movement` + `Due` | approved |
+| CP-MB04 ⚠ | `%d minutes of estimated active computer use` | `[C033]` allowed — **exact phrase matters** | approved |
+| CP-MB05 | `Next: about %d minutes` | neutral UI; "about" is required, the estimate is not precise | approved |
+| CP-MB06 | `Paused until %@` | neutral UI; `%@` is the actual localized pause deadline | approved |
+| CP-MB07 | Quiet during Calendar busy time | neutral UI; must not imply meeting comprehension `[C050]` | approved |
+| CP-MB08 | Outside working hours | neutral UI | approved |
+| CP-MB09 | Start a visual reset | neutral UI | approved |
+| CP-MB10 | Start movement | neutral UI | approved |
+| CP-MB11 | Pause | neutral UI | approved |
+| CP-MB12 | Weekly rhythm… | neutral UI | approved |
+| CP-MB13 | Settings… | neutral UI | approved |
 
 **Prohibited on this surface:** "You have been sitting for 60 minutes" `[C013]`, any streak,
 any count of missed breaks, any numeric countdown (`D-004`).
@@ -307,9 +307,13 @@ Strings the review pass found unregistered in the round-2 artboards, plus the D-
 |---|---|---|---|
 | CP-MB14 | Only during working hours | A | Checked menu item (replaces "Working hours: on" — a checkmark is the platform's state carrier, not a colon-label). Maps to `outside_working_hours` |
 | CP-MB15 | Start now · Later ▸ | A | Status-menu rows shown only during a live heads-up — the keyboard route to the capsule's choices (D-029). Same events as CP-HU14/CP-HU15 |
-| CP-MB16 | Pause ▸ For 30 minutes · For 1 hour · For the rest of the day · Until I resume | A | `manual_pause`; indefinite pause is a first-class option `[03 §16]` |
-| CP-MB17 | Paused until you resume | A | Menu-bar/status value while manually paused — states the honest reason (`accessibility.md` §5) |
-| CP-MB18 | Quit Cadence | A | Standard platform item; "Cadence" is a placeholder (D-001) |
+| CP-MB16 | Pause ▸ For 30 minutes · For 1 hour · For the rest of the day · Until I resume · Presenting | A | `manual_pause` / explicit presentation mode; indefinite pause is a first-class option `[03 §16]` |
+| CP-MB17 | Paused until you resume · Resume | A | Menu-bar/status value and direct action while indefinitely paused — states the honest reason (`accessibility.md` §5) |
+| CP-MB18 | Quit | A | Standard platform item; neutral while product identity remains deferred (D-001) |
+| CP-MB19 | Break status | A | Neutral accessibility label; the dynamic value carries the actual clock and suppression state |
+| CP-MB20 | Recovery suggestion | A | Exact protocol term (`03` §4.3); names a suggestion, never a recovered outcome |
+| CP-MB21 | Quiet while the Mac is inactive · Presenting — reminders off · Quiet in Focus · Quiet in this app · Snoozed · Waiting for a pause | A | Exact `SuppressionReason` variants, visible and appended to VoiceOver only when that reason is active |
+| CP-MB22 | `%@ due.` | A | VoiceOver clock-state format; current concrete outputs are `Visual reset due.` and `Movement due.` |
 | CP-HU21 | in 45 s · in 30 s · in 15 s · in 5 s | A | Coarse capsule steps (D-029) — nothing ticks; height is the continuous signal |
 | CP-SE25 | Breaks · Visual resets · Movement · Schedule | A | Settings sidebar group + rows (functional labels) |
 | CP-SE26 | Quiet · Quiet times · Apps & Focus | A | Settings sidebar; "Quiet times", never "blocked" or "locked" |
@@ -323,3 +327,8 @@ Strings the review pass found unregistered in the round-2 artboards, plus the D-
 
 Removed in this pass: the menu shortcut hints "⌥⌘V" and "⌥⌘M" (no default global
 hotkeys ship — D-029; ⌥⌘V also shadows Finder's move-paste); "Working hours: on".
+
+Phase 2 claims outcome (2026-08-26): CP-MB02 through CP-MB22 are approved where
+implemented above; CP-MB01 is explicitly superseded. The dynamic VoiceOver forms
+`%@ in about %d minutes.` and `Estimated active computer use, %d minutes.` are approved
+variants of CP-VO06 and preserve its load-bearing `about` / `estimated` qualifiers.

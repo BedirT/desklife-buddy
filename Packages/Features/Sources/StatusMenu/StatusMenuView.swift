@@ -5,14 +5,36 @@ import SwiftUI
 /// Snapshotable working reference for the native status menu composition.
 public struct StatusMenuView: View {
     private let model: StatusMenuModel
+    private let width: CGFloat
+    private let menuTextPointSize: CGFloat?
+    private let increasedContrastOverride: Bool?
 
-    public init(model: StatusMenuModel) {
+    public init(model: StatusMenuModel, width: CGFloat = 312) {
         self.model = model
+        self.width = width
+        menuTextPointSize = nil
+        increasedContrastOverride = nil
+    }
+
+    init(
+        model: StatusMenuModel,
+        width: CGFloat,
+        menuTextPointSize: CGFloat? = nil,
+        increasedContrastOverride: Bool?,
+    ) {
+        self.model = model
+        self.width = width
+        self.menuTextPointSize = menuTextPointSize
+        self.increasedContrastOverride = increasedContrastOverride
     }
 
     public var body: some View {
         VStack(spacing: 0) {
-            StatusMenuStatusRegion(model: model)
+            StatusMenuStatusRegion(
+                model: model,
+                menuTextPointSize: menuTextPointSize,
+                increasedContrastOverride: increasedContrastOverride,
+            )
             Divider()
 
             if model.snapshot.liveHeadsUp != nil {
@@ -65,7 +87,7 @@ public struct StatusMenuView: View {
                 model.send(.quit)
             }
         }
-        .frame(width: 312)
+        .frame(width: width)
         .background(Color.dsSurface)
     }
 
@@ -107,32 +129,40 @@ public struct StatusMenuView: View {
 
 /// Static two-clock readout embedded as the first item of the native menu.
 public struct StatusMenuStatusRegion: View {
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     private let model: StatusMenuModel
+    private let menuTextPointSize: CGFloat?
+    private let increasedContrastOverride: Bool?
 
-    public init(model: StatusMenuModel) {
+    public init(model: StatusMenuModel, menuTextPointSize: CGFloat? = nil) {
         self.model = model
+        self.menuTextPointSize = menuTextPointSize
+        increasedContrastOverride = nil
+    }
+
+    init(
+        model: StatusMenuModel,
+        menuTextPointSize: CGFloat? = nil,
+        increasedContrastOverride: Bool?,
+    ) {
+        self.model = model
+        self.menuTextPointSize = menuTextPointSize
+        self.increasedContrastOverride = increasedContrastOverride
     }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: DSSpacing.md) {
-            HStack(spacing: DSSpacing.sm) {
-                DSProtocolMark(state: markState, size: 24)
-                Text(stateTitle)
-                    .font(DSTypography.headline)
-                    .foregroundStyle(Color.dsTextPrimary)
-            }
-
             clockRow(model.snapshot.visual)
             clockRow(model.snapshot.movement)
 
             Text(StatusMenuL10n.estimatedActiveUse(minutes: model.snapshot.estimatedActiveUseMinutes))
-                .font(DSTypography.caption)
-                .foregroundStyle(Color.dsTextSecondary)
+                .font(supportingFont)
+                .foregroundStyle(Color.dsMenuTextSecondary)
 
             if let reason = model.snapshot.activeSuppression {
-                Text(StatusMenuL10n.suppression(reason))
-                    .font(DSTypography.subtext)
-                    .foregroundStyle(Color.dsTextPrimary)
+                Text(StatusMenuL10n.suppression(reason, manualPause: model.snapshot.manualPause))
+                    .font(labelFont)
+                    .foregroundStyle(Color.dsMenuTextPrimary)
             }
         }
         .padding(DSSpacing.lg)
@@ -144,19 +174,28 @@ public struct StatusMenuStatusRegion: View {
         VStack(alignment: .leading, spacing: DSSpacing.xs) {
             HStack(alignment: .firstTextBaseline) {
                 Text(label(for: summary.opportunity))
-                    .font(DSTypography.subtext)
-                    .foregroundStyle(Color.dsTextPrimary)
+                    .font(labelFont)
+                    .foregroundStyle(Color.dsMenuTextPrimary)
+                    .lineLimit(1)
                 Spacer()
                 Text(timing(summary.timing))
-                    .font(DSTypography.caption)
-                    .foregroundStyle(Color.dsTextSecondary)
+                    .font(supportingFont)
+                    .foregroundStyle(Color.dsMenuTextSecondary)
+                    .lineLimit(1)
             }
 
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Color.dsSurfaceSecondary)
                     Capsule()
-                        .fill(Color.dsTextPrimary)
+                        .fill(Color.dsMenuTrack)
+                        .overlay {
+                            Capsule().stroke(
+                                Color.dsMenuTextPrimary,
+                                lineWidth: usesIncreasedContrast ? 1 : 0,
+                            )
+                        }
+                    Capsule()
+                        .fill(barColor(for: summary.opportunity))
                         .frame(width: geometry.size.width * summary.progress)
                 }
             }
@@ -164,23 +203,22 @@ public struct StatusMenuStatusRegion: View {
         }
     }
 
-    private var markState: DSProtocolMark.State {
-        switch model.snapshot.glyph {
-        case .operating: .operating
-        case .visualDue: .visualDue
-        case .movementDue: .movementDue
-        case .bothDue: .bothDue
-        case .paused: .paused
-        }
+    private var usesIncreasedContrast: Bool {
+        increasedContrastOverride ?? (colorSchemeContrast == .increased)
     }
 
-    private var stateTitle: String {
-        switch model.snapshot.glyph {
-        case .operating: StatusMenuL10n.nothingDue
-        case .visualDue: StatusMenuL10n.visualDue
-        case .movementDue: StatusMenuL10n.movementDue
-        case .bothDue: StatusMenuL10n.bothDue
-        case .paused: StatusMenuL10n.paused
+    private var labelFont: Font {
+        menuTextPointSize.map(DSTypography.menuLabel) ?? DSTypography.subtext
+    }
+
+    private var supportingFont: Font {
+        menuTextPointSize.map(DSTypography.menuSupporting) ?? DSTypography.caption
+    }
+
+    private func barColor(for opportunity: OpportunityType) -> Color {
+        switch opportunity {
+        case .visual: .dsVisualBar
+        case .movement, .positionChange, .recovery: .dsMovementBar
         }
     }
 
@@ -189,7 +227,7 @@ public struct StatusMenuStatusRegion: View {
         case .visual: StatusMenuL10n.visualReset
         case .movement: StatusMenuL10n.movement
         case .positionChange: StatusMenuL10n.positionChange
-        case .recovery: StatusMenuL10n.recovery
+        case .recovery: StatusMenuL10n.recoverySuggestion
         }
     }
 
@@ -213,8 +251,16 @@ public struct StatusMenuStatusRegion: View {
     StatusMenuView(model: .preview(.movementDue))
 }
 
+#Preview("Both due") {
+    StatusMenuView(model: .preview(.bothDue))
+}
+
 #Preview("Paused") {
     StatusMenuView(model: .preview(.paused))
+}
+
+#Preview("Timed pause") {
+    StatusMenuView(model: .preview(.timedPause))
 }
 
 #Preview("Calendar busy") {

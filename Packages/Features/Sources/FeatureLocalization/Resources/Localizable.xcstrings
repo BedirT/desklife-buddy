@@ -191,6 +191,26 @@
         }
       }
     },
+    "status_menu.accessibility_due_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ due."
+          }
+        }
+      }
+    },
+    "status_menu.accessibility_estimated_active_use_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated active computer use, %d minutes."
+          }
+        }
+      }
+    },
     "status_menu.accessibility_label": {
       "localizations": {
         "en": {
@@ -201,12 +221,12 @@
         }
       }
     },
-    "status_menu.both_due": {
+    "status_menu.accessibility_next_format": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Visual reset and movement due"
+            "value": "%@ in about %d minutes."
           }
         }
       }
@@ -251,16 +271,6 @@
         }
       }
     },
-    "status_menu.movement_due": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Movement due"
-          }
-        }
-      }
-    },
     "status_menu.movement_position": {
       "localizations": {
         "en": {
@@ -297,16 +307,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Next: about %d minutes"
-          }
-        }
-      }
-    },
-    "status_menu.nothing_due": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nothing due"
           }
         }
       }
@@ -361,16 +361,6 @@
         }
       }
     },
-    "status_menu.paused": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Paused"
-          }
-        }
-      }
-    },
     "status_menu.position_change": {
       "localizations": {
         "en": {
@@ -401,12 +391,12 @@
         }
       }
     },
-    "status_menu.recovery": {
+    "status_menu.recovery_suggestion": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Recovery"
+            "value": "Recovery suggestion"
           }
         }
       }
@@ -541,6 +531,26 @@
         }
       }
     },
+    "status_menu.suppression.manual_pause_generic": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paused"
+          }
+        }
+      }
+    },
+    "status_menu.suppression.manual_pause_until_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paused until %@"
+          }
+        }
+      }
+    },
     "status_menu.suppression.outside_hours": {
       "localizations": {
         "en": {
@@ -577,16 +587,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quiet while the Mac is inactive"
-          }
-        }
-      }
-    },
-    "status_menu.visual_due": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Visual reset due"
           }
         }
       }

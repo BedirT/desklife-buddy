@@ -80,6 +80,47 @@ struct ProtocolRuntimeTests {
         #expect(runtime.statusContext.activeSuppression == nil)
         #expect(store.commits.isEmpty)
     }
+
+    @Test("A timed pause publishes its real deadline instead of claiming it lasts until resume")
+    func timedPauseDeadline() async throws {
+        let store = RuntimeStore()
+        let now = Date(timeIntervalSince1970: 300)
+        let runtime = try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
+            store: store,
+            now: { now },
+            makeID: { UUID(0) },
+        )
+        try await runtime.restore()
+
+        try await runtime.handle(.pause(.thirtyMinutes))
+
+        #expect(runtime.statusContext.manualPause == .until(now.addingTimeInterval(1800)))
+    }
+
+    @Test("An unavailable public system sample immediately supplies the honest quiet reason")
+    func unavailableSystem() async throws {
+        let store = RuntimeStore()
+        let runtime = try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
+            store: store,
+            now: { Date(timeIntervalSince1970: 400) },
+            makeID: { UUID(0) },
+        )
+        try await runtime.restore()
+
+        try await runtime.observe(ActivitySample(
+            uptimeSeconds: 10,
+            secondsSinceInput: 0,
+            systemAwake: false,
+            sessionActive: true,
+            screenLocked: false,
+        ))
+
+        #expect(runtime.statusContext.activeSuppression == .systemInactiveOrLocked)
+        #expect(runtime.state.visualClock.phase == .suppressed(.systemInactiveOrLocked))
+        #expect(runtime.state.movementClock.phase == .suppressed(.systemInactiveOrLocked))
+    }
 }
 
 private final class RuntimeStore: ProtocolRuntimeStore {

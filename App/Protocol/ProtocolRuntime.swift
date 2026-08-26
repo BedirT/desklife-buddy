@@ -19,6 +19,7 @@ final class ProtocolRuntime {
     private var engine: ProtocolEngine
     private var pauseUntil: Date?
     private var indefiniteSuppression: SuppressionReason?
+    private var observedSuppressions: Set<SuppressionReason> = []
 
     private(set) var state: ProtocolState
     private(set) var statusContext: StatusMenuContext
@@ -63,7 +64,11 @@ final class ProtocolRuntime {
         isLowFrictionMoment: Bool = false,
     ) async throws {
         expireTimedPauseIfNeeded()
-        var suppressions = activeSuppressions
+        observedSuppressions = activeSuppressions
+        if !sample.systemAwake || !sample.sessionActive || sample.screenLocked {
+            observedSuppressions.insert(.systemInactiveOrLocked)
+        }
+        var suppressions = observedSuppressions
         if let suppression = currentSuppression {
             suppressions.insert(suppression)
         }
@@ -90,6 +95,7 @@ final class ProtocolRuntime {
             statusContext = StatusMenuContext(
                 estimatedActiveUseSeconds: statusContext.estimatedActiveUseSeconds,
                 activeSuppression: statusContext.activeSuppression,
+                manualPause: statusContext.manualPause,
                 liveHeadsUp: statusContext.liveHeadsUp,
                 workingHoursOnly: !statusContext.workingHoursOnly,
             )
@@ -105,7 +111,21 @@ final class ProtocolRuntime {
 
 private extension ProtocolRuntime {
     var currentSuppression: SuppressionReason? {
-        indefiniteSuppression ?? (pauseUntil == nil ? nil : .manualPause)
+        var suppressions = observedSuppressions
+        if let indefiniteSuppression {
+            suppressions.insert(indefiniteSuppression)
+        } else if pauseUntil != nil {
+            suppressions.insert(.manualPause)
+        }
+        return SuppressionResolver.resolve(activeReasons: suppressions).reason
+    }
+
+    var manualPauseSummary: StatusMenuManualPause? {
+        guard currentSuppression == .manualPause else { return nil }
+        if indefiniteSuppression == .manualPause {
+            return .untilResume
+        }
+        return pauseUntil.map(StatusMenuManualPause.until)
     }
 
     func applyPause(_ choice: StatusMenuPauseChoice) {
@@ -180,6 +200,7 @@ private extension ProtocolRuntime {
                 state.movementClock.accumulatedActiveUseSeconds,
             ),
             activeSuppression: currentSuppression,
+            manualPause: manualPauseSummary,
             liveHeadsUp: liveHeadsUp,
             workingHoursOnly: statusContext.workingHoursOnly,
         )

@@ -37,6 +37,7 @@ public struct StatusMenuSnapshot: Equatable, Sendable {
     public let movement: StatusClockSummary
     public let estimatedActiveUseMinutes: Int
     public let activeSuppression: SuppressionReason?
+    public let manualPause: StatusMenuManualPause?
     public let liveHeadsUp: OpportunityPresentation?
     public let workingHoursOnly: Bool
 }
@@ -44,17 +45,20 @@ public struct StatusMenuSnapshot: Equatable, Sendable {
 public struct StatusMenuContext: Equatable, Sendable {
     public let estimatedActiveUseSeconds: TimeInterval
     public let activeSuppression: SuppressionReason?
+    public let manualPause: StatusMenuManualPause?
     public let liveHeadsUp: OpportunityPresentation?
     public let workingHoursOnly: Bool
 
     public init(
         estimatedActiveUseSeconds: TimeInterval = 0,
         activeSuppression: SuppressionReason? = nil,
+        manualPause: StatusMenuManualPause? = nil,
         liveHeadsUp: OpportunityPresentation? = nil,
         workingHoursOnly: Bool = false,
     ) {
         self.estimatedActiveUseSeconds = estimatedActiveUseSeconds
         self.activeSuppression = activeSuppression
+        self.manualPause = manualPause
         self.liveHeadsUp = liveHeadsUp
         self.workingHoursOnly = workingHoursOnly
     }
@@ -72,6 +76,11 @@ public enum StatusMenuPauseChoice: Equatable, Sendable {
     case restOfDay
     case untilResume
     case presenting
+}
+
+public enum StatusMenuManualPause: Equatable, Sendable {
+    case until(Date)
+    case untilResume
 }
 
 public enum StatusMenuAction: Equatable, Sendable {
@@ -154,6 +163,7 @@ private extension StatusMenuModel {
             movement: movement,
             estimatedActiveUseMinutes: wholeMinutes(context.estimatedActiveUseSeconds),
             activeSuppression: context.activeSuppression,
+            manualPause: context.manualPause,
             liveHeadsUp: context.liveHeadsUp,
             workingHoursOnly: context.workingHoursOnly,
         )
@@ -213,7 +223,9 @@ public extension StatusMenuModel {
         case normal
         case visualDue
         case movementDue
+        case bothDue
         case paused
+        case timedPause
         case calendarBusy
         case headsUp
     }
@@ -225,12 +237,17 @@ public extension StatusMenuModel {
 
 private extension StatusMenuModel {
     static func previewSnapshot(_ state: PreviewState) -> StatusMenuSnapshot {
-        let visualDue = state == .visualDue
-        let movementDue = state == .movementDue
+        let visualDue = state == .visualDue || state == .bothDue
+        let movementDue = state == .movementDue || state == .bothDue
         let suppression: SuppressionReason? = switch state {
-        case .paused: .manualPause
+        case .paused, .timedPause: .manualPause
         case .calendarBusy: .calendarBusy
-        case .normal, .visualDue, .movementDue, .headsUp: nil
+        case .normal, .visualDue, .movementDue, .bothDue, .headsUp: nil
+        }
+        let manualPause: StatusMenuManualPause? = switch state {
+        case .paused: .untilResume
+        case .timedPause: .until(Date(timeIntervalSince1970: 1_787_686_800))
+        case .normal, .visualDue, .movementDue, .bothDue, .calendarBusy, .headsUp: nil
         }
         return StatusMenuSnapshot(
             glyph: glyph(
@@ -250,6 +267,7 @@ private extension StatusMenuModel {
             ),
             estimatedActiveUseMinutes: 63,
             activeSuppression: suppression,
+            manualPause: manualPause,
             liveHeadsUp: state == .headsUp ? .visual : nil,
             workingHoursOnly: true,
         )

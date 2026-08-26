@@ -34,6 +34,18 @@ surfaces are in §K below.
 | MB-12 | Pause submenu | 30 min · 1 hr · Until… · Until tomorrow · Presenting | todo |
 | MB-13 | Dock menu | Fallback path when the extra is hidden | todo |
 
+**Phase 2 built-surface review (2026-08-26).** The implemented MB-01...MB-13 slice
+passed the design review and claims review; the accessibility review found no remaining
+implementation defect after dynamic VoiceOver values, menu-font scaling, no-wrap labels,
+Increase Contrast outlines, and native Dock fallback were added. Preview evidence covers
+light/dark normal, each due combination, indefinite/timed pause, Calendar busy, live
+heads-up, +35% menu text, and Increased Contrast. Real Debug evidence covers the native
+operating/due/paused menus and all five 18-point status-item variants. The formal inventory
+statuses above intentionally remain pre-`designed`: final `design/renders/` assets are not
+being manufactured from test artifacts, and DQ-18's final light menu/art remains open.
+External keyboard/VoiceOver traversal also remains an environment evidence gap because
+the invoking `/usr/bin/swift` process has not been granted Accessibility permission.
+
 ## B. Heads-up (Level 1)
 
 | ID | Screen / state | Notes | Status |

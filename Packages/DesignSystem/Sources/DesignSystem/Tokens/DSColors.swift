@@ -23,6 +23,15 @@ public extension Color {
         dark: Color(hex: 0xFFFFFF).opacity(0.12),
     )
 
+    /// Platform-owned ink for custom content embedded inside a native menu.
+    static let dsMenuTextPrimary = Color(nsColor: .labelColor)
+    static let dsMenuTextSecondary = Color(nsColor: .secondaryLabelColor)
+    static let dsMenuTrack = Color(nsColor: .separatorColor)
+
+    /// The dark working direction's clock accents; light remains neutral until DQ-18 closes.
+    static let dsVisualBar = Color(light: Color(hex: 0x1A1A1E), dark: Color(hex: 0xFFC98F))
+    static let dsMovementBar = Color(light: Color(hex: 0x1A1A1E), dark: Color(hex: 0xFF9EC0))
+
     // MARK: - Brand & status
 
     static let dsAccent = Color(light: Color(hex: 0x4F46E5), dark: Color(hex: 0x8B85F4))

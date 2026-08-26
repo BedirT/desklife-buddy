@@ -49,7 +49,7 @@ App coordinator ready for the break surfaces that follow.
       fallback, operating/due/paused glyph variants, and focused screenshots - done =
       `scripts/build.sh`, `scripts/run.sh --verify`, `scripts/ui.sh`, and `scripts/shot.sh` green
       with artifacts inspected.
-- [ ] 5. Phase closeout: run design, claims, and accessibility reviews on the built surfaces;
+- [x] 5. Phase closeout: run design, claims, and accessibility reviews on the built surfaces;
       reconcile MB-01...MB-13 inventory status without overstating DQ-18; run full retained
       verification and assemble the evidence pack - done = `scripts/lint.sh` and
       `scripts/verify.sh` green, child/umbrella checkboxes updated.
@@ -85,3 +85,32 @@ App coordinator ready for the break surfaces that follow.
   essential routes. Green proof: `DERIVED=/private/tmp/desklife-step3-integrated
   scripts/test.sh App`, including `ProtocolRuntimeTests` (3), `StatusItemCoordinatorTests` (2),
   and `DockMenuTests` (2), with every pre-existing App suite passing.
+- 2026-08-26: Step 4 implementation is complete but the checkbox remains open for one
+  environment-owned proof. The template launch window and its copy are gone; the app runs
+  as a menu-only process with Settings and Dock fallback. `scripts/build.sh` and
+  `scripts/run.sh --verify` pass. Debug-only self-capture now images the actual native
+  `NSMenu` and exact `NSStatusBarButton` without adding a product permission; inspected
+  artifacts cover operating, visual due, movement due, both due, indefinite pause, timed
+  pause, and all five shipped-size mark states. `scripts/ui.sh` still exits 3 because the
+  invoking `/usr/bin/swift` lacks macOS Accessibility permission; code tests and an
+  independent accessibility re-review found no substitute product defect, but external AX
+  traversal is not claimed.
+- 2026-08-26: The review pass removed the redundant status header/material slab, moved custom
+  menu content to system-semantic ink/track roles, restored dark visual/movement accents,
+  added Increase Contrast outlines, scaled custom type and width from `NSFont.menuFont`,
+  exposed a dynamic status-item accessibility value with coarse `valueChanged`
+  notifications, and made timed pauses state their real localized deadline. The timed-pause
+  regression was observed RED when `StatusMenuContext.manualPause` did not exist, then the
+  complete App suite passed with the new deadline contract. Design verdict: ship. Claims:
+  pass. Accessibility: pass apart from the external AX permission limitation. DQ-18 remains
+  explicitly open; light bars stay neutral rather than inventing final owner artwork.
+- 2026-08-26: Closeout proof is retained. `scripts/verify.sh` passed formatting, lint, all
+  package tests, and every App-owned test; `scripts/run.sh --verify` built and launched the
+  menu-only app successfully. Focused Features snapshots passed with 19 inspected renders and
+  the DesignSystem token gallery passed with 2 inspected renders. Final native captures under
+  `artifacts/status-menu-*.png` distinguish all six states, while
+  `artifacts/status-item-*.png` proves the shipped-size glyph states after the semantic
+  background repair. `scripts/ui.sh` was rerun and still exits 3 with the exact requirement to
+  grant the invoking process Accessibility permission. Step 4 and umbrella Phase 2 therefore
+  remain open solely for that environment-owned traversal; no product defect is hidden or
+  waived.

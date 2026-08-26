@@ -47,6 +47,33 @@ struct StatusItemCoordinatorTests {
 
         #expect(actions == [.startHeadsUpNow, .snooze(600)])
     }
+
+    @Test("Status value exposes both clocks, the estimate, and the quiet reason")
+    func accessibilityValue() {
+        let normal = StatusMenuModel.preview(.normal).snapshot
+        let paused = StatusMenuModel.preview(.paused).snapshot
+        let timedPause = StatusMenuModel.preview(.timedPause).snapshot
+
+        #expect(StatusMenuCopy.accessibilityValue(for: normal) == """
+        Visual reset in about 9 minutes. Movement in about 34 minutes. Estimated active computer use, 63 minutes.
+        """)
+        #expect(StatusMenuCopy.accessibilityValue(for: paused) == """
+        Visual reset in about 9 minutes. Movement in about 34 minutes. Estimated active computer use, 63 minutes. Paused until you resume.
+        """)
+        #expect(StatusMenuCopy.accessibilityValue(for: timedPause).contains("Paused until"))
+        #expect(!StatusMenuCopy.accessibilityValue(for: timedPause).contains("until you resume"))
+    }
+
+    @Test("Custom status region grows with the system menu font")
+    func statusRegionScaling() {
+        let coordinator = StatusItemCoordinator(
+            model: .preview(.normal),
+            installsStatusItem: false,
+            menuPointSize: NSFont.systemFontSize * 1.35,
+        )
+
+        #expect(abs(coordinator.statusRegionWidth - 421.2) < 0.001)
+    }
 }
 
 private func menuTitles(_ menu: NSMenu) -> [String] {

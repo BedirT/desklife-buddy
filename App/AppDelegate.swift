@@ -9,11 +9,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var dockMenuController: DockMenuController?
     private var activityTimer: Timer?
     private var configuration: ProtocolConfiguration?
+    private var verificationPreviewState: StatusMenuModel.PreviewState?
     private var latestSnapshot = StatusMenuModel.preview(.normal).snapshot
     private(set) var lastRuntimeError: Error?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         do {
+            verificationPreviewState = Self.verificationState(from: ProcessInfo.processInfo.arguments)
             let configuration = try ProtocolProfiles.configuration(for: .balanced)
             let runtime = try ProtocolRuntime(
                 configuration: configuration,
@@ -29,11 +31,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.route(action)
             }
 
-            let initialModel = StatusMenuModel(
-                state: runtime.state,
-                configuration: configuration,
-                context: runtime.statusContext,
-            )
+            let initialModel = verificationPreviewState.map(StatusMenuModel.preview)
+                ?? StatusMenuModel(
+                    state: runtime.state,
+                    configuration: configuration,
+                    context: runtime.statusContext,
+                )
             statusItemCoordinator = StatusItemCoordinator(
                 model: initialModel,
                 onAction: { [weak self] action in self?.handle(action) },
@@ -45,6 +48,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             activitySource = SystemActivitySource(
                 onAvailabilityChange: { [weak self] sample in self?.observe(sample) },
             )
+
+            #if DEBUG
+                if ProcessInfo.processInfo.arguments.contains("--verify-status-menu") {
+                    let openTimer = Timer(
+                        timeInterval: 1,
+                        target: self,
+                        selector: #selector(openVerificationMenu),
+                        userInfo: nil,
+                        repeats: false,
+                    )
+                    RunLoop.main.add(openTimer, forMode: .common)
+
+                    for delay in [2.0, 2.4, 2.8, 3.2] {
+                        let captureTimer = Timer(
+                            timeInterval: delay,
+                            target: self,
+                            selector: #selector(captureVerificationMenu),
+                            userInfo: nil,
+                            repeats: false,
+                        )
+                        RunLoop.main.add(captureTimer, forMode: .common)
+                    }
+                }
+            #endif
 
             Task { [weak self] in
                 guard let self else { return }
@@ -89,6 +116,16 @@ private extension AppDelegate {
         observe(activitySource.sample())
     }
 
+    @objc func openVerificationMenu() {
+        statusItemCoordinator?.openMenuForVerification()
+    }
+
+    #if DEBUG
+        @objc func captureVerificationMenu() {
+            _ = statusItemCoordinator?.captureMenuForVerification()
+        }
+    #endif
+
     func observe(_ sample: ActivitySample) {
         guard let runtime else { return }
         Task { [weak self] in
@@ -113,11 +150,12 @@ private extension AppDelegate {
 
     func refreshStatus(state: ProtocolState, context: StatusMenuContext) {
         guard let configuration else { return }
-        let model = StatusMenuModel(
-            state: state,
-            configuration: configuration,
-            context: context,
-        )
+        let model = verificationPreviewState.map(StatusMenuModel.preview)
+            ?? StatusMenuModel(
+                state: state,
+                configuration: configuration,
+                context: context,
+            )
         latestSnapshot = model.snapshot
         statusItemCoordinator?.update(model: model)
     }
@@ -135,6 +173,27 @@ private extension AppDelegate {
         case .snooze, .pause, .resume, .toggleWorkingHours:
             break
         }
+    }
+
+    static func verificationState(from arguments: [String]) -> StatusMenuModel.PreviewState? {
+        #if DEBUG
+            guard let index = arguments.firstIndex(of: "--verify-status-state"),
+                  arguments.indices.contains(index + 1)
+            else {
+                return nil
+            }
+            return switch arguments[index + 1] {
+            case "operating": .normal
+            case "visual-due": .visualDue
+            case "movement-due": .movementDue
+            case "both-due": .bothDue
+            case "paused": .paused
+            case "timed-pause": .timedPause
+            default: nil
+            }
+        #else
+            nil
+        #endif
     }
 }
 

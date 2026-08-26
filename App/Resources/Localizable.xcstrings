@@ -1,26 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "app.placeholder.message" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Replace this placeholder with your first macOS feature."
-          }
-        }
-      }
-    },
-    "app.placeholder.title" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ready to build"
-          }
-        }
-      }
-    },
     "app.name" : {
       "localizations" : {
         "en" : {

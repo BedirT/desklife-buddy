@@ -6,7 +6,10 @@ enum StatusMenuL10n {
     static let visualReset = string("status_menu.visual_reset", default: "Visual reset")
     static let movement = string("status_menu.movement", default: "Movement")
     static let positionChange = string("status_menu.position_change", default: "Position change")
-    static let recovery = string("status_menu.recovery", default: "Recovery")
+    static let recoverySuggestion = string(
+        "status_menu.recovery_suggestion",
+        default: "Recovery suggestion",
+    )
     static let due = string("status_menu.due", default: "Due")
     static let startNow = string("status_menu.start_now", default: "Start now")
     static let later = string("status_menu.later", default: "Later")
@@ -30,12 +33,6 @@ enum StatusMenuL10n {
     static let settings = string("status_menu.settings", default: "Settings…")
     static let quit = string("status_menu.quit", default: "Quit")
     static let accessibilityLabel = string("status_menu.accessibility_label", default: "Break status")
-    static let nothingDue = string("status_menu.nothing_due", default: "Nothing due")
-    static let paused = string("status_menu.paused", default: "Paused")
-    static let visualDue = string("status_menu.visual_due", default: "Visual reset due")
-    static let movementDue = string("status_menu.movement_due", default: "Movement due")
-    static let bothDue = string("status_menu.both_due", default: "Visual reset and movement due")
-
     static func next(aboutMinutes: Int) -> String {
         format("status_menu.next_format", default: "Next: about %d minutes", aboutMinutes)
     }
@@ -48,10 +45,28 @@ enum StatusMenuL10n {
         )
     }
 
-    static func suppression(_ reason: SuppressionReason) -> String {
+    static func suppression(
+        _ reason: SuppressionReason,
+        manualPause: StatusMenuManualPause? = nil,
+    ) -> String {
         switch reason {
         case .manualPause:
-            string("status_menu.suppression.manual_pause", default: "Paused until you resume")
+            switch manualPause {
+            case let .until(date):
+                format(
+                    "status_menu.suppression.manual_pause_until_format",
+                    default: "Paused until %@",
+                    DateFormatter.localizedString(
+                        from: date,
+                        dateStyle: .none,
+                        timeStyle: .short,
+                    ),
+                )
+            case .untilResume:
+                string("status_menu.suppression.manual_pause", default: "Paused until you resume")
+            case nil:
+                string("status_menu.suppression.manual_pause_generic", default: "Paused")
+            }
         case .systemInactiveOrLocked:
             string("status_menu.suppression.system_inactive", default: "Quiet while the Mac is inactive")
         case .explicitPresentationMode:
@@ -71,12 +86,52 @@ enum StatusMenuL10n {
         }
     }
 
+    static func accessibilityClock(_ summary: StatusClockSummary) -> String {
+        let label = switch summary.opportunity {
+        case .visual: visualReset
+        case .movement: movement
+        case .positionChange: positionChange
+        case .recovery: recoverySuggestion
+        }
+        return switch summary.timing {
+        case let .next(aboutMinutes):
+            format(
+                "status_menu.accessibility_next_format",
+                default: "%@ in about %d minutes.",
+                label,
+                aboutMinutes,
+            )
+        case .due:
+            format(
+                "status_menu.accessibility_due_format",
+                default: "%@ due.",
+                label,
+            )
+        }
+    }
+
+    static func accessibilityEstimatedActiveUse(minutes: Int) -> String {
+        format(
+            "status_menu.accessibility_estimated_active_use_format",
+            default: "Estimated active computer use, %d minutes.",
+            minutes,
+        )
+    }
+
     private static func string(_ key: String, default value: String) -> String {
         FeatureL10n.string(key, default: value)
     }
 
-    private static func format(_ key: String, default value: String, _ argument: Int) -> String {
-        String(format: string(key, default: value), locale: .current, argument)
+    private static func format(
+        _ key: String,
+        default value: String,
+        _ arguments: CVarArg...,
+    ) -> String {
+        String(
+            format: string(key, default: value),
+            locale: .current,
+            arguments: arguments,
+        )
     }
 }
 
@@ -104,4 +159,23 @@ public enum StatusMenuCopy {
     public static let settings = StatusMenuL10n.settings
     public static let quit = StatusMenuL10n.quit
     public static let accessibilityLabel = StatusMenuL10n.accessibilityLabel
+
+    public static func accessibilityValue(for snapshot: StatusMenuSnapshot) -> String {
+        var components = [
+            StatusMenuL10n.accessibilityClock(snapshot.visual),
+            StatusMenuL10n.accessibilityClock(snapshot.movement),
+            StatusMenuL10n.accessibilityEstimatedActiveUse(
+                minutes: snapshot.estimatedActiveUseMinutes,
+            ),
+        ]
+        if let suppression = snapshot.activeSuppression {
+            components.append(
+                StatusMenuL10n.suppression(
+                    suppression,
+                    manualPause: snapshot.manualPause,
+                ) + ".",
+            )
+        }
+        return components.joined(separator: " ")
+    }
 }

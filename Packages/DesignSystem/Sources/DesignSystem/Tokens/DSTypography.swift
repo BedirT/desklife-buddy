@@ -15,4 +15,14 @@ public enum DSTypography {
     public static let subtext = Font.subheadline
     /// Timestamps, tags, fine print.
     public static let caption = Font.caption
+
+    /// Custom content embedded in a native menu follows the menu's current point size.
+    public static func menuLabel(pointSize: CGFloat) -> Font {
+        .system(size: pointSize)
+    }
+
+    /// Supporting native-menu copy stays one step below the current menu font.
+    public static func menuSupporting(pointSize: CGFloat) -> Font {
+        .system(size: max(9, pointSize - 2))
+    }
 }

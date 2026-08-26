@@ -4,19 +4,24 @@ import StatusMenu
 import SwiftUI
 
 /// Owns the system status item and its native, keyboard-driven menu.
-final class StatusItemCoordinator: NSObject {
+final class StatusItemCoordinator: NSObject, NSMenuDelegate {
     private let statusItem: NSStatusItem?
     private let onAction: (StatusMenuAction) -> Void
     private var model: StatusMenuModel
+    private var isMenuOpen = false
+    private let menuPointSize: CGFloat
+    private var lastAccessibilityValue: String?
     private(set) var menu = NSMenu()
 
     init(
         model: StatusMenuModel,
         installsStatusItem: Bool = true,
+        menuPointSize: CGFloat = NSFont.menuFont(ofSize: 0).pointSize,
         onAction: @escaping (StatusMenuAction) -> Void = { _ in },
     ) {
         self.model = model
         self.onAction = onAction
+        self.menuPointSize = menuPointSize
         statusItem = installsStatusItem ? NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength) : nil
         super.init()
         rebuildMenu()
@@ -26,18 +31,98 @@ final class StatusItemCoordinator: NSObject {
 
     func update(model: StatusMenuModel) {
         self.model = model
-        rebuildMenu()
-        statusItem?.menu = menu
         configureStatusButton()
+        if !isMenuOpen {
+            rebuildMenu()
+            statusItem?.menu = menu
+        }
     }
 
     func perform(_ item: NSMenuItem) {
         activateMenuItem(item)
     }
 
+    func menuWillOpen(_ menu: NSMenu) {
+        isMenuOpen = true
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        isMenuOpen = false
+        rebuildMenu()
+        statusItem?.menu = self.menu
+    }
+
+    func openMenuForVerification() {
+        statusItem?.button?.performClick(nil)
+    }
+
+    #if DEBUG
+        @discardableResult
+        func captureMenuForVerification() -> Bool {
+            guard let menuView = menu.items.first?.view?.window?.contentView,
+                  let menuData = verificationPNGData(for: menuView)
+            else {
+                return false
+            }
+            if let button = statusItem?.button,
+               let buttonData = verificationPNGData(
+                   for: button,
+                   backgroundColor: .windowBackgroundColor,
+               )
+            {
+                _ = writeVerificationPNG(buttonData, prefix: "status-item")
+            }
+            return writeVerificationPNG(menuData, prefix: "status-menu")
+        }
+
+        private func verificationPNGData(
+            for view: NSView,
+            backgroundColor: NSColor? = nil,
+        ) -> Data? {
+            guard let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds),
+                  let graphicsContext = NSGraphicsContext(bitmapImageRep: bitmap)
+            else { return nil }
+            view.layoutSubtreeIfNeeded()
+            view.displayIgnoringOpacity(view.bounds, in: graphicsContext)
+            if let backgroundColor {
+                NSGraphicsContext.saveGraphicsState()
+                NSGraphicsContext.current = graphicsContext
+                graphicsContext.cgContext.setBlendMode(.destinationOver)
+                backgroundColor.setFill()
+                view.bounds.fill()
+                NSGraphicsContext.restoreGraphicsState()
+            }
+            return bitmap.representation(using: .png, properties: [:])
+        }
+
+        private func writeVerificationPNG(_ data: Data, prefix: String) -> Bool {
+            guard let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            else { return false }
+            let filename = "\(prefix)-\(ProcessInfo.processInfo.processIdentifier).png"
+            let destination = caches.appendingPathComponent(filename)
+            do {
+                let existingSize = try destination.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
+                guard data.count > existingSize else { return true }
+                try data.write(to: destination, options: .atomic)
+                return true
+            } catch {
+                do {
+                    try data.write(to: destination, options: .atomic)
+                    return true
+                } catch {
+                    return false
+                }
+            }
+        }
+    #endif
+
     @objc private func activateMenuItem(_ item: NSMenuItem) {
         guard let action = (item.representedObject as? StatusMenuActionBox)?.action else { return }
         onAction(action)
+    }
+
+    var statusRegionWidth: CGFloat {
+        312 * max(1, menuPointSize / NSFont.systemFontSize)
     }
 }
 
@@ -45,6 +130,7 @@ private extension StatusItemCoordinator {
     func rebuildMenu() {
         let rebuilt = NSMenu()
         rebuilt.autoenablesItems = false
+        rebuilt.delegate = self
         rebuilt.addItem(statusRegionItem())
         rebuilt.addItem(.separator())
 
@@ -106,11 +192,18 @@ private extension StatusItemCoordinator {
 
     func statusRegionItem() -> NSMenuItem {
         let item = NSMenuItem()
-        let content = StatusMenuStatusRegion(model: model)
-            .frame(width: 312)
-            .background(Color.dsSurface)
+        let content = StatusMenuStatusRegion(
+            model: model,
+            menuTextPointSize: menuPointSize,
+        )
+        .frame(width: statusRegionWidth)
         let hostingView = NSHostingView(rootView: content)
-        hostingView.frame = NSRect(x: 0, y: 0, width: 312, height: hostingView.fittingSize.height)
+        hostingView.frame = NSRect(
+            x: 0,
+            y: 0,
+            width: statusRegionWidth,
+            height: hostingView.fittingSize.height,
+        )
         item.view = hostingView
         return item
     }
@@ -143,6 +236,12 @@ private extension StatusItemCoordinator {
         button.imagePosition = .imageOnly
         button.setAccessibilityIdentifier("statusMenu.item")
         button.setAccessibilityLabel(StatusMenuCopy.accessibilityLabel)
+        let accessibilityValue = StatusMenuCopy.accessibilityValue(for: model.snapshot)
+        button.setAccessibilityValue(accessibilityValue)
+        if let lastAccessibilityValue, lastAccessibilityValue != accessibilityValue {
+            NSAccessibility.post(element: button, notification: .valueChanged)
+        }
+        lastAccessibilityValue = accessibilityValue
     }
 
     var markImage: NSImage? {

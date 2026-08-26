@@ -37,6 +37,13 @@ public struct DSGallery: View {
             ("menuTrack", .dsMenuTrack),
             ("visualBar", .dsVisualBar),
             ("movementBar", .dsMovementBar),
+            ("breakTextPrimary", .dsBreakTextPrimary),
+            ("breakTextPrimaryIC", .dsBreakTextPrimaryIncreased),
+            ("breakSkyTop", .dsBreakSkyTop),
+            ("breakSkyHorizon", .dsBreakSkyHorizon),
+            ("breakGroundBottom", .dsBreakGroundBottom),
+            ("breakHorizonFill", .dsBreakHorizonFill),
+            ("breakHorizonTrackIC", .dsBreakHorizonTrackIncreased),
             ("accent", .dsAccent),
             ("positive", .dsPositive),
             ("warning", .dsWarning),
@@ -138,6 +145,43 @@ public struct DSGallery: View {
                     DSButton(DesignSystemL10n.Buttons.secondary, systemImage: "plus", style: .secondary) {}
                     DSButton(DesignSystemL10n.Buttons.destructive, style: .destructive) {}
                 }
+
+                header(DesignSystemL10n.Sections.breakControls)
+                VStack(spacing: DSSpacing.md) {
+                    DSBreakCountdown(remainingSeconds: 12)
+                    DSHorizonProgress(progress: 0.4)
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 190))], spacing: DSSpacing.sm) {
+                        DSBreakPill(
+                            DesignSystemL10n.BreakField.doneEarly,
+                            keycap: "↩",
+                            accessibilityLabel: DesignSystemL10n.BreakField.doneEarly,
+                            accessibilityIdentifier: "designSystem.break.doneEarly",
+                        ) {}
+                        DSBreakPill(
+                            DesignSystemL10n.BreakField.skip,
+                            keycap: "esc",
+                            accessibilityLabel: DesignSystemL10n.BreakField.skip,
+                            accessibilityIdentifier: "designSystem.break.skip",
+                            reduceTransparency: true,
+                        ) {}
+                        DSBreakPill(
+                            DesignSystemL10n.Buttons.continueTitle,
+                            keycap: "↩",
+                            accessibilityLabel: DesignSystemL10n.Buttons.continueTitle,
+                            accessibilityIdentifier: "designSystem.break.focused",
+                            focusOverride: true,
+                        ) {}
+                        DSBreakPill(
+                            DesignSystemL10n.Buttons.secondary,
+                            keycap: "esc",
+                            accessibilityLabel: DesignSystemL10n.Buttons.secondary,
+                            accessibilityIdentifier: "designSystem.break.increasedContrast",
+                            increaseContrast: true,
+                        ) {}
+                    }
+                }
+                .padding(DSSpacing.lg)
+                .background(Color.dsBreakGroundTop, in: RoundedRectangle(cornerRadius: DSRadius.md))
 
                 header(DesignSystemL10n.Sections.tags)
                 HStack(spacing: DSSpacing.sm) {

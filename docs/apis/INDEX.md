@@ -9,6 +9,7 @@ the project adopts a new post-cutoff surface.
 |---|---|
 | [swift-concurrency-6-2.md](swift-concurrency-6-2.md) | touching async code, isolation diagnostics, @concurrent, Sendable errors |
 | [swiftui-macos.md](swiftui-macos.md) | shaping macOS scenes, windows, split views, commands, settings, inspectors, or previews |
+| [appkit-overlays.md](appkit-overlays.md) | building AppKit break panels, multi-display overlays, Spaces behavior, or focus restoration |
 | [swiftdata.md](swiftdata.md) | adding or changing app persistence, model containers, @Model types, fetches, or migrations |
 | [liquid-glass.md](liquid-glass.md) | building macOS chrome/overlay UI or anything labeled "glass" |
 

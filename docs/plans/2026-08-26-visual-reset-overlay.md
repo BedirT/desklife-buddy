@@ -54,7 +54,7 @@ art package and the still-undesigned BR-04 static/migraine presentation.
       Motion/Increase Contrast/Reduce Transparency changes, and static-presentation selection;
       implement without AppKit - done =
       `scripts/test.sh Features --filter VisualResetModelTests` green.
-- [ ] 3. Preview-first field and shared controls: add only the recurring break-surface DS
+- [x] 3. Preview-first field and shared controls: add only the recurring break-surface DS
       components/tokens, motion tokens and manifest required by the closed choreography; build
       BR-02/03 and working-reference BR-14...18 states from localized approved copy; declare
       every reachable state as `#Preview`; keep BR-04 behind its supplied-content seam rather
@@ -108,3 +108,23 @@ art package and the still-undesigned BR-04 static/migraine presentation.
   `scripts/test.sh Features --filter VisualResetModelTests` passed 7 tests and the complete
   `scripts/test.sh Features` suite passed 22 tests; lint passed and the repository formatter
   normalized the new sources.
+- 2026-08-26: Step 3 now renders one deterministic working-reference field at the accepted
+  1440×900 canvas with BR-03 blink emphasis, exact three-line large-text reflow, coarse-only
+  spoken timer milestones, supplied-content-only static presentation, and live light/dark,
+  Reduce Motion, Reduce Transparency, Increase Contrast, and text-size variants. The shared
+  equal-weight break pills use native glass with an opaque fallback and the specified offset
+  focus ring. The visual per-second countdown is hidden from accessibility; the model owns the
+  registered open/10-second/terminal announcements.
+- 2026-08-26: A short per-refresh horizon animation was rejected in review because it produced
+  eased bursts rather than the closed one-way linear fill. The Feature now renders the model's
+  authoritative progress directly. Step 4's single App-owned session refresh source will feed
+  that model continuously for standard motion; Reduce Motion/static modes retain tested stepped
+  progress without creating one refresh loop per display panel.
+- 2026-08-26: Step 3 RED was observed first in the model suite (the scaffold lacked the action,
+  announcement, declaration-arm, countdown, and accessibility contracts), then in the snapshot
+  suites as each new/reflowed state lacked an accepted baseline. Green proof after visual review:
+  `scripts/test.sh Features` passed 23 tests; `scripts/snapshot.sh Features
+  VisualResetSnapshotTests` passed 12 tests / 17 renders after narrow baseline recording;
+  DesignSystem gallery snapshots passed 2 tests / 4 renders. Claims review passed with all new
+  visible and spoken copy registered under CP-BR16 and CP-VO07...10. Final art and BR-04 remain
+  the explicit step-5 owner gates.

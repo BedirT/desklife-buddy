@@ -68,24 +68,38 @@ struct VisualResetModelTests {
     func declarationGuard() {
         let clock = TestClock()
         var actions: [VisualResetAction] = []
+        var announcements: [VisualResetAnnouncement] = []
         let model = VisualResetModel(
             durationSeconds: 20,
             declarationArmDelay: 0.8,
             now: { clock.value },
             onAction: { actions.append($0) },
+            onAnnouncement: { announcements.append($0) },
         )
         model.open()
 
         clock.value = 0.79
-        model.doneEarly()
+        model.doneEarlyFromKeyboard()
         #expect(model.phase == .running)
 
         clock.value = 0.8
-        model.doneEarly()
-        model.doneEarly()
+        model.doneEarlyFromKeyboard()
+        model.doneEarlyFromKeyboard()
 
         #expect(model.phase == .finished(.doneEarly))
         #expect(actions == [.opened, .doneEarly])
+        #expect(announcements == [.opened(durationSeconds: 20), .doneEarly])
+    }
+
+    @Test("Pointer and assistive activation can declare Done early immediately")
+    func declarationControlIsImmediate() {
+        let clock = TestClock()
+        let model = VisualResetModel(durationSeconds: 20, now: { clock.value })
+        model.open()
+
+        model.doneEarly()
+
+        #expect(model.phase == .finished(.doneEarly))
     }
 
     @Test("Escape-style skip is immediate and terminal from the first frame")

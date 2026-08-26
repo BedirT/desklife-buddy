@@ -7,56 +7,116 @@
 
     @Suite("VisualReset screens", .serialized)
     struct VisualResetSnapshotTests {
-        private func screen(_ state: VisualResetModel.Phase = .ready) -> some View {
-            DesktopSnapshotShell {
-                List(selection: .constant(0)) {
-                    Text(VisualResetL10n.navigationTitle).tag(0)
-                }
-                .listStyle(.sidebar)
-            } detail: {
-                VisualResetView(model: .preview(state), loadsAutomatically: false)
-            }
+        private let referenceLayout = SnapshotLayout.fixed(width: 1440, height: 900)
+
+        private func screen(
+            _ phase: VisualResetModel.Phase = .running,
+            accessibility: VisualResetAccessibility = .init(),
+            standardField: AnyView? = nil,
+            staticField: AnyView? = nil,
+        ) -> some View {
+            VisualResetView(
+                model: .preview(phase, accessibility: accessibility),
+                standardField: standardField,
+                staticField: staticField,
+                accessibilityOverride: accessibility,
+            )
+            .frame(width: 1440, height: 900)
         }
 
-        @Test func loading() {
-            assertScreenSnapshot(of: screen(.loading))
+        @Test func workingReference() {
+            assertScreenSnapshot(of: screen(), layout: referenceLayout)
         }
 
-        @Test func ready() {
-            assertScreenSnapshot(of: screen())
+        @Test func finalSeconds() {
+            assertScreenSnapshot(of: screen(.finalSeconds), layout: referenceLayout)
         }
 
-        @Test func failed() {
-            assertScreenSnapshot(of: screen(.failed(message: VisualResetL10n.previewError)))
-        }
-    }
-
-    private struct DesktopSnapshotShell<Sidebar: View, Detail: View>: View {
-        let sidebar: Sidebar
-        let detail: Detail
-
-        init(
-            @ViewBuilder sidebar: () -> Sidebar,
-            @ViewBuilder detail: () -> Detail,
-        ) {
-            self.sidebar = sidebar()
-            self.detail = detail()
+        @Test func increasedContrast() {
+            assertScreenSnapshot(
+                of: screen(accessibility: .init(increaseContrast: true)),
+                layout: referenceLayout,
+            )
         }
 
-        var body: some View {
-            HStack(spacing: 0) {
-                sidebar
-                    .frame(width: 280)
-                    .background(.regularMaterial)
+        @Test func reducedTransparency() {
+            assertScreenSnapshot(
+                of: screen(accessibility: .init(reduceTransparency: true)),
+                layout: referenceLayout,
+            )
+        }
 
-                Divider()
+        @Test func reducedMotion() {
+            let accessibility = VisualResetAccessibility(reduceMotion: true)
+            assertScreenSnapshot(
+                of: screen(accessibility: accessibility),
+                layout: referenceLayout,
+            )
+        }
 
-                detail
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.dsBackground)
-            }
-            .frame(width: 1000, height: 700)
-            .tint(.dsAccent)
+        @Test func plusThirtyFivePercentText() {
+            assertDynamicTypeSnapshot(
+                of: screen(),
+                sizes: [.xxxLarge],
+                layout: referenceLayout,
+            )
+        }
+
+        @Test func largestText() {
+            assertDynamicTypeSnapshot(
+                of: screen(),
+                sizes: [.accessibility3],
+                layout: referenceLayout,
+            )
+        }
+
+        @Test func largestTextDark() {
+            assertScreenSnapshot(
+                of: screen().environment(\.dynamicTypeSize, .accessibility3),
+                layout: referenceLayout,
+                appearances: [.dark],
+            )
+        }
+
+        @Test func largestTextCombinedAccessibility() {
+            let accessibility = VisualResetAccessibility(
+                reduceTransparency: true,
+                increaseContrast: true,
+            )
+            assertScreenSnapshot(
+                of: screen(accessibility: accessibility)
+                    .environment(\.dynamicTypeSize, .accessibility3),
+                layout: referenceLayout,
+                appearances: [.dark],
+            )
+        }
+
+        @Test func brightBackdrop() {
+            assertScreenSnapshot(
+                of: screen(standardField: AnyView(Color.dsBreakSkyTop)),
+                layout: referenceLayout,
+                appearances: [.light],
+            )
+        }
+
+        @Test func darkBackdrop() {
+            assertScreenSnapshot(
+                of: screen(standardField: AnyView(Color.dsBreakGroundBottom)),
+                layout: referenceLayout,
+                appearances: [.dark],
+            )
+        }
+
+        @Test func injectedStaticPresentation() {
+            let accessibility = VisualResetAccessibility(staticPresentation: true)
+            assertScreenSnapshot(
+                of: screen(
+                    accessibility: accessibility,
+                    staticField: AnyView(Color.dsBreakControlSolid),
+                ),
+                layout: referenceLayout,
+                appearances: [.light],
+            )
         }
     }
 #endif

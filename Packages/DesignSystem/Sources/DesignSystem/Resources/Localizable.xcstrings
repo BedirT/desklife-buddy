@@ -1,6 +1,26 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "break_field.done_early" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done early"
+          }
+        }
+      }
+    },
+    "break_field.skip" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip"
+          }
+        }
+      }
+    },
     "buttons.add_item" : {
       "localizations" : {
         "en" : {
@@ -147,6 +167,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buttons"
+          }
+        }
+      }
+    },
+    "sections.break_controls" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Break controls"
           }
         }
       }

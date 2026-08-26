@@ -621,62 +621,202 @@
         }
       }
     },
-    "visualReset.error_title": {
+    "visualReset.alternative": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Something went wrong"
+            "value": "If looking far away isn't practical, closing your eyes gently works too."
           }
         }
       }
     },
-    "visualReset.navigation_title": {
+    "visualReset.announcement.done_early": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "VisualReset"
+            "value": "Done early."
           }
         }
       }
     },
-    "visualReset.preview_error": {
+    "visualReset.announcement.finished": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Couldn't load."
+            "value": "Finished."
           }
         }
       }
     },
-    "visualReset.primary_action": {
+    "visualReset.announcement.opened": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "New"
+            "value": "Visual reset. Look at something comfortably far away. %d seconds."
           }
         }
       }
     },
-    "visualReset.ready_message": {
+    "visualReset.announcement.opened_twenty": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Replace this placeholder with the real macOS surface."
+            "value": "Visual reset. Look at something comfortably far away. Twenty seconds."
           }
         }
       }
     },
-    "visualReset.ready_title": {
+    "visualReset.announcement.skipped": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "VisualReset"
+            "value": "Skipped."
+          }
+        }
+      }
+    },
+    "visualReset.announcement.ten_seconds": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "10 seconds remaining."
+          }
+        }
+      }
+    },
+    "visualReset.automatic_ending": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ends on its own."
+          }
+        }
+      }
+    },
+    "visualReset.blink_prompt": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blink slowly two or three times."
+          }
+        }
+      }
+    },
+    "visualReset.done_early": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done early"
+          }
+        }
+      }
+    },
+    "visualReset.escape_key": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "esc"
+          }
+        }
+      }
+    },
+    "visualReset.escape_key_accessibility": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escape"
+          }
+        }
+      }
+    },
+    "visualReset.eyebrow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual reset"
+          }
+        }
+      }
+    },
+    "visualReset.guidance": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Let the small details come into view without forcing focus. Blink slowly two or three times."
+          }
+        }
+      }
+    },
+    "visualReset.guidance_lead": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Let the small details come into view without forcing focus."
+          }
+        }
+      }
+    },
+    "visualReset.instruction": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Look at something comfortably far away."
+          }
+        }
+      }
+    },
+    "visualReset.instruction_emphasis": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "comfortably"
+          }
+        }
+      }
+    },
+    "visualReset.return_key": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Return"
+          }
+        }
+      }
+    },
+    "visualReset.skip": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip"
+          }
+        }
+      }
+    },
+    "visualReset.skip_accessibility": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip this reset"
           }
         }
       }

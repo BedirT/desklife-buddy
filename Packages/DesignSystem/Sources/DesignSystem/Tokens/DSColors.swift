@@ -32,6 +32,34 @@ public extension Color {
     static let dsVisualBar = Color(light: Color(hex: 0x1A1A1E), dark: Color(hex: 0xFFC98F))
     static let dsMovementBar = Color(light: Color(hex: 0x1A1A1E), dark: Color(hex: 0xFF9EC0))
 
+    // MARK: - Break fields
+
+    /// Working-reference break-field ink. Final field colors remain gated by DQ-18.
+    static let dsBreakTextPrimary = Color(light: Color(hex: 0x241D2E), dark: Color(hex: 0xFDF6EF))
+    static let dsBreakTextSecondary = Color(light: Color(hex: 0x665C70), dark: Color(hex: 0xD5CBD1))
+    static let dsBreakEyebrow = Color(light: Color(hex: 0x7A4234), dark: Color(hex: 0xE4BFA8))
+    static let dsBreakTextPrimaryIncreased = Color(light: Color(hex: 0x120C18), dark: Color(hex: 0xFFFFFF))
+    static let dsBreakTextSecondaryIncreased = Color(light: Color(hex: 0x403648), dark: Color(hex: 0xFFF7FB))
+    static let dsBreakEyebrowIncreased = Color(light: Color(hex: 0x5B281E), dark: Color(hex: 0xFFE0CC))
+    static let dsBreakControlSolid = Color(light: Color(hex: 0xF7F3F6), dark: Color(hex: 0x20182A))
+    static let dsBreakControlBorder = Color(light: Color(hex: 0x604B62), dark: Color(hex: 0xB9A9BA))
+    static let dsBreakControlBorderIncreased = Color(light: Color(hex: 0x39283A), dark: Color(hex: 0xF5EAF3))
+    static let dsBreakKeycap = Color(light: Color(hex: 0xE4DDE5), dark: Color(hex: 0x493B50))
+    static let dsBreakHorizonTrack = Color(light: Color(hex: 0x665266), dark: Color(hex: 0x9D8E9D))
+    static let dsBreakHorizonTrackIncreased = Color(light: Color(hex: 0x39283A), dark: Color(hex: 0xF5EAF3))
+    static let dsBreakHorizonFill = Color(light: Color(hex: 0xB95B34), dark: Color(hex: 0xFFD0A8))
+    static let dsBreakFocusRing = Color(light: Color(hex: 0x3A2438), dark: Color(hex: 0xFFD6B2))
+    static let dsBreakSkyTop = Color(light: Color(hex: 0xDBE1F6), dark: Color(hex: 0x08091B))
+    static let dsBreakSkyMiddle = Color(light: Color(hex: 0xE7E5F2), dark: Color(hex: 0x14132E))
+    static let dsBreakSkyHorizon = Color(light: Color(hex: 0xFDE9D8), dark: Color(hex: 0x55303F))
+    static let dsBreakGroundTop = Color(light: Color(hex: 0xF3EBE9), dark: Color(hex: 0x241A30))
+    static let dsBreakGroundBottom = Color(light: Color(hex: 0xE2E4EE), dark: Color(hex: 0x0A0A19))
+    static let dsBreakGlow = Color(light: Color(hex: 0xFFD6AE), dark: Color(hex: 0xFFDCC2))
+    static let dsBreakTextShadow = Color(
+        light: .clear,
+        dark: Color(hex: 0x000000).opacity(0.72),
+    )
+
     // MARK: - Brand & status
 
     static let dsAccent = Color(light: Color(hex: 0x4F46E5), dark: Color(hex: 0x8B85F4))

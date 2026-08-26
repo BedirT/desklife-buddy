@@ -12,6 +12,7 @@ public enum VisualResetAnnouncement: Equatable, Sendable {
     case opened(durationSeconds: Int)
     case tenSecondsRemaining
     case finished
+    case doneEarly
     case skipped
 }
 
@@ -120,19 +121,22 @@ public final class VisualResetModel {
         phase = remainingSeconds <= Int(ceil(finalSecondsThreshold))
             ? .finalSeconds
             : .running
-        if !announcedTenSeconds,
-           previousRemainingSeconds > 10,
-           remainingSeconds <= 10
-        {
+        let reachedTenSecondMilestone = previousRemainingSeconds > 10 && remainingSeconds <= 10
+        if !announcedTenSeconds, reachedTenSecondMilestone {
             announcedTenSeconds = true
             onAnnouncement(.tenSecondsRemaining)
         }
     }
 
     public func doneEarly() {
+        guard isActive else { return }
+        finish(.doneEarly, announcement: .doneEarly)
+    }
+
+    public func doneEarlyFromKeyboard() {
         refresh()
         guard isActive, isDeclarationArmed else { return }
-        finish(.doneEarly, announcement: .finished)
+        finish(.doneEarly, announcement: .doneEarly)
     }
 
     public func skip() {
@@ -147,18 +151,28 @@ public final class VisualResetModel {
 }
 
 public extension VisualResetModel {
-    static func preview(_ phase: Phase = .running) -> VisualResetModel {
-        let model = VisualResetModel(durationSeconds: 20, now: { 0 })
-        model.phase = phase
-        model.openedAt = phase == .ready ? nil : 0
+    static func preview(
+        _ phase: Phase = .running,
+        remainingSeconds: Int? = nil,
+        accessibility: VisualResetAccessibility = .init(),
+    ) -> VisualResetModel {
+        let previewRemaining = remainingSeconds ?? (phase == .finalSeconds ? 3 : 12)
+        let elapsed = TimeInterval(20 - min(max(previewRemaining, 0), 20))
+        let model = VisualResetModel(durationSeconds: 20, accessibility: accessibility, now: { elapsed })
         switch phase {
-        case .ready, .running:
-            break
+        case .ready:
+            return model
+        case .running:
+            model.phase = .running
+            model.openedAt = 0
+            model.refresh()
         case .finalSeconds:
-            model.remainingSeconds = 3
-            model.progress = 0.85
-            model.isDeclarationArmed = true
+            model.phase = .running
+            model.openedAt = 0
+            model.refresh()
         case .finished:
+            model.phase = phase
+            model.openedAt = 0
             model.remainingSeconds = 0
             model.progress = 1
             model.isDeclarationArmed = true

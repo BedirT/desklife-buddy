@@ -50,6 +50,11 @@ enum DesignSystemL10n {
         static let previewAction = string("empty_state.preview_action", default: "Add your first item")
     }
 
+    enum BreakField {
+        static let doneEarly = string("break_field.done_early", default: "Done early")
+        static let skip = string("break_field.skip", default: "Skip")
+    }
+
     enum Typography {
         static let largeTitle = string("typography.large_title", default: "Large Title")
         static let title = string("typography.title", default: "Title")
@@ -69,5 +74,6 @@ enum DesignSystemL10n {
         static let tags = string("sections.tags", default: "Tags")
         static let card = string("sections.card", default: "Card")
         static let emptyState = string("sections.empty_state", default: "Empty state")
+        static let breakControls = string("sections.break_controls", default: "Break controls")
     }
 }

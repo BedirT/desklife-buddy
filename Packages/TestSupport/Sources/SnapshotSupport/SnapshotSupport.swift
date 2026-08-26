@@ -20,6 +20,8 @@
     public enum SnapshotLayout {
         /// Full desktop window render at 1000x700 pt.
         case window
+        /// Exact-size render for accepted fixed-canvas compositions.
+        case fixed(width: CGFloat, height: CGFloat)
         /// Tight render for components; the view defines its own size.
         case sizeThatFits
     }
@@ -134,6 +136,8 @@
             switch layout {
             case .window:
                 size = CGSize(width: 1000, height: 700)
+            case let .fixed(width, height):
+                size = CGSize(width: width, height: height)
             case .sizeThatFits:
                 let fitting = controller.view.fittingSize
                 size = CGSize(width: max(fitting.width, 1), height: max(fitting.height, 1))

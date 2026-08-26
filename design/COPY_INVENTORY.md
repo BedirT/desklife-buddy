@@ -94,7 +94,7 @@ any count of missed breaks, any numeric countdown (`D-004`).
 | CP-BR13 | Not a good moment? Snooze or skip. | `[C037]` allowed verbatim | draft |
 | CP-BR14 ⚠ | Visual reset done. Movement is still open when you want it. | describes clock state only; must not imply anything about the body | draft |
 | CP-BR15 ⚠ | Changing position is worth doing — it doesn't replace moving. | `[C048]`, `09 §6`. The hardest sentence in the product: true, short, and not a lecture. | draft |
-| CP-BR16 | Skip | neutral UI | draft |
+| CP-BR16 | Skip | neutral UI; maps to `.skipped`, never misconduct `[C037]` | approved — VisualReset claims review 2026-08-26 |
 | CP-BR17 | Not now | neutral UI | draft |
 | CP-BR18 | This one doesn't work for me | neutral UI; ED-13, demands no explanation | draft |
 
@@ -295,6 +295,10 @@ Spoken strings are user-facing copy and follow the same claims discipline.
 | CP-VO04 | "Cadence: visual reset in 45 seconds. Now, button. Later, menu button." | A | Factual; "Cadence" is a placeholder name (D-001) |
 | CP-VO05 | "On hold — busy until 3:00." / "Paused — busy until 3:00." | A | Honest suppression reason (`07`); never "smart pause" |
 | CP-VO06 | "Visual reset in about 12 minutes. Movement in about 31 minutes. Estimated active computer use, 48 minutes." | A | "about" keeps estimate-level precision; "estimated" never dropped `[C033]` |
+| CP-VO07 | "10 seconds remaining." (coarse timer announcement) · "Done early." (declaration exit) | A | Factual timer milestone + `userDeclaredCompleted`; neither is a health outcome `[03 §10]`, `[C034]` |
+| CP-VO08 | "Visual reset. Look at something comfortably far away. %d seconds." | A | Dynamic fallback when protocol configuration changes the timer; `%d` must equal the actual configured duration. Instruction + factual duration only `[V01]`, `[C004]` |
+| CP-VO09 | "Return" · "Escape" · visible keycaps "↩" · "esc" | A | Factual shortcut labels and VoiceOver hints; valid only while the corresponding Done early and Skip shortcuts operate |
+| CP-VO10 | "Skip this reset" | A | VoiceOver action name for the visible Skip control; maps only to `.skipped` and adds no outcome claim `[C037]` |
 
 Cadence rule (not a string): timers announce at coarse marks only (open, 10 s/1:00, end),
 polite live region — per-second announcement is an accessibility defect (`accessibility.md` §5).

@@ -9,6 +9,13 @@ protocol ProtocolRuntimeStore {
 
 extension SwiftDataProtocolStore: ProtocolRuntimeStore {}
 
+enum VisualResetLifecycleEvent: Sendable {
+    case opened
+    case timerFinished
+    case doneEarly
+    case skipped
+}
+
 /// App-owned bridge from coarse system samples to retained protocol state.
 final class ProtocolRuntime {
     private let configuration: ProtocolConfiguration
@@ -106,6 +113,29 @@ final class ProtocolRuntime {
              .openWeeklyRhythm, .openSettings, .quit:
             route(action)
         }
+    }
+
+    func handleVisualReset(
+        _ event: VisualResetLifecycleEvent,
+        openingSource: OpportunityEventSource = .user,
+    ) async throws {
+        let fact: (kind: OpportunityEventKind, source: OpportunityEventSource) = switch event {
+        case .opened:
+            (.breakStarted, openingSource)
+        case .timerFinished:
+            (.timerFinished, .localTimer)
+        case .doneEarly:
+            (.userDeclaredCompleted, .user)
+        case .skipped:
+            (.skipped, .user)
+        }
+        let output = engine.record(
+            fact.kind,
+            opportunity: .visual,
+            source: fact.source,
+        )
+        try await persist(output.events)
+        publish(liveHeadsUp: nil)
     }
 }
 

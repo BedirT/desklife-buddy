@@ -121,6 +121,67 @@ struct ProtocolRuntimeTests {
         #expect(runtime.state.visualClock.phase == .suppressed(.systemInactiveOrLocked))
         #expect(runtime.state.movementClock.phase == .suppressed(.systemInactiveOrLocked))
     }
+
+    @Test("A visual reset persists its open and timer facts while resetting only the visual clock")
+    func visualResetTimerLifecycle() async throws {
+        let retained = ProtocolState(
+            profileID: .balanced,
+            visualClock: OpportunityClockState(accumulatedActiveUseSeconds: 900),
+            movementClock: OpportunityClockState(accumulatedActiveUseSeconds: 1800),
+        )
+        let store = RuntimeStore(state: retained)
+        let ids = IDSequence()
+        let runtime = try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
+            store: store,
+            now: { Date(timeIntervalSince1970: 500) },
+            makeID: { ids.next() },
+        )
+        try await runtime.restore()
+
+        try await runtime.handleVisualReset(.opened)
+        try await runtime.handleVisualReset(.timerFinished)
+
+        #expect(store.commits.map(\.events.first?.kind) == [.breakStarted, .timerFinished])
+        #expect(store.commits.map(\.events.first?.source) == [.user, .localTimer])
+        #expect(store.commits.allSatisfy { $0.events.count == 1 })
+        #expect(runtime.state.visualClock.accumulatedActiveUseSeconds == 0)
+        #expect(runtime.state.movementClock.accumulatedActiveUseSeconds == 1800)
+    }
+
+    @Test("Done early persists the user's visual completion declaration")
+    func visualResetDoneEarly() async throws {
+        try await expectVisualResetFact(
+            event: .doneEarly,
+            kind: .userDeclaredCompleted,
+        )
+    }
+
+    @Test("Skip persists the user's visual skip without manufacturing completion")
+    func visualResetSkipped() async throws {
+        try await expectVisualResetFact(event: .skipped, kind: .skipped)
+    }
+
+    private func expectVisualResetFact(
+        event: VisualResetLifecycleEvent,
+        kind: OpportunityEventKind,
+    ) async throws {
+        let store = RuntimeStore()
+        let runtime = try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
+            store: store,
+            now: { Date(timeIntervalSince1970: 600) },
+            makeID: { UUID(0) },
+        )
+        try await runtime.restore()
+
+        try await runtime.handleVisualReset(event)
+
+        #expect(store.commits.count == 1)
+        #expect(store.commits.first?.events.map(\.kind) == [kind])
+        #expect(store.commits.first?.events.first?.source == .user)
+        #expect(store.commits.first?.events.first?.opportunity == .visual)
+    }
 }
 
 private final class RuntimeStore: ProtocolRuntimeStore {

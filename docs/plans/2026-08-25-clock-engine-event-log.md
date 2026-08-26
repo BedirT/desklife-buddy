@@ -43,7 +43,7 @@ system signal adapters, and SwiftData persistence without changing Domain semant
       validation and no production numbers in views - done = focused loader tests plus
       `scripts/test.sh App` green. A new parsing dependency is an owner gate; prefer an existing
       structured runtime or a deterministic generated projection checked against the YAML.
-- [ ] 4. App-owned persistence and system adapters: SwiftData event/clock state, restart-safe
+- [x] 4. App-owned persistence and system adapters: SwiftData event/clock state, restart-safe
       reconstruction with no unobserved elapsed catch-up, coarse public activity/session inputs,
       and no prohibited permission/content capture - done = `scripts/test.sh App` green - gating
       suites: `SwiftDataOpportunityEventStoreTests`, `ProtocolStateStoreTests`,
@@ -67,6 +67,18 @@ system signal adapters, and SwiftData persistence without changing Domain semant
   `DERIVED=/private/tmp/desklife-debug-tests-fresh scripts/test.sh App` passed all four App
   tests, and `scripts/lint.sh` was clean. The temporary DerivedData override avoided a corrupt
   repository-local Xcode cache; an entirely fresh Debug test run independently passed first.
+- 2026-08-25: Step 4 red was observed with `scripts/test.sh App` failing because the three new
+  App contracts did not exist. One versioned SwiftData store now commits exhaustive events and
+  restart-safe profile/counter state atomically, preserves explicit append order, rejects
+  corrupt inputs, and normalizes transient phases to startup grace. The system adapter uses a
+  process-local `SuspendingClock`, the query-only any-input idle scalar, and public workspace
+  sleep/session notifications; it emits transition samples immediately and persists none of
+  the signals. Green proof: 34 Domain tests passed, the App xcresult reports 18 declared tests
+  and 27 parameterized executions passed including a file-backed reconstruction, lint was
+  clean, and `scripts/build.sh` succeeded.
+- 2026-08-25: DQ-21 records the public-platform gap for distinct immediate lock/unlock state.
+  The adapter reports only what sanctioned public APIs establish instead of mislabeling
+  display sleep/session switching or adopting private distributed notifications.
 
 - 2026-08-25: Domain models exactly the ten events in `INTERACTION_SPEC.md` section 6. The
   broader `event_schema.json` vocabulary is not imported into product semantics (DQ-20).

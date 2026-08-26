@@ -67,17 +67,20 @@ public struct ProtocolEngine: Sendable {
     private let configuration: ProtocolConfiguration
     private var activityEstimator: ActivityEstimator
 
+    public private(set) var profileID: ProtocolProfileID
     public private(set) var visualClock: OpportunityClockState
     public private(set) var movementClock: OpportunityClockState
 
     /// Creates an engine with injected configuration and optional restored clock values.
     public init(
         configuration: ProtocolConfiguration,
+        profileID: ProtocolProfileID = .balanced,
         visualClock: OpportunityClockState = OpportunityClockState(),
         movementClock: OpportunityClockState = OpportunityClockState(),
     ) {
         self.configuration = configuration
         activityEstimator = ActivityEstimator(configuration: configuration.activityEstimator)
+        self.profileID = profileID
         self.visualClock = visualClock
         self.movementClock = movementClock
     }

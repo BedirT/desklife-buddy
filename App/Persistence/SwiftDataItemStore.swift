@@ -6,10 +6,12 @@ final class SwiftDataItemStore: ItemStore {
     private let container: ModelContainer
     private let context: ModelContext
 
-    init(inMemory: Bool = false) throws {
-        let schema = Schema([StoredItem.self])
-        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: inMemory)
-        container = try ModelContainer(for: schema, configurations: [configuration])
+    convenience init(inMemory: Bool = false) throws {
+        try self.init(container: AppModelContainer.make(inMemory: inMemory))
+    }
+
+    init(container: ModelContainer) throws {
+        self.container = container
         context = ModelContext(container)
     }
 

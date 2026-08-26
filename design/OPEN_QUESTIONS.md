@@ -327,3 +327,20 @@ local record families rather than silently becoming extra protocol events.
 **Settled by:** the research owner reconciling `event_schema.json` with the authoritative
 handoff and clarifying whether it is a storage-envelope union rather than the protocol event
 vocabulary.
+
+### DQ-21 — Immediate screen-lock state has no sanctioned public signal
+
+The protocol asks lock/unlock to pause immediately and arm wake grace, but macOS does not
+expose a documented public notification or scalar that reliably distinguishes screen lock
+from display sleep or user-session switching. Commonly cited distributed notifications and
+Core Graphics session keys for lock state are private/undocumented, while Accessibility and
+Input Monitoring permissions are explicitly prohibited for core function.
+
+**Interim (truthful and permission-free):** the App adapter uses public `NSWorkspace`
+sleep/wake and session-active notifications, and reports `screenLocked = false` rather than
+mislabeling either signal as a lock. A simple lock therefore falls back to the coarse idle
+window and may not arm unlock grace. No private notification, event tap, or permission prompt
+is introduced to hide this limitation.
+
+**Settled by:** a documented public macOS lock-state API, or a product-protocol amendment that
+accepts the coarse idle fallback explicitly.

@@ -1,4 +1,0 @@
-interface:
-  display_name: "Grill Me"
-  short_description: "Run the one batched product intake."
-  default_prompt: "Run the repository product intake and persist the approved decisions."

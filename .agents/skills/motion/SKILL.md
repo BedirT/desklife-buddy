@@ -110,12 +110,12 @@ peripheral motion, auto-advancing carousels, and ongoing loops.
 
 Use the cheapest sufficient proof:
 1. Endpoint proof: Preview states and `scripts/snapshot.sh <Package> [filter]`.
-2. Movement proof: `scripts/motion-review.sh <seconds> <name>` and inspect the
-   generated video/contact sheet.
+2. Movement proof: exercise the real app and inspect a focused local screen
+   recording when endpoint snapshots cannot show the behavior.
 3. Asset proof: `scripts/check-motion-assets.sh` for manifests, fallbacks,
    provenance, size, and remote-asset rejection.
-4. High-risk/jank proof: `PERF_REPRO="exact gesture" scripts/perf.sh <flow> 8
-   "Animation Hitches"` before/after.
+4. High-risk/jank proof: reproduce the exact action in Instruments and record
+   before/after measurements.
 5. Accessibility proof: reduced-motion Preview plus a11y identifiers for the
    real trigger/target when it is a user flow.
 

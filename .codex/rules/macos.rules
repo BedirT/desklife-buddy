@@ -1,10 +1,5 @@
-# Project execpolicy: pre-approve the blessed verification loop so guarded
-# profiles never prompt for routine rungs. (Under approval_policy = "never"
-# these are inert but harmless.)
-#
-# Deliberately ABSENT: scripts/record-snapshots.sh (baseline mutation is
-# human-run), scripts/rename-app.sh (one-time setup), and scripts/release.sh
-# (signing + shipping stays supervised).
+# Project exec policy for direct repository verification commands.
+# `record-snapshots.sh` is deliberately absent because it mutates baselines.
 
 prefix_rule(pattern=["scripts/check-previews.sh"], decision="allow")
 prefix_rule(pattern=["./scripts/check-previews.sh"], decision="allow")
@@ -17,6 +12,9 @@ prefix_rule(pattern=["scripts/run.sh", "--verify"], decision="allow")
 prefix_rule(pattern=["scripts/lint.sh"], decision="allow")
 prefix_rule(pattern=["scripts/format.sh"], decision="allow")
 prefix_rule(pattern=["scripts/new-feature.sh"], decision="allow")
+prefix_rule(pattern=["scripts/verify.sh"], decision="allow")
+prefix_rule(pattern=["scripts/ui.sh"], decision="allow")
+prefix_rule(pattern=["scripts/shot.sh"], decision="allow")
 prefix_rule(pattern=["./scripts/doctor.sh"], decision="allow")
 prefix_rule(pattern=["./scripts/build.sh"], decision="allow")
 prefix_rule(pattern=["./scripts/test.sh"], decision="allow")
@@ -25,3 +23,6 @@ prefix_rule(pattern=["./scripts/run.sh", "--verify"], decision="allow")
 prefix_rule(pattern=["./scripts/lint.sh"], decision="allow")
 prefix_rule(pattern=["./scripts/format.sh"], decision="allow")
 prefix_rule(pattern=["./scripts/new-feature.sh"], decision="allow")
+prefix_rule(pattern=["./scripts/verify.sh"], decision="allow")
+prefix_rule(pattern=["./scripts/ui.sh"], decision="allow")
+prefix_rule(pattern=["./scripts/shot.sh"], decision="allow")

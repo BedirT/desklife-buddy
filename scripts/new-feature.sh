@@ -29,8 +29,7 @@ LOWER_NAME="$(tr '[:upper:]' '[:lower:]' <<< "${NAME:0:1}")${NAME:1}"
 PACKAGE_MANIFEST="$ROOT/Packages/Features/Package.swift"
 LOCALIZATION_CATALOG="$ROOT/Packages/Features/Sources/FeatureLocalization/Resources/Localizable.xcstrings"
 
-# Preflight every shared mutation point before creating a single file.
-"$ROOT/scripts/check-dependency-inputs.sh"
+# Validate shared mutation points before creating a single file.
 /usr/bin/python3 -I - "$PACKAGE_MANIFEST" "$LOCALIZATION_CATALOG" "$NAME" <<'PY'
 import json
 import pathlib
@@ -366,9 +365,6 @@ with open(path, "w") as file:
 
 print(f"Localizable.xcstrings: seeded keys for {name}")
 PY
-
-# This trusted generator is the only routine path that changes the Features manifest.
-"$ROOT/scripts/check-dependency-inputs.sh" --write Packages/Features/Package.swift
 
 echo
 echo "Feature $NAME scaffolded. Next steps:"

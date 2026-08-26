@@ -1,19 +1,11 @@
-# Pinned developer tooling. Run `mise install` once per machine.
-# Versions are exact on purpose: agents and CI must see identical tool behavior.
-# Update deliberately (bump + run scripts/test.sh all), never implicitly.
+# Only tools used by the retained repository commands belong here.
 
 [tools]
-actionlint = "1.7.12"
-node = "24.16.0"
 swiftlint = "0.61.0"
 swiftformat = "0.58.7"
-uv = "0.7.13"
 xcbeautify = "2.30.1"
-zizmor = "1.26.1"
 
 [settings]
 experimental = true
 locked = true
-# PR-head CI intentionally has no GitHub token. Optional provenance API outages
-# may warn; checksums, mismatches, and lock-required provenance remain fatal.
 provenance_api_failures_fatal = false

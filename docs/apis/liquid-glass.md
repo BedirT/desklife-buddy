@@ -26,8 +26,8 @@ SDK, so the default move is to use native components first.
 - A new glass tint, radius, or motion feel is a design decision. Ask first, then
   add a DS token/component and a `DSGallery` preview.
 - Glass is environment-dependent. Snapshot tests need stable backgrounds; final
-  judgment for glass-heavy polish should include `scripts/shot.sh` or
-  `scripts/capture-matrix.sh`.
+  judgment for glass-heavy polish should include focused Preview variants and
+  `scripts/shot.sh`.
 
 ## Sharp edges
 

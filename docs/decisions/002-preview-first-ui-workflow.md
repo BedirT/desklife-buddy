@@ -17,12 +17,12 @@ data and the same composition chrome the app uses.
 
 `scripts/snapshot.sh` is the primary scripted export mechanism for review
 artifacts. It runs SnapshotSupport baseline tests for high-value states,
-exports the rendered macOS SwiftUI views to PNG/JSON, and creates a review
-bundle in `artifacts/preview-review/` for every run. Xcode live Previews remain
+exports the rendered macOS SwiftUI views to PNG/JSON under
+`artifacts/preview-review/`. Xcode live Previews remain
 the interactive authoring surface; the scripted rung is deterministic proof.
 
-Agents own visual inspection. They must open the generated review contact sheet
-or selected rendered Preview images, compare them to intent, and present the
+Agents own visual inspection. They must open selected rendered Preview images,
+compare them to intent, and present the
 relevant artifact(s) in the handoff. The owner should never be asked to inspect
 a raw snapshot directory to understand the work.
 
@@ -40,17 +40,11 @@ are not the primary layout-discovery loop.
   macOS host cannot be pinned to the baseline OS, so hosted CI uses an explicit
   `--render-only` exact-inventory contract whose evidence says baselines were
   not verified; that lane never satisfies verification rung 2.
-- Strict and render-only behavior are mutually exclusive compile modes attested
-  in every export. Full strict runs reconcile every target-qualified committed
-  identity before claiming package-wide verification; filtered strict runs
-  remain valid scoped pixel checks but make no package-wide claim.
+- Strict and render-only behavior are mutually exclusive compile modes.
 - Renderer provenance is observed, not asserted: each sidecar records point and
   pixel geometry plus the window backing scale, and review accepts only measured
   2x Display P3 output (with raster-rounding allowance for intrinsic sizes).
-- `scripts/snapshot.sh` output includes a compact review artifact, not just
-  baseline paths.
+- `scripts/snapshot.sh` exports the current PNGs for direct inspection.
 - Evidence packs include the reviewed Preview artifact when UI changes land.
-- Intended baseline updates are agent-owned when every moved render traces to
-  intentional source edits: inspect the ranked colored diff page, accept the
-  exact reviewed bytes with `accept-snapshots.sh`, and rerun to green. Bulk
-  re-rendering without a candidate remains owner-confirmed.
+- Intended baseline updates require inspecting the exported image, using the
+  narrowest confirmed `record-snapshots.sh` filter, and rerunning to green.

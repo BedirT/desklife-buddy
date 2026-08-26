@@ -102,7 +102,6 @@ for base in [root / "App", root / "Packages"]:
             non_asset_json = {
                 "Package.resolved",
                 "Contents.json",
-                "Packages/Factory/PublicAPI.json",
             }
             if path.name not in non_asset_json and relative not in non_asset_json and ".xcassets" not in rel_parts:
                 asset_paths.append(path)

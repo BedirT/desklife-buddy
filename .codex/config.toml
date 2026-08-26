@@ -1,27 +1,3 @@
-# Project-scoped codex config — loaded on top of ~/.codex/config.toml when the
-# project is trusted. Keep this layer minimal: only what every session in THIS
-# repo needs. (Note: `profile`/`profiles` keys are ignored at project level.)
-
-# Optional XcodeBuildMCP server for macOS build/run/debug sessions. Runtime MCPs
-# are disabled by default; an explicit session opts in only when it needs them.
-[mcp_servers.xcodebuildmcp]
-command = "./scripts/xcodebuildmcp-session.sh"
-args = ["mcp"]
-cwd = "."
-enabled = false
-
-# Native Xcode MCP is also opt-in. Shell scripts remain the correctness path.
-[mcp_servers.xcode]
-command = "./scripts/support/run_sanitized.sh"
-args = ["/usr/bin/xcrun", "mcpbridge"]
-enabled = false
-
-# Enable per-project when a design source exists:
-# [mcp_servers.figma]
-# url = "https://mcp.figma.com/mcp"
-#
-# NOTE: plugin enable/disable is GLOBAL-only in Codex (verified 2026-06-17):
-# a [plugins."x"] enabled=false here is INERT, the skill root still loads.
-# To prune plugin skills, disable them in ~/.codex/config.toml. Skills cannot
-# be scoped per-project either; a project only ADDS its .agents/skills on top
-# of the global set.
+# Project-scoped Codex settings are intentionally empty. The repository's
+# shell scripts are the build and verification interface; no project MCP server
+# or vendored runtime is required.

@@ -1,6 +1,6 @@
 # Motion Production
 
-This folder is the harness contract for advanced animation. It lets an agent
+This folder is the repository contract for advanced animation. It lets an agent
 move from "make this feel premium" to a concrete SwiftUI implementation, an
 asset request when needed, and evidence the owner can review.
 
@@ -44,9 +44,9 @@ runtime after owner approval and a documented product need.
 5. Wire the final surface through SwiftUI; app/domain logic stays in Swift.
 6. Add start/end/trigger/reduced-motion Preview states.
 7. Run the evidence ladder:
-   - endpoint snapshots/contact sheet for UI state,
-   - `scripts/motion-review.sh` for real-window movement,
-   - `scripts/perf.sh` for jank risk,
+   - endpoint snapshots for UI state,
+   - focused local screen recording when movement cannot be judged from endpoints,
+   - Instruments before/after measurement for jank risk,
    - `scripts/check-motion-assets.sh` for asset metadata/provenance.
 
 ## Human loop
@@ -58,7 +58,7 @@ Ask the owner for:
 - final Adobe/Rive/AI production exports,
 - licensing/provenance decisions,
 - animation that changes product meaning,
-- bulk snapshot baseline re-recording (not exact bytes from a colored review),
+- broad snapshot baseline re-recording,
 - final feel on target Mac hardware.
 
 Do not ask for:

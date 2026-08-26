@@ -8,17 +8,8 @@ __pycache__/
 ## Agent/script artifacts (screenshots, videos, result summaries)
 artifacts/
 
-## Per-worktree liveness marker. This must remain ignored so a heartbeat does
-## not make an otherwise clean task worktree appear dirty.
-.worktree-session
-# Legacy Apple-platform task-resource files remain ignored so adopted projects
-# can be cleaned safely without making every imported worktree appear dirty.
-.worktree-env
-.worktree-sim-owner
-
-## Transient record-mode authorization (created/removed by record-snapshots.sh)
+## Transient snapshot recording authorization
 .snapshot-record-token
-.snapshot-operation-lock
 
 ## User state
 xcuserdata/
@@ -33,10 +24,6 @@ xcuserdata/
 Packages/*/.build/
 Packages/*/.swiftpm/
 .swiftpm/
-Tools/XcodeBuildMCP/node_modules/
 
 ## mise local overrides
 .mise.local.toml
-
-## Python bytecode from script helpers
-__pycache__/

@@ -1,191 +1,39 @@
-# Manual clean-machine verification. Local scripts are the default proof path;
-# this workflow is reserved for explicitly dispatched milestones and releases.
-name: Manual hosted verification
+name: Verify
 
 on:
+  pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: manual-ci-${{ github.workflow }}-${{ github.ref }}
+  group: verify-${{ github.ref }}
   cancel-in-progress: true
-
-env:
-  DEVELOPER_DIR: /Applications/Xcode_26.5.app/Contents/Developer
 
 jobs:
   verify:
-    name: verify
     runs-on: macos-26
-    timeout-minutes: 45
+    timeout-minutes: 20
     steps:
-      - name: Check out proposed tree
+      - name: Check out
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
-      - name: Verify reviewed dependency inputs
-        shell: /usr/bin/env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin /bin/bash --noprofile --norc -e -o pipefail {0}
-        working-directory: ${{ github.workspace }}
-        run: |
-          /usr/bin/python3 -I - <<'PY'
-          import hashlib
-          import os
-          import pathlib
-          import re
-          import stat
-
-          root = pathlib.Path.cwd()
-          workflow_path = root / ".github/workflows/ci.yml"
-          workflow_text = workflow_path.read_text()
-          workflow_lines = workflow_text.splitlines()
-
-          def action_step(action):
-              action_line = next(index for index, line in enumerate(workflow_lines) if f"uses: {action}@" in line)
-              start = action_line
-              while start > 0 and not re.match(r"^\s{6}-\s", workflow_lines[start]):
-                  start -= 1
-              end = action_line + 1
-              while end < len(workflow_lines) and not re.match(r"^\s{6}-\s", workflow_lines[end]):
-                  end += 1
-              return "\n".join(workflow_lines[start:end])
-
-          checkout_digest = hashlib.sha256(action_step("actions/checkout").encode()).hexdigest()
-          mise_action_digest = hashlib.sha256(action_step("jdx/mise-action").encode()).hexdigest()
-          if checkout_digest != "82833ff139d222a964f3b9fc56d66f0f18d686f568b335656f2819eee50f021b":
-              raise SystemExit("checkout step changed before the dependency boundary")
-          if mise_action_digest != "dbde322d3b824c61382c58737e62e84fc7d6241487d3337a9b0e8f91f52a64b2":
-              raise SystemExit("mise action step changed before the dependency boundary")
-
-          step_starts = [line.strip() for line in workflow_lines if re.match(r"^\s{6}-\s", line)]
-          if step_starts[:3] != [
-              "- name: Check out proposed tree",
-              "- name: Verify reviewed dependency inputs",
-              "- name: Install locked developer tools",
-          ]:
-              raise SystemExit("unreviewed step precedes the dependency boundary")
-
-          env_blocks = []
-          env_occurrences = []
-          for index, line in enumerate(workflow_lines):
-              if not re.match(r"^\s*env\s*:", line):
-                  continue
-              env_occurrences.append(line.strip())
-              if line.strip() != "env:":
-                  continue
-              indent = len(line) - len(line.lstrip())
-              block = []
-              cursor = index + 1
-              while cursor < len(workflow_lines):
-                  candidate = workflow_lines[cursor]
-                  if not candidate.strip():
-                      cursor += 1
-                      continue
-                  candidate_indent = len(candidate) - len(candidate.lstrip())
-                  if candidate_indent <= indent:
-                      break
-                  block.append(candidate.strip())
-                  cursor += 1
-              env_blocks.append(tuple(block))
-
-          github_workspace = "$" + "{{ github.workspace }}"
-          expected_action_env = (
-              'DYLD_FRAMEWORK_PATH: ""',
-              'DYLD_INSERT_LIBRARIES: ""',
-              'DYLD_LIBRARY_PATH: ""',
-              f"MISE_GLOBAL_CONFIG_FILE: {github_workspace}/mise.toml",
-              'MISE_NO_ENV: "1"',
-              'MISE_NO_HOOKS: "1"',
-              "MISE_OVERRIDE_CONFIG_FILENAMES: mise.toml",
-              "MISE_OVERRIDE_TOOL_VERSIONS_FILENAMES: none",
-              f"MISE_SYSTEM_CONFIG_FILE: {github_workspace}/mise.toml",
-              f"MISE_TRUSTED_CONFIG_PATHS: {github_workspace}/mise.toml",
-              'NODE_OPTIONS: ""',
-              'NODE_PATH: ""',
-              "PATH: /usr/bin:/bin:/usr/sbin:/sbin",
-          )
-          if env_occurrences != ["env:", "env:", "env: false"] or env_blocks != [
-              ("DEVELOPER_DIR: /Applications/Xcode_26.5.app/Contents/Developer",),
-              expected_action_env,
-          ]:
-              raise SystemExit("workflow environment changed before the dependency boundary")
-
-          checker = root / "scripts/check-dependency-inputs.sh"
-          checker_metadata = checker.lstat()
-          if (
-              not stat.S_ISREG(checker_metadata.st_mode)
-              or checker_metadata.st_nlink != 1
-              or checker_metadata.st_mode & 0o022
-              or hashlib.sha256(checker.read_bytes()).hexdigest()
-              != "d30e8a29415398c1c2641b4c0831a3606b3b5258083fbe3137d52fd829ff0574"
-          ):
-              raise SystemExit("dependency-input checker changed before the tool boundary")
-          PY
-          /bin/bash -p ./scripts/check-dependency-inputs.sh
-
-      - name: Install locked developer tools
+      - name: Install tools
         uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
-        env:
-          DYLD_FRAMEWORK_PATH: ""
-          DYLD_INSERT_LIBRARIES: ""
-          DYLD_LIBRARY_PATH: ""
-          MISE_GLOBAL_CONFIG_FILE: ${{ github.workspace }}/mise.toml
-          MISE_NO_ENV: "1"
-          MISE_NO_HOOKS: "1"
-          MISE_OVERRIDE_CONFIG_FILENAMES: mise.toml
-          MISE_OVERRIDE_TOOL_VERSIONS_FILENAMES: none
-          MISE_SYSTEM_CONFIG_FILE: ${{ github.workspace }}/mise.toml
-          MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}/mise.toml
-          NODE_OPTIONS: ""
-          NODE_PATH: ""
-          PATH: /usr/bin:/bin:/usr/sbin:/sbin
         with:
           version: 2026.6.3
-          sha256: 737353e07a404ff7d0be079fcc9325fb5b68840293a5165c714c26deabee9a9d
-          mise_dir: ${{ runner.temp }}/swiftmac-mise
-          github_token: ""
-          env: false
-          cache_save: false
-          working_directory: ${{ github.workspace }}
+          cache: true
 
-      - name: Enforce CI security policy
-        shell: /usr/bin/env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin /bin/bash --noprofile --norc -e -o pipefail {0}
-        working-directory: ${{ github.workspace }}
-        run: /bin/bash ./scripts/check-ci-security.sh
+      - name: Verify code
+        run: scripts/verify.sh
 
-      - name: Doctor
-        run: ./scripts/doctor.sh
+      - name: Render feature snapshots
+        run: scripts/snapshot.sh --render-only Features
 
-      - name: Lint
-        run: ./scripts/lint.sh
-
-      - name: Format check
-        run: ./scripts/format.sh --check
-
-      - name: Template contract smoke
-        run: ./scripts/test-template.sh
-
-      - name: Harness lifecycle smoke
-        run: ./scripts/test-harness.sh
-
-      - name: Factory and host tests (ladder rung 1)
-        run: ./scripts/test.sh all
-
-      # The rolling hosted macOS image cannot be pinned to the baseline host OS.
-      # Strict pixel comparison remains the local rung-2 gate; hosted CI proves
-      # that every committed snapshot identity still renders at the fixed
-      # 2x Display P3 contract without claiming cross-OS pixel equivalence.
-      - name: Hosted snapshot render contract (non-baseline)
-        run: |
-          status=0
-          ./scripts/snapshot.sh --render-only Features || status=$?
-          ./scripts/snapshot.sh --render-only DesignSystem || {
-            next_status=$?
-            if [[ "$status" -eq 0 ]]; then status="$next_status"; fi
-          }
-          exit "$status"
-
-      - name: App build (ladder rung 3 prerequisite)
-        run: ./scripts/build.sh
+      - name: Render design-system snapshots
+        run: scripts/snapshot.sh --render-only DesignSystem

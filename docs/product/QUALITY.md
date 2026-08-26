@@ -18,7 +18,7 @@ not captured by a deterministic predicate.
 | Privacy, dependencies, entitlements, and secrets | critical | No account/network/invasive core permission; optional access stays isolated | privacy spec |
 | Performance, responsiveness, memory, and energy | required | Quiet low-energy utility; overlays restore focus and release resources | runtime/perf proof |
 | Architecture, concurrency, tests, and maintainability | required | Domain-first tests, injected clocks, Swift isolation, previews, lint | `AGENTS.md` |
-| Release, provenance, signing, and distribution readiness | target | Owner-gated after identity/channel are settled | `scripts/release.sh` |
+| Release, provenance, signing, and distribution readiness | target | Owner-gated after identity/channel are settled | future release plan |
 
 ## Hard blockers
 

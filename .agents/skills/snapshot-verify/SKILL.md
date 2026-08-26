@@ -16,22 +16,16 @@ owner, and stay right without launching the full app.
 1. Every reachable state of the view gets a `#Preview`. SnapshotSupport tests
    cover high-value states with `assertScreenSnapshot` /
    `assertDynamicTypeSnapshot`, and `scripts/snapshot.sh` exports those renders
-   to the owner-facing contact sheet. Wrap screens the way the app composes
+   to `artifacts/preview-review/<Package>/`. Wrap screens the way the app composes
    them when the platform view renders reliably; otherwise use the
    deterministic desktop split shell pattern from `ItemListSnapshotTests` while
    keeping real `#Preview`s in `NavigationSplitView`.
 2. Run scoped, not broad:
-   `scripts/snapshot.sh Features ItemListTests/ItemListSnapshotTests/loaded`
-   (no filter = the package's full suite). A filtered strict run proves the
-   selected pixel baselines but deliberately reports `scope=filtered` and
-   `SNAPSHOT_BASELINES_VERIFIED=false`; only the unfiltered strict run makes the
-   package-wide claim.
-3. The script prints `PREVIEW_REVIEW_CONTACT_SHEET`, `PREVIEW_REVIEW_INDEX`,
-   and `SNAPSHOT_REVIEW_PAGE` under `artifacts/`: OPEN the contact sheet and,
-   when any baseline moved, the colored diff page. The diff page ranks the
-   largest changes first and shows before, after, a heatmap, and a changed-region
-   zoom with light/dark variants grouped together. Rendering without looking is
-   the exact failure mode this skill exists to prevent.
+   `scripts/snapshot.sh Features ItemListSnapshotTests.loaded`
+   (no filter = the package's full suite).
+3. Open the relevant PNGs under `artifacts/preview-review/<Package>/` and inspect
+   them. Rendering without looking is the exact failure mode this skill exists
+   to prevent.
 4. Iterate view code → rerun the same filtered command → stop when the PNG
    matches intent and the test passes.
 5. Present the work properly. For small changes, include the relevant rendered
@@ -40,30 +34,25 @@ owner, and stay right without launching the full app.
 
 ## Determinism
 
-Fixed 1000x700 desktop window metrics, a measured 2x backing scale, Display P3,
-frozen en_US/UTC/gregorian, perceptualPrecision 0.98. Every export attests its
-compiled verification mode, target-qualified baseline identity, point size,
-pixel size, and backing scale. Your part: snapshot only frozen
+Fixed 1000x700 desktop window metrics, a 2x backing scale, Display P3, and
+frozen en_US/UTC/gregorian. Local baseline comparison uses normalized RGBA
+pixels. Your part: snapshot only frozen
 preview models (`Model.preview(...)` pattern, injected
 `SampleData.referenceDate`) — no live `Date()`/`UUID()`/network in anything
 snapshotted, and keep async loads guarded so they cannot race the render.
 
 Hosted CI uses `scripts/snapshot.sh --render-only <Package>` because its rolling
-macOS image cannot be pinned to the baseline host OS. That mode proves the exact
-committed render inventory, is compiler-separated from strict assertions, emits
-`SNAPSHOT_BASELINES_VERIFIED=false`, and never counts as this rung. Agents use
-the default strict command above.
+macOS image cannot be pinned to the baseline host OS. That mode proves that all
+declared states render but never counts as local pixel proof.
 
 ## Failure rules
 
 - Unintended diff → your bug. Fix the view, never the baseline.
-- Intended diff (an existing baseline must change) -> verify every moved image
-  traces to a file you intentionally touched, inspect the colored diff page,
-  then run its printed `scripts/accept-snapshots.sh <run> --proposal-sha256 <digest>`
-  command. The digest binds acceptance to the page you inspected. This copies
-  the exact reviewed bytes and refuses stale/tampered proposals. Rerun the same
-  snapshot scope to green and list the review page plus accepted baselines in
-  the evidence pack. Bulk `record-snapshots.sh` remains owner-confirmed.
+- Intended diff (an existing baseline must change) -> verify the exported image
+  traces to files you intentionally touched, then run the narrowest
+  `scripts/record-snapshots.sh --confirm <Package> [filter]` command. Rerun the
+  same snapshot scope to green and list the accepted baselines in the evidence
+  pack.
 - Suspected flakiness → look for nondeterminism you introduced before blaming
   tooling.
 

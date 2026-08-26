@@ -11,8 +11,7 @@ Implementation starts at `design/HANDOFF.md`. Read it before any product code,
 then follow its canonical links into `design/` and the normative
 `research/health/machine-readable/product_protocol.yaml`. Research authority,
 claims safety, privacy, accessibility, copy, screen inventory, and design
-decisions are defined in root `CLAUDE.md`; those product rules override generic
-template defaults in this manual when they conflict.
+decisions are defined in root `CLAUDE.md`.
 
 The current `App`, `Item`, and `ItemList` code is an untouched harness proof,
 not the product. Do not begin the clock engine or any user-facing product slice
@@ -31,16 +30,15 @@ order in `design/HANDOFF.md`: clock engine and exhaustive event log first.
 | `Packages/DesignSystem` | Every color/font/spacing/radius/motion token + reusable components. Catalog: `DSGallery`. |
 | `Packages/TestSupport` | `SnapshotSupport`: deterministic macOS SwiftUI snapshot helpers and preview-review PNG export. |
 
-Create files freely — buildable folders mean disk = build. `App.xcodeproj` links
-the stable `AppFeatures` product once; `scripts/new-feature.sh` adds feature
-targets at SwiftPM markers and never edits the pbxproj.
+Create files freely - buildable folders mean disk = build. `App.xcodeproj` links
+the stable `AppFeatures` product once; new feature targets are added to
+`Packages/Features/Package.swift` and do not require pbxproj edits.
 
 ## Definition of done
 
-A change is done when the cheapest sufficient rung passes, `scripts/lint.sh` is
-clean, an independent exact-head review is accepted, and the linked issue and
-merge receipts are confirmed through the agent-owned finalizer. Hand over
-evidence, not claims ($evidence-pack).
+A change is done when the cheapest sufficient check passes, `scripts/lint.sh`
+is clean, and the behavior is supported by evidence rather than a claim
+($evidence-pack).
 
 Verification ladder — climb only as far as the change demands:
 1. `scripts/test.sh <Package|App|all>` — host package tests plus App-owned
@@ -50,48 +48,30 @@ Verification ladder — climb only as far as the change demands:
    change reaches at least this rung. ($snapshot-verify)
 3. `scripts/run.sh --verify` + `scripts/ui.sh` — real macOS app process plus
    accessibility-tree probe of the real flow. New/changed flows reach this rung.
-4. `scripts/shot.sh`, `scripts/capture-matrix.sh`,
-   `scripts/motion-review.sh`, `scripts/perf.sh` — feature-complete polish,
-   motion, and reported-jank evidence. Perf fixes need before/after
-   `scripts/perf.sh` bundles.
-5. `scripts/worktree-finalize.sh --prepare` → exact-head review acceptance →
-   `scripts/worktree-finalize.sh --land` — FIFO admission, current-main gates,
-   verified PR merge, linked-issue closure, and targeted owned-resource cleanup.
+4. `scripts/shot.sh` - focused real-window visual evidence when a screenshot is
+   needed. Performance investigations use Instruments directly and record the
+   exact reproduction and before/after measurements.
 
 Xcode's interactive live Previews are the primary authoring/review surface for
 humans. The default scripted snapshot rung is the strict local pixel proof and
-does not replace the `#Preview` requirement. Owner-dispatched hosted verification
-uses the explicitly non-baseline `--render-only` inventory contract because
-GitHub's rolling macOS image cannot be pinned to the baseline host OS; it is
-supplementary clean-machine evidence and never counts as rung 2. An unfiltered
-strict run reconciles the complete committed baseline inventory and is the only
-scope that reports package-wide baselines verified. A filtered strict run still
-proves its selected pixels but reports `scope=filtered` and no package-wide
-baseline claim.
+does not replace the `#Preview` requirement. Hosted verification uses
+`--render-only` because the runner OS can differ from the baseline host. It
+proves that declared states render but does not replace a local pixel comparison.
 
 ## The feature path
 
-"Build feature X" travels one road; each stage names its skill and exit gate:
-1. Plan ($plan-feature) for anything beyond a single-surface change — plan file
-   in docs/plans/. Materially incomplete product intent routes through one
-   batched $grill-me intake; after accepted context exists, reversible product
-   and implementation choices do not create another approval gate. Genuinely
-   small change: skip to 3 and say so in the evidence pack.
+"Build feature X" travels one road:
+1. Plan ($plan-feature) for anything beyond a single-surface change - plan file
+   in `docs/plans/`. The accepted research and design package is the product
+   context; do not repeat generic discovery.
 2. Domain first — behavior tests written first and seen RED, then implement
    to green. Exit: `scripts/test.sh Domain`.
-3. Scaffold — `scripts/new-feature.sh <Name>`, then its printed checklist.
-4. Screens — $design-system vocabulary → Preview states first → views →
-   $snapshot-verify. Exit: `scripts/snapshot.sh` green, contact sheet inspected.
-5. Wire & prove — route into `RootView`/commands/settings as needed. Exit:
+3. Screens - $design-system vocabulary, Preview states first, then views and
+   $snapshot-verify. Exit: `scripts/snapshot.sh` green and exported PNGs inspected.
+4. Wire and prove - route into `RootView`/commands/settings as needed. Exit:
    `scripts/build.sh`, `scripts/run.sh --verify`, and `scripts/ui.sh` prove the
    real macOS flow.
-6. Polish when relevant — $motion production lane; `capture-matrix.sh` and
-   `motion-review.sh` at feature-complete; reported lag → $perf-audit +
-   `scripts/perf.sh` before/after.
-7. Finalize — assemble $evidence-pack, enter the FIFO finalization queue, accept
-   a clean exact-head review, and land through `scripts/worktree-finalize.sh`.
-   Ordinary tasks do not stop at a draft PR. Blocked work still gets an
-   evidence pack and a state-preserving checkpoint.
+5. Finish with `scripts/verify.sh` and assemble the concise $evidence-pack.
 
 Continuity: the plan file and the commits ARE the state — conversation memory
 is disposable. Starting on existing work, read docs/plans/ first: an in-progress
@@ -99,51 +79,10 @@ plan's first unchecked step is the next move.
 
 ## Git workflow
 
-Main checkout is the serialized integration surface. Write-capable agent work happens
-in an isolated worktree unless the task is read-only, a status/scope check, or a
-trivial owner-requested edit in the current checkout. Start with
-`scripts/worktree-start.sh <slug>` and continue from the printed path.
-
-- One task, one branch, one worktree. Default branch shape is `agent/<slug>`.
-- Read-only review/root-cause swarms may inspect the integration checkout. Any
-  subagent allowed to edit needs its own worktree and branch.
-- Commit inside the task worktree. Use `scripts/worktree-list.sh` for live
-  ownership and `scripts/worktree-finalize.sh` for review, merge, issue closure,
-  and cleanup. Do not merge or push `main` by hand.
-
-## Issue, review, and landing lifecycle
-
-Ordinary app and harness tasks are agent-landed, not owner-only merges:
-
-1. Link one durable GitHub issue when the task is issue-backed. The final PR
-   records exactly one `Linked-Issue: <number>` or `Linked-Issue: none`.
-2. Commit a clean task branch, assemble `artifacts/evidence.md`, then run
-   `scripts/worktree-finalize.sh --prepare [--full]`. Waiting branches perform
-   no broad gates or review; only the FIFO-admitted branch rebases onto current
-   `origin/main` and proceeds.
-3. Inspect the generated `artifacts/codex-review.md`. Repair findings and repeat
-   preparation when needed. Accept only the unchanged exact head with
-   `scripts/review.sh --accept artifacts/codex-review.md`.
-4. Run `scripts/worktree-finalize.sh --land --review
-   artifacts/codex-review.md --evidence artifacts/evidence.md [--issue N]
-   [--full]`. The finalizer creates or updates the draft PR, binds evidence and
-   review to exact SHAs, runs serialized gates, atomically publishes verified
-   `main`, confirms GitHub reports `MERGED`, confirms linked issue closure, then
-   removes only the task's branch, worktree, ticket, and owned resources.
-5. A rebase, repair, or commit invalidates prior review and evidence receipts.
-   Any failed landing retains recovery state and the finalization ticket. Repair
-   and retry, or explicitly abort with the finalizer. Never bypass the queue.
-
-Use `scripts/review.sh` rather than an ambient review client. It is bounded,
-ephemeral, read-only, and MCP-free. Use `scripts/test-harness.sh` when changing
-ordinary lifecycle-facing contracts; use `scripts/test-harness.sh --full` only when changing
-worktree, review, integration, landing, or recovery code. Use
-`scripts/test-template.sh --full` only when changing template setup, tool installation,
-capture, or security-boundary behavior. Neither exhaustive self-test belongs in an app change
-or an exact-head rerun solely because a commit was created. Long gates must run as bare commands, not through output
-filters or polling loops; the shared supervisor supplies heartbeat, timeout,
-process-group termination, and the real exit status. See
-`docs/agent-harness.md` and `docs/claude-long-gates.md`.
+Use ordinary Git. Keep changes scoped, preserve unrelated owner work, and use a
+task branch or worktree when parallel write-capable work actually requires one.
+There is no repository-specific merge queue, review client, or landing script.
+Commit only after the retained verification commands pass.
 
 ## Law
 
@@ -192,40 +131,27 @@ Testing:
   repro test — red before the fix, always. New logic whose behavior is already
   specified: test first, then implement.
 - Baselines are ground truth. An unintended snapshot diff is your bug. For an
-  intended diff, inspect the generated before/after/heatmap page and accept only
-  changes traceable to files you intentionally touched with
-  `scripts/accept-snapshots.sh`; it installs the exact reviewed bytes. Include
-  the review page and accepted baseline list in the evidence pack. Bulk
-  `scripts/record-snapshots.sh` remains owner-confirmed. Never raise tolerances
-  or delete a failing test to go green.
+  intended diff, inspect the exported render, then use the narrowest possible
+  `scripts/record-snapshots.sh --confirm <Package> [filter]` command. Never
+  raise tolerances or delete a failing test to go green.
 
 Scope: implement exactly what was asked. Adjacent improvements go in the
 evidence pack's "Suggested follow-ups", not the diff.
 
 ## The escalation boundary
 
-The normal owner gate is one batched $grill-me product intake. After durable
-product context and an accepted contract exist, resolve
-reversible UX, layout, copy, tone, token, component, architecture, test, and
-implementation choices from that context, prove them, independently review the
-exact head, and land the ordinary task without an additional merge approval.
+The accepted research and design package is the product intake. Resolve
+reversible UX, layout, copy, token, architecture, test, and implementation
+choices from that context and prove them without repeating discovery.
 
 Stop only for contradictory or materially incomplete product intent; paid,
 telemetry-bearing, or hosted dependencies; production credentials/signing,
 bundle ID, entitlements, privacy expansion, or new network domains; destructive
 released-data migrations or user-visible data loss; legal/policy text, unclear
-final-art rights, or real translations; production distribution; a change that
-weakens a control-plane gate; or exhausted repair limits. Exact-byte baseline
-acceptance from an inspected colored diff is agent-owned when every moved render
-traces to intentional source edits. Bulk re-recording, deleting/disabling tests,
-or weakening tolerances remains forbidden without explicit owner action. Never
+final-art rights, or real translations; production distribution; deleting or
+disabling tests; or weakening snapshot tolerances. Never
 ask for naming, file placement, which existing token, manifest shape, test
 structure, or invisible internals.
-
-The factory trust kernel remains a separate control plane. The normal owner gates are one batched $grill-me product intake and the final factory merge for
-factory-governed transactions. The factory owner accepts or rejects those choices through the PR rather than managing the build. Its trusted-root,
-self-evolution, credential, and activation rules do not govern ordinary app or
-harness landing, and ordinary landing does not weaken those factory rules.
 
 ## Routing
 
@@ -233,14 +159,10 @@ harness landing, and ordinary landing does not weaken those factory rules.
   `scripts/ui.sh` (shell-first macOS loop; use build-macos-apps skills when
   deeper AppKit/window/debug help is needed)
 - View work end-to-end → Preview states + $snapshot-verify · design vocabulary
-  → $design-system · animation → $motion · hangs/hitches/jank → $perf-audit
+  → $design-system · animation → $motion
 - Finishing any task → $evidence-pack · multi-session work → $plan-feature
-- Finalizing any ordinary task → `scripts/worktree-finalize.sh --prepare`,
-  exact-head `scripts/review.sh --accept`, then `--land`
-- Shipping a version (preflight/bump/archive/notes) → $release
-- Deep review → $review-swarm · root-cause → $bug-hunt-swarm
-- New feature module → `scripts/new-feature.sh <Name>` (then its checklist)
-- Re-homing an EXISTING app into the harness → $adopt-app (`scripts/adopt.sh <app>`)
+- Full retained repository verification → `scripts/verify.sh`
+- New feature module → `scripts/new-feature.sh <Name>`
 - APIs newer than your training data → read docs/apis/INDEX.md BEFORE using
   them · Liquid Glass work → build-macos-apps:liquid-glass
 - Module specifics → `Packages/*/AGENTS.md` (auto-loaded by proximity)
@@ -251,12 +173,6 @@ harness landing, and ordinary landing does not weaken those factory rules.
 - `scripts/snapshot.sh` writes review bundles to `artifacts/preview-review/`;
   agents inspect/present those artifacts instead of asking the owner to browse
   raw baseline folders.
-- `scripts/motion-review.sh` writes video, frames, contact sheets, and summary
-  markdown to `artifacts/motion-review/`.
-- Runtime artifacts (shots/video/xcresult/perf bundles) land in `artifacts/`,
-  gitignored and private. Snapshot inputs/logs, App-test results, bounded unified
-  logs, and capture/perf evidence are scanned before retention; raw runtime
-  evidence is `local-restricted` and must never be attached or blanket-uploaded.
-  Retained video is OCR-scanned across every decoded frame. Byte scanning and
-  native Vision OCR are defense in depth; human visual review is still required.
-  Read script output + generated summaries, not raw logs.
+- Runtime artifacts (shots, rendered snapshots, and xcresult bundles) land in
+  `artifacts/`, which is gitignored and private. Human visual review is still
+  required before sharing or accepting visual evidence.

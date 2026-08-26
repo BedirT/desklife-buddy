@@ -1,8 +1,0 @@
-{
-  "name": "swiftmac-base-xcodebuildmcp",
-  "private": true,
-  "version": "1.0.0",
-  "dependencies": {
-    "xcodebuildmcp": "2.6.2"
-  }
-}

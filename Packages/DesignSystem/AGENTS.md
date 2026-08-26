@@ -13,9 +13,8 @@ radius, typography, motion) and reusable components.
   localized strings from callers.
 - Changing an existing token or component changes every screen. When accepted
   product context does not settle the visible intent, confirm it with the user;
-  otherwise proceed and inspect the gallery's colored diff. Agents may accept
-  its exact reviewed candidate bytes; only bulk `scripts/record-snapshots.sh`
-  re-recording is handed to the human.
+  otherwise proceed and inspect the exported gallery renders. Record only the
+  narrow reviewed snapshot filter.
 - Native motion uses `DSMotion` tokens. New motion tokens need a one-line intent
   comment (what it's for, how it should feel) and an entry in
   `DSMotion.catalog`. Asset-backed motion belongs in feature/app code with a

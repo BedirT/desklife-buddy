@@ -47,6 +47,25 @@
         .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
     }
 
+    func snapshotBaselineURL(
+        filePath: String,
+        testName: String,
+        snapshotName: String,
+    ) -> URL? {
+        let sourceURL = URL(fileURLWithPath: filePath)
+        let sourceName = sourceURL.deletingPathExtension().lastPathComponent
+        let testComponent = snapshotPathComponent(testName)
+        let snapshotComponent = snapshotPathComponent(snapshotName)
+        guard !sourceName.isEmpty, !testComponent.isEmpty, !snapshotComponent.isEmpty else {
+            return nil
+        }
+        return sourceURL
+            .deletingLastPathComponent()
+            .appendingPathComponent("__Snapshots__", isDirectory: true)
+            .appendingPathComponent(sourceName, isDirectory: true)
+            .appendingPathComponent("\(testComponent).\(snapshotComponent).png")
+    }
+
     struct SnapshotExportMetadata {
         let baselineIdentity: String
         let displayName: String

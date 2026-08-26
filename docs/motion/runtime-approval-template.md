@@ -29,7 +29,7 @@ harness does not link animation runtimes.
 ## Verification
 
 - Preview states:
-- `scripts/motion-review.sh` artifact:
+- Focused real-window movement artifact:
 - `scripts/check-motion-assets.sh` result:
 - Perf evidence if looping, above the fold, or scroll-linked:
 

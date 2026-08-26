@@ -1,47 +1,62 @@
-# Full harness bootstrap
+# Lean harness bootstrap
 
-Status: complete
+Status: in progress
 
 ## Objective
 
-Install and adapt the complete `swiftmac-base` harness in this combined design and
-implementation repository before any product code is written. Preserve the design and
-research package as the implementation authority, and keep product identity neutral.
+Prepare a fast, app-specific macOS development harness before product work begins.
+Use `swiftmac-base` as reference material only: retain the choices that directly
+support this repository's build, test, Preview, snapshot, launch, accessibility,
+and screenshot loops, without importing its reusable template or software-factory
+control plane.
 
 ## Non-goals
 
-- Do not implement the clock engine, event log, menu bar, break surfaces, or any other
-  product behavior.
-- Do not rename the template target, scheme, module, display name, or bundle identifier.
-- Do not change the immutable research package or reinterpret product decisions.
-- Do not activate the factory trust root, configure production credentials, create a remote,
-  or begin distribution.
+- Do not implement product behavior from `design/HANDOFF.md` yet.
+- Do not rename the neutral `App` target, scheme, module, or bundle identity.
+- Do not add factory orchestration, evaluator infrastructure, release automation,
+  hosted services, production credentials, or a custom pull-request lifecycle.
+- Do not self-test the harness by cloning the repository or rehearsing Git recovery.
+  Test the actual repository commands instead.
 
 ## Steps
 
-- [x] 1. Read `design/HANDOFF.md`, repository law, and the `swiftmac-base` greenfield and
-  harness contracts.
-- [x] 2. Import the complete tracked harness, including scripts, skills, factory contracts,
-  CI, tool pins, snapshot kernel, macOS app proof fixture, and exact-head lifecycle.
-- [x] 3. Merge the existing design, claims, and accessibility review skills into the shared
-  `.agents/skills/` portfolio and restore the `.claude/skills` parity adapter.
-- [x] 4. Initialize fresh Git metadata on `main` without a remote or production identity.
-- [x] 5. Bind the durable product contracts and repository instructions to
-  `design/HANDOFF.md`, the canonical design package, and the normative protocol YAML.
-- [x] 6. Install locked tools and run `scripts/doctor.sh`.
-- [x] 7. Run the full bootstrap verification: lint, product/package tests, snapshots, app
-  build/run proof where the environment permits, `scripts/test-template.sh`, and
-  `scripts/test-harness.sh`.
-- [x] 8. Record exact command evidence and leave the repository with a clean local baseline.
-  Product implementation remains explicitly not started.
+- [x] 1. Read `design/HANDOFF.md` and identify the app's real development loops.
+- [x] 2. Restore the last verified state after the abandoned broad cleanup.
+- [x] 3. Remove template-only, factory, evaluator, MCP-vendoring, and custom landing
+  infrastructure.
+- [x] 4. Reduce the command surface to direct app build, test, lint, format, snapshot,
+  launch, accessibility, and screenshot commands.
+- [x] 5. Make CI run the same repository verification command used locally.
+- [x] 6. Rewrite repository guidance to describe the resulting harness, not
+  `swiftmac-base`.
+- [x] 7. Verify every retained command and record measured timings.
+- [ ] 8. Commit and publish the clean baseline to a private repository.
 
 ## Decisions
 
-- 2026-08-25: The owner chose to install the app harness in this repository despite the
-  earlier design-only boundary, making it a combined design and implementation repository.
-- 2026-08-25: Product identity is deferred. Neutral template identity remains intentionally.
-- 2026-08-25: `design/HANDOFF.md` is the implementation entry point; existing research and
-  design authority order remains unchanged.
-- 2026-08-25: Harness self-tests are tiered for development speed. Quick contract smoke is
-  the default; exhaustive repository-copy and Git/PR recovery suites require `--full` and run
-  only when their harness implementation changes. They are never ordinary app gates.
+- 2026-08-25: The full `swiftmac-base` import was rejected as too slow and too broad.
+- 2026-08-25: `AGENTS.md`, `CLAUDE.md`, and `README.md` remain repository-owned files,
+  but their contents are selected for this app rather than preserved for template
+  parity.
+- 2026-08-25: There is no `test-template.sh` or `test-harness.sh`. The harness is
+  verified by running its real lint, format, package-test, App-test, snapshot, and
+  build paths.
+- 2026-08-25: Product implementation still starts at `design/HANDOFF.md` after this
+  plan is complete.
+
+## Verification record
+
+- `scripts/doctor.sh`: 0.24 seconds, all required checks passed.
+- `scripts/verify.sh`: 13.91 seconds, including format, lint, 3 Domain tests,
+  9 Features tests, and 2 App SwiftData tests.
+- `scripts/snapshot.sh Features`: 7.01 seconds, 16 tests and 13 strict renders.
+- `scripts/snapshot.sh DesignSystem`: 2.78 seconds, 2 tests and 4 strict renders.
+- `scripts/build.sh`: 5.71 seconds, app build passed.
+- `scripts/run.sh --verify`: 7.48 seconds, exact built app launched and remained live.
+- `scripts/ui.sh` and `scripts/shot.sh`: permission gates diagnosed missing
+  Accessibility and Screen Recording access without retaining partial artifacts.
+- `scripts/new-feature.sh HarnessProbe`: disposable scaffold and generated
+  `Package.swift` validation passed.
+- Harness script surface: reduced from roughly 29,700 lines to 1,403 lines.
+- Tracked repository surface: reduced from 533 files to approximately 242 files.

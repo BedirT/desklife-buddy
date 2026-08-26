@@ -4,7 +4,7 @@
 
 This is the **combined design and implementation repository** for a native macOS
 desk-wellness utility. It contains the authoritative health research package, product design
-(documents plus visual artifacts), the full macOS agent harness, and the production app
+(documents plus visual artifacts), a focused macOS development harness, and the production app
 workspace. The owner explicitly chose this combined boundary on 2026-08-25; do not split or
 duplicate the design package into a second app repository without a new owner decision.
 
@@ -15,7 +15,7 @@ Implementation starts at `design/HANDOFF.md`. The template `App`, `Item`, and `I
 sources exist only to prove the harness and must not be mistaken for product implementation.
 Keep the target, scheme, module, display name, and bundle identifier neutral until the owner
 settles product identity. Before the first product change, the harness bootstrap plan and its
-full verification gates must be green.
+retained verification commands must be green.
 
 ## 2. Product in one paragraph
 
@@ -256,12 +256,12 @@ not approved until every question there answers yes.
 
 ## 16. Implementation harness
 
-`AGENTS.md` is the complete implementation operating manual. Its verification ladder,
-**one-intake owner boundary**, agent-owned exact-head finalization, and evidence-pack contract
-apply to Codex, Claude Code, and Pi identically. The accepted research and design package is
-the completed one-intake product context; do not repeat reversible preference gates.
+`AGENTS.md` is the implementation operating manual. The accepted research and
+design package is the completed product context; do not repeat reversible
+preference gates. Use the direct commands in `scripts/` and climb only as far as
+the change needs: focused logic tests, snapshots for view changes, and real-app
+launch/accessibility proof for changed flows. `scripts/verify.sh` is the full
+retained repository check.
 
-Read `docs/claude-long-gates.md` before a long command. The separate factory owner boundary in
-`docs/factory/constitution.md` remains in force for factory-governed transactions and
-activation ceremonies. Shared skills live in `.agents/skills/` and are projected to Claude
-Code through `.claude/skills`; per-module conventions live in `Packages/*/AGENTS.md`.
+Shared skills live in `.agents/skills/` and are projected to Claude Code through
+`.claude/skills`; per-module conventions live in `Packages/*/AGENTS.md`.

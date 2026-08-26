@@ -1,6 +1,6 @@
 #if os(macOS)
     import AppKit
-    import SnapshotTesting
+    import ImageIO
     import SwiftUI
     import Testing
 
@@ -11,12 +11,11 @@
     /// - Fixed 2x backing scale and Display P3 color space on every machine.
     /// - Frozen locale (en_US), time zone (UTC), and calendar.
     /// - Light/dark appearances are driven through NSAppearance on the host view.
-    /// - Snapshot PNGs are also exported to SNAPSHOTS_EXPORT_DIR for the
-    ///   owner-facing `artifacts/preview-review/` contact sheet.
-    /// - Recording: a *missing* baseline records itself on first run. Failed
-    ///   existing baselines are captured for the colored diff review and are
-    ///   accepted byte-for-byte with scripts/accept-snapshots.sh. Bulk fallback
-    ///   recording requires the `.snapshot-record-token` lock directory.
+    /// - Snapshot PNGs are also exported to SNAPSHOTS_EXPORT_DIR for direct
+    ///   inspection under `artifacts/preview-review/`.
+    /// - Recording: a missing baseline records itself on first run. Replacing
+    ///   an existing baseline requires the `.snapshot-record-token` directory,
+    ///   which is owned by `scripts/record-snapshots.sh --confirm`.
 
     public enum SnapshotLayout {
         /// Full desktop window render at 1000x700 pt.
@@ -52,34 +51,24 @@
         fileID: StaticString = #fileID,
         file filePath: StaticString = #filePath,
         testName: String = #function,
-        line: UInt = #line,
-        column: UInt = #column,
     ) {
-        withRecordMode(file: filePath) {
-            for appearance in appearances {
-                let snapshotName = name.map { "\($0)-\(appearance.rawValue)" } ?? appearance.rawValue
-                let host = hostedSnapshot(for: view, layout: layout, appearance: appearance)
-                defer { host.close() }
-                export(
-                    host.view,
-                    name: snapshotName,
-                    group: testName,
-                    fileID: fileID,
-                    filePath: filePath,
-                )
-                if verifiesPixelBaselines {
-                    assertSnapshot(
-                        of: host.view,
-                        as: .image(precision: 1, perceptualPrecision: 0.98),
-                        named: snapshotName,
-                        fileID: fileID,
-                        file: filePath,
-                        testName: testName,
-                        line: line,
-                        column: column,
-                    )
-                }
-            }
+        for appearance in appearances {
+            let snapshotName = name.map { "\($0)-\(appearance.rawValue)" } ?? appearance.rawValue
+            let host = hostedSnapshot(for: view, layout: layout, appearance: appearance)
+            defer { host.close() }
+            export(
+                host.view,
+                name: snapshotName,
+                group: testName,
+                fileID: fileID,
+                filePath: filePath,
+            )
+            assertPixelBaseline(
+                of: host.view,
+                named: snapshotName,
+                filePath: filePath,
+                testName: testName,
+            )
         }
     }
 
@@ -91,38 +80,28 @@
         fileID: StaticString = #fileID,
         file filePath: StaticString = #filePath,
         testName: String = #function,
-        line: UInt = #line,
-        column: UInt = #column,
     ) {
-        withRecordMode(file: filePath) {
-            for size in sizes {
-                let snapshotName = name.map { "\($0)-\(size)" } ?? "\(size)"
-                let host = hostedSnapshot(
-                    for: frozen(view).environment(\.dynamicTypeSize, size),
-                    layout: layout,
-                    appearance: .light,
-                )
-                defer { host.close() }
-                export(
-                    host.view,
-                    name: snapshotName,
-                    group: testName,
-                    fileID: fileID,
-                    filePath: filePath,
-                )
-                if verifiesPixelBaselines {
-                    assertSnapshot(
-                        of: host.view,
-                        as: .image(precision: 1, perceptualPrecision: 0.98),
-                        named: snapshotName,
-                        fileID: fileID,
-                        file: filePath,
-                        testName: testName,
-                        line: line,
-                        column: column,
-                    )
-                }
-            }
+        for size in sizes {
+            let snapshotName = name.map { "\($0)-\(size)" } ?? "\(size)"
+            let host = hostedSnapshot(
+                for: frozen(view).environment(\.dynamicTypeSize, size),
+                layout: layout,
+                appearance: .light,
+            )
+            defer { host.close() }
+            export(
+                host.view,
+                name: snapshotName,
+                group: testName,
+                fileID: fileID,
+                filePath: filePath,
+            )
+            assertPixelBaseline(
+                of: host.view,
+                named: snapshotName,
+                filePath: filePath,
+                testName: testName,
+            )
         }
     }
 
@@ -137,15 +116,12 @@
         #error("SnapshotSupport cannot compile with two verification modes")
     #elseif SNAPSHOT_TESTS && SNAPSHOT_RENDER_ONLY
         private let compiledVerificationMode = "render-only"
-        private let verifiesPixelBaselines = false
     #elseif SNAPSHOT_TESTS && SNAPSHOT_BASELINE_VERIFICATION
         private let compiledVerificationMode = "baseline"
-        private let verifiesPixelBaselines = true
     #elseif SNAPSHOT_TESTS
         #error("SnapshotSupport requires an explicit snapshot verification mode")
     #else
         private let compiledVerificationMode = "inactive"
-        private let verifiesPixelBaselines = true
     #endif
 
     private final class HostedSnapshot {
@@ -317,12 +293,81 @@
         )
     }
 
-    private func withRecordMode(file filePath: StaticString, _ operation: () -> Void) {
-        if isRecordModeRequested(file: filePath) {
-            withSnapshotTesting(record: .failed, operation: operation)
-        } else {
-            withSnapshotTesting(record: .missing, operation: operation)
+    private func assertPixelBaseline(
+        of view: NSView,
+        named name: String,
+        filePath: StaticString,
+        testName: String,
+    ) {
+        guard compiledVerificationMode == "baseline",
+              let render = pngRender(for: view),
+              let baselineURL = snapshotBaselineURL(
+                  filePath: "\(filePath)",
+                  testName: testName,
+                  snapshotName: name,
+              )
+        else {
+            return
         }
+
+        do {
+            if isRecordModeRequested(file: filePath) || !FileManager.default.fileExists(atPath: baselineURL.path) {
+                try FileManager.default.createDirectory(
+                    at: baselineURL.deletingLastPathComponent(),
+                    withIntermediateDirectories: true,
+                )
+                try render.data.write(to: baselineURL, options: .atomic)
+                return
+            }
+
+            let expected = try Data(contentsOf: baselineURL)
+            guard let expectedPixels = normalizedPixels(expected),
+                  let currentPixels = normalizedPixels(render.data)
+            else {
+                Issue.record("Snapshot PNG could not be decoded: \(baselineURL.path)")
+                return
+            }
+            guard expectedPixels == currentPixels else {
+                Issue.record("Snapshot mismatch: \(baselineURL.path)")
+                return
+            }
+        } catch {
+            Issue.record("Snapshot baseline failed: \(error)")
+        }
+    }
+
+    private struct PixelBuffer: Equatable {
+        let width: Int
+        let height: Int
+        let bytes: [UInt8]
+    }
+
+    private func normalizedPixels(_ data: Data) -> PixelBuffer? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
+        else {
+            return nil
+        }
+
+        let width = image.width
+        let height = image.height
+        let bytesPerRow = width * 4
+        var bytes = [UInt8](repeating: 0, count: bytesPerRow * height)
+        guard let colorSpace = CGColorSpace(name: CGColorSpace.displayP3),
+              let context = CGContext(
+                  data: &bytes,
+                  width: width,
+                  height: height,
+                  bitsPerComponent: 8,
+                  bytesPerRow: bytesPerRow,
+                  space: colorSpace,
+                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue,
+              )
+        else {
+            return nil
+        }
+        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return PixelBuffer(width: width, height: height, bytes: bytes)
     }
 
     private func isRecordModeRequested(file filePath: StaticString) -> Bool {

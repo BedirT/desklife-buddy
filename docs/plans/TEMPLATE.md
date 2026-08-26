@@ -26,7 +26,7 @@ Intake/escalation status: clear <!-- clear | grill-me-needed | blocked-owner -->
 - [ ] 1. Domain: <behavior tests FIRST (seen red), then implement> — done =
       `scripts/test.sh Domain` green · gating tests: <suite/test names>
 - [ ] 2. Feature scaffold: `scripts/new-feature.sh <Name>` — done = `scripts/test.sh Features` green
-- [ ] 3. Preview states + snapshot renders — done = `scripts/snapshot.sh Features <Name>Tests` green, contact sheet inspected/presented
+- [ ] 3. Preview states + snapshot renders - done = `scripts/snapshot.sh Features <Name>Tests` green, exported PNGs inspected/presented
 - [ ] 4. Wire into macOS navigation/commands/settings — done = `scripts/build.sh`, `scripts/run.sh --verify`, and a11y probe of the flow
 - [ ] 5. Polish: matrix + motion check if relevant — done = artifacts in evidence pack
 

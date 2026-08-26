@@ -1,4 +1,0 @@
-interface:
-  display_name: "Factory Run"
-  short_description: "Drive one issue-to-PR factory transaction."
-  default_prompt: "Drive the current factory transaction from durable state to evidenced draft PR."

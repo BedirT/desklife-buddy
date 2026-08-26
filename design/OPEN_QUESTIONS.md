@@ -310,3 +310,20 @@ readings change the weekly view's counts.
 a stated reason the user did not give. A "Later ▸" choice records `snoozed` as usual. The
 weekly view must not word capsule-declines differently from overlay-skips until this is
 resolved. Provisional reading of `[03 §10]`; flagged for the research owner.
+
+### DQ-20 — Ten-event product vocabulary vs the machine event schema
+
+`HANDOFF.md` and `INTERACTION_SPEC.md` define ten exhaustive product events and prohibit adding,
+merging, or deriving outcome events. `research/health/machine-readable/event_schema.json`
+instead defines sixteen `event_type` values, omits `promptPresented`, and uses
+`opportunity_presented`; it also includes aggregate, scheduling, suppression, settings, and
+subjective-check-in records outside the handoff vocabulary.
+
+**Interim (authority-preserving):** Domain implements exactly the ten handoff events. Local
+persistence keeps its encoding centralized and does not freeze the broader JSON vocabulary
+into engine semantics. Aggregate/settings records, if later needed, must be stored as separate
+local record families rather than silently becoming extra protocol events.
+
+**Settled by:** the research owner reconciling `event_schema.json` with the authoritative
+handoff and clarifying whether it is a storage-envelope union rather than the protocol event
+vocabulary.

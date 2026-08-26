@@ -89,6 +89,29 @@ public extension Color {
     static let dsMovementSeatedTileTop = Color(hex: 0xB39BFF)
     static let dsMovementSeatedTileBottom = Color(hex: 0x6F4FD8)
 
+    // MARK: - Heads-up capsule
+
+    /// The capsule deliberately remains a dark place in both system appearances.
+    static let dsCapsuleSurface = Color(hex: 0x120E1E).opacity(0.88)
+    static let dsCapsuleSurfaceOpaque = Color(hex: 0x120E1E)
+    static let dsCapsuleTextPrimary = Color(hex: 0xFDF6EF).opacity(0.92)
+    static let dsCapsuleTextSecondary = Color(hex: 0xFDF6EF).opacity(0.58)
+    static let dsCapsuleBorder = Color(hex: 0xFFFFFF).opacity(0.13)
+    static let dsCapsuleBorderIncreased = Color(hex: 0xFFFFFF).opacity(0.40)
+    static let dsCapsuleActionFill = Color(hex: 0xFFFFFF).opacity(0.09)
+    static let dsCapsuleActionHoverFill = Color(hex: 0xFFFFFF).opacity(0.14)
+    static let dsCapsuleActionPressedFill = Color(hex: 0xFFFFFF).opacity(0.18)
+    static let dsCapsuleActionPrimary = Color(hex: 0xFFE0C6).opacity(0.95)
+    static let dsCapsuleActionSecondary = Color(hex: 0xFFFFFF).opacity(0.68)
+    static let dsCapsuleHoldRing = Color(hex: 0xFFD6B2).opacity(0.72)
+    static let dsCapsuleSkyTop = Color(hex: 0x0B0C20)
+    static let dsCapsuleSkyMiddle = Color(hex: 0x241A38)
+    static let dsCapsuleSkyHorizon = Color(hex: 0x4C2C40)
+    static let dsSunCore = Color(hex: 0xFFF6E0)
+    static let dsSunMiddle = Color(hex: 0xFFD9A0)
+    static let dsSunEdge = Color(hex: 0xFF9E62)
+    static let dsSunGlow = Color(hex: 0xFFBE82).opacity(0.66)
+
     // MARK: - Brand & status
 
     static let dsAccent = Color(light: Color(hex: 0x4F46E5), dark: Color(hex: 0x8B85F4))

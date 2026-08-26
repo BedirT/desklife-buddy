@@ -49,9 +49,11 @@ None blocks Phase 1. Later phases stop only at their explicit constitution-level
       `docs/plans/2026-08-26-movement-merged-breaks.md` - done = all explicit event semantics,
       equal-status movement paths, snapshots,
       keyboard/Escape, and real-flow proof pass.
-- [ ] 5. Notification-first heads-up, permission degradation, then capsule - child plan created
-      at phase start - done = notification and no-permission paths, capsule/menu keyboard parity,
-      snapshots, and real-flow proof pass.
+- [ ] 5. Notification-first heads-up, permission degradation, then capsule - child plan:
+      `docs/plans/2026-08-26-heads-up-notification-capsule.md` - DesignSystem enablement may
+      proceed while Phase 4 semantics are owner-gated; runtime waits for Phase 4 - done =
+      notification and no-permission paths, capsule/menu keyboard parity, snapshots, and
+      real-flow proof pass.
 - [ ] 6. Settings and optional integrations - child plan created at phase start - done =
       SE-01...SE-15, local preferences/history/export/delete, claims review, snapshots, and
       real-flow proof pass; owner-gated integrations remain absent unless authorized.
@@ -94,3 +96,6 @@ data, even if its query model is explored earlier.
   are retained through `033f1c9`; only its DQ-18/BR-04 and external-evidence gates remain. Per
   the build order, those gates do not prevent behavior and working-reference implementation of
   Phase 4.
+- 2026-08-26: Phase 5 now has an executable child plan. Its order-safe DesignSystem capsule
+  vocabulary is complete and preview-verified; notification/capsule runtime steps remain behind
+  Phase 4's three owner-semantic answers rather than bypassing the required implementation chain.

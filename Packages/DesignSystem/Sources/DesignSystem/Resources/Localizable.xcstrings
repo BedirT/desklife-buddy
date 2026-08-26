@@ -1,6 +1,246 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "heads_up.accessibility_15" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visual reset in 15 seconds"
+          }
+        }
+      }
+    },
+    "heads_up.accessibility_30" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visual reset in 30 seconds"
+          }
+        }
+      }
+    },
+    "heads_up.accessibility_45" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visual reset in 45 seconds"
+          }
+        }
+      }
+    },
+    "heads_up.accessibility_5" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visual reset in 5 seconds"
+          }
+        }
+      }
+    },
+    "heads_up.accessibility_hold" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On hold — busy until 3:00"
+          }
+        }
+      }
+    },
+    "heads_up.accessibility_later" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Later"
+          }
+        }
+      }
+    },
+    "heads_up.accessibility_paused" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On hold — paused until you resume"
+          }
+        }
+      }
+    },
+    "heads_up.accessibility_start_now" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start now"
+          }
+        }
+      }
+    },
+    "heads_up.busy_until" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "· busy until 3:00"
+          }
+        }
+      }
+    },
+    "heads_up.fifteen_minutes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "15 minutes"
+          }
+        }
+      }
+    },
+    "heads_up.five_minutes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "5 minutes"
+          }
+        }
+      }
+    },
+    "heads_up.later" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Later"
+          }
+        }
+      }
+    },
+    "heads_up.now" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Now"
+          }
+        }
+      }
+    },
+    "heads_up.on_hold" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On hold"
+          }
+        }
+      }
+    },
+    "heads_up.paused" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "· paused until you resume"
+          }
+        }
+      }
+    },
+    "heads_up.ten_minutes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 minutes"
+          }
+        }
+      }
+    },
+    "heads_up.time_15" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "· in 15 s"
+          }
+        }
+      }
+    },
+    "heads_up.time_30" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "· in 30 s"
+          }
+        }
+      }
+    },
+    "heads_up.time_45" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "· in 45 s"
+          }
+        }
+      }
+    },
+    "heads_up.time_5" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "· in 5 s"
+          }
+        }
+      }
+    },
+    "heads_up.visual_reset" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visual reset"
+          }
+        }
+      }
+    },
+    "sections.heads_up_capsules" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heads-up capsules"
+          }
+        }
+      }
+    },
+    "typography.heads_up_action" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heads-up action"
+          }
+        }
+      }
+    },
+    "typography.heads_up_text" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heads-up text"
+          }
+        }
+      }
+    },
     "break_field.done_early" : {
       "localizations" : {
         "en" : {

@@ -16,6 +16,7 @@ public struct DSGallery: View {
                 TokensSection()
                 ComponentsSection()
                 MovementControlsSection()
+                HeadsUpCapsulesSection()
             }
             .padding(DSSpacing.lg)
         }
@@ -64,6 +65,25 @@ public struct DSGallery: View {
             ("movementSmallBottom", .dsMovementSmallSpaceTileBottom),
             ("movementSeatedTop", .dsMovementSeatedTileTop),
             ("movementSeatedBottom", .dsMovementSeatedTileBottom),
+            ("capsuleSurface", .dsCapsuleSurface),
+            ("capsuleSurfaceOpaque", .dsCapsuleSurfaceOpaque),
+            ("capsuleTextPrimary", .dsCapsuleTextPrimary),
+            ("capsuleTextSecondary", .dsCapsuleTextSecondary),
+            ("capsuleBorder", .dsCapsuleBorder),
+            ("capsuleBorderIC", .dsCapsuleBorderIncreased),
+            ("capsuleActionFill", .dsCapsuleActionFill),
+            ("capsuleActionHover", .dsCapsuleActionHoverFill),
+            ("capsuleActionPressed", .dsCapsuleActionPressedFill),
+            ("capsuleActionPrimary", .dsCapsuleActionPrimary),
+            ("capsuleActionSecondary", .dsCapsuleActionSecondary),
+            ("capsuleHoldRing", .dsCapsuleHoldRing),
+            ("capsuleSkyTop", .dsCapsuleSkyTop),
+            ("capsuleSkyMiddle", .dsCapsuleSkyMiddle),
+            ("capsuleSkyHorizon", .dsCapsuleSkyHorizon),
+            ("sunCore", .dsSunCore),
+            ("sunMiddle", .dsSunMiddle),
+            ("sunEdge", .dsSunEdge),
+            ("sunGlow", .dsSunGlow),
             ("accent", .dsAccent),
             ("positive", .dsPositive),
             ("warning", .dsWarning),
@@ -107,6 +127,10 @@ public struct DSGallery: View {
                         .font(DSTypography.breakChoice(pointSize: DSTypography.breakChoiceSize))
                     Text(DesignSystemL10n.Typography.breakSafety)
                         .font(DSTypography.breakSafety(pointSize: DSTypography.breakSafetySize))
+                    Text(DesignSystemL10n.Typography.headsUpText)
+                        .font(DSTypography.headsUpText(pointSize: DSTypography.headsUpTextSize))
+                    Text(DesignSystemL10n.Typography.headsUpAction)
+                        .font(DSTypography.headsUpAction(pointSize: DSTypography.headsUpActionSize))
                 }
                 .foregroundStyle(Color.dsTextPrimary)
 

@@ -27,6 +27,8 @@ public enum DSTypography {
     public static let breakActionSize: CGFloat = 15
     public static let breakChoiceSize: CGFloat = 18
     public static let breakSafetySize: CGFloat = 12.5
+    public static let headsUpTextSize: CGFloat = 12.5
+    public static let headsUpActionSize: CGFloat = 11.5
 
     public static func breakEyebrow(pointSize: CGFloat) -> Font {
         .system(size: pointSize, weight: .semibold)
@@ -66,6 +68,14 @@ public enum DSTypography {
 
     public static func breakSafety(pointSize: CGFloat) -> Font {
         .system(size: pointSize)
+    }
+
+    public static func headsUpText(pointSize: CGFloat) -> Font {
+        .system(size: pointSize, weight: .medium)
+    }
+
+    public static func headsUpAction(pointSize: CGFloat) -> Font {
+        .system(size: pointSize, weight: .medium)
     }
 
     /// Custom content embedded in a native menu follows the menu's current point size.

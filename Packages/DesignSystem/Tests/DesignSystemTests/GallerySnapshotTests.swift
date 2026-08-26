@@ -39,5 +39,15 @@
                 layout: .sizeThatFits,
             )
         }
+
+        @Test func headsUpCapsule() {
+            assertScreenSnapshot(
+                of: DSGallery.HeadsUpCapsulesSection()
+                    .padding(DSSpacing.lg)
+                    .background(Color.dsBackground)
+                    .frame(width: 1120),
+                layout: .sizeThatFits,
+            )
+        }
     }
 #endif

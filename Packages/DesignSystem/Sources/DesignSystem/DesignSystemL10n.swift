@@ -73,6 +73,53 @@ enum DesignSystemL10n {
         )
     }
 
+    enum HeadsUp {
+        static let visualReset = string("heads_up.visual_reset", default: "Visual reset")
+        static let time45 = string("heads_up.time_45", default: "· in 45 s")
+        static let time30 = string("heads_up.time_30", default: "· in 30 s")
+        static let time15 = string("heads_up.time_15", default: "· in 15 s")
+        static let time5 = string("heads_up.time_5", default: "· in 5 s")
+        static let now = string("heads_up.now", default: "Now")
+        static let later = string("heads_up.later", default: "Later")
+        static let fiveMinutes = string("heads_up.five_minutes", default: "5 minutes")
+        static let tenMinutes = string("heads_up.ten_minutes", default: "10 minutes")
+        static let fifteenMinutes = string("heads_up.fifteen_minutes", default: "15 minutes")
+        static let onHold = string("heads_up.on_hold", default: "On hold")
+        static let busyUntil = string("heads_up.busy_until", default: "· busy until 3:00")
+        static let paused = string("heads_up.paused", default: "· paused until you resume")
+        static let accessibility45 = string(
+            "heads_up.accessibility_45",
+            default: "Visual reset in 45 seconds",
+        )
+        static let accessibility30 = string(
+            "heads_up.accessibility_30",
+            default: "Visual reset in 30 seconds",
+        )
+        static let accessibility15 = string(
+            "heads_up.accessibility_15",
+            default: "Visual reset in 15 seconds",
+        )
+        static let accessibility5 = string(
+            "heads_up.accessibility_5",
+            default: "Visual reset in 5 seconds",
+        )
+        static let accessibilityHold = string(
+            "heads_up.accessibility_hold",
+            default: "On hold — busy until 3:00",
+        )
+        static let accessibilityPaused = string(
+            "heads_up.accessibility_paused",
+            default: "On hold — paused until you resume",
+        )
+        static let accessibilityStartNow = string(
+            "heads_up.accessibility_start_now",
+            default: "Start now",
+        )
+        static let accessibilityLater = string("heads_up.accessibility_later", default: "Later")
+
+        static let laterOptions = [fiveMinutes, tenMinutes, fifteenMinutes]
+    }
+
     enum Typography {
         static let largeTitle = string("typography.large_title", default: "Large Title")
         static let title = string("typography.title", default: "Title")
@@ -86,6 +133,8 @@ enum DesignSystemL10n {
         )
         static let breakChoice = string("typography.break_choice", default: "Break choice")
         static let breakSafety = string("typography.break_safety", default: "Break safety")
+        static let headsUpText = string("typography.heads_up_text", default: "Heads-up text")
+        static let headsUpAction = string("typography.heads_up_action", default: "Heads-up action")
     }
 
     enum Sections {
@@ -100,5 +149,6 @@ enum DesignSystemL10n {
         static let emptyState = string("sections.empty_state", default: "Empty state")
         static let breakControls = string("sections.break_controls", default: "Break controls")
         static let movementChoices = string("sections.movement_choices", default: "Movement choices")
+        static let headsUpCapsules = string("sections.heads_up_capsules", default: "Heads-up capsules")
     }
 }

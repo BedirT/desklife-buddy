@@ -162,6 +162,31 @@ struct ProtocolRuntimeTests {
         try await expectVisualResetFact(event: .skipped, kind: .skipped)
     }
 
+    @Test("A failed visual lifecycle commit leaves the published reducer state unchanged")
+    func visualResetCommitFailure() async throws {
+        let retained = ProtocolState(
+            profileID: .balanced,
+            visualClock: OpportunityClockState(accumulatedActiveUseSeconds: 900),
+            movementClock: OpportunityClockState(accumulatedActiveUseSeconds: 1800),
+        )
+        let store = RuntimeStore(state: retained, failuresRemaining: 1)
+        let runtime = try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
+            store: store,
+            now: { Date(timeIntervalSince1970: 700) },
+            makeID: { UUID(0) },
+        )
+        try await runtime.restore()
+
+        await #expect(throws: RuntimeStore.Failure.self) {
+            try await runtime.handleVisualReset(.opened)
+        }
+
+        #expect(runtime.state == retained)
+        #expect(store.commits.isEmpty)
+        #expect(store.state == retained)
+    }
+
     private func expectVisualResetFact(
         event: VisualResetLifecycleEvent,
         kind: OpportunityEventKind,
@@ -185,6 +210,10 @@ struct ProtocolRuntimeTests {
 }
 
 private final class RuntimeStore: ProtocolRuntimeStore {
+    enum Failure: Error {
+        case requested
+    }
+
     struct Commit {
         let events: [OpportunityEvent]
         let state: ProtocolState
@@ -192,9 +221,11 @@ private final class RuntimeStore: ProtocolRuntimeStore {
 
     var state: ProtocolState?
     var commits: [Commit] = []
+    var failuresRemaining: Int
 
-    init(state: ProtocolState? = nil) {
+    init(state: ProtocolState? = nil, failuresRemaining: Int = 0) {
         self.state = state
+        self.failuresRemaining = failuresRemaining
     }
 
     func loadState() async throws -> ProtocolState? {
@@ -202,6 +233,10 @@ private final class RuntimeStore: ProtocolRuntimeStore {
     }
 
     func commit(events: [OpportunityEvent], state: ProtocolState) async throws {
+        if failuresRemaining > 0 {
+            failuresRemaining -= 1
+            throw Failure.requested
+        }
         commits.append(Commit(events: events, state: state))
         self.state = state
     }

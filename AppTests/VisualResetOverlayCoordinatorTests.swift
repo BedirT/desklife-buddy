@@ -1,0 +1,482 @@
+import AppKit
+import CoreGraphics
+import Testing
+import VisualReset
+@testable import App
+
+@Suite("Visual reset overlay coordinator")
+struct VisualResetOverlayCoordinatorTests {
+    @Test("All-display planning collapses mirrors and keys the pointer display")
+    func allDisplayPlanning() {
+        let displays = [
+            display(1, isMain: true),
+            display(2, mirrorRootID: 1),
+            display(3, containsPointer: true),
+        ]
+
+        let plan = OverlayDisplayPlan.resolve(displays, policy: .allDisplays)
+
+        #expect(plan.displays.map(\.id) == [.direct(1), .direct(3)])
+        #expect(plan.keyDisplayID == .direct(3))
+    }
+
+    @Test("Primary-only planning retains the canonical main display")
+    func primaryOnlyPlanning() {
+        let displays = [
+            display(10, containsPointer: true),
+            display(20, isMain: true),
+            display(21, mirrorRootID: 20),
+        ]
+
+        let plan = OverlayDisplayPlan.resolve(displays, policy: .primaryOnly)
+
+        #expect(plan.displays.map(\.id) == [.direct(20)])
+        #expect(plan.keyDisplayID == .direct(20))
+    }
+
+    @Test("A screen without a direct display ID remains eligible")
+    func fallbackDisplayPlanning() {
+        let token = NSObject()
+        let fallbackID = OverlayDisplayID.fallback(ObjectIdentifier(token))
+        let fallback = OverlayDisplay(
+            id: fallbackID,
+            mirrorRootID: fallbackID,
+            frame: CGRect(x: 0, y: 0, width: 100, height: 100),
+            isMain: true,
+            containsPointer: false,
+        )
+
+        let plan = OverlayDisplayPlan.resolve([fallback], policy: .allDisplays)
+
+        #expect(plan.displays.map(\.id) == [fallbackID])
+        #expect(plan.keyDisplayID == fallbackID)
+    }
+
+    @Test("Presentation captures before activation and shares one session across every panel")
+    func presentation() {
+        let harness = OverlayHarness(displays: [display(1, isMain: true), display(2)])
+        let coordinator = harness.makeCoordinator()
+
+        coordinator.present()
+
+        #expect(harness.operations.prefix(2) == ["capture", "activate"])
+        #expect(harness.panels.map(\.displayID) == [.direct(1), .direct(2)])
+        #expect(harness.panels.filter(\.wasMadeKey).map(\.displayID) == [.direct(1)])
+        #expect(harness.panels[0].model === harness.panels[1].model)
+        #expect(harness.lifecycle == [.opened])
+        #expect(harness.refreshScheduleCount == 1)
+        #expect(harness.screenObservationCount == 1)
+    }
+
+    @Test("Escape from any display closes every panel and restores once")
+    func escapeClosesAll() {
+        let harness = OverlayHarness(displays: [display(1, isMain: true), display(2)])
+        let coordinator = harness.makeCoordinator()
+        coordinator.present()
+
+        harness.panels[1].cancel()
+        harness.panels[0].cancel()
+
+        #expect(harness.lifecycle == [.opened, .skipped])
+        #expect(!harness.panels.contains { !$0.wasClosed })
+        #expect(harness.restoredProcessIdentifiers == [41])
+        #expect(harness.refreshCancellationCount == 1)
+        #expect(harness.screenCancellationCount == 1)
+        #expect(harness.operations.suffix(2) == ["announce.skipped", "restore"])
+    }
+
+    @Test("Duplicate presentation is idempotent")
+    func duplicatePresentation() {
+        let harness = OverlayHarness(displays: [display(1, isMain: true)])
+        let coordinator = harness.makeCoordinator()
+
+        coordinator.present()
+        coordinator.present()
+
+        #expect(harness.panels.count == 1)
+        #expect(harness.lifecycle == [.opened])
+        #expect(harness.refreshScheduleCount == 1)
+    }
+
+    @Test("A newly frontmost app is never displaced during dismissal")
+    func noFocusStealing() {
+        let harness = OverlayHarness(displays: [display(1, isMain: true)])
+        let coordinator = harness.makeCoordinator()
+        coordinator.present()
+        harness.appIsFrontmost = false
+
+        harness.panels[0].cancel()
+
+        #expect(harness.restoredProcessIdentifiers.isEmpty)
+    }
+
+    @Test("Display changes preserve the shared session and leave one reachable key panel")
+    func displayReconciliation() {
+        let harness = OverlayHarness(displays: [display(1, isMain: true), display(2)])
+        let coordinator = harness.makeCoordinator()
+        coordinator.present()
+        let session = harness.panels[0].model
+
+        harness.displays = [display(2, isMain: true), display(3)]
+        harness.fireScreenChange()
+
+        #expect(harness.panels.first(where: { $0.displayID == .direct(1) })?.wasClosed == true)
+        #expect(harness.panels.last?.displayID == .direct(3))
+        #expect(harness.panels.last?.model === session)
+        let openPanels = harness.panels.filter { !$0.wasClosed }
+        #expect(Set(openPanels.map(\.displayID)) == [.direct(2), .direct(3)])
+        #expect(openPanels.filter(\.wasMadeKey).map(\.displayID) == [.direct(2)])
+    }
+
+    @Test("A temporarily empty display plan closes stale panels without restarting the session")
+    func temporarilyEmptyDisplayPlan() {
+        let harness = OverlayHarness(displays: [display(1, isMain: true)])
+        let coordinator = harness.makeCoordinator()
+        coordinator.present()
+        let session = harness.panels[0].model
+
+        harness.displays = []
+        harness.fireScreenChange()
+
+        #expect(harness.panels[0].wasClosed)
+        #expect(harness.lifecycle == [.opened])
+
+        harness.displays = [display(2, isMain: true)]
+        harness.fireScreenChange()
+
+        #expect(harness.panels.count == 2)
+        #expect(harness.panels[1].model === session)
+        #expect(!harness.panels[1].wasClosed)
+        #expect(harness.lifecycle == [.opened])
+    }
+
+    @Test("Releasing an active coordinator closes panels and cancels its sources")
+    func releaseCleanup() {
+        let harness = OverlayHarness(displays: [display(1, isMain: true)])
+        var coordinator: VisualResetOverlayCoordinator? = harness.makeCoordinator()
+        weak let releasedCoordinator = coordinator
+        coordinator?.present()
+
+        coordinator = nil
+
+        #expect(releasedCoordinator == nil)
+        #expect(harness.panels[0].wasClosed)
+        #expect(harness.refreshCancellationCount == 1)
+        #expect(harness.screenCancellationCount == 1)
+        #expect(harness.lifecycle == [.opened])
+        #expect(harness.restoredProcessIdentifiers.isEmpty)
+    }
+
+    @Test("One refresh source drives deadline completion for the shared model")
+    func timerCompletion() {
+        let harness = OverlayHarness(displays: [display(1, isMain: true), display(2)])
+        let coordinator = harness.makeCoordinator(durationSeconds: 20)
+        coordinator.present()
+
+        harness.monotonicNow = 20
+        harness.fireRefresh()
+
+        #expect(harness.lifecycle == [.opened, .timerFinished])
+        #expect(!harness.panels.contains { !$0.wasClosed })
+        #expect(harness.restoredProcessIdentifiers == [41])
+    }
+
+    @Test("Lifecycle persistence operations cannot overtake an earlier event")
+    func lifecycleSerialization() async {
+        let queue = VisualResetLifecycleQueue()
+        var recorded: [VisualResetLifecycleEvent] = []
+
+        queue.enqueue(.opened) { event in
+            await Task.yield()
+            recorded.append(event)
+        }
+        queue.enqueue(.skipped) { event in recorded.append(event) }
+        let failure = await queue.drain()
+
+        #expect(recorded == [.opened, .skipped])
+        #expect(failure == nil)
+    }
+
+    @Test("A failed opening write blocks that session's terminal write and a later open retries")
+    func lifecycleFailureOrdering() async {
+        enum Failure: Error {
+            case requested
+        }
+        let queue = VisualResetLifecycleQueue()
+        var attempted: [VisualResetLifecycleEvent] = []
+
+        queue.enqueue(.opened) { event in
+            attempted.append(event)
+            throw Failure.requested
+        }
+        queue.enqueue(.skipped) { event in attempted.append(event) }
+        let firstFailure = await queue.drain()
+
+        #expect(firstFailure is Failure)
+        #expect(attempted == [.opened])
+
+        queue.enqueue(.opened) { event in attempted.append(event) }
+        queue.enqueue(.timerFinished) { event in attempted.append(event) }
+        let retryFailure = await queue.drain()
+
+        #expect(retryFailure == nil)
+        #expect(attempted == [.opened, .opened, .timerFinished])
+    }
+
+    @Test("The live refresh scheduler advances on the application run loop")
+    func liveRefreshScheduler() {
+        var tickCount = 0
+        let cancellation = VisualResetOverlayCoordinator.liveRefreshScheduler {
+            tickCount += 1
+        }
+
+        RunLoop.main.run(until: Date().addingTimeInterval(0.12))
+        cancellation.cancel()
+
+        #expect(tickCount >= 2)
+    }
+}
+
+@Suite("Visual reset panel keyboard contract")
+struct VisualResetPanelTests {
+    @Test("A break panel can become key but never main and uses the floating level")
+    func panelContract() {
+        let panel = VisualResetPanel(
+            displayID: .direct(1),
+            frame: CGRect(x: 0, y: 0, width: 800, height: 600),
+            model: .preview(.ready),
+            onCancel: {},
+        )
+        defer { panel.close() }
+
+        #expect(panel.canBecomeKey)
+        #expect(!panel.canBecomeMain)
+        #expect(panel.level == .floating)
+        #expect(panel.collectionBehavior.contains(.canJoinAllSpaces))
+        #expect(panel.collectionBehavior.contains(.canJoinAllApplications))
+        #expect(panel.collectionBehavior.contains(.ignoresCycle))
+        #expect(!panel.hidesOnDeactivate)
+        #expect(!panel.isFloatingPanel)
+        #expect(!panel.showsDefaultActionForTesting)
+
+        panel.becomeKey()
+        #expect(panel.showsDefaultActionForTesting)
+
+        panel.resignKey()
+        #expect(!panel.showsDefaultActionForTesting)
+    }
+
+    @Test("Escape and Command-period route through the immediate cancel seam")
+    func immediateCancel() throws {
+        var cancelCount = 0
+        let panel = VisualResetPanel(
+            displayID: .direct(1),
+            frame: CGRect(x: 0, y: 0, width: 800, height: 600),
+            model: .preview(.ready),
+            onCancel: { cancelCount += 1 },
+        )
+        defer { panel.close() }
+
+        let escape = try #require(NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "\u{1B}",
+            charactersIgnoringModifiers: "\u{1B}",
+            isARepeat: false,
+            keyCode: 53,
+        ))
+        #expect(panel.performKeyEquivalent(with: escape))
+        let commandPeriod = try #require(NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: .command,
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: ".",
+            charactersIgnoringModifiers: ".",
+            isARepeat: false,
+            keyCode: 47,
+        ))
+        #expect(panel.performKeyEquivalent(with: commandPeriod))
+        #expect(cancelCount == 2)
+    }
+
+    @Test("Only the panel receiving key-window lifecycle exposes the initial default action")
+    func keyPanelDefaultAction() {
+        let model = VisualResetModel.preview(.ready)
+        let first = VisualResetPanel(
+            displayID: .direct(1),
+            frame: CGRect(x: 0, y: 0, width: 800, height: 600),
+            model: model,
+            onCancel: {},
+        )
+        let second = VisualResetPanel(
+            displayID: .direct(2),
+            frame: CGRect(x: 800, y: 0, width: 800, height: 600),
+            model: model,
+            onCancel: {},
+        )
+        defer {
+            first.close()
+            second.close()
+        }
+
+        first.resignKey()
+        second.becomeKey()
+
+        #expect(!first.showsDefaultActionForTesting)
+        #expect(second.showsDefaultActionForTesting)
+
+        second.resignKey()
+        first.becomeKey()
+
+        #expect(first.showsDefaultActionForTesting)
+        #expect(!second.showsDefaultActionForTesting)
+    }
+}
+
+private func display(
+    _ id: CGDirectDisplayID,
+    mirrorRootID: CGDirectDisplayID? = nil,
+    isMain: Bool = false,
+    containsPointer: Bool = false,
+) -> OverlayDisplay {
+    OverlayDisplay(
+        id: .direct(id),
+        mirrorRootID: .direct(mirrorRootID ?? id),
+        frame: CGRect(x: Int(id) * 100, y: 0, width: 100, height: 100),
+        isMain: isMain,
+        containsPointer: containsPointer,
+    )
+}
+
+private final class OverlayHarness {
+    var displays: [OverlayDisplay]
+    var monotonicNow: TimeInterval = 0
+    var appIsFrontmost = true
+    var operations: [String] = []
+    var panels: [TestVisualResetPanel] = []
+    var lifecycle: [VisualResetAction] = []
+    var announcements: [VisualResetAnnouncement] = []
+    var restoredProcessIdentifiers: [pid_t] = []
+    var refreshScheduleCount = 0
+    var refreshCancellationCount = 0
+    var screenObservationCount = 0
+    var screenCancellationCount = 0
+    private var refreshAction: (() -> Void)?
+    private var screenChangeAction: (() -> Void)?
+
+    init(displays: [OverlayDisplay]) {
+        self.displays = displays
+    }
+
+    func makeCoordinator(durationSeconds: TimeInterval = 20) -> VisualResetOverlayCoordinator {
+        VisualResetOverlayCoordinator(
+            policy: .allDisplays,
+            durationSeconds: durationSeconds,
+            now: { self.monotonicNow },
+            displays: { self.displays },
+            makePanel: { display, model, onCancel in
+                let panel = TestVisualResetPanel(
+                    displayID: display.id,
+                    frame: display.frame,
+                    model: model,
+                    onCancel: onCancel,
+                )
+                self.panels.append(panel)
+                return panel
+            },
+            captureFrontmostProcessIdentifier: {
+                self.operations.append("capture")
+                return 41
+            },
+            activate: { self.operations.append("activate") },
+            isAppFrontmost: { self.appIsFrontmost },
+            restore: {
+                self.operations.append("restore")
+                self.restoredProcessIdentifiers.append($0)
+            },
+            scheduleRefresh: { action in
+                self.refreshScheduleCount += 1
+                self.refreshAction = action
+                return OverlayCancellation { self.refreshCancellationCount += 1 }
+            },
+            observeScreenChanges: { action in
+                self.screenObservationCount += 1
+                self.screenChangeAction = action
+                return OverlayCancellation { self.screenCancellationCount += 1 }
+            },
+            onLifecycle: { self.lifecycle.append($0) },
+            onAnnouncement: {
+                self.announcements.append($0)
+                self.operations.append("announce.\($0.operationName)")
+            },
+        )
+    }
+
+    func fireRefresh() {
+        refreshAction?()
+    }
+
+    func fireScreenChange() {
+        screenChangeAction?()
+    }
+}
+
+private extension VisualResetAnnouncement {
+    var operationName: String {
+        switch self {
+        case .opened: "opened"
+        case .tenSecondsRemaining: "tenSeconds"
+        case .finished: "finished"
+        case .doneEarly: "doneEarly"
+        case .skipped: "skipped"
+        }
+    }
+}
+
+private final class TestVisualResetPanel: VisualResetPanelPresenting {
+    let displayID: OverlayDisplayID
+    let model: VisualResetModel
+    private let onCancel: () -> Void
+    private(set) var frame: CGRect
+    private(set) var wasMadeKey = false
+    private(set) var wasClosed = false
+
+    init(
+        displayID: OverlayDisplayID,
+        frame: CGRect,
+        model: VisualResetModel,
+        onCancel: @escaping () -> Void,
+    ) {
+        self.displayID = displayID
+        self.frame = frame
+        self.model = model
+        self.onCancel = onCancel
+    }
+
+    func present(makeKey: Bool) {
+        wasMadeKey = makeKey
+    }
+
+    func update(frame: CGRect) {
+        self.frame = frame
+    }
+
+    func close() {
+        wasClosed = true
+    }
+
+    func makeKey() {
+        wasMadeKey = true
+    }
+
+    func cancel() {
+        onCancel()
+    }
+}

@@ -61,7 +61,7 @@ art package and the still-undesigned BR-04 static/migraine presentation.
       than inventing final visuals - done = focused DesignSystem and VisualReset snapshot
       suites green, exported light/dark, final-seconds, Increase Contrast, Reduce Transparency,
       largest-text, Reduce Motion, bright-backdrop, and dark-backdrop PNGs inspected.
-- [ ] 4. App-owned overlay coordinator: route the existing menu/Dock intent into borderless
+- [x] 4. App-owned overlay coordinator: route the existing menu/Dock intent into borderless
       per-display panels, repeat the complete control stack on every chosen display, make one
       panel key, restore the previously active app on every exit, handle mirrored/disconnected
       displays without stranding controls, and prove Escape/Command-period from frame one while
@@ -128,3 +128,36 @@ art package and the still-undesigned BR-04 static/migraine presentation.
   DesignSystem gallery snapshots passed 2 tests / 4 renders. Claims review passed with all new
   visible and spoken copy registered under CP-BR16 and CP-VO07...10. Final art and BR-04 remain
   the explicit step-5 owner gates.
+- 2026-08-26: Step 4 RED was observed in `scripts/test.sh App`: the new App tests failed to
+  compile because the display plan, coordinator, cancellation, panel, and presentation seams
+  did not exist. The App now routes visual-reset intents directly, captures activation before
+  activating, shares one Feature model and one refresh source across every canonical display,
+  repeats complete controls, makes exactly one floating borderless panel key, reconciles mirror,
+  fallback-ID, disconnect, and reconnect states, serializes retained lifecycle writes, announces
+  terminal state before cooperative restoration, and never restores over a newly frontmost app.
+- 2026-08-26: Real-process proof caught a defect the injected tests did not: the first
+  target-selector scheduler left the live field at 20 seconds while its monotonic clock reached
+  3.05 seconds. It was replaced by one main-run-loop block timer and covered by a live-scheduler
+  regression test. The rebuilt own-process capture is 3024×1964 and shows 17 seconds plus a
+  proportionally advanced horizon at 3.05 seconds. Green proof: App passed 49 tests, including
+  17 overlay/panel tests; Domain passed 34; Features passed 23; VisualReset snapshots passed
+  12 tests / 17 renders; build, normal process launch, format, and lint passed. `scripts/ui.sh`
+  still exits 3 because the invoking environment lacks Accessibility permission, so external
+  AX-tree, VoiceOver focus traversal, and real-hardware multi-display evidence remain explicitly
+  unclaimed rather than inferred from unit proof.
+- 2026-08-26: Final Step 4 review found four lifecycle gaps and one real-host focus defect.
+  Empty display plans now close stale panels without ending the shared session; coordinator
+  release cancels both live sources and closes panels; Debug verification uses a non-persisting
+  coordinator and terminates after capture; and tests send actual Escape and Command-period
+  events. A fresh hosted 3024×1964 capture at 3.03 seconds visibly proves the offset focus ring
+  around `Done early`, 17 seconds remaining, complete controls, and proportional progress.
+  Full desktop/menu-bar context capture remains unclaimed because `screencapture` lacks Screen
+  Recording permission in this environment; the panel's `.floating` level and full-screen frame
+  are code/test verified, not presented as visual system-context proof.
+- 2026-08-26: Re-review then found that deferred focus could still run in every hosted display
+  tree and that a failed opening commit could be followed by a retained terminal event. Focus
+  assignment now follows each panel's actual key-window lifecycle, clears on resignation, and is
+  covered with two real panel instances. Runtime reductions commit a candidate state before
+  replacing the live engine, while the lifecycle queue blocks a failed session's later terminal
+  write and permits the next opening to retry. Failing-first-commit tests prove both retained and
+  published state stay unchanged when `breakStarted` persistence fails.

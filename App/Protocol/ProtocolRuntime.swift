@@ -9,7 +9,7 @@ protocol ProtocolRuntimeStore {
 
 extension SwiftDataProtocolStore: ProtocolRuntimeStore {}
 
-enum VisualResetLifecycleEvent: Sendable {
+enum VisualResetLifecycleEvent: Equatable, Sendable {
     case opened
     case timerFinished
     case doneEarly
@@ -80,12 +80,14 @@ final class ProtocolRuntime {
             suppressions.insert(suppression)
         }
 
-        let output = engine.observe(
+        var candidate = engine
+        let output = candidate.observe(
             sample,
             activeSuppressions: suppressions,
             isLowFrictionMoment: isLowFrictionMoment,
         )
-        try await persist(output.events)
+        try await persist(output.events, state: candidate.state)
+        engine = candidate
         publish(liveHeadsUp: output.presentation)
     }
 
@@ -129,12 +131,14 @@ final class ProtocolRuntime {
         case .skipped:
             (.skipped, .user)
         }
-        let output = engine.record(
+        var candidate = engine
+        let output = candidate.record(
             fact.kind,
             opportunity: .visual,
             source: fact.source,
         )
-        try await persist(output.events)
+        try await persist(output.events, state: candidate.state)
+        engine = candidate
         publish(liveHeadsUp: nil)
     }
 }
@@ -191,9 +195,10 @@ private extension ProtocolRuntime {
         case .merged: [.visual, .movement]
         case nil: []
         }
+        var candidate = engine
         var drafts: [OpportunityEventDraft] = []
         for opportunity in opportunities {
-            drafts += engine.record(
+            drafts += candidate.record(
                 .snoozed,
                 opportunity: opportunity,
                 selectedDurationSeconds: duration,
@@ -203,11 +208,12 @@ private extension ProtocolRuntime {
             route(.snooze(duration))
             return
         }
-        try await persist(drafts)
+        try await persist(drafts, state: candidate.state)
+        engine = candidate
         publish(liveHeadsUp: nil)
     }
 
-    func persist(_ drafts: [OpportunityEventDraft]) async throws {
+    func persist(_ drafts: [OpportunityEventDraft], state: ProtocolState) async throws {
         let recordedAt = now()
         let events = drafts.map { draft in
             OpportunityEvent(
@@ -219,7 +225,7 @@ private extension ProtocolRuntime {
                 selectedDurationSeconds: draft.selectedDurationSeconds,
             )
         }
-        try await store.commit(events: events, state: engine.state)
+        try await store.commit(events: events, state: state)
     }
 
     func publish(liveHeadsUp: OpportunityPresentation?) {

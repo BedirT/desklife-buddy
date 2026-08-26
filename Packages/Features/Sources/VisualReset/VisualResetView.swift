@@ -11,7 +11,10 @@ public struct VisualResetView: View {
     @ScaledMetric(relativeTo: .body) private var supportingSize = DSTypography.breakSupportingSize
     @ScaledMetric(relativeTo: .caption) private var metaSize = DSTypography.breakMetaSize
     @State private var model: VisualResetModel
+    @State private var focusPresentation: VisualResetFocusPresentation
+    @State private var showsInitialFocusFallback = true
     @FocusState private var doneEarlyFocused: Bool
+    @FocusState private var skipFocused: Bool
 
     private let standardField: AnyView
     private let staticField: AnyView?
@@ -22,12 +25,14 @@ public struct VisualResetView: View {
         standardField: AnyView? = nil,
         staticField: AnyView? = nil,
         accessibilityOverride: VisualResetAccessibility? = nil,
+        focusPresentation: VisualResetFocusPresentation = .init(),
         opensAutomatically: Bool = true,
     ) {
         if opensAutomatically {
             model.open()
         }
         _model = State(initialValue: model)
+        _focusPresentation = State(initialValue: focusPresentation)
         self.standardField = standardField ?? AnyView(VisualResetWorkingField())
         self.staticField = staticField
         self.accessibilityOverride = accessibilityOverride
@@ -62,9 +67,23 @@ public struct VisualResetView: View {
         }
         .onAppear {
             model.updateAccessibility(effectiveAccessibility)
+            updateFocusPresentation(focusPresentation.showsDefaultAction)
         }
         .onChange(of: effectiveAccessibility) { _, accessibility in
             model.updateAccessibility(accessibility)
+        }
+        .onChange(of: doneEarlyFocused) { _, focused in
+            if focused {
+                showsInitialFocusFallback = false
+            }
+        }
+        .onChange(of: skipFocused) { _, focused in
+            if focused {
+                showsInitialFocusFallback = false
+            }
+        }
+        .onChange(of: focusPresentation.showsDefaultAction) { _, visible in
+            updateFocusPresentation(visible)
         }
     }
 
@@ -150,6 +169,8 @@ public struct VisualResetView: View {
                     accessibilityHint: VisualResetL10n.returnKey,
                     accessibilityIdentifier: "visualReset.doneEarly",
                     focus: $doneEarlyFocused,
+                    focusOverride: focusPresentation.showsDefaultAction
+                        && (doneEarlyFocused || showsInitialFocusFallback),
                     reduceTransparency: effectiveAccessibility.reduceTransparency,
                     increaseContrast: effectiveAccessibility.increaseContrast,
                     action: model.doneEarly,
@@ -165,6 +186,8 @@ public struct VisualResetView: View {
                     accessibilityLabel: VisualResetL10n.skipAccessibility,
                     accessibilityHint: VisualResetL10n.escapeKeyAccessibility,
                     accessibilityIdentifier: "visualReset.skip",
+                    focus: $skipFocused,
+                    focusOverride: focusPresentation.showsDefaultAction && skipFocused,
                     reduceTransparency: effectiveAccessibility.reduceTransparency,
                     increaseContrast: effectiveAccessibility.increaseContrast,
                     action: model.skip,
@@ -217,6 +240,19 @@ public struct VisualResetView: View {
 
     private var usesLargeTextLayout: Bool {
         dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .xxxLarge
+    }
+
+    private func updateFocusPresentation(_ visible: Bool) {
+        guard visible else {
+            doneEarlyFocused = false
+            skipFocused = false
+            return
+        }
+        Task {
+            await Task.yield()
+            guard focusPresentation.showsDefaultAction else { return }
+            doneEarlyFocused = true
+        }
     }
 
     private var primaryInk: Color {

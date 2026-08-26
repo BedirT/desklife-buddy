@@ -10,6 +10,34 @@ name="${1:-app}"
 }
 
 output="$ARTIFACTS/$name.png"
+if [[ "$name" == "visual-reset" ]]; then
+  for running_pid in $(app_pids); do
+    /bin/kill "$running_pid"
+  done
+  /usr/bin/open -na "$APP_PATH" --args --verify-visual-reset
+  /bin/sleep 4
+  pid="$(app_pid)"
+  cache="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/visual-reset-$pid.png"
+  if [[ -s "$cache" && "$(/usr/bin/stat -f %z "$cache")" -ge 100000 ]]; then
+    /bin/cp "$cache" "$output"
+    state="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/visual-reset-state-$pid.txt"
+    [[ -s "$state" ]] || {
+      echo "The real visual-reset panel did not report its live timer state." >&2
+      exit 1
+    }
+    context="$ARTIFACTS/visual-reset-context.png"
+    /bin/rm -f "$context"
+    if ! /usr/sbin/screencapture -x -t png "$context"; then
+      echo "Screen-context capture unavailable; grant Screen Recording permission for that evidence." >&2
+    fi
+    /bin/kill "$pid"
+    echo "SHOT OK: $output (capture count, remaining, monotonic: $(/bin/cat "$state"))"
+    exit 0
+  fi
+  echo "The real visual-reset panel did not produce a complete Debug verification capture." >&2
+  exit 1
+fi
+
 if [[ "$name" == status-menu* ]]; then
   state="${name#status-menu-}"
   [[ "$name" == "status-menu" ]] && state="operating"

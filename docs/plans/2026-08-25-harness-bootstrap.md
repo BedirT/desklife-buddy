@@ -32,7 +32,7 @@ control plane.
   `swiftmac-base`.
 - [x] 7. Verify every retained command and record measured timings.
 - [x] 8. Commit and publish the clean baseline to the private
-  `BedirT/desklife-design` repository.
+  `BedirT/desklife-buddy` repository.
 
 ## Decisions
 
@@ -62,4 +62,4 @@ control plane.
 - Harness script surface: reduced from roughly 29,700 lines to 1,403 lines.
 - Tracked repository surface: reduced from 533 files to 242 files.
 - Private repository publication: `main` created at
-  `https://github.com/BedirT/desklife-design` from verified commit `030335b`.
+  `https://github.com/BedirT/desklife-buddy` from verified commit `030335b`.

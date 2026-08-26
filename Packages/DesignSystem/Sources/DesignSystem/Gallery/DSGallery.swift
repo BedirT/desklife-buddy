@@ -119,6 +119,14 @@ public struct DSGallery: View {
 
         public var body: some View {
             VStack(alignment: .leading, spacing: DSSpacing.lg) {
+                header(DesignSystemL10n.Sections.protocolMark)
+                HStack(spacing: DSSpacing.xl) {
+                    ForEach(DSProtocolMark.State.allCases, id: \.self) { state in
+                        DSProtocolMark(state: state, size: 32)
+                    }
+                }
+                .foregroundStyle(Color.dsTextPrimary)
+
                 header(DesignSystemL10n.Sections.buttons)
                 VStack(spacing: DSSpacing.sm) {
                     DSButton(DesignSystemL10n.Buttons.primary, style: .primary) {}

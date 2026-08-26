@@ -60,6 +60,7 @@ enum DesignSystemL10n {
     }
 
     enum Sections {
+        static let protocolMark = string("sections.protocol_mark", default: "Protocol mark")
         static let colors = string("sections.colors", default: "Colors")
         static let typography = string("sections.typography", default: "Typography")
         static let spacing = string("sections.spacing", default: "Spacing")

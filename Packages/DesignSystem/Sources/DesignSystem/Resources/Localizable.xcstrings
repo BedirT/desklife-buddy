@@ -131,6 +131,16 @@
         }
       }
     },
+    "sections.protocol_mark" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Protocol mark"
+          }
+        }
+      }
+    },
     "sections.buttons" : {
       "localizations" : {
         "en" : {

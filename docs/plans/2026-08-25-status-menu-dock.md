@@ -34,7 +34,7 @@ App coordinator ready for the break surfaces that follow.
       first and observe RED for normal, visual due, movement due, paused, suppression-reason,
       live-heads-up, working-hours, and action-routing states - done =
       `scripts/test.sh Features --filter StatusMenuModelTests` green.
-- [ ] 2. Mark and Preview-first menu composition: add the D-017 two-beats template mark to the
+- [x] 2. Mark and Preview-first menu composition: add the D-017 two-beats template mark to the
       DesignSystem gallery, declare every reachable status-region state as `#Preview`, compose
       only with DS tokens/system menu material, and add high-value snapshots - done =
       `scripts/snapshot.sh DesignSystem` and `scripts/snapshot.sh Features StatusMenuSnapshotTests`
@@ -70,3 +70,10 @@ App coordinator ready for the break surfaces that follow.
   `scripts/test.sh Features --filter StatusMenuModelTests` passed 6 tests / 7 executions and
   `scripts/lint.sh` was clean. Scaffold placeholder UI/copy was removed rather than retained;
   Step 2 begins from the declared preview-state enum and the round-2 working reference.
+- 2026-08-25: Step 2 renders use one long shallow movement beat and one short tall visual beat
+  on a shared horizon. A dot sits above the due beat, while paused strokes are dashed. The
+  first Preview render caught and corrected a dot-induced clipping defect and duplicate
+  suppression copy before the reviewed light/dark baselines were accepted. Green proof:
+  `scripts/snapshot.sh DesignSystem` and
+  `scripts/snapshot.sh Features StatusMenuSnapshotTests`; review artifacts live under
+  `artifacts/preview-review/DesignSystem/` and `artifacts/preview-review/Features/`.

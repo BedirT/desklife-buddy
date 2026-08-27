@@ -88,7 +88,7 @@ production action-policy answers above remain open.
       landed/waiting, honest hold, text-only, Reduce Motion, Reduce Transparency, Increase
       Contrast, +35% text, no-notch dock, and acknowledgement endpoints. Done =
       `scripts/snapshot.sh Features HeadsUpTests` green and exported PNGs inspected.
-- [ ] 5. Native capsule coordinator: implement an App-owned non-activating panel on the display
+- [x] 5. Native capsule coordinator: implement an App-owned non-activating panel on the display
       containing the pointer, independent of menu-bar visibility, with explicit screen-change,
       mirrored-display, full-screen, Escape, and cooperative teardown behavior. Ephemeral
       pointer reads exist only during the visible capsule and are absent from storage/events;
@@ -207,3 +207,20 @@ production action-policy answers above remain open.
   re-review found no remaining P0-P2. Actual
   `NSAccessibility.post`, native status-menu projection consumption, continuous live descent,
   and real-window docking remain explicit App Steps 5-7 evidence, not Feature proof.
+- 2026-08-27: The restart-safe App foundation is retained-ready after red-first implementation
+  and repeated adversarial review. SwiftData now stores exact outer clock generations plus the
+  versioned Heads-Up delivery payload, rejects corrupt/future or cycle-inconsistent state, and
+  opens a separately seeded pre-Heads-Up SQLite store while preserving all legacy protocol
+  values. Notification requests use the persisted delivery UUID as their sole identity; a
+  mandatory shared active-ID registry queues structurally valid launch responses until restore,
+  discards terminal callbacks, bounds recent retired IDs, reconciles actual Notification Center
+  delivery, and closes native-response races before and during capsule fallback. No production
+  default body-tap behavior is selected. The capsule coordinator uses a nonactivating AppKit
+  panel, persistence-completion-aware Escape, exact visible-body docking with shadow chrome,
+  live hover remeasurement without progress churn, generation-safe Observation lifetimes, and
+  display plus active-Space reconciliation. Final independent persistence, notification, and
+  capsule reviews found no P0-P2 findings. A fresh App `build-for-testing` passed; direct
+  execution of the rebuilt bundle passed 216 tests / 32 suites; `scripts/build.sh` reported
+  `BUILD OK`; and `scripts/lint.sh` reported `LINT OK`. Step 7 still owns real foreground-app
+  retention, full-screen/multi-display visual proof, native keyboard interaction, and live AX
+  evidence.

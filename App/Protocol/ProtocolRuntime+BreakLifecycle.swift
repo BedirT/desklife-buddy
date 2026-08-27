@@ -38,7 +38,15 @@ extension ProtocolRuntime {
         case .opened:
             try await openMerged(source: openingSource)
         case .visualTimerFinished:
-            try await finishMergedVisual()
+            try await finishMergedVisual(
+                kind: .timerFinished,
+                source: .localTimer,
+            )
+        case .doneEarly where lifecycleSession == .merged(segment: .visual, selectedDuration: nil):
+            try await finishMergedVisual(
+                kind: .userDeclaredCompleted,
+                source: .user,
+            )
         case .skipped:
             try await skipMergedActiveSegment()
         case .selectedDuration, .movementTimerFinished, .doneEarly,
@@ -94,15 +102,18 @@ extension ProtocolRuntime {
         )
     }
 
-    private func finishMergedVisual() async throws {
+    private func finishMergedVisual(
+        kind: OpportunityEventKind,
+        source: OpportunityEventSource,
+    ) async throws {
         guard lifecycleSession == .merged(segment: .visual, selectedDuration: nil) else {
             throw ProtocolLifecycleError.noActiveSession
         }
         var candidate = engine
         var drafts = candidate.record(
-            .timerFinished,
+            kind,
             opportunity: .visual,
-            source: .localTimer,
+            source: source,
         ).events
         drafts += candidate.record(
             .breakStarted,

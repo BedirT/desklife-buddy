@@ -194,6 +194,33 @@ struct MovementModelTests {
         #expect(actions == [.opened, .selectedDuration(120)])
     }
 
+    @Test("A rejected quick duration lifecycle fact can be retried from the same selection")
+    func rejectedQuickDurationIsRetryable() throws {
+        let clock = TestClock()
+        var actions: [MovementAction] = []
+        let schedule = try movementSchedule(durations: [300, 120])
+        let model = MovementModel(
+            schedule: schedule,
+            requiresLifecycleConfirmation: true,
+            now: { clock.value },
+            onAction: { actions.append($0) },
+        )
+        model.open()
+        model.confirmLifecycle(.opened)
+
+        model.selectQuickDuration()
+        model.rejectLifecycle(.selectedDuration(120))
+        model.selectQuickDuration()
+
+        #expect(model.selectedDurationSeconds == 120)
+        #expect(model.deadline == 120)
+        #expect(actions == [
+            .opened,
+            .selectedDuration(120),
+            .selectedDuration(120),
+        ])
+    }
+
     @Test("Return A and P are guarded while pointer declarations remain immediate")
     func declarationGuard() throws {
         let clock = TestClock()
@@ -276,6 +303,38 @@ extension MovementModelTests {
         #expect(actions == [.opened, .timerFinished])
     }
 
+    @Test("A rejected timer fact retries once per second rather than once per render")
+    func rejectedTimerRetryIsThrottled() throws {
+        let clock = TestClock()
+        var actions: [MovementAction] = []
+        let schedule = try movementSchedule(durations: [300, 120])
+        let model = MovementModel(
+            schedule: schedule,
+            requiresLifecycleConfirmation: true,
+            now: { clock.value },
+            onAction: { actions.append($0) },
+        )
+        model.open()
+        model.confirmLifecycle(.opened)
+        clock.value = 300
+        model.refresh()
+
+        model.rejectLifecycle(.timerFinished)
+        for frame in 1 ... 29 {
+            clock.value = 300 + Double(frame) / 30
+            model.refresh()
+        }
+
+        #expect(model.phase == .running)
+        #expect(actions == [.opened, .timerFinished])
+
+        clock.value = 301
+        model.refresh()
+
+        #expect(model.phase == .finished(.timerFinished))
+        #expect(actions == [.opened, .timerFinished, .timerFinished])
+    }
+
     @Test("Each declared exit has its exact terminal announcement", arguments: [
         (MovementTerminalAction.doneEarly, MovementAnnouncement.doneEarly),
         (MovementTerminalAction.alreadyMoved, MovementAnnouncement.alreadyMoved),
@@ -295,7 +354,7 @@ extension MovementModelTests {
         clock.value = 0.8
 
         switch terminal {
-        case .timerFinished, .skipped:
+        case .timerFinished, .visualOnly, .skipped:
             Issue.record("Covered by dedicated timer and Escape tests")
         case .doneEarly:
             model.doneEarlyFromKeyboard()
@@ -337,34 +396,4 @@ extension MovementModelTests {
         #expect(model.progress == 0.5)
         #expect(model.remainingSeconds == 120)
     }
-
-    private func makeModel(
-        clock: TestClock = TestClock(),
-        durations: [TimeInterval] = [300, 120],
-        onAction: @escaping (MovementAction) -> Void = { _ in },
-        onAnnouncement: @escaping (MovementAnnouncement) -> Void = { _ in },
-    ) throws -> MovementModel {
-        let schedule = try movementSchedule(durations: durations)
-        return MovementModel(
-            schedule: schedule,
-            now: { clock.value },
-            onAction: onAction,
-            onAnnouncement: onAnnouncement,
-        )
-    }
-
-    private func movementSchedule(
-        durations: [TimeInterval],
-    ) throws -> OpportunitySchedule {
-        try OpportunitySchedule(
-            softDueSeconds: 3000,
-            targetSeconds: 3600,
-            latestPreferredSeconds: 4200,
-            durationOptionsSeconds: durations,
-        )
-    }
-}
-
-private final class TestClock {
-    var value: TimeInterval = 0
 }

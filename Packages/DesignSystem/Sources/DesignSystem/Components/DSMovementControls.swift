@@ -3,8 +3,7 @@ import SwiftUI
 /// Equal-status movement choice with stable selection, focus, and keyboard affordances.
 public struct DSBreakChoiceChip: View {
     private let shape = Capsule(style: .continuous)
-
-    @ScaledMetric(relativeTo: .body) private var pointSize = DSTypography.breakChoiceSize
+    @Environment(\.dsTextScale) private var textScale
     @FocusState private var localFocus: Bool
 
     private let title: String
@@ -18,6 +17,8 @@ public struct DSBreakChoiceChip: View {
     private let reduceTransparency: Bool
     private let increaseContrast: Bool
     private let action: () -> Void
+
+    private var pointSize: CGFloat { textScale.apply(to: DSTypography.breakChoiceSize) }
 
     public init(
         _ title: String,
@@ -187,12 +188,12 @@ public struct DSBreakChoiceChip: View {
 public struct DSBreakQuietPill: View {
     private let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
 
-    @ScaledMetric(relativeTo: .body) private var pointSize = DSTypography.breakActionSize
+    @Environment(\.dsTextScale) private var textScale
     @FocusState private var localFocus: Bool
 
     private let title: String
-    private let detail: String
-    private let keycap: String
+    private let detail: String?
+    private let keycap: String?
     private let accessibilityLabel: String
     private let accessibilityIdentifier: String
     private let focus: FocusState<Bool>.Binding?
@@ -201,10 +202,12 @@ public struct DSBreakQuietPill: View {
     private let increaseContrast: Bool
     private let action: () -> Void
 
+    private var pointSize: CGFloat { textScale.apply(to: DSTypography.breakActionSize) }
+
     public init(
         _ title: String,
-        detail: String,
-        keycap: String,
+        detail: String? = nil,
+        keycap: String? = nil,
         accessibilityLabel: String,
         accessibilityIdentifier: String,
         focus: FocusState<Bool>.Binding? = nil,
@@ -269,10 +272,14 @@ public struct DSBreakQuietPill: View {
             HStack(spacing: 9) {
                 Text(title)
                     .font(DSTypography.breakAction(pointSize: pointSize))
-                Text(detail)
-                    .font(DSTypography.breakMeta(pointSize: pointSize))
-                    .foregroundStyle(secondaryInk)
-                DSKeycap(keycap, increaseContrast: increaseContrast)
+                if let detail {
+                    Text(detail)
+                        .font(DSTypography.breakMeta(pointSize: pointSize))
+                        .foregroundStyle(secondaryInk)
+                }
+                if let keycap {
+                    DSKeycap(keycap, increaseContrast: increaseContrast)
+                }
             }
             .foregroundStyle(primaryInk)
             .padding(.horizontal, 18)

@@ -181,6 +181,33 @@ struct VisualResetOverlayCoordinatorTests {
         #expect(harness.restoredProcessIdentifiers == [41])
     }
 
+    @Test("Failed lifecycle writes keep the surface retryable and defer announcements")
+    func lifecycleFailureRecovery() {
+        let harness = OverlayHarness(displays: [display(1, isMain: true)])
+        harness.failNextActions = [.opened, .doneEarly]
+        let coordinator = harness.makeCoordinator()
+
+        coordinator.present()
+        #expect(harness.panels[0].model.phase == .ready)
+        #expect(harness.announcements.isEmpty)
+        #expect(!harness.panels[0].wasClosed)
+
+        coordinator.present()
+        #expect(harness.panels[0].model.phase == .running)
+        #expect(harness.lifecycle == [.opened, .opened])
+        #expect(harness.announcements == [.opened(durationSeconds: 20)])
+
+        harness.panels[0].model.doneEarly()
+        #expect(harness.panels[0].model.phase == .running)
+        #expect(!harness.panels[0].wasClosed)
+        #expect(!harness.announcements.contains(.doneEarly))
+
+        harness.panels[0].model.doneEarly()
+        #expect(harness.panels[0].wasClosed)
+        #expect(harness.announcements.last == .doneEarly)
+        #expect(harness.restoredProcessIdentifiers == [41])
+    }
+
     @Test("Lifecycle persistence operations cannot overtake an earlier event")
     func lifecycleSerialization() async {
         let queue = VisualResetLifecycleQueue()
@@ -221,6 +248,35 @@ struct VisualResetOverlayCoordinatorTests {
 
         #expect(retryFailure == nil)
         #expect(attempted == [.opened, .opened, .timerFinished])
+    }
+
+    @Test("A failed terminal write can be retried without poisoning the lifecycle queue")
+    func lifecycleTerminalRetry() async {
+        enum Failure: Error {
+            case requested
+        }
+        let queue = VisualResetLifecycleQueue()
+        var attempted: [VisualResetLifecycleEvent] = []
+        var failuresRemaining = 1
+
+        queue.enqueue(.opened) { event in attempted.append(event) }
+        queue.enqueue(.doneEarly) { event in
+            attempted.append(event)
+            if failuresRemaining > 0 {
+                failuresRemaining -= 1
+                throw Failure.requested
+            }
+        }
+        let firstFailure = await queue.drain()
+
+        #expect(firstFailure is Failure)
+        #expect(attempted == [.opened, .doneEarly])
+
+        queue.enqueue(.doneEarly) { event in attempted.append(event) }
+        let retryFailure = await queue.drain()
+
+        #expect(retryFailure == nil)
+        #expect(attempted == [.opened, .doneEarly, .doneEarly])
     }
 
     @Test("The live refresh scheduler advances on the application run loop")
@@ -363,6 +419,7 @@ private final class OverlayHarness {
     var panels: [TestVisualResetPanel] = []
     var lifecycle: [VisualResetAction] = []
     var announcements: [VisualResetAnnouncement] = []
+    var failNextActions: [VisualResetAction] = []
     var restoredProcessIdentifiers: [pid_t] = []
     var refreshScheduleCount = 0
     var refreshCancellationCount = 0
@@ -411,7 +468,15 @@ private final class OverlayHarness {
                 self.screenChangeAction = action
                 return OverlayCancellation { self.screenCancellationCount += 1 }
             },
-            onLifecycle: { self.lifecycle.append($0) },
+            onLifecycle: { action, completion in
+                self.lifecycle.append(action)
+                if let index = self.failNextActions.firstIndex(of: action) {
+                    self.failNextActions.remove(at: index)
+                    completion(.failure(VisualResetOverlayTestFailure.requested))
+                } else {
+                    completion(.success(()))
+                }
+            },
             onAnnouncement: {
                 self.announcements.append($0)
                 self.operations.append("announce.\($0.operationName)")
@@ -426,6 +491,10 @@ private final class OverlayHarness {
     func fireScreenChange() {
         screenChangeAction?()
     }
+}
+
+private enum VisualResetOverlayTestFailure: Error {
+    case requested
 }
 
 private extension VisualResetAnnouncement {

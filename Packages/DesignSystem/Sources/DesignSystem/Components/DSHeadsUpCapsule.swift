@@ -11,10 +11,7 @@ public struct DSHeadsUpCapsule: View {
 
     private let shape = Capsule(style: .continuous)
 
-    @ScaledMetric(relativeTo: .body) private var textSize = DSTypography.headsUpTextSize
-    @ScaledMetric(relativeTo: .caption) private var actionSize = DSTypography.headsUpActionSize
-    @ScaledMetric(relativeTo: .body) private var minimumHeight: CGFloat = 34
-    @ScaledMetric(relativeTo: .caption) private var actionHeight: CGFloat = 24
+    @Environment(\.dsTextScale) private var textScale
     @State private var nowHovered = false
     @State private var laterHovered = false
     @GestureState private var laterPressed = false
@@ -34,6 +31,22 @@ public struct DSHeadsUpCapsule: View {
     private let increaseContrast: Bool
     private let nowAction: () -> Void
     private let laterAction: (Int) -> Void
+
+    private var textSize: CGFloat {
+        textScale.apply(to: DSTypography.headsUpTextSize)
+    }
+
+    private var actionSize: CGFloat {
+        textScale.apply(to: DSTypography.headsUpActionSize)
+    }
+
+    private var minimumHeight: CGFloat {
+        textScale.apply(to: 34)
+    }
+
+    private var actionHeight: CGFloat {
+        textScale.apply(to: 24)
+    }
 
     public init(
         title: String,
@@ -71,18 +84,18 @@ public struct DSHeadsUpCapsule: View {
 
     public var body: some View {
         adaptiveContent
-        .padding(.horizontal, 6)
-        .frame(minHeight: minimumHeight)
-        .background { capsuleBackground }
-        .overlay {
-            shape.strokeBorder(
-                increaseContrast ? Color.dsCapsuleBorderIncreased : Color.dsCapsuleBorder,
-                lineWidth: increaseContrast ? 2 : 1,
-            )
-        }
-        .clipShape(shape)
-        .shadow(color: Color.black.opacity(0.44), radius: 14, y: 8)
-        .accessibilityIdentifier(accessibilityIdentifier)
+            .padding(.horizontal, 6)
+            .frame(minHeight: minimumHeight)
+            .background { capsuleBackground }
+            .overlay {
+                shape.strokeBorder(
+                    increaseContrast ? Color.dsCapsuleBorderIncreased : Color.dsCapsuleBorder,
+                    lineWidth: increaseContrast ? 2 : 1,
+                )
+            }
+            .clipShape(shape)
+            .shadow(color: Color.black.opacity(0.44), radius: 14, y: 8)
+            .accessibilityIdentifier(accessibilityIdentifier)
     }
 
     @ViewBuilder

@@ -76,6 +76,62 @@ if [[ "$name" == "movement" ]]; then
   exit 1
 fi
 
+if [[ "$name" == "merged" ]]; then
+  for running_pid in $(app_pids); do
+    /bin/kill "$running_pid"
+  done
+  /usr/bin/open -na "$APP_PATH" --args --verify-merged
+  /bin/sleep 4
+  pid="$(app_pid)"
+  cache="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/merged-$pid.png"
+  state="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/merged-state-$pid.txt"
+  if [[ -s "$cache" && -s "$state" && "$(/usr/bin/stat -f %z "$cache")" -ge 100000 ]]; then
+    /usr/bin/awk '
+      NF == 4 && $1 >= 3 && $2 == "visual" && $3 < 20 && $3 > 0 && $4 == "ok" {
+        verified = 1
+      }
+      END { exit verified ? 0 : 1 }
+    ' "$state" || {
+      echo "The merged capture did not prove a ticking production-routed visual segment." >&2
+      /bin/cat "$state" >&2
+      exit 1
+    }
+    /bin/cp "$cache" "$output"
+    /bin/kill "$pid"
+    echo "SHOT OK: $output (captures, phase, remaining, status: $(/bin/cat "$state"))"
+    exit 0
+  fi
+  echo "The real merged panel did not produce a complete Debug verification capture." >&2
+  exit 1
+fi
+
+if [[ "$name" == "snooze" ]]; then
+  for running_pid in $(app_pids); do
+    /bin/kill "$running_pid"
+  done
+  /usr/bin/open -na "$APP_PATH" --args --verify-snooze
+  /bin/sleep 4
+  pid="$(app_pid)"
+  cache="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/snooze-$pid.png"
+  state="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/snooze-state-$pid.txt"
+  if [[ -s "$cache" && -s "$state" && "$(/usr/bin/stat -f %z "$cache")" -ge 32000 ]]; then
+    /usr/bin/awk '
+      NF == 3 && $1 >= 3 && $2 == "merged" && $3 == "ok" { verified = 1 }
+      END { exit verified ? 0 : 1 }
+    ' "$state" || {
+      echo "The snooze capture did not prove the production-routed merged scope." >&2
+      /bin/cat "$state" >&2
+      exit 1
+    }
+    /bin/cp "$cache" "$output"
+    /bin/kill "$pid"
+    echo "SHOT OK: $output (captures, scope, status: $(/bin/cat "$state"))"
+    exit 0
+  fi
+  echo "The real snooze panel did not produce a complete Debug verification capture." >&2
+  exit 1
+fi
+
 if [[ "$name" == status-menu* ]]; then
   state="${name#status-menu-}"
   [[ "$name" == "status-menu" ]] && state="operating"

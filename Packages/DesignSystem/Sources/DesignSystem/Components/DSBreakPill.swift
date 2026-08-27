@@ -27,11 +27,11 @@ public struct DSKeycap: View {
 public struct DSBreakPill: View {
     private let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
 
-    @ScaledMetric(relativeTo: .body) private var pointSize = DSTypography.breakActionSize
+    @Environment(\.dsTextScale) private var textScale
     @FocusState private var localFocus: Bool
 
     private let title: String
-    private let keycap: String
+    private let keycap: String?
     private let accessibilityLabel: String
     private let accessibilityHint: String?
     private let accessibilityIdentifier: String
@@ -43,9 +43,13 @@ public struct DSBreakPill: View {
     private let enabled: Bool
     private let action: () -> Void
 
+    private var pointSize: CGFloat {
+        textScale.apply(to: DSTypography.breakActionSize)
+    }
+
     public init(
         _ title: String,
-        keycap: String,
+        keycap: String? = nil,
         accessibilityLabel: String,
         accessibilityHint: String? = nil,
         accessibilityIdentifier: String,
@@ -137,7 +141,9 @@ public struct DSBreakPill: View {
                     .opacity(selected == true ? 1 : 0)
                     .accessibilityHidden(true)
             }
-            DSKeycap(keycap, increaseContrast: increaseContrast)
+            if let keycap {
+                DSKeycap(keycap, increaseContrast: increaseContrast)
+            }
         }
         .foregroundStyle(
             increaseContrast

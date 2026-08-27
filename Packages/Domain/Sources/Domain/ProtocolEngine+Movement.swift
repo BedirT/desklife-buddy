@@ -4,9 +4,9 @@ public extension ProtocolEngine {
     /// Rotates recovery-session debt after a confirmed unavailable or offline boundary.
     mutating func observeRecoverySession(at date: Date, systemAvailable: Bool) {
         if hasRecoverySessionGap(at: date) {
-            recoveryState = RecoveryState()
+            rotateSessionScopedState()
         }
-        if systemAvailable || recoveryState == RecoveryState() {
+        if systemAvailable || sessionScopedStateIsEmpty {
             recoveryLastObservedAt = date
         }
     }
@@ -14,7 +14,7 @@ public extension ProtocolEngine {
     /// Applies an offline boundary during restore without inferring active use.
     mutating func resumeRecoverySession(at date: Date) {
         guard hasRecoverySessionGap(at: date) else { return }
-        recoveryState = RecoveryState()
+        rotateSessionScopedState()
         recoveryLastObservedAt = date
     }
 
@@ -121,8 +121,10 @@ public extension ProtocolEngine {
 extension ProtocolEngine {
     func recommendedPresentation() -> OpportunityPresentation? {
         if recoveryIsEligible { return .recovery }
-        let visualPresentable = visualClock.phase.isPresentable
-        let movementPresentable = movementClock.phase.isPresentable
+        let visualIsAllowed = !notAppropriateOpportunities.contains(.visual)
+        let movementIsAllowed = !notAppropriateOpportunities.contains(.movement)
+        let visualPresentable = visualClock.phase.isPresentable && visualIsAllowed
+        let movementPresentable = movementClock.phase.isPresentable && movementIsAllowed
         let visualRemaining = max(
             0,
             configuration.visual.targetSeconds - visualClock.accumulatedActiveUseSeconds,
@@ -132,7 +134,10 @@ extension ProtocolEngine {
             configuration.movement.targetSeconds - movementClock.accumulatedActiveUseSeconds,
         )
         let mergeEligible = abs(visualRemaining - movementRemaining) <= configuration.delivery.mergeWindowSeconds
-        let mergePhasesEligible = visualClock.phase.isMergeEligible && movementClock.phase.isMergeEligible
+        let mergePhasesEligible = visualClock.phase.isMergeEligible
+            && movementClock.phase.isMergeEligible
+            && visualIsAllowed
+            && movementIsAllowed
 
         if mergeEligible, mergePhasesEligible, visualPresentable || movementPresentable {
             return .merged
@@ -155,11 +160,21 @@ extension ProtocolEngine {
 
     private var recoveryIsEligible: Bool {
         guard let recovery = configuration.recovery else { return false }
-        return movementSnoozeDeadline == nil
+        return !notAppropriateOpportunities.contains(.movement)
+            && movementSnoozeDeadline == nil
             && movementClock.phase != .snoozed
             && !recoveryState.wasOfferedThisSession
             && recoveryState.movementDeferralCount >= recovery.requiredMovementDeferrals
             && recoveryState.accumulatedEligibleActiveUseSeconds >= recovery.eligibleAfterSeconds
+    }
+
+    var sessionScopedStateIsEmpty: Bool {
+        recoveryState == RecoveryState() && notAppropriateOpportunities.isEmpty
+    }
+
+    mutating func rotateSessionScopedState() {
+        recoveryState = RecoveryState()
+        notAppropriateOpportunities.removeAll()
     }
 }
 

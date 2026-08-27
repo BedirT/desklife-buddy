@@ -122,6 +122,128 @@ struct VisualResetModelTests {
         #expect(actions == [.opened, .skipped])
     }
 
+    @Test("A terminal announcement waits for persistence confirmation")
+    func terminalWaitsForLifecycleConfirmation() {
+        let clock = TestClock()
+        var actions: [VisualResetAction] = []
+        var announcements: [VisualResetAnnouncement] = []
+        let model = VisualResetModel(
+            durationSeconds: 20,
+            requiresLifecycleConfirmation: true,
+            now: { clock.value },
+            onAction: { actions.append($0) },
+            onAnnouncement: { announcements.append($0) },
+        )
+        model.open()
+        model.confirmLifecycle(.opened)
+
+        model.doneEarly()
+        #expect(announcements == [.opened(durationSeconds: 20)])
+        model.confirmLifecycle(.doneEarly)
+        model.confirmLifecycle(.doneEarly)
+
+        #expect(model.phase == .finished(.doneEarly))
+        #expect(actions == [.opened, .doneEarly])
+        #expect(announcements == [.opened(durationSeconds: 20), .doneEarly])
+    }
+
+    @Test("A rejected terminal restores its exact active phase and can be retried")
+    func rejectedTerminalIsRetryable() {
+        let clock = TestClock()
+        var actions: [VisualResetAction] = []
+        var announcements: [VisualResetAnnouncement] = []
+        let model = VisualResetModel(
+            durationSeconds: 20,
+            requiresLifecycleConfirmation: true,
+            now: { clock.value },
+            onAction: { actions.append($0) },
+            onAnnouncement: { announcements.append($0) },
+        )
+        model.open()
+        model.confirmLifecycle(.opened)
+        clock.value = 17
+        model.refresh()
+        #expect(model.phase == .finalSeconds)
+
+        model.skip()
+        model.rejectLifecycle(.skipped)
+        #expect(model.phase == .finalSeconds)
+
+        model.skip()
+        model.confirmLifecycle(.skipped)
+
+        #expect(model.phase == .finished(.skipped))
+        #expect(actions == [.opened, .skipped, .skipped])
+        #expect(announcements == [
+            .opened(durationSeconds: 20),
+            .tenSecondsRemaining,
+            .skipped,
+        ])
+    }
+
+    @Test("A rejected timer fact retries once per second rather than once per render")
+    func rejectedTimerRetryIsThrottled() {
+        let clock = TestClock()
+        var actions: [VisualResetAction] = []
+        let model = VisualResetModel(
+            durationSeconds: 20,
+            requiresLifecycleConfirmation: true,
+            now: { clock.value },
+            onAction: { actions.append($0) },
+        )
+        model.open()
+        model.confirmLifecycle(.opened)
+        clock.value = 17
+        model.refresh()
+        clock.value = 20
+        model.refresh()
+
+        model.rejectLifecycle(.timerFinished)
+        #expect(model.phase == .finalSeconds)
+        for frame in 1 ... 29 {
+            clock.value = 20 + Double(frame) / 30
+            model.refresh()
+        }
+
+        #expect(model.phase == .finalSeconds)
+        #expect(actions == [.opened, .timerFinished])
+
+        clock.value = 21
+        model.refresh()
+
+        #expect(model.phase == .finished(.timerFinished))
+        #expect(actions == [.opened, .timerFinished, .timerFinished])
+    }
+}
+
+extension VisualResetModelTests {
+    @Test("A rejected open returns to ready and can begin again")
+    func rejectedOpenIsRetryable() {
+        let clock = TestClock()
+        var actions: [VisualResetAction] = []
+        var announcements: [VisualResetAnnouncement] = []
+        let model = VisualResetModel(
+            durationSeconds: 20,
+            requiresLifecycleConfirmation: true,
+            now: { clock.value },
+            onAction: { actions.append($0) },
+            onAnnouncement: { announcements.append($0) },
+        )
+
+        model.open()
+        model.rejectLifecycle(.opened)
+        #expect(model.phase == .ready)
+
+        clock.value = 4
+        model.open()
+        model.confirmLifecycle(.opened)
+
+        #expect(model.phase == .running)
+        #expect(model.remainingSeconds == 20)
+        #expect(actions == [.opened, .opened])
+        #expect(announcements == [.opened(durationSeconds: 20)])
+    }
+
     @Test("VoiceOver receives only open ten-second and terminal milestones")
     func announcementsAreCoarse() {
         let clock = TestClock()

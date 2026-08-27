@@ -6,10 +6,7 @@ public struct VisualResetView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @ScaledMetric(relativeTo: .caption) private var eyebrowSize = DSTypography.breakEyebrowSize
-    @ScaledMetric(relativeTo: .largeTitle) private var instructionSize = DSTypography.breakInstructionSize
-    @ScaledMetric(relativeTo: .body) private var supportingSize = DSTypography.breakSupportingSize
-    @ScaledMetric(relativeTo: .caption) private var metaSize = DSTypography.breakMetaSize
+    @Environment(\.dsTextScale) private var textScale
     @State private var model: VisualResetModel
     @State private var focusPresentation: VisualResetFocusPresentation
     @State private var showsInitialFocusFallback = true
@@ -19,6 +16,7 @@ public struct VisualResetView: View {
     private let standardField: AnyView
     private let staticField: AnyView?
     private let accessibilityOverride: VisualResetAccessibility?
+    let context: VisualResetContext
 
     public init(
         model: VisualResetModel,
@@ -27,6 +25,7 @@ public struct VisualResetView: View {
         accessibilityOverride: VisualResetAccessibility? = nil,
         focusPresentation: VisualResetFocusPresentation = .init(),
         opensAutomatically: Bool = true,
+        context: VisualResetContext = .standalone,
     ) {
         if opensAutomatically {
             model.open()
@@ -36,6 +35,7 @@ public struct VisualResetView: View {
         self.standardField = standardField ?? AnyView(VisualResetWorkingField())
         self.staticField = staticField
         self.accessibilityOverride = accessibilityOverride
+        self.context = context
     }
 
     public var body: some View {
@@ -43,11 +43,13 @@ public struct VisualResetView: View {
             ZStack {
                 field
                     .accessibilityHidden(true)
-                DSHorizonProgress(
-                    progress: model.progress,
-                    increaseContrast: effectiveAccessibility.increaseContrast,
-                )
-                .position(x: proxy.size.width / 2, y: proxy.size.height * 0.622)
+                if !usesLargeTextLayout {
+                    DSHorizonProgress(
+                        progress: model.progress,
+                        increaseContrast: effectiveAccessibility.increaseContrast,
+                    )
+                    .position(x: proxy.size.width / 2, y: proxy.size.height * 0.622)
+                }
 
                 if usesLargeTextLayout {
                     accessibilityLayout
@@ -59,7 +61,7 @@ public struct VisualResetView: View {
         }
         .ignoresSafeArea()
         .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("visualReset.surface")
+        .accessibilityIdentifier(surfaceIdentifier)
         .defaultFocus($doneEarlyFocused, true)
         .onKeyPress(.return) {
             model.doneEarlyFromKeyboard()
@@ -116,6 +118,10 @@ public struct VisualResetView: View {
             instructionStack
                 .frame(maxWidth: 500)
             Spacer(minLength: DSSpacing.md)
+            DSHorizonProgress(
+                progress: model.progress,
+                increaseContrast: effectiveAccessibility.increaseContrast,
+            )
             controlStack
             alternative
         }
@@ -238,10 +244,6 @@ public struct VisualResetView: View {
         return accessibility
     }
 
-    private var usesLargeTextLayout: Bool {
-        dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .xxxLarge
-    }
-
     private func updateFocusPresentation(_ visible: Bool) {
         guard visible else {
             doneEarlyFocused = false
@@ -271,6 +273,28 @@ public struct VisualResetView: View {
         effectiveAccessibility.increaseContrast
             ? .dsBreakEyebrowIncreased
             : .dsBreakEyebrow
+    }
+}
+
+private extension VisualResetView {
+    var usesLargeTextLayout: Bool {
+        dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .xxxLarge
+    }
+
+    var eyebrowSize: CGFloat {
+        textScale.apply(to: DSTypography.breakEyebrowSize)
+    }
+
+    var instructionSize: CGFloat {
+        textScale.apply(to: DSTypography.breakInstructionSize)
+    }
+
+    var supportingSize: CGFloat {
+        textScale.apply(to: DSTypography.breakSupportingSize)
+    }
+
+    var metaSize: CGFloat {
+        textScale.apply(to: DSTypography.breakMetaSize)
     }
 }
 
@@ -318,6 +342,11 @@ private struct VisualResetWorkingField: View {
 
 #Preview("Working field - final seconds") {
     VisualResetView(model: .preview(.finalSeconds))
+        .frame(width: 1440, height: 900)
+}
+
+#Preview("BR-09 - Merged visual segment") {
+    VisualResetView(model: .preview(), context: .merged)
         .frame(width: 1440, height: 900)
 }
 

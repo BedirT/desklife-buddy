@@ -106,9 +106,8 @@ final class MovementOverlayCoordinator {
     }
 
     func present(selectedDurationSeconds: TimeInterval? = nil) {
-        if let selectedDurationSeconds,
-           !schedule.durationOptionsSeconds.contains(selectedDurationSeconds) {
-            return
+        if let selectedDurationSeconds {
+            guard schedule.durationOptionsSeconds.contains(selectedDurationSeconds) else { return }
         }
         if let model {
             if model.phase == .ready {
@@ -146,6 +145,10 @@ final class MovementOverlayCoordinator {
         }
         refreshCancellation = scheduleRefresh { [weak self] in self?.model?.refresh() }
         screenCancellation = observeScreenChanges { [weak self] in self?.screenParametersChanged() }
+    }
+
+    var isPresenting: Bool {
+        model != nil
     }
 
     func tearDown() {
@@ -290,7 +293,7 @@ private extension MovementAction {
         switch self {
         case .opened, .selectedDuration:
             false
-        case .timerFinished, .doneEarly, .alreadyMoved, .positionChanged, .skipped:
+        case .timerFinished, .doneEarly, .alreadyMoved, .positionChanged, .visualOnly, .skipped:
             true
         }
     }

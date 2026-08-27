@@ -1,11 +1,15 @@
 import SwiftUI
 
 public struct DSBreakCountdown: View {
-    @ScaledMetric(relativeTo: .title2) private var pointSize = DSTypography.breakCountdownSize
+    @Environment(\.dsTextScale) private var textScale
 
     private let remainingSeconds: Int
     private let accessibilityIdentifier: String
     private let increaseContrast: Bool
+
+    private var pointSize: CGFloat {
+        textScale.apply(to: DSTypography.breakCountdownSize)
+    }
 
     public init(
         remainingSeconds: Int,

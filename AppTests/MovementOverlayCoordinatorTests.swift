@@ -391,6 +391,7 @@ private final class MovementOverlayHarness {
     var pendingLifecycleActions: [MovementAction] {
         pendingLifecycleCompletions.map(\.action)
     }
+
     let schedule: OpportunitySchedule
     private var refreshAction: (() -> Void)?
     private var screenChangeAction: (() -> Void)?

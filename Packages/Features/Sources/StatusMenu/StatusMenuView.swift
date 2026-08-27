@@ -37,7 +37,7 @@ public struct StatusMenuView: View {
             )
             Divider()
 
-            if model.snapshot.liveHeadsUp != nil {
+            if model.snapshot.hasActionableHeadsUp {
                 menuRow(StatusMenuL10n.startNow, identifier: "statusMenu.startNow") {
                     model.send(.startHeadsUpNow)
                 }

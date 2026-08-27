@@ -69,6 +69,10 @@ enum MovementL10n {
         "movement.position_change",
         default: "Change position instead",
     )
+    static let justTheVisualOne = FeatureL10n.string(
+        "movement.just_the_visual_one",
+        default: "Just the visual one",
+    )
     static let loggedSeparately = FeatureL10n.string(
         "movement.logged_separately",
         default: "logged separately",
@@ -214,6 +218,10 @@ enum MovementL10n {
         "movement.announcement.position_changed",
         default: "Change position instead. Logged separately.",
     )
+    static let visualOnlyAnnouncement = FeatureL10n.string(
+        "movement.announcement.visual_only",
+        default: "Visual reset done. Movement is still open when you want it.",
+    )
     static let skippedAnnouncement = FeatureL10n.string(
         "movement.announcement.skipped",
         default: "Skipped.",
@@ -230,6 +238,7 @@ public extension MovementAnnouncement {
         case .doneEarly: MovementL10n.doneEarlyAnnouncement
         case .alreadyMoved: MovementL10n.alreadyMovedAnnouncement
         case .positionChanged: MovementL10n.positionChangedAnnouncement
+        case .visualOnly: MovementL10n.visualOnlyAnnouncement
         case .skipped: MovementL10n.skippedAnnouncement
         }
     }

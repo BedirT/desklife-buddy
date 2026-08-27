@@ -1,4 +1,5 @@
 import AppKit
+import Domain
 import StatusMenu
 import Testing
 @testable import App
@@ -42,10 +43,27 @@ struct StatusItemCoordinatorTests {
         )
 
         coordinator.perform(coordinator.menu.item(withTitle: "Start now")!)
-        let later = coordinator.menu.item(withTitle: "Later")!.submenu!.items[1]
-        coordinator.perform(later)
+        let later = coordinator.menu.item(withTitle: "Later")!.submenu!
+        coordinator.perform(later.items[1])
+        coordinator.perform(later.item(withTitle: "More options")!)
 
-        #expect(actions == [.startHeadsUpNow, .snooze(600)])
+        #expect(actions == [.startHeadsUpNow, .snooze(600), .openSnoozeOptions])
+    }
+
+    @Test("Unsettled recovery exposes no dead Start or Later controls")
+    func recoveryHasNoDeadActions() throws {
+        let model = try StatusMenuModel(
+            state: ProtocolState(),
+            configuration: ProtocolProfiles.configuration(for: .balanced),
+            context: StatusMenuContext(liveHeadsUp: .recovery),
+        )
+        let coordinator = StatusItemCoordinator(
+            model: model,
+            installsStatusItem: false,
+        )
+
+        #expect(coordinator.menu.item(withTitle: "Start now") == nil)
+        #expect(coordinator.menu.item(withTitle: "Later") == nil)
     }
 
     @Test("Status value exposes both clocks, the estimate, and the quiet reason")

@@ -21,7 +21,10 @@ final class VisualResetOverlayCoordinator {
     private let restore: (pid_t) -> Void
     private let scheduleRefresh: Scheduler
     private let observeScreenChanges: Scheduler
-    private let onLifecycle: (VisualResetAction) -> Void
+    private let onLifecycle: (
+        VisualResetAction,
+        @escaping (Result<Void, any Error>) -> Void,
+    ) -> Void
     private let onAnnouncement: (VisualResetAnnouncement) -> Void
 
     private var panels: [OverlayDisplayID: any VisualResetPanelPresenting] = [:]
@@ -44,7 +47,10 @@ final class VisualResetOverlayCoordinator {
         restore: @escaping (pid_t) -> Void,
         scheduleRefresh: @escaping Scheduler,
         observeScreenChanges: @escaping Scheduler,
-        onLifecycle: @escaping (VisualResetAction) -> Void,
+        onLifecycle: @escaping (
+            VisualResetAction,
+            @escaping (Result<Void, any Error>) -> Void,
+        ) -> Void,
         onAnnouncement: @escaping (VisualResetAnnouncement) -> Void = { _ in },
     ) {
         self.policy = policy
@@ -65,7 +71,10 @@ final class VisualResetOverlayCoordinator {
     convenience init(
         policy: OverlayDisplayPolicy = .allDisplays,
         durationSeconds: TimeInterval = 20,
-        onLifecycle: @escaping (VisualResetAction) -> Void,
+        onLifecycle: @escaping (
+            VisualResetAction,
+            @escaping (Result<Void, any Error>) -> Void,
+        ) -> Void,
         onAnnouncement: @escaping (VisualResetAnnouncement) -> Void,
     ) {
         let clock = OverlayMonotonicClock()
@@ -96,13 +105,19 @@ final class VisualResetOverlayCoordinator {
     }
 
     func present() {
-        guard model == nil else { return }
+        if let model {
+            if model.phase == .ready {
+                model.open()
+            }
+            return
+        }
         let plan = OverlayDisplayPlan.resolve(displays(), policy: policy)
         guard !plan.displays.isEmpty else { return }
 
         priorProcessIdentifier = captureFrontmostProcessIdentifier()
         let model = VisualResetModel(
             durationSeconds: durationSeconds,
+            requiresLifecycleConfirmation: true,
             now: now,
             onAction: { [weak self] action in self?.handle(action) },
             onAnnouncement: { [weak self] announcement in self?.handle(announcement) },
@@ -119,6 +134,10 @@ final class VisualResetOverlayCoordinator {
         model.open()
         refreshCancellation = scheduleRefresh { [weak self] in self?.model?.refresh() }
         screenCancellation = observeScreenChanges { [weak self] in self?.screenParametersChanged() }
+    }
+
+    var isPresenting: Bool {
+        model != nil
     }
 
     func tearDown() {
@@ -152,19 +171,28 @@ final class VisualResetOverlayCoordinator {
     #endif
 
     private func handle(_ action: VisualResetAction) {
-        onLifecycle(action)
-        guard action != .opened else { return }
-        dismissPanels()
+        guard let actionModel = model else { return }
+        onLifecycle(action) { [weak self, weak actionModel] result in
+            guard let self,
+                  let actionModel,
+                  model === actionModel
+            else {
+                return
+            }
+            switch result {
+            case .success:
+                actionModel.confirmLifecycle(action)
+                guard action != .opened else { return }
+                dismissPanels()
+                restorePriorApplication()
+            case .failure:
+                actionModel.rejectLifecycle(action)
+            }
+        }
     }
 
     private func handle(_ announcement: VisualResetAnnouncement) {
         onAnnouncement(announcement)
-        switch announcement {
-        case .finished, .doneEarly, .skipped:
-            restorePriorApplication()
-        case .opened, .tenSecondsRemaining:
-            break
-        }
     }
 
     private func dismissPanels() {

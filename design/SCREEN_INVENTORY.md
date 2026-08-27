@@ -68,11 +68,11 @@ the invoking `/usr/bin/swift` process has not been granted Accessibility permiss
 | BR-06 | Movement — activity choice | Three equal chips + position-change tertiary (D-024); round-2 `Movement.dc.html` | explored |
 | BR-07 | Movement — running | Self-running countdown, one guidance sentence (D-024); round-2 `Movement.dc.html` | explored |
 | BR-08 | Movement — user-declared completion | Completion is declared, never verified | todo |
-| BR-09 | Merged break | Visual segment → movement, one surface `[03 §6.3]` | todo |
-| BR-10 | Merged — "visual only" chosen | Movement stays due; must say so | todo |
+| BR-09 | Merged break | Visual segment → movement, one surface `[03 §6.3]` | explored |
+| BR-10 | Merged — "visual only" chosen | Movement stays due; must say so | explored |
 | BR-11 | Position change offer | Semantically separate from movement `[P02]` | todo |
-| BR-12 | Recovery suggestion | 5–10 min, gentle, never an alarm `[03 §4.3]` | todo |
-| BR-13 | Snooze / bad-timing sheet | 5 · 10 · 15 · after meeting/task · pause 1 hr · not appropriate | todo |
+| BR-12 | Recovery suggestion | 5–10 min, gentle, never an alarm `[03 §4.3]` | explored |
+| BR-13 | Snooze / bad-timing sheet | 5 · 10 · 15 · after meeting/task · pause 1 hr · not appropriate | explored |
 | BR-14 | Break on secondary display | Coordinated, one experience | todo |
 | BR-15 | Break — high contrast | Increase Contrast appearance | todo |
 | BR-16 | Break — largest text size | No clipping | todo |
@@ -215,14 +215,18 @@ Multi-display        — Field per chosen display; the full pill stack repeats o
 Keyboard path        — Appears on its own or via menu "Start movement"; 1/2/3 select the
                        movement choice, Q two-minutes, ↩ done early, A already-moved,
                        P change-position, Esc leaves — every key printed on its control.
-                       Declaration keys arm ~800 ms; Esc immediate. No pointer needed.
+                       In the merged segment, "Just the visual one" precedes Skip in the
+                       same Tab path. Declaration keys arm ~800 ms; Esc immediate. No
+                       pointer is needed.
 Initial focus        — "Done early" pill (same position as BR-02 — predictability rule).
 Focus order          — Walk or wheel → Small space → Seated → 2 minutes instead →
-                       Done early → I already moved → Skip → Change position → (wraps).
+                       Done early → I already moved → [Just the visual one, merged only] →
+                       Skip → Change position → (wraps).
 Escape               — Leaves immediately → `skipped`. ⌘. same.
 VoiceOver names      — "Walk or wheel, 1" · "Small space, 2" · "Seated, 3" (equal rank,
                        same trait set — never "alternative") · "Two minutes instead" ·
-                       "Done early, Return" · "I already moved, A" · "Skip, Escape" ·
+                       "Done early, Return" · "I already moved, A" · ["Just the visual one",
+                       merged only] · "Skip, Escape" ·
                        "Change position instead, P — logged separately". Siblings with
                        parallel names, per ACCESSIBILITY.md BR-05 (tertiary tier is
                        visual only — D-027).
@@ -330,20 +334,100 @@ Alternative movement — Movement settings name all three paths with equal rank;
 Multi-display        — Ordinary window; opens on the active display, restorable position.
 ```
 
+### K.6 Merged visual-only acknowledgement (BR-10)
+
+```
+Keyboard path        — Appears only after the merged movement segment's explicit
+                       "Just the visual one" action is retained. No action is required;
+                       Esc closes it immediately and it closes itself after about 2 s.
+Initial focus        — None. This is passive status, not another decision.
+Focus order          — None; there are no controls and no focus trap.
+Escape               — Closes the acknowledgement without recording a second event or
+                       changing either clock. ⌘. follows the panel's equivalent close path.
+VoiceOver names      — The one status element is "Visual reset done. Movement is still
+                       open when you want it."
+VoiceOver values     — One polite announcement after persistence acknowledges the
+                       visual-only action; no countdown and no closing announcement.
+Text scaling         — The status wraps freely in a bounded central region; +35% and the
+                       largest supported size retain the whole sentence without clipping.
+High contrast        — Increased-contrast ink is explicit; static mode places white text
+                       on the opaque static text scrim.
+Reduced motion       — No app-owned motion is required; presentation and close may use the
+                       shared crossfade, with an instant static-mode replacement.
+Meaning w/o color    — The complete two-clock outcome is stated in words.
+Alternative movement — n/a; this state reports that movement remains open and does not
+                       rank or remove any later movement path.
+Multi-display        — Reuses the same merged panels and key display; each panel closes
+                       together, including after display reconciliation.
+```
+
+### K.7 Recovery suggestion (BR-12)
+
+```
+Keyboard path        — Tab/Shift-Tab traverses 5 minutes away → 10 minutes away → Not now;
+                       Space activates the focused choice. Esc is printed on Not now and
+                       closes immediately. Duration-choice runtime meaning remains gated.
+Initial focus        — 5 minutes away, the first configured suggestion.
+Focus order          — 5 minutes away → 10 minutes away → Not now → (wraps).
+Escape               — Not now; no reprimand, score, counter, or repeat this session.
+VoiceOver names      — "Choose 5 minutes away" · "Choose 10 minutes away" · "Not now,
+                       Escape". Names describe a selection, not an inferred break outcome.
+VoiceOver values     — One calm surface announcement using CP-BR47; a confirmed selection
+                       announces only the runtime result that the owner-approved semantics
+                       can truthfully support. Not now announces dismissal once.
+Text scaling         — D-027's large-text stack keeps the instruction above controls; the
+                       whole qualified sentence remains visible through largest text.
+High contrast        — Increased-contrast ink/borders; static mode gives the complete
+                       instruction stack an opaque text scrim.
+Reduced motion       — No looping or required motion; the field follows the common static
+                       and reduced-motion presentation rules.
+Meaning w/o color    — "Recovery suggestion" and every action are text labels; focus uses
+                       an outline, not hue alone.
+Alternative movement — The copy is modality-neutral and requires no standing, walking,
+                       wheeling, or particular movement path.
+Multi-display        — Uses the break overlay display plan; one shared model and one key
+                       panel, with cooperative focus restoration on close.
+```
+
+### K.8 Snooze / bad-timing sheet (BR-13)
+
+```
+Keyboard path        — Standard sheet Tab order; Space activates the focused row. Esc is
+                       printed on Skip and records only the sheet's typed scope.
+Initial focus        — First configured duration (5 minutes in the Balanced profile).
+Focus order          — 5 → 10 → 15 minutes → [After this meeting, when bounded] →
+                       For 1 hour → This one doesn't work for me → Skip → (wraps).
+Escape               — Skip immediately, no confirmation or escalation.
+VoiceOver names      — "Snooze for 5 minutes" · 10 · 15; "After this meeting" only for a
+                       bounded Calendar busy end; remaining rows use their visible labels.
+VoiceOver values     — A persistence-confirmed action is announced once; repeat deferrals
+                       never change tone, size, color, copy, or announcement urgency.
+Text scaling         — The native vertical scroll container keeps every row reachable at
+                       the largest size; no horizontal scrolling or truncation.
+High contrast        — Native buttons and semantic system colors own contrast; the explicit
+                       focus outline remains visible in light, dark, and Increased Contrast.
+Reduced motion       — No app-owned motion exists in the sheet.
+Meaning w/o color    — Every row is named; focus uses an outline and the order is textual.
+Alternative movement — Scope is explicit in the model; snoozing movement never pretends a
+                       visual reset or position change completed it.
+Multi-display        — Sheet is attached to the active opportunity's key panel; reconnect
+                       and mirrored-display behavior reuse the parent overlay plan.
+```
+
 ## Coverage summary
 
 | Area | Entries | Explored | Designed | Canonical |
 |---|---:|---:|---:|---:|
 | Menu bar | 13 | 3 | 0 | 0 |
 | Heads-up | 5 | 2 | 0 | 0 |
-| Break surfaces | 18 | 5 | 0 | 0 |
+| Break surfaces | 18 | 9 | 0 | 0 |
 | Acknowledgement | 2 | 1 | 0 | 0 |
 | Weekly | 5 | 0 | 0 | 0 |
 | Onboarding | 7 | 0 | 0 | 0 |
 | Settings | 15 | 1 | 0 | 0 |
 | Permissions | 7 | 0 | 0 | 0 |
 | Edge states | 18 | 0 | 0 | 0 |
-| **Total** | **90** | **12** | **0** | **0** |
+| **Total** | **90** | **16** | **0** | **0** |
 
 `explored` = drawn in `explorations/` (round 1: three ways; round 2: the chosen Horizon
 direction), non-canonical. Nothing advances to `designed` until the light+dark 2x renders

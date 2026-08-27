@@ -15,11 +15,17 @@ public enum OpportunityEventKind: String, CaseIterable, Codable, Sendable {
 }
 
 /// The opportunity whose facts an event records without implying an outcome.
-public enum OpportunityType: String, Codable, Sendable {
+public enum OpportunityType: String, Codable, Hashable, Sendable {
     case visual
     case movement
     case positionChange
     case recovery
+}
+
+extension OpportunityType {
+    var supportsNotAppropriateSuppression: Bool {
+        self == .visual || self == .movement
+    }
 }
 
 /// The bounded origin of a locally recorded protocol fact.

@@ -378,6 +378,38 @@ struct MergedLifecycleRuntimeTests {
         #expect(runtime.state.movementClock.accumulatedActiveUseSeconds == 3600)
     }
 
+    @Test("Done early during the visual segment records visual completion before movement opens")
+    func visualDoneEarlyAdvancesToMovement() async throws {
+        let store = MovementRuntimeStore(state: dueState)
+        let runtime = try makeRuntime(store: store)
+        try await runtime.restore()
+        try await runtime.handleMerged(.opened, openingSource: .localTimer)
+        store.commits.removeAll()
+
+        try await runtime.handleMerged(.doneEarly)
+
+        #expect(store.commits.count == 1)
+        #expect(store.commits[0].events.map(Fact.init) == [
+            Fact(
+                kind: .userDeclaredCompleted,
+                source: .user,
+                opportunity: .visual,
+                duration: nil,
+            ),
+            Fact(
+                kind: .breakStarted,
+                source: .localTimer,
+                opportunity: .movement,
+                duration: nil,
+            ),
+        ])
+        #expect(runtime.state.visualClock.accumulatedActiveUseSeconds == 0)
+        #expect(runtime.state.movementClock.accumulatedActiveUseSeconds == 3600)
+
+        try await runtime.handleMerged(.skipped)
+        #expect(store.commits.last?.events.first?.opportunity == .movement)
+    }
+
     @Test("Escape during the visual segment retains both unfinished clocks")
     func escapeDuringVisual() async throws {
         let store = MovementRuntimeStore(state: dueState)

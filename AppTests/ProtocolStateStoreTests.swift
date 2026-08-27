@@ -1,5 +1,6 @@
 import Domain
 import Foundation
+import SwiftData
 import Testing
 @testable import App
 
@@ -80,6 +81,48 @@ struct ProtocolStateStoreTests {
         #expect(loaded.movementSnoozeDeadline == deadline)
         #expect(loaded.recoveryState == state.recoveryState)
         #expect(loaded.recoveryLastObservedAt == recoveryAnchor)
+    }
+
+    @Test("Session-scoped not-appropriate choices round-trip independently")
+    func notAppropriateOpportunitiesRoundTrip() async throws {
+        let store = try SwiftDataProtocolStateStore(inMemory: true)
+        let state = ProtocolState(
+            notAppropriateOpportunities: [.visual, .movement],
+        )
+
+        try await store.saveState(state)
+
+        let loaded = try #require(try await store.loadState())
+        #expect(loaded.notAppropriateOpportunities == [.visual, .movement])
+
+        try await store.saveState(ProtocolState(
+            notAppropriateOpportunities: [.movement],
+        ))
+        #expect(try await store.loadState()?.notAppropriateOpportunities == [.movement])
+    }
+
+    @Test("Rows without additive suppression flags restore as no session suppression")
+    func absentNotAppropriateFlagsDefaultToEmpty() async throws {
+        let container = try AppModelContainer.make(inMemory: true)
+        let context = ModelContext(container)
+        context.insert(StoredProtocolState(
+            key: "current",
+            schemaVersion: 1,
+            profileID: ProtocolProfileID.balanced.rawValue,
+            visualAccumulatedActiveUseSeconds: 0,
+            movementAccumulatedActiveUseSeconds: 0,
+            visualSnoozeDeadline: nil,
+            movementSnoozeDeadline: nil,
+            recoveryActiveUseSeconds: 0,
+            recoveryMovementDeferralCount: 0,
+            recoveryWasOfferedThisSession: false,
+            recoveryLastObservedAt: nil,
+        ))
+        try context.save()
+
+        let store = try SwiftDataProtocolStateStore(container: container)
+        let loaded = try #require(try await store.loadState())
+        #expect(loaded.notAppropriateOpportunities.isEmpty)
     }
 
     @Test("Completing a snoozed visual opportunity cannot resurrect snooze after restart")

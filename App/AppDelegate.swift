@@ -1,4 +1,5 @@
 import AppKit
+import BreakFlow
 import Domain
 import Movement
 import StatusMenu
@@ -9,19 +10,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var activitySource: SystemActivitySource?
     private var statusItemCoordinator: StatusItemCoordinator?
     private var dockMenuController: DockMenuController?
-    private var overlayCoordinator: VisualResetOverlayCoordinator?
-    private var movementOverlayCoordinator: MovementOverlayCoordinator?
+    var overlayCoordinator: VisualResetOverlayCoordinator?
+    var movementOverlayCoordinator: MovementOverlayCoordinator?
+    var mergedOverlayCoordinator: MergedOverlayCoordinator?
+    var breakFlowOverlayCoordinator: BreakFlowOverlayCoordinator?
     #if DEBUG
         private var verificationOverlayCoordinator: VisualResetOverlayCoordinator?
     #endif
     private var activityTimer: Timer?
     private let visualResetLifecycleQueue = VisualResetLifecycleQueue()
     private let movementLifecycleQueue = MovementLifecycleQueue()
-    private var configuration: ProtocolConfiguration?
+    private let mergedLifecycleQueue = MergedLifecycleQueue()
+    var configuration: ProtocolConfiguration?
     private var verificationPreviewState: StatusMenuModel.PreviewState?
     private var latestSnapshot = StatusMenuModel.preview(.normal).snapshot
     private var visualResetCaptureCount = 0
     private var movementCaptureCount = 0
+    var mergedCaptureCount = 0
+    var snoozeCaptureCount = 0
     private(set) var lastRuntimeError: Error?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -48,19 +54,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         activityTimer?.invalidate()
         overlayCoordinator?.tearDown()
         movementOverlayCoordinator?.tearDown()
+        mergedOverlayCoordinator?.tearDown()
+        breakFlowOverlayCoordinator?.tearDown()
         #if DEBUG
             verificationOverlayCoordinator?.tearDown()
         #endif
-    }
-}
-
-private extension AppDelegate {
-    static var isRunningTests: Bool {
-        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-    }
-
-    static var isVerificationRun: Bool {
-        ProcessInfo.processInfo.arguments.contains { $0.hasPrefix("--verify-") }
     }
 }
 
@@ -72,7 +70,9 @@ private extension AppDelegate {
         self.runtime = runtime
         overlayCoordinator = VisualResetOverlayCoordinator(
             durationSeconds: configuration.visual.durationOptionsSeconds[0],
-            onLifecycle: { [weak self] action in self?.enqueueVisualReset(action) },
+            onLifecycle: { [weak self] action, completion in
+                self?.enqueueVisualReset(action, completion: completion)
+            },
             onAnnouncement: VisualResetAccessibilityAnnouncer.post,
         )
         movementOverlayCoordinator = MovementOverlayCoordinator(
@@ -82,6 +82,7 @@ private extension AppDelegate {
             },
             onAnnouncement: MovementAccessibilityAnnouncer.post,
         )
+        installStepSixOverlays(configuration: configuration)
         runtime.onChange = { [weak self] state, context in
             self?.refreshStatus(state: state, context: context)
         }
@@ -104,6 +105,25 @@ private extension AppDelegate {
             onAvailabilityChange: { [weak self] sample in self?.observe(sample) },
         )
         configureVerification(arguments: arguments)
+    }
+
+    func installStepSixOverlays(configuration: ProtocolConfiguration) {
+        mergedOverlayCoordinator = MergedOverlayCoordinator(
+            visualDurationSeconds: configuration.visual.durationOptionsSeconds[0],
+            movementSchedule: configuration.movement,
+            onLifecycle: { [weak self] event, completion in
+                self?.enqueueMerged(event, completion: completion)
+            },
+            onVisualAnnouncement: VisualResetAccessibilityAnnouncer.post,
+            onMovementAnnouncement: MovementAccessibilityAnnouncer.post,
+        )
+        breakFlowOverlayCoordinator = BreakFlowOverlayCoordinator(
+            snoozeDurationsSeconds: configuration.delivery.snoozeOptionsSeconds,
+            onAction: { [weak self] action, completion in
+                self?.enqueueBreakFlow(action, completion: completion)
+            },
+            onAnnouncement: BreakFlowAccessibilityAnnouncer.post,
+        )
     }
 
     func restore(_ runtime: ProtocolRuntime) {
@@ -132,7 +152,7 @@ private extension AppDelegate {
             if arguments.contains("--verify-visual-reset") {
                 let coordinator = VisualResetOverlayCoordinator(
                     durationSeconds: configuration?.visual.durationOptionsSeconds[0] ?? 20,
-                    onLifecycle: { _ in },
+                    onLifecycle: { _, completion in completion(.success(())) },
                     onAnnouncement: VisualResetAccessibilityAnnouncer.post,
                 )
                 verificationOverlayCoordinator = coordinator
@@ -153,18 +173,19 @@ private extension AppDelegate {
                     )
                 }
             }
+            if arguments.contains("--verify-merged") {
+                addVerificationTimer(delay: 0.5, selector: #selector(openVerificationMerged))
+                for delay in [1.0, 2.0, 3.0] {
+                    addVerificationTimer(delay: delay, selector: #selector(captureVerificationMerged))
+                }
+            }
+            if arguments.contains("--verify-snooze") {
+                addVerificationTimer(delay: 0.5, selector: #selector(openVerificationSnooze))
+                for delay in [1.0, 2.0, 3.0] {
+                    addVerificationTimer(delay: delay, selector: #selector(captureVerificationSnooze))
+                }
+            }
         #endif
-    }
-
-    func addVerificationTimer(delay: TimeInterval, selector: Selector) {
-        let timer = Timer(
-            timeInterval: delay,
-            target: self,
-            selector: selector,
-            userInfo: nil,
-            repeats: false,
-        )
-        RunLoop.main.add(timer, forMode: .common)
     }
 
     func startActivityTimer() {
@@ -269,33 +290,34 @@ private extension AppDelegate {
     }
 
     func route(_ action: StatusMenuAction) {
+        if let overlayRoute = AppOverlayRoute.resolve(
+            action: action,
+            liveHeadsUp: runtime?.statusContext.liveHeadsUp,
+        ) {
+            present(overlayRoute, for: action)
+            return
+        }
+
         switch action {
         case .openSettings:
             NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
             NSApp.activate()
         case .quit:
             NSApp.terminate(nil)
-        case .startVisualReset:
-            overlayCoordinator?.present()
-        case let .startMovement(choice):
-            let selectedDuration: TimeInterval? = switch choice {
-            case .recommended:
-                configuration?.movement.durationOptionsSeconds.first
-            case .quick:
-                configuration?.movement.durationOptionsSeconds.dropFirst().first
-            case .positionChange:
-                nil
-            }
-            movementOverlayCoordinator?.present(selectedDurationSeconds: selectedDuration)
-        case .startHeadsUpNow, .openWeeklyRhythm:
+        case .openWeeklyRhythm:
             NSApp.activate()
             NotificationCenter.default.post(name: .statusMenuRoute, object: action)
+        case .startHeadsUpNow, .openSnoozeOptions, .startVisualReset, .startMovement:
+            break
         case .snooze, .pause, .resume, .toggleWorkingHours:
             break
         }
     }
 
-    func enqueueVisualReset(_ action: VisualResetAction) {
+    func enqueueVisualReset(
+        _ action: VisualResetAction,
+        completion: @escaping (Result<Void, any Error>) -> Void,
+    ) {
         let event: VisualResetLifecycleEvent = switch action {
         case .opened: .opened
         case .timerFinished: .timerFinished
@@ -309,6 +331,7 @@ private extension AppDelegate {
                 try await runtime.handleVisualReset(event)
             },
             onFailure: { [weak self] error in self?.lastRuntimeError = error },
+            completion: completion,
         )
     }
 
@@ -316,14 +339,18 @@ private extension AppDelegate {
         _ action: MovementAction,
         completion: @escaping (Result<Void, any Error>) -> Void,
     ) {
-        let event: MovementLifecycleEvent = switch action {
-        case .opened: .opened
-        case let .selectedDuration(duration): .selectedDuration(duration)
-        case .timerFinished: .timerFinished
-        case .doneEarly: .doneEarly
-        case .alreadyMoved: .alreadyMoved
-        case .positionChanged: .positionChanged
-        case .skipped: .skipped
+        let event: MovementLifecycleEvent
+        switch action {
+        case .opened: event = .opened
+        case let .selectedDuration(duration): event = .selectedDuration(duration)
+        case .timerFinished: event = .timerFinished
+        case .doneEarly: event = .doneEarly
+        case .alreadyMoved: event = .alreadyMoved
+        case .positionChanged: event = .positionChanged
+        case .skipped: event = .skipped
+        case .visualOnly:
+            completion(.failure(ProtocolLifecycleError.invalidTransition))
+            return
         }
         movementLifecycleQueue.enqueue(
             event,
@@ -336,28 +363,34 @@ private extension AppDelegate {
         )
     }
 
-    static func verificationState(from arguments: [String]) -> StatusMenuModel.PreviewState? {
-        #if DEBUG
-            guard let index = arguments.firstIndex(of: "--verify-status-state"),
-                  arguments.indices.contains(index + 1)
-            else {
-                return nil
-            }
-            return switch arguments[index + 1] {
-            case "operating": .normal
-            case "visual-due": .visualDue
-            case "movement-due": .movementDue
-            case "both-due": .bothDue
-            case "paused": .paused
-            case "timed-pause": .timedPause
-            default: nil
-            }
-        #else
-            nil
-        #endif
+    func enqueueMerged(
+        _ event: MergedLifecycleEvent,
+        completion: @escaping (Result<Void, any Error>) -> Void,
+    ) {
+        mergedLifecycleQueue.enqueue(
+            event,
+            operation: { [weak self] event in
+                guard let self, let runtime else { return }
+                try await runtime.handleMerged(event)
+            },
+            onFailure: { [weak self] error in self?.lastRuntimeError = error },
+            completion: completion,
+        )
     }
-}
 
-extension Notification.Name {
-    static let statusMenuRoute = Notification.Name("app.statusMenuRoute")
+    func enqueueBreakFlow(
+        _ action: BreakFlowAction,
+        completion: @escaping (Result<Void, any Error>) -> Void,
+    ) {
+        Task { [weak self] in
+            guard let self, let runtime else { return }
+            do {
+                try await runtime.handleBreakFlow(action)
+                completion(.success(()))
+            } catch {
+                lastRuntimeError = error
+                completion(.failure(error))
+            }
+        }
+    }
 }

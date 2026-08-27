@@ -1,30 +1,39 @@
 final class VisualResetLifecycleQueue {
     typealias Operation = (VisualResetLifecycleEvent) async throws -> Void
 
-    private var tail: Task<(any Error)?, Never>?
+    private struct FailedOperation {
+        let event: VisualResetLifecycleEvent
+        let error: any Error
+    }
+
+    private var tail: Task<FailedOperation?, Never>?
 
     func enqueue(
         _ event: VisualResetLifecycleEvent,
         operation: @escaping Operation,
         onFailure: @escaping (any Error) -> Void = { _ in },
+        completion: @escaping (Result<Void, any Error>) -> Void = { _ in },
     ) {
         let predecessor = tail
         tail = Task {
             let previousFailure = await predecessor?.value
-            guard previousFailure == nil || event == .opened else {
+            if let previousFailure, previousFailure.event == .opened, event != .opened {
+                completion(.failure(previousFailure.error))
                 return previousFailure
             }
             do {
                 try await operation(event)
+                completion(.success(()))
                 return nil
             } catch {
                 onFailure(error)
-                return error
+                completion(.failure(error))
+                return FailedOperation(event: event, error: error)
             }
         }
     }
 
     func drain() async -> (any Error)? {
-        await tail?.value
+        await tail?.value?.error
     }
 }

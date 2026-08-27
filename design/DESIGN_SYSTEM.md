@@ -34,9 +34,12 @@ changes in place uses `font-variant-numeric: tabular-nums`; sentence case everyw
 except platform-conventional title case (menu titles, window titles); body copy never
 below 11 (design-quality §5).
 
-Text scaling: all sizes track the system text-size setting proportionally; layouts must
-tolerate +35% without clipping — per-screen behavior is stated in each screen's
-accessibility annotation block.
+Text scaling: macOS does not resize SwiftUI text from `dynamicTypeSize`, so break typography
+uses the app-owned `DSTextScale` environment instead of claiming an iOS-only platform behavior.
+Its retained states are standard (1.0x), canonical +35% (1.35x), and largest supported (1.7x).
+Layouts must tolerate +35% without clipping and keep every action reachable at the largest
+state; per-screen behavior is stated in each screen's accessibility annotation block. The
+production preference control that supplies this environment belongs to the Settings slice.
 
 ## 2. Color
 

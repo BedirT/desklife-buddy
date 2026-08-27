@@ -1,5 +1,10 @@
 import Foundation
 
+public enum MovementContext: Equatable, Sendable {
+    case standalone
+    case merged
+}
+
 public enum MovementChoice: CaseIterable, Equatable, Sendable {
     case walkOrWheel
     case smallSpace
@@ -25,6 +30,7 @@ public enum MovementTerminalAction: Equatable, Sendable {
     case doneEarly
     case alreadyMoved
     case positionChanged
+    case visualOnly
     case skipped
 }
 
@@ -35,6 +41,7 @@ public enum MovementAction: Equatable, Sendable {
     case doneEarly
     case alreadyMoved
     case positionChanged
+    case visualOnly
     case skipped
 }
 
@@ -46,6 +53,7 @@ public enum MovementAnnouncement: Equatable, Sendable {
     case doneEarly
     case alreadyMoved
     case positionChanged
+    case visualOnly
     case skipped
 }
 
@@ -77,6 +85,7 @@ public enum MovementControl: CaseIterable, Equatable, Sendable {
     case alreadyMoved
     case skip
     case positionChange
+    case visualOnly
 }
 
 extension MovementChoice {

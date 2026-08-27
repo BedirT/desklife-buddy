@@ -14,12 +14,14 @@
             accessibility: VisualResetAccessibility = .init(),
             standardField: AnyView? = nil,
             staticField: AnyView? = nil,
+            context: VisualResetContext = .standalone,
         ) -> some View {
             VisualResetView(
                 model: .preview(phase, accessibility: accessibility),
                 standardField: standardField,
                 staticField: staticField,
                 accessibilityOverride: accessibility,
+                context: context,
             )
             .frame(width: 1440, height: 900)
         }
@@ -30,6 +32,13 @@
 
         @Test func finalSeconds() {
             assertScreenSnapshot(of: screen(.finalSeconds), layout: referenceLayout)
+        }
+
+        @Test func mergedVisualSegment() {
+            assertScreenSnapshot(
+                of: screen(context: .merged),
+                layout: referenceLayout,
+            )
         }
 
         @Test func increasedContrast() {
@@ -55,24 +64,32 @@
         }
 
         @Test func plusThirtyFivePercentText() {
-            assertDynamicTypeSnapshot(
-                of: screen(),
-                sizes: [.xxxLarge],
+            assertScreenSnapshot(
+                of: screen()
+                    .environment(\.dynamicTypeSize, .xxxLarge)
+                    .environment(\.dsTextScale, .plusThirtyFivePercent),
+                named: "plus-35-percent",
                 layout: referenceLayout,
+                appearances: [.light],
             )
         }
 
         @Test func largestText() {
-            assertDynamicTypeSnapshot(
-                of: screen(),
-                sizes: [.accessibility3],
+            assertScreenSnapshot(
+                of: screen()
+                    .environment(\.dynamicTypeSize, .accessibility3)
+                    .environment(\.dsTextScale, .largest),
+                named: "largest",
                 layout: referenceLayout,
+                appearances: [.light],
             )
         }
 
         @Test func largestTextDark() {
             assertScreenSnapshot(
-                of: screen().environment(\.dynamicTypeSize, .accessibility3),
+                of: screen()
+                    .environment(\.dynamicTypeSize, .accessibility3)
+                    .environment(\.dsTextScale, .largest),
                 layout: referenceLayout,
                 appearances: [.dark],
             )
@@ -85,7 +102,8 @@
             )
             assertScreenSnapshot(
                 of: screen(accessibility: accessibility)
-                    .environment(\.dynamicTypeSize, .accessibility3),
+                    .environment(\.dynamicTypeSize, .accessibility3)
+                    .environment(\.dsTextScale, .largest),
                 layout: referenceLayout,
                 appearances: [.dark],
             )

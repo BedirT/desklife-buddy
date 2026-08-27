@@ -14,6 +14,8 @@ final class StoredProtocolState {
     var recoveryMovementDeferralCount: Int = 0
     var recoveryWasOfferedThisSession: Bool = false
     var recoveryLastObservedAt: Date?
+    var visualNotAppropriateThisSession: Bool?
+    var movementNotAppropriateThisSession: Bool?
 
     init(
         key: String,
@@ -27,6 +29,8 @@ final class StoredProtocolState {
         recoveryMovementDeferralCount: Int,
         recoveryWasOfferedThisSession: Bool,
         recoveryLastObservedAt: Date?,
+        visualNotAppropriateThisSession: Bool? = nil,
+        movementNotAppropriateThisSession: Bool? = nil,
     ) {
         self.key = key
         self.schemaVersion = schemaVersion
@@ -39,6 +43,8 @@ final class StoredProtocolState {
         self.recoveryMovementDeferralCount = recoveryMovementDeferralCount
         self.recoveryWasOfferedThisSession = recoveryWasOfferedThisSession
         self.recoveryLastObservedAt = recoveryLastObservedAt
+        self.visualNotAppropriateThisSession = visualNotAppropriateThisSession
+        self.movementNotAppropriateThisSession = movementNotAppropriateThisSession
     }
 
     func updateClocks(
@@ -66,5 +72,10 @@ final class StoredProtocolState {
         recoveryMovementDeferralCount = movementDeferralCount
         recoveryWasOfferedThisSession = wasOfferedThisSession
         recoveryLastObservedAt = lastObservedAt
+    }
+
+    func updateNotAppropriateOpportunities(visual: Bool, movement: Bool) {
+        visualNotAppropriateThisSession = visual
+        movementNotAppropriateThisSession = movement
     }
 }

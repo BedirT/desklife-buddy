@@ -7,11 +7,7 @@ public struct MovementView: View {
     @Environment(\.accessibilityReduceMotion) var reduceMotion
     @Environment(\.accessibilityReduceTransparency) var reduceTransparency
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
-    @ScaledMetric(relativeTo: .caption) var eyebrowSize = DSTypography.breakEyebrowSize
-    @ScaledMetric(relativeTo: .largeTitle) var instructionSize = DSTypography.breakLongInstructionSize
-    @ScaledMetric(relativeTo: .body) var supportingSize = DSTypography.breakSupportingSize
-    @ScaledMetric(relativeTo: .caption) var metaSize = DSTypography.breakMetaSize
-    @ScaledMetric(relativeTo: .caption) var safetySize = DSTypography.breakSafetySize
+    @Environment(\.dsTextScale) var textScale
     @State var model: MovementModel
     @State var focusPresentation: MovementFocusPresentation
     @State var showsInitialFocusFallback = true
@@ -23,6 +19,7 @@ public struct MovementView: View {
     @FocusState var alreadyMovedFocused: Bool
     @FocusState var skipFocused: Bool
     @FocusState var positionChangeFocused: Bool
+    @FocusState var visualOnlyFocused: Bool
 
     let standardField: AnyView
     let staticField: AnyView
@@ -61,7 +58,7 @@ public struct MovementView: View {
                     standardLayout(in: proxy.size)
                 }
 
-                if !effectiveAccessibility.staticPresentation {
+                if !effectiveAccessibility.staticPresentation, !usesLargeTextLayout {
                     DSHorizonProgress(
                         progress: model.progress,
                         increaseContrast: usesContrastSafeTokens,
@@ -73,7 +70,7 @@ public struct MovementView: View {
         }
         .ignoresSafeArea()
         .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("movement.surface")
+        .accessibilityIdentifier(surfaceIdentifier)
         .defaultFocus($doneEarlyFocused, true)
         .onKeyPress(.return) {
             model.doneEarlyFromKeyboard()
@@ -100,6 +97,7 @@ public struct MovementView: View {
         .onChange(of: alreadyMovedFocused) { _, focused in hideFallbackIfFocused(focused) }
         .onChange(of: skipFocused) { _, focused in hideFallbackIfFocused(focused) }
         .onChange(of: positionChangeFocused) { _, focused in hideFallbackIfFocused(focused) }
+        .onChange(of: visualOnlyFocused) { _, focused in hideFallbackIfFocused(focused) }
         .onChange(of: focusPresentation.showsDefaultAction) { _, visible in
             updateFocusPresentation(visible)
         }
@@ -138,6 +136,12 @@ private extension MovementView {
                 .frame(maxWidth: 960)
             choiceAndGuidance
             Spacer(minLength: DSSpacing.sm)
+            if !effectiveAccessibility.staticPresentation {
+                DSHorizonProgress(
+                    progress: model.progress,
+                    increaseContrast: usesContrastSafeTokens,
+                )
+            }
             controlStack
         }
         .padding(.horizontal, DSSpacing.xxl)
@@ -335,6 +339,8 @@ private extension MovementView {
                     action: model.alreadyMoved,
                 )
 
+                mergedVisualOnlyAction
+
                 DSBreakPill(
                     MovementL10n.skip,
                     keycap: MovementL10n.escapeKey,
@@ -382,7 +388,6 @@ private extension MovementView {
                 }
         }
     }
-
 }
 
 #Preview("Working field - walk or wheel") {

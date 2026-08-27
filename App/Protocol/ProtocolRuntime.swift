@@ -20,7 +20,7 @@ enum VisualResetLifecycleEvent: Equatable, Sendable {
 final class ProtocolRuntime {
     private let configuration: ProtocolConfiguration
     private let store: ProtocolRuntimeStore
-    private let now: () -> Date
+    let now: () -> Date
     private let makeID: () -> UUID
     private let endOfDay: (Date) -> Date
     var engine: ProtocolEngine
@@ -136,7 +136,7 @@ final class ProtocolRuntime {
             try await withLifecycleGate {
                 try await snooze(duration)
             }
-        case .startHeadsUpNow, .startVisualReset, .startMovement,
+        case .startHeadsUpNow, .openSnoozeOptions, .startVisualReset, .startMovement,
              .openWeeklyRhythm, .openSettings, .quit:
             route(action)
         }

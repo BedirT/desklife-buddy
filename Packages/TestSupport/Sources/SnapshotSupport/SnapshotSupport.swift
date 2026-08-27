@@ -86,7 +86,8 @@
         for size in sizes {
             let snapshotName = name.map { "\($0)-\(size)" } ?? "\(size)"
             let host = hostedSnapshot(
-                for: frozen(view).environment(\.dynamicTypeSize, size),
+                for: frozen(view)
+                    .environment(\.dynamicTypeSize, size),
                 layout: layout,
                 appearance: .light,
             )

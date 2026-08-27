@@ -70,8 +70,8 @@ any count of missed breaks, any numeric countdown (`D-004`).
 | CP-HU02 | Time to move, when you're ready | neutral UI; autonomy framing `[C037]` | draft |
 | CP-HU03 | Start now | neutral UI | draft |
 | CP-HU04 | In 5 minutes | neutral UI | draft |
-| CP-HU05 | More options | neutral UI | draft |
-| CP-HU06 | Both are due — one break covers them | describes merge, asserts nothing `[03 §6.3]` | draft |
+| CP-HU05 | More options | Class A neutral route label; shown only during an actionable heads-up and opens BR-13 without recording a fact | approved — BreakFlow claims review 2026-08-26 |
+| CP-HU06 | Both are due — one break covers them | describes merge, asserts nothing `[03 §6.3]`; merged scope only, with visual and movement facts/clocks still independent | approved — BreakFlow claims review 2026-08-26 |
 
 ---
 
@@ -91,12 +91,18 @@ any count of missed breaks, any numeric countdown (`D-004`).
 | CP-BR10 | Change position | `[P01]` | draft |
 | CP-BR11 | Done | neutral UI — a declaration, never a measurement `[C034]`, `D-008` | draft |
 | CP-BR12 | I already moved | neutral UI; maps to `userDeclaredAlreadyMoved` | draft |
-| CP-BR13 | Not a good moment? Snooze or skip. | `[C037]` allowed verbatim | draft |
-| CP-BR14 ⚠ | Visual reset done. Movement is still open when you want it. | describes clock state only; must not imply anything about the body | draft |
+| CP-BR13 | Not a good moment? Snooze or skip. | `[C037]` allowed verbatim | approved — BreakFlow claims review 2026-08-26 |
+| CP-BR14 ⚠ | Visual reset done. Movement is still open when you want it. | describes clock state only; must not imply anything about the body | approved — BreakFlow claims review 2026-08-26 |
 | CP-BR15 ⚠ | Changing position is worth doing — it doesn't replace moving. | `[C048]`, `09 §6`. The hardest sentence in the product: true, short, and not a lecture. | draft |
 | CP-BR16 | Skip | neutral UI; maps to `.skipped`, never misconduct `[C037]` | approved — VisualReset claims review 2026-08-26 |
-| CP-BR17 | Not now | neutral UI | draft |
-| CP-BR18 | This one doesn't work for me | neutral UI; ED-13, demands no explanation | draft |
+| CP-BR17 | Not now | neutral UI | approved — BreakFlow claims review 2026-08-26 |
+| CP-BR18 | This one doesn't work for me | neutral UI; ED-13, demands no explanation | approved — BreakFlow claims review 2026-08-26 |
+| CP-BR47 ⚠ | A longer reset may feel better after a long computer-use run. Try 5–10 minutes away from the desk when it works. | Class B; exact `03 §4.3`, `[C010]`; `may` and `when it works` are load-bearing | approved — presentation copy; action semantics separately gated |
+| CP-BR48 | `%d minutes away` | Class A duration choice; does not itself define what selection does | draft — presentation-only pending recovery action semantics |
+| CP-BR49 | `5 minutes` · `10 minutes` · `15 minutes` | Class A configured snooze durations `[03 §4.1–4.2]` | approved — BreakFlow claims review 2026-08-26 |
+| CP-BR50 | Pause for 1 hour | Class A; combines the existing pause action and exact duration `[03 §16]` | approved — neutral UI consolidation 2026-08-26 |
+| CP-BR51 | Choose `%d` minutes away | Class A VoiceOver action name; describes selection only while recovery semantics remain gated | draft — presentation-only pending recovery action semantics |
+| CP-BR52 | Snooze for `%d` minutes | Class A VoiceOver action name; maps to the configured typed snooze duration `[03 §4.1–4.2]` | approved — BreakFlow claims review 2026-08-26 |
 
 ---
 
@@ -259,7 +265,7 @@ The heads-up chip (D-019, DQ-10). Registered per `.claude/rules/health-and-claim
 |---|---|---|---|
 | CP-HU16 | Visual reset · in 45 s | A | Presentation timing `[03 §4.1]` |
 | CP-HU17 | Later ▸ → 5 min · 10 min · 15 min | A | Snooze options verbatim `[03 §4.1]` |
-| CP-HU18 | After this meeting | A | Only shown when Calendar enabled `[03 §4.1, §9]` |
+| CP-HU18 | After this meeting | A | Only shown for a bounded actual Calendar busy-end deadline `[03 §4.1, §9]`; reused by BR-13 |
 | CP-HU19 | Presenting for 1 hour | A | Protocol-sanctioned mode `[03 §9]` |
 | CP-HU20 | On hold · busy until 3:00 | A | Calendar busy suppression; shows source honestly `[03 §8]` |
 
@@ -277,6 +283,7 @@ Rejected in this pass: "Focus mode detected" (implies sensing beyond honest sour
 | CP-MV12 | 2 minutes instead | B | Quick option `[C012]` — offers, never equates 2 min with 5 |
 | CP-MV13 | I already moved | A | Maps to `userDeclaredAlreadyMoved`; user declaration, not verification `[C034]` |
 | CP-MV14 | Change position instead · logged separately | A | Position change never completes the movement clock `[01 §3.3]`; "logged separately" carries the honesty in three words |
+| CP-MV17 | Just the visual one | A | Merged movement-segment action only; visual is already retained, movement is skipped and remains due `[03 §6.3]` |
 
 Removed from the surface (not from the product): per-card description paragraphs (live
 behind selection + Settings/Help), "A chance to break up a long computer-use run."
@@ -300,6 +307,10 @@ Spoken strings are user-facing copy and follow the same claims discipline.
 | CP-VO09 | "Return" · "Escape" · visible keycaps "↩" · "esc" | A | Factual shortcut labels and VoiceOver hints; valid only while the corresponding Done early and Skip shortcuts operate |
 | CP-VO10 | "Skip this reset" | A | VoiceOver action name for the visible Skip control; maps only to `.skipped` and adds no outcome claim `[C037]` |
 | CP-VO11 | "Movement opportunity. Move in a way that works for you. Two minutes." | A | Factual quick-entry variant of CP-VO03; `%d` must equal the selected configured duration `[C010]`, `[C012]`, `[C047]` |
+| CP-VO12 | "Visual reset done. Movement is still open when you want it." | A | Persistence-acknowledged merged visual-only status; never implies movement or a body outcome. Same wording as CP-BR14 |
+| CP-VO13 | "Snoozed for %d minutes." | A | Persistence-confirmed selected deferral duration; `%d` equals the retained duration |
+| CP-VO14 | "Paused for 1 hour." | A | Persistence-confirmed manual pause duration; no health or outcome claim |
+| CP-VO15 | "Noted for this session." | A | Confirms only the session-scoped choice; no permanent preference or health claim |
 
 Cadence rule (not a string): timers announce at coarse marks only (open, 10 s/1:00, end),
 polite live region — per-second announcement is an accessibility defect (`accessibility.md` §5).
@@ -316,7 +327,7 @@ Strings the review pass found unregistered in the round-2 artboards, plus the D-
 | CP-MB17 | Paused until you resume · Resume | A | Menu-bar/status value and direct action while indefinitely paused — states the honest reason (`accessibility.md` §5) |
 | CP-MB18 | Quit | A | Standard platform item; neutral while product identity remains deferred (D-001) |
 | CP-MB19 | Break status | A | Neutral accessibility label; the dynamic value carries the actual clock and suppression state |
-| CP-MB20 | Recovery suggestion | A | Exact protocol term (`03` §4.3); names a suggestion, never a recovered outcome |
+| CP-MB20 | Recovery suggestion | A | Exact protocol term (`03` §4.3); names a suggestion, never a recovered outcome; reused as BR-12 eyebrow |
 | CP-MB21 | Quiet while the Mac is inactive · Presenting — reminders off · Quiet in Focus · Quiet in this app · Snoozed · Waiting for a pause | A | Exact `SuppressionReason` variants, visible and appended to VoiceOver only when that reason is active |
 | CP-MB22 | `%@ due.` | A | VoiceOver clock-state format; current concrete outputs are `Visual reset due.` and `Movement due.` |
 | CP-HU21 | in 45 s · in 30 s · in 15 s · in 5 s | A | Coarse capsule steps (D-029) — nothing ticks; height is the continuous signal |

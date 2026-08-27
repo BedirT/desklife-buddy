@@ -40,6 +40,13 @@ public struct StatusMenuSnapshot: Equatable, Sendable {
     public let manualPause: StatusMenuManualPause?
     public let liveHeadsUp: OpportunityPresentation?
     public let workingHoursOnly: Bool
+
+    public var hasActionableHeadsUp: Bool {
+        switch liveHeadsUp {
+        case .visual, .movement, .merged: true
+        case .recovery, nil: false
+        }
+    }
 }
 
 public struct StatusMenuContext: Equatable, Sendable {
@@ -86,6 +93,7 @@ public enum StatusMenuManualPause: Equatable, Sendable {
 public enum StatusMenuAction: Equatable, Sendable {
     case startHeadsUpNow
     case snooze(TimeInterval)
+    case openSnoozeOptions
     case startVisualReset
     case startMovement(StatusMenuMovementChoice)
     case pause(StatusMenuPauseChoice)

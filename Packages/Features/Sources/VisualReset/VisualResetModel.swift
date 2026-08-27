@@ -37,6 +37,8 @@ public struct VisualResetAccessibility: Equatable, Sendable {
 
 @Observable
 public final class VisualResetModel {
+    private static let automaticTimerRetryDelay: TimeInterval = 1
+
     public enum Phase: Equatable {
         case ready
         case running
@@ -53,17 +55,23 @@ public final class VisualResetModel {
     @ObservationIgnored private let durationSeconds: TimeInterval
     @ObservationIgnored private let finalSecondsThreshold: TimeInterval
     @ObservationIgnored private let declarationArmDelay: TimeInterval
+    @ObservationIgnored private let requiresLifecycleConfirmation: Bool
     @ObservationIgnored private let now: () -> TimeInterval
     @ObservationIgnored private let onAction: (VisualResetAction) -> Void
     @ObservationIgnored private let onAnnouncement: (VisualResetAnnouncement) -> Void
     @ObservationIgnored private var openedAt: TimeInterval?
     @ObservationIgnored private var announcedTenSeconds = false
+    @ObservationIgnored private var pendingOpenAnnouncement: VisualResetAnnouncement?
+    @ObservationIgnored private var pendingTerminalAnnouncement: VisualResetAnnouncement?
+    @ObservationIgnored private var pendingTerminalPhase: Phase?
+    @ObservationIgnored private var nextAutomaticTimerRetryAt: TimeInterval?
 
     public init(
         durationSeconds: TimeInterval,
         finalSecondsThreshold: TimeInterval = 3,
         declarationArmDelay: TimeInterval = 0.8,
         accessibility: VisualResetAccessibility = .init(),
+        requiresLifecycleConfirmation: Bool = false,
         now: @escaping () -> TimeInterval,
         onAction: @escaping (VisualResetAction) -> Void = { _ in },
         onAnnouncement: @escaping (VisualResetAnnouncement) -> Void = { _ in },
@@ -74,6 +82,7 @@ public final class VisualResetModel {
         self.durationSeconds = durationSeconds
         self.finalSecondsThreshold = min(finalSecondsThreshold, durationSeconds)
         self.declarationArmDelay = declarationArmDelay
+        self.requiresLifecycleConfirmation = requiresLifecycleConfirmation
         self.accessibility = accessibility
         self.now = now
         self.onAction = onAction
@@ -84,6 +93,7 @@ public final class VisualResetModel {
     public convenience init(
         durationSeconds: TimeInterval = 20,
         accessibility: VisualResetAccessibility = .init(),
+        requiresLifecycleConfirmation: Bool = false,
         onAction: @escaping (VisualResetAction) -> Void = { _ in },
         onAnnouncement: @escaping (VisualResetAnnouncement) -> Void = { _ in },
     ) {
@@ -91,6 +101,7 @@ public final class VisualResetModel {
         self.init(
             durationSeconds: durationSeconds,
             accessibility: accessibility,
+            requiresLifecycleConfirmation: requiresLifecycleConfirmation,
             now: { clock.seconds },
             onAction: onAction,
             onAnnouncement: onAnnouncement,
@@ -99,15 +110,20 @@ public final class VisualResetModel {
 
     public func open() {
         guard phase == .ready else { return }
+        nextAutomaticTimerRetryAt = nil
         openedAt = now()
         phase = .running
+        pendingOpenAnnouncement = .opened(durationSeconds: Int(ceil(durationSeconds)))
         onAction(.opened)
-        onAnnouncement(.opened(durationSeconds: Int(ceil(durationSeconds))))
+        if !requiresLifecycleConfirmation {
+            confirmLifecycle(.opened)
+        }
     }
 
     public func refresh() {
         guard let openedAt, isActive else { return }
-        let elapsed = max(0, now() - openedAt)
+        let currentTime = now()
+        let elapsed = max(0, currentTime - openedAt)
         let rawProgress = min(1, elapsed / durationSeconds)
         let previousRemainingSeconds = remainingSeconds
         remainingSeconds = Int(ceil(max(0, durationSeconds - elapsed)))
@@ -115,6 +131,10 @@ public final class VisualResetModel {
         progress = displayedProgress(rawProgress)
 
         if remainingSeconds == 0 {
+            if let nextAutomaticTimerRetryAt, currentTime < nextAutomaticTimerRetryAt {
+                return
+            }
+            nextAutomaticTimerRetryAt = nil
             finish(.timerFinished, announcement: .finished)
             return
         }
@@ -142,6 +162,53 @@ public final class VisualResetModel {
     public func skip() {
         guard isActive else { return }
         finish(.skipped, announcement: .skipped)
+    }
+
+    public func confirmLifecycle(_ action: VisualResetAction) {
+        switch action {
+        case .opened:
+            guard let pendingOpenAnnouncement else { return }
+            self.pendingOpenAnnouncement = nil
+            onAnnouncement(pendingOpenAnnouncement)
+        case .timerFinished, .doneEarly, .skipped:
+            guard phase == .finished(action),
+                  let pendingTerminalAnnouncement
+            else {
+                return
+            }
+            self.pendingTerminalAnnouncement = nil
+            pendingTerminalPhase = nil
+            onAnnouncement(pendingTerminalAnnouncement)
+        }
+    }
+
+    public func rejectLifecycle(_ action: VisualResetAction) {
+        switch action {
+        case .opened:
+            guard pendingOpenAnnouncement != nil else { return }
+            phase = .ready
+            openedAt = nil
+            remainingSeconds = Int(ceil(durationSeconds))
+            progress = 0
+            isDeclarationArmed = false
+            announcedTenSeconds = false
+            pendingOpenAnnouncement = nil
+            pendingTerminalAnnouncement = nil
+            pendingTerminalPhase = nil
+            nextAutomaticTimerRetryAt = nil
+        case .timerFinished, .doneEarly, .skipped:
+            guard phase == .finished(action),
+                  let pendingTerminalPhase
+            else {
+                return
+            }
+            phase = pendingTerminalPhase
+            pendingTerminalAnnouncement = nil
+            self.pendingTerminalPhase = nil
+            nextAutomaticTimerRetryAt = action == .timerFinished
+                ? now() + Self.automaticTimerRetryDelay
+                : nil
+        }
     }
 
     public func updateAccessibility(_ accessibility: VisualResetAccessibility) {
@@ -200,9 +267,16 @@ private extension VisualResetModel {
         announcement: VisualResetAnnouncement,
     ) {
         guard isActive else { return }
+        if action != .timerFinished {
+            nextAutomaticTimerRetryAt = nil
+        }
+        pendingTerminalPhase = phase
         phase = .finished(action)
+        pendingTerminalAnnouncement = announcement
         onAction(action)
-        onAnnouncement(announcement)
+        if !requiresLifecycleConfirmation {
+            confirmLifecycle(action)
+        }
     }
 }
 

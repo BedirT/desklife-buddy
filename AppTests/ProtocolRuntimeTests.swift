@@ -257,6 +257,44 @@ struct ProtocolRuntimeTests {
         #expect(store.state == retained)
     }
 
+    @Test("A failed visual terminal commit can be retried through the lifecycle queue")
+    func visualResetTerminalCommitRetry() async throws {
+        let store = RuntimeStore()
+        let runtime = try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
+            store: store,
+            now: { Date(timeIntervalSince1970: 800) },
+            makeID: { UUID(0) },
+        )
+        let queue = VisualResetLifecycleQueue()
+        try await runtime.restore()
+
+        queue.enqueue(.opened) { event in
+            try await runtime.handleVisualReset(event)
+        }
+        let openingFailure = await queue.drain()
+        #expect(openingFailure == nil)
+
+        store.failuresRemaining = 1
+        queue.enqueue(.doneEarly) { event in
+            try await runtime.handleVisualReset(event)
+        }
+        let terminalFailure = await queue.drain()
+        #expect(terminalFailure is RuntimeStore.Failure)
+
+        queue.enqueue(.doneEarly) { event in
+            try await runtime.handleVisualReset(event)
+        }
+        let retryFailure = await queue.drain()
+        #expect(retryFailure == nil)
+
+        #expect(store.commitAttempts == 3)
+        #expect(store.commits.map { $0.events.map(\.kind) } == [
+            [.breakStarted],
+            [.userDeclaredCompleted],
+        ])
+    }
+
     private func expectVisualResetFact(
         event: VisualResetLifecycleEvent,
         kind: OpportunityEventKind,
@@ -291,6 +329,7 @@ private final class RuntimeStore: ProtocolRuntimeStore {
 
     var state: ProtocolState?
     var commits: [Commit] = []
+    var commitAttempts = 0
     var failuresRemaining: Int
 
     init(state: ProtocolState? = nil, failuresRemaining: Int = 0) {
@@ -303,6 +342,7 @@ private final class RuntimeStore: ProtocolRuntimeStore {
     }
 
     func commit(events: [OpportunityEvent], state: ProtocolState) async throws {
+        commitAttempts += 1
         if failuresRemaining > 0 {
             failuresRemaining -= 1
             throw Failure.requested

@@ -26,6 +26,7 @@ public struct ProtocolState: Equatable, Sendable {
     public let movementSnoozeDeadline: Date?
     public let recoveryState: RecoveryState
     public let recoveryLastObservedAt: Date?
+    public let notAppropriateOpportunities: Set<OpportunityType>
 
     /// Creates a state snapshot from two independent opportunity clocks.
     public init(
@@ -36,6 +37,7 @@ public struct ProtocolState: Equatable, Sendable {
         movementSnoozeDeadline: Date? = nil,
         recoveryState: RecoveryState = RecoveryState(),
         recoveryLastObservedAt: Date? = nil,
+        notAppropriateOpportunities: Set<OpportunityType> = [],
     ) {
         self.profileID = profileID
         self.visualClock = visualClock
@@ -44,6 +46,9 @@ public struct ProtocolState: Equatable, Sendable {
         self.movementSnoozeDeadline = movementSnoozeDeadline
         self.recoveryState = recoveryState
         self.recoveryLastObservedAt = recoveryLastObservedAt
+        self.notAppropriateOpportunities = Set(
+            notAppropriateOpportunities.filter(\.supportsNotAppropriateSuppression),
+        )
     }
 }
 
@@ -93,6 +98,7 @@ public extension ProtocolEngine {
             movementSnoozeDeadline: state.movementSnoozeDeadline,
             recoveryState: state.recoveryState,
             recoveryLastObservedAt: state.recoveryLastObservedAt,
+            notAppropriateOpportunities: state.notAppropriateOpportunities,
         )
     }
 
@@ -106,6 +112,7 @@ public extension ProtocolEngine {
             movementSnoozeDeadline: movementSnoozeDeadline,
             recoveryState: recoveryState,
             recoveryLastObservedAt: recoveryLastObservedAt,
+            notAppropriateOpportunities: notAppropriateOpportunities,
         )
     }
 }

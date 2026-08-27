@@ -4,6 +4,8 @@ import Observation
 
 @Observable
 public final class MovementModel {
+    private static let automaticTimerRetryDelay: TimeInterval = 1
+
     public enum Phase: Equatable {
         case ready
         case running
@@ -21,6 +23,7 @@ public final class MovementModel {
 
     public let recommendedDurationSeconds: TimeInterval
     public let quickDurationSeconds: TimeInterval
+    public let context: MovementContext
 
     public var guidance: MovementGuidance {
         MovementGuidance(choice: selectedChoice)
@@ -36,10 +39,12 @@ public final class MovementModel {
     @ObservationIgnored private var lastExplicitDurationSelection: TimeInterval?
     @ObservationIgnored private var pendingOpenAnnouncement: MovementAnnouncement?
     @ObservationIgnored private var pendingTerminalAnnouncement: MovementAnnouncement?
+    @ObservationIgnored private var nextAutomaticTimerRetryAt: TimeInterval?
 
     public init(
         schedule: OpportunitySchedule,
         initialDurationSeconds: TimeInterval? = nil,
+        context: MovementContext = .standalone,
         declarationArmDelay: TimeInterval = 0.8,
         accessibility: MovementAccessibility = .init(),
         requiresLifecycleConfirmation: Bool = false,
@@ -57,6 +62,7 @@ public final class MovementModel {
 
         recommendedDurationSeconds = recommendedDuration
         quickDurationSeconds = quickDuration
+        self.context = context
         selectedDurationSeconds = initialDuration
         remainingSeconds = Int(ceil(initialDuration))
         self.declarationArmDelay = declarationArmDelay
@@ -70,6 +76,7 @@ public final class MovementModel {
     public convenience init(
         schedule: OpportunitySchedule,
         initialDurationSeconds: TimeInterval? = nil,
+        context: MovementContext = .standalone,
         accessibility: MovementAccessibility = .init(),
         requiresLifecycleConfirmation: Bool = false,
         onAction: @escaping (MovementAction) -> Void = { _ in },
@@ -79,6 +86,7 @@ public final class MovementModel {
         self.init(
             schedule: schedule,
             initialDurationSeconds: initialDurationSeconds,
+            context: context,
             accessibility: accessibility,
             requiresLifecycleConfirmation: requiresLifecycleConfirmation,
             now: { clock.seconds },
@@ -90,6 +98,7 @@ public final class MovementModel {
     public func open() {
         guard phase == .ready else { return }
         let start = now()
+        nextAutomaticTimerRetryAt = nil
         openedAt = start
         deadline = start + selectedDurationSeconds
         phase = .running
@@ -114,12 +123,17 @@ public final class MovementModel {
         isDeclarationArmed = currentTime - openedAt >= declarationArmDelay
 
         if remainingSeconds == 0 {
+            if let nextAutomaticTimerRetryAt, currentTime < nextAutomaticTimerRetryAt {
+                return
+            }
+            nextAutomaticTimerRetryAt = nil
             finish(.timerFinished, announcement: .finished)
             return
         }
-        if !announcedOneMinute,
-           previousRemainingSeconds > 60,
-           remainingSeconds <= 60 {
+        let shouldAnnounceOneMinute = !announcedOneMinute
+            && previousRemainingSeconds > 60
+            && remainingSeconds <= 60
+        if shouldAnnounceOneMinute {
             announcedOneMinute = true
             onAnnouncement(.oneMinuteRemaining)
         }
@@ -150,7 +164,8 @@ public final class MovementModel {
 
     public func selectQuickDuration() {
         guard phase == .running,
-              selectedDurationSeconds != quickDurationSeconds,
+              selectedDurationSeconds != quickDurationSeconds
+              || lastExplicitDurationSelection != quickDurationSeconds,
               let openedAt
         else {
             return
@@ -203,6 +218,11 @@ public final class MovementModel {
         finishFromKeyboard(.positionChanged, announcement: .positionChanged)
     }
 
+    public func justTheVisualOne() {
+        guard context == .merged else { return }
+        finish(.visualOnly, announcement: .visualOnly)
+    }
+
     public func skip() {
         finish(.skipped, announcement: .skipped)
     }
@@ -215,7 +235,7 @@ public final class MovementModel {
             onAnnouncement(pendingOpenAnnouncement)
         case .selectedDuration:
             break
-        case .timerFinished, .doneEarly, .alreadyMoved, .positionChanged, .skipped:
+        case .timerFinished, .doneEarly, .alreadyMoved, .positionChanged, .visualOnly, .skipped:
             guard let terminal = action.terminal,
                   phase == .finished(terminal),
                   let pendingTerminalAnnouncement
@@ -240,11 +260,12 @@ public final class MovementModel {
             announcedOneMinute = false
             pendingOpenAnnouncement = nil
             pendingTerminalAnnouncement = nil
+            nextAutomaticTimerRetryAt = nil
         case let .selectedDuration(duration):
             if lastExplicitDurationSelection == duration {
                 lastExplicitDurationSelection = nil
             }
-        case .timerFinished, .doneEarly, .alreadyMoved, .positionChanged, .skipped:
+        case .timerFinished, .doneEarly, .alreadyMoved, .positionChanged, .visualOnly, .skipped:
             guard let terminal = action.terminal,
                   phase == .finished(terminal)
             else {
@@ -252,6 +273,9 @@ public final class MovementModel {
             }
             phase = .running
             pendingTerminalAnnouncement = nil
+            nextAutomaticTimerRetryAt = terminal == .timerFinished
+                ? now() + Self.automaticTimerRetryDelay
+                : nil
         }
     }
 
@@ -268,6 +292,7 @@ public extension MovementModel {
         selectedDurationSeconds: TimeInterval = 300,
         remainingSeconds: Int = 225,
         accessibility: MovementAccessibility = .init(),
+        context: MovementContext = .standalone,
     ) -> MovementModel {
         let schedule = previewSchedule()
         let duration = schedule.durationOptionsSeconds.contains(selectedDurationSeconds)
@@ -276,6 +301,7 @@ public extension MovementModel {
         let elapsed = duration - min(max(TimeInterval(remainingSeconds), 0), duration)
         let model = MovementModel(
             schedule: schedule,
+            context: context,
             accessibility: accessibility,
             now: { elapsed },
         )
@@ -330,6 +356,9 @@ private extension MovementModel {
         announcement: MovementAnnouncement,
     ) {
         guard phase == .running else { return }
+        if terminal != .timerFinished {
+            nextAutomaticTimerRetryAt = nil
+        }
         phase = .finished(terminal)
         pendingTerminalAnnouncement = announcement
         onAction(terminal.action)
@@ -345,31 +374,6 @@ private extension MovementModel {
         if rawProgress >= 1 { return 1 }
         if rawProgress >= 0.5 { return 0.5 }
         return 0
-    }
-}
-
-private extension MovementTerminalAction {
-    var action: MovementAction {
-        switch self {
-        case .timerFinished: .timerFinished
-        case .doneEarly: .doneEarly
-        case .alreadyMoved: .alreadyMoved
-        case .positionChanged: .positionChanged
-        case .skipped: .skipped
-        }
-    }
-}
-
-private extension MovementAction {
-    var terminal: MovementTerminalAction? {
-        switch self {
-        case .timerFinished: .timerFinished
-        case .doneEarly: .doneEarly
-        case .alreadyMoved: .alreadyMoved
-        case .positionChanged: .positionChanged
-        case .skipped: .skipped
-        case .opened, .selectedDuration: nil
-        }
     }
 }
 

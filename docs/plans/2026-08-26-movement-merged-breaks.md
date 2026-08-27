@@ -1,8 +1,8 @@
 # Movement, position, merged breaks, snooze, and recovery - plan
 
 Status: in-progress
-Intake/escalation status: clear for behavior implementation; final movement art acceptance
-remains staged
+Intake/escalation status: settled Step 6 behavior is implemented; recovery selection semantics
+still require the owner, and final movement art acceptance remains staged
 
 ## Outcome
 
@@ -40,6 +40,9 @@ in place, or use a seated equivalent.” No copy or research escalation remains 
 
 ## Staged owner gates - required before final visual acceptance
 
+- Recovery selection behavior: decide whether choosing 5 or 10 minutes starts a dedicated
+  recovery timer, reuses the movement break, or records an untimed break. Until answered,
+  recovery remains presentation-only and exposes no dead Start/Later actions.
 - DQ-18 final movement art: MovementLight, 2880x1800 masters/provenance, and the movement
   Increase Contrast/Reduce Transparency variants. Working-reference gradients and seams may
   proceed but are not promoted to canonical final pixels.
@@ -78,7 +81,7 @@ in place, or use a seated equivalent.” No copy or research escalation remains 
       focus cooperatively, and prove every printed key plus display reconciliation - done = App
       tests, `scripts/build.sh`, `scripts/run.sh --verify`, `scripts/shot.sh movement`, and
       `scripts/ui.sh` when host permission is available.
-- [ ] 5. Design and model merged, snooze, and recovery states before implementation: create
+- [x] 5. Design and model merged, snooze, and recovery states before implementation: create
       Preview variants for BR-09/10/12/13 and recovery using the accepted sequential lifecycle,
       native sheet vocabulary, no-escalation rule, and patterns-not-grades copy; review the
       variants for clock honesty, dismissal, and parity - done = decision log updated and
@@ -181,3 +184,31 @@ in place, or use a seated equivalent.” No copy or research escalation remains 
   until Accessibility permission is granted. Two independent review rounds found and repaired
   the failure-acknowledgement race and active-session quick-route mismatch; the final narrow
   P0/P1/P2 re-review was clear.
+- 2026-08-26: Step 5 retains BR-09/10/12/13 Preview and render states plus exact keyboard,
+  VoiceOver, contrast, dismissal, and clock-honesty annotations. The compact Snooze sheet uses
+  native runtime focus, deterministic system-accent review focus, and accessibility-only
+  scrolling. Because macOS `dynamicTypeSize` does not resize text, `DSTextScale` now owns exact
+  1.35x and largest-supported render seams; the resulting images exposed and repaired fixed
+  horizon collisions in Visual Reset, merged Movement, and BR-10. Focused Feature tests passed
+  55 tests, focused render-only suites passed, `scripts/lint.sh` ended `LINT OK`, and final
+  design/accessibility/claims reviews reported no remaining Step 5 P0/P1/P2. Recovery 5/10
+  selection behavior remains an explicit Step 6 owner gate; the current surface is
+  presentation-only and no runtime outcome has been invented.
+- 2026-08-26: The settled Step 6 slice is retained except for recovery selection. Merged visual
+  then movement uses one cross-display session; BR-10 closes after its persisted visual-only
+  outcome; Later → More options opens the production BR-13 sheet with exact visual, movement,
+  or merged scope; not-appropriate survives restart for the current availability session; and
+  recovery exposes no action whose meaning is unsettled. Failed lifecycle writes remain
+  retryable, rejected automatic timer facts retry at most once per second, and active-overlay
+  arbitration prevents contradictory standalone and merged sessions. `scripts/test.sh Domain`
+  passed 63 tests, `scripts/test.sh Features` passed 58, the direct App bundle passed 134, and
+  render-only Features snapshots passed with the exported states inspected. Real-process
+  captures `artifacts/merged.png` (`3 visual 18 ok`) and `artifacts/snooze.png`
+  (`3 merged ok`) prove the production coordinators; design, accessibility, claims, and code
+  reviews are clear after repair. A retained `scripts/verify.sh` rerun cleared format, lint,
+  protocol/configuration, Domain, and Features before Xcode's hosted App runner reported
+  `The test runner hung before establishing connection`; direct execution of that same built
+  App test bundle then passed all 134 tests. The exact current app build launches and both
+  real-process captures pass. `scripts/ui.sh` remains host-blocked by Accessibility permission,
+  and recovery duration selection remains intentionally unrouted until the owner chooses its
+  lifecycle meaning.

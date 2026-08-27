@@ -13,6 +13,7 @@ enum StatusMenuL10n {
     static let due = string("status_menu.due", default: "Due")
     static let startNow = string("status_menu.start_now", default: "Start now")
     static let later = string("status_menu.later", default: "Later")
+    static let moreOptions = string("status_menu.more_options", default: "More options")
     static let snoozeFiveMinutes = string("status_menu.snooze_five_minutes", default: "5 minutes")
     static let snoozeTenMinutes = string("status_menu.snooze_ten_minutes", default: "10 minutes")
     static let snoozeFifteenMinutes = string("status_menu.snooze_fifteen_minutes", default: "15 minutes")
@@ -139,6 +140,7 @@ enum StatusMenuL10n {
 public enum StatusMenuCopy {
     public static let startNow = StatusMenuL10n.startNow
     public static let later = StatusMenuL10n.later
+    public static let moreOptions = StatusMenuL10n.moreOptions
     public static let snoozeFiveMinutes = StatusMenuL10n.snoozeFiveMinutes
     public static let snoozeTenMinutes = StatusMenuL10n.snoozeTenMinutes
     public static let snoozeFifteenMinutes = StatusMenuL10n.snoozeFifteenMinutes

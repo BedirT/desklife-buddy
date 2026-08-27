@@ -2,6 +2,26 @@ import DesignSystem
 import SwiftUI
 
 extension MovementView {
+    var eyebrowSize: CGFloat {
+        textScale.apply(to: DSTypography.breakEyebrowSize)
+    }
+
+    var instructionSize: CGFloat {
+        textScale.apply(to: DSTypography.breakLongInstructionSize)
+    }
+
+    var supportingSize: CGFloat {
+        textScale.apply(to: DSTypography.breakSupportingSize)
+    }
+
+    var metaSize: CGFloat {
+        textScale.apply(to: DSTypography.breakMetaSize)
+    }
+
+    var safetySize: CGFloat {
+        textScale.apply(to: DSTypography.breakSafetySize)
+    }
+
     var attributedInstruction: AttributedString {
         var instruction = AttributedString(MovementL10n.instruction)
         if let emphasis = instruction.range(of: MovementL10n.instructionEmphasis) {
@@ -48,6 +68,32 @@ extension MovementView {
 
     var usesOpaqueControlBackgrounds: Bool {
         effectiveAccessibility.reduceTransparency || effectiveAccessibility.staticPresentation
+    }
+
+    var surfaceIdentifier: String {
+        switch model.context {
+        case .standalone: "movement.surface"
+        case .merged: "merged.movement.surface"
+        }
+    }
+
+    @ViewBuilder
+    var mergedVisualOnlyAction: some View {
+        if model.context == .merged {
+            DSBreakQuietPill(
+                MovementL10n.justTheVisualOne,
+                accessibilityLabel: MovementL10n.justTheVisualOne,
+                accessibilityIdentifier: "merged.movement.visualOnly",
+                focus: $visualOnlyFocused,
+                focusOverride: focusOverride(
+                    for: .visualOnly,
+                    actual: visualOnlyFocused,
+                ),
+                reduceTransparency: usesOpaqueControlBackgrounds,
+                increaseContrast: usesContrastSafeTokens,
+                action: model.justTheVisualOne,
+            )
+        }
     }
 
     @ViewBuilder

@@ -1,6 +1,216 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "breakFlow.escape_key": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "esc"
+          }
+        }
+      }
+    },
+    "breakFlow.escape_key_accessibility": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escape"
+          }
+        }
+      }
+    },
+    "breakFlow.recovery.eyebrow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recovery suggestion"
+          }
+        }
+      }
+    },
+    "breakFlow.recovery.minutes_away_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d minutes away"
+          }
+        }
+      }
+    },
+    "breakFlow.recovery.guidance": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try 5–10 minutes away from the desk when it works."
+          }
+        }
+      }
+    },
+    "breakFlow.recovery.headline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A longer reset may feel better after a long computer-use run."
+          }
+        }
+      }
+    },
+    "breakFlow.recovery.minutes_accessibility_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose %d minutes away"
+          }
+        }
+      }
+    },
+    "breakFlow.recovery.not_now": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not now"
+          }
+        }
+      }
+    },
+    "breakFlow.snooze.after_meeting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After this meeting"
+          }
+        }
+      }
+    },
+    "breakFlow.snooze.both_due": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Both are due — one break covers them"
+          }
+        }
+      }
+    },
+    "breakFlow.snooze.minutes_accessibility_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snooze for %d minutes"
+          }
+        }
+      }
+    },
+    "breakFlow.snooze.minutes_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d minutes"
+          }
+        }
+      }
+    },
+    "breakFlow.snooze.not_appropriate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This one doesn't work for me"
+          }
+        }
+      }
+    },
+    "breakFlow.snooze.noted_for_session_announcement": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noted for this session."
+          }
+        }
+      }
+    },
+    "breakFlow.snooze.pause_for_one_hour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause for 1 hour"
+          }
+        }
+      }
+    },
+    "breakFlow.snooze.paused_one_hour_announcement": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paused for 1 hour."
+          }
+        }
+      }
+    },
+    "breakFlow.snooze.skip": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip"
+          }
+        }
+      }
+    },
+    "breakFlow.snooze.skipped_announcement": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skipped."
+          }
+        }
+      }
+    },
+    "breakFlow.snooze.snoozed_announcement_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snoozed for %d minutes."
+          }
+        }
+      }
+    },
+    "breakFlow.snooze.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not a good moment? Snooze or skip."
+          }
+        }
+      }
+    },
+    "breakFlow.visual_only_acknowledgement": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual reset done. Movement is still open when you want it."
+          }
+        }
+      }
+    },
     "item_detail.created_label": {
       "localizations": {
         "en": {
@@ -216,7 +426,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Change position instead, P — logged separately"
+            "value": "Change position instead, P \u2014 logged separately"
           }
         }
       }
@@ -381,6 +591,16 @@
         }
       }
     },
+    "movement.announcement.visual_only": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual reset done. Movement is still open when you want it."
+          }
+        }
+      }
+    },
     "movement.automatic_ending": {
       "localizations": {
         "en": {
@@ -446,7 +666,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seated — alternate lifting each foot, move the ankles, reach the arms easily."
+            "value": "Seated \u2014 alternate lifting each foot, move the ankles, reach the arms easily."
           }
         }
       }
@@ -456,7 +676,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Small space — march or step gently in place, or use a seated equivalent."
+            "value": "Small space \u2014 march or step gently in place, or use a seated equivalent."
           }
         }
       }
@@ -466,7 +686,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Walk or wheel — away from the desk, at an easy, comfortable pace."
+            "value": "Walk or wheel \u2014 away from the desk, at an easy, comfortable pace."
           }
         }
       }
@@ -487,6 +707,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "works for you"
+          }
+        }
+      }
+    },
+    "movement.just_the_visual_one": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Just the visual one"
           }
         }
       }
@@ -601,16 +831,6 @@
         }
       }
     },
-    "movement.preview_error": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn't load movement."
-          }
-        }
-      }
-    },
     "movement.position_change": {
       "localizations": {
         "en": {
@@ -626,7 +846,17 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Change position instead · logged separately"
+            "value": "Change position instead \u00b7 logged separately"
+          }
+        }
+      }
+    },
+    "movement.preview_error": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't load movement."
           }
         }
       }
@@ -727,6 +957,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Later"
+          }
+        }
+      }
+    },
+    "status_menu.more_options": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More options"
           }
         }
       }

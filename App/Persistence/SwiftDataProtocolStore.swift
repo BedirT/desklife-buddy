@@ -94,6 +94,7 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
                 wasOfferedThisSession: stored.recoveryWasOfferedThisSession,
             ),
             recoveryLastObservedAt: stored.recoveryLastObservedAt,
+            notAppropriateOpportunities: notAppropriateOpportunities(from: stored),
         )
     }
 
@@ -162,36 +163,63 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
             throw ProtocolPersistenceError.invalidSnoozeDeadline
         }
         if let stored = try fetchState() {
-            stored.updateClocks(
-                profileID: state.profileID.rawValue,
-                visualAccumulatedActiveUseSeconds: visual,
-                movementAccumulatedActiveUseSeconds: movement,
-            )
-            stored.updateSnoozes(
-                visual: state.visualSnoozeDeadline,
-                movement: state.movementSnoozeDeadline,
-            )
-            stored.updateRecovery(
-                activeUseSeconds: recovery,
-                movementDeferralCount: state.recoveryState.movementDeferralCount,
-                wasOfferedThisSession: state.recoveryState.wasOfferedThisSession,
-                lastObservedAt: state.recoveryLastObservedAt,
-            )
+            update(stored, from: state)
         } else {
-            context.insert(StoredProtocolState(
-                key: Self.stateKey,
-                schemaVersion: Self.schemaVersion,
-                profileID: state.profileID.rawValue,
-                visualAccumulatedActiveUseSeconds: visual,
-                movementAccumulatedActiveUseSeconds: movement,
-                visualSnoozeDeadline: state.visualSnoozeDeadline,
-                movementSnoozeDeadline: state.movementSnoozeDeadline,
-                recoveryActiveUseSeconds: recovery,
-                recoveryMovementDeferralCount: state.recoveryState.movementDeferralCount,
-                recoveryWasOfferedThisSession: state.recoveryState.wasOfferedThisSession,
-                recoveryLastObservedAt: state.recoveryLastObservedAt,
-            ))
+            insertState(state)
         }
+    }
+
+    private func update(_ stored: StoredProtocolState, from state: ProtocolState) {
+        stored.updateClocks(
+            profileID: state.profileID.rawValue,
+            visualAccumulatedActiveUseSeconds: state.visualClock.accumulatedActiveUseSeconds,
+            movementAccumulatedActiveUseSeconds: state.movementClock.accumulatedActiveUseSeconds,
+        )
+        stored.updateSnoozes(
+            visual: state.visualSnoozeDeadline,
+            movement: state.movementSnoozeDeadline,
+        )
+        stored.updateRecovery(
+            activeUseSeconds: state.recoveryState.accumulatedEligibleActiveUseSeconds,
+            movementDeferralCount: state.recoveryState.movementDeferralCount,
+            wasOfferedThisSession: state.recoveryState.wasOfferedThisSession,
+            lastObservedAt: state.recoveryLastObservedAt,
+        )
+        stored.updateNotAppropriateOpportunities(
+            visual: state.notAppropriateOpportunities.contains(.visual),
+            movement: state.notAppropriateOpportunities.contains(.movement),
+        )
+    }
+
+    private func insertState(_ state: ProtocolState) {
+        context.insert(StoredProtocolState(
+            key: Self.stateKey,
+            schemaVersion: Self.schemaVersion,
+            profileID: state.profileID.rawValue,
+            visualAccumulatedActiveUseSeconds: state.visualClock.accumulatedActiveUseSeconds,
+            movementAccumulatedActiveUseSeconds: state.movementClock.accumulatedActiveUseSeconds,
+            visualSnoozeDeadline: state.visualSnoozeDeadline,
+            movementSnoozeDeadline: state.movementSnoozeDeadline,
+            recoveryActiveUseSeconds: state.recoveryState.accumulatedEligibleActiveUseSeconds,
+            recoveryMovementDeferralCount: state.recoveryState.movementDeferralCount,
+            recoveryWasOfferedThisSession: state.recoveryState.wasOfferedThisSession,
+            recoveryLastObservedAt: state.recoveryLastObservedAt,
+            visualNotAppropriateThisSession: state.notAppropriateOpportunities.contains(.visual),
+            movementNotAppropriateThisSession: state.notAppropriateOpportunities.contains(.movement),
+        ))
+    }
+
+    private func notAppropriateOpportunities(
+        from stored: StoredProtocolState,
+    ) -> Set<OpportunityType> {
+        var opportunities: Set<OpportunityType> = []
+        if stored.visualNotAppropriateThisSession == true {
+            opportunities.insert(.visual)
+        }
+        if stored.movementNotAppropriateThisSession == true {
+            opportunities.insert(.movement)
+        }
+        return opportunities
     }
 
     private func event(from stored: StoredOpportunityEvent) throws -> OpportunityEvent {

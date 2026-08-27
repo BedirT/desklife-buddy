@@ -72,6 +72,7 @@ public struct ProtocolEngine: Sendable {
     public internal(set) var visualClock: OpportunityClockState
     public internal(set) var movementClock: OpportunityClockState
     public internal(set) var recoveryState: RecoveryState
+    public internal(set) var notAppropriateOpportunities: Set<OpportunityType>
     var visualSnoozeDeadline: Date?
     var movementSnoozeDeadline: Date?
     var recoveryLastObservedAt: Date?
@@ -86,6 +87,7 @@ public struct ProtocolEngine: Sendable {
         movementSnoozeDeadline: Date? = nil,
         recoveryState: RecoveryState = RecoveryState(),
         recoveryLastObservedAt: Date? = nil,
+        notAppropriateOpportunities: Set<OpportunityType> = [],
     ) {
         self.configuration = configuration
         activityEstimator = ActivityEstimator(configuration: configuration.activityEstimator)
@@ -96,6 +98,9 @@ public struct ProtocolEngine: Sendable {
         self.movementSnoozeDeadline = movementSnoozeDeadline
         self.recoveryState = recoveryState
         self.recoveryLastObservedAt = recoveryLastObservedAt
+        self.notAppropriateOpportunities = Set(
+            notAppropriateOpportunities.filter(\.supportsNotAppropriateSuppression),
+        )
     }
 
     /// Reduces one coarse system observation and returns newly emitted event facts.
@@ -204,7 +209,7 @@ extension ProtocolEngine {
             movementClock,
             schedule: configuration.movement,
         )
-        recoveryState = RecoveryState()
+        rotateSessionScopedState()
     }
 
     func phaseAfterNaturalInterruption(
@@ -313,7 +318,9 @@ extension ProtocolEngine {
         case .positionChanged:
             movementClock.phase = .gracedAfterSuppression
         case .notAppropriate:
-            break
+            if let opportunity, opportunity.supportsNotAppropriateSuppression {
+                notAppropriateOpportunities.insert(opportunity)
+            }
         case .promptPresented, .breakStarted, .timerFinished,
              .userDeclaredCompleted, .userDeclaredAlreadyMoved, .snoozed, .skipped:
             break

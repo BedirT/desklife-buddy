@@ -74,3 +74,11 @@ import SwiftUI
     .environment(\.colorScheme, .dark)
     .frame(width: 1440, height: 900)
 }
+
+#Preview("BR-09 - Merged movement segment") {
+    MovementView(
+        model: .preview(context: .merged),
+        opensAutomatically: false,
+    )
+    .frame(width: 1440, height: 900)
+}

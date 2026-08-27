@@ -134,7 +134,7 @@ private extension StatusItemCoordinator {
         rebuilt.addItem(statusRegionItem())
         rebuilt.addItem(.separator())
 
-        if model.snapshot.liveHeadsUp != nil {
+        if model.snapshot.hasActionableHeadsUp {
             rebuilt.addItem(actionItem(StatusMenuCopy.startNow, action: .startHeadsUpNow))
             rebuilt.addItem(submenuItem(
                 StatusMenuCopy.later,
@@ -142,6 +142,7 @@ private extension StatusItemCoordinator {
                     (StatusMenuCopy.snoozeFiveMinutes, .snooze(300)),
                     (StatusMenuCopy.snoozeTenMinutes, .snooze(600)),
                     (StatusMenuCopy.snoozeFifteenMinutes, .snooze(900)),
+                    (StatusMenuCopy.moreOptions, .openSnoozeOptions),
                 ],
             ))
             rebuilt.addItem(.separator())

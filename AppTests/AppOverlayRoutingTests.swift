@@ -1,4 +1,6 @@
 import Domain
+import BreakFlow
+import Foundation
 import StatusMenu
 import Testing
 @testable import App
@@ -140,6 +142,36 @@ struct AppOverlayRoutingTests {
         #expect(presentationCount == 1)
     }
 
+    @Test("A Heads-Up opening never reuses or invokes an existing same-family surface")
+    func headsUpPresentationRequiresEmptySlot() {
+        var presentationCount = 0
+
+        let decision = AppOverlayArbitration.performExclusivePresentation(
+            active: [.movement],
+        ) {
+            presentationCount += 1
+        }
+
+        #expect(decision == .blocked)
+        #expect(presentationCount == 0)
+    }
+
+    @Test("A Heads-Up opening stays unbound when no overlay actually presents")
+    func headsUpPresentationRequiresRealSurface() {
+        let delegate = AppDelegate()
+        let id = HeadsUpDeliveryID(
+            rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
+        )
+
+        let decision = delegate.presentHeadsUpBreak(
+            id,
+            opportunity: .visual(cycleID: 0),
+        )
+
+        #expect(decision == .blocked)
+        #expect(delegate.headsUpOpeningBinding == nil)
+    }
+
     @Test("Merged lifecycle writes are serialized and report an exact failed completion")
     func mergedFailureCompletion() async {
         enum Failure: Error {
@@ -174,6 +206,21 @@ struct AppOverlayRoutingTests {
         #expect(failure == nil)
         #expect(attempted == [.opened, .opened])
         #expect(completions == [false, true])
+    }
+
+    @Test("A released AppDelegate reports lifecycle failure instead of silent success")
+    func releasedDelegateFailsCompletion() async {
+        await confirmation { completionReceived in
+            var delegate: AppDelegate? = AppDelegate()
+            delegate?.enqueueBreakFlowForTesting(.skip(scope: .visual)) { result in
+                #expect(throws: AppDelegateLifecycleError.coordinatorUnavailable) {
+                    try result.get()
+                }
+                completionReceived()
+            }
+            delegate = nil
+            for _ in 0 ..< 10 { await Task.yield() }
+        }
     }
 }
 

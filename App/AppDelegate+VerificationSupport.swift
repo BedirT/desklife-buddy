@@ -2,6 +2,21 @@ import Foundation
 import StatusMenu
 
 extension AppDelegate {
+    static func verificationHeadsUpPolicy(
+        arguments: [String],
+    ) -> HeadsUpRuntimePolicy? {
+        #if DEBUG
+            guard arguments.contains("--verify-heads-up-notification")
+                    || arguments.contains("--verify-heads-up-capsule")
+            else {
+                return nil
+            }
+            return HeadsUpRuntimePolicy(maximumSnoozeReoffers: 1)
+        #else
+            return nil
+        #endif
+    }
+
     static var isRunningTests: Bool {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }

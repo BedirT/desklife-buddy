@@ -1,8 +1,14 @@
+import BreakFlow
+import Domain
 import Foundation
 import StatusMenu
 
 extension AppDelegate {
-    func present(_ overlayRoute: AppOverlayRoute, for action: StatusMenuAction) {
+    @discardableResult
+    func present(
+        _ overlayRoute: AppOverlayRoute,
+        for action: StatusMenuAction,
+    ) -> AppOverlayPresentationDecision {
         AppOverlayArbitration.performPresentation(
             requested: overlayRoute.family,
             active: activeOverlayFamilies,
@@ -22,6 +28,47 @@ extension AppDelegate {
         }
     }
 
+    func presentHeadsUpBreak(
+        _ id: HeadsUpDeliveryID,
+        opportunity: HeadsUpOpportunityID,
+    ) -> AppOverlayPresentationDecision {
+        let family = HeadsUpLifecycleCoordinator.family(for: opportunity)
+        let binding = HeadsUpOpeningBinding(id: id, family: family)
+        let decision = AppOverlayArbitration.performExclusivePresentation(
+            active: activeOverlayFamilies,
+        ) { [self] in
+            headsUpOpeningBinding = binding
+            switch opportunity {
+            case .visual:
+                overlayCoordinator?.present()
+            case .movement:
+                movementOverlayCoordinator?.present()
+            case .merged:
+                mergedOverlayCoordinator?.present()
+            }
+        }
+        guard decision == .presented, isHeadsUpOverlayPresenting(opportunity) else {
+            if headsUpOpeningBinding == binding { headsUpOpeningBinding = nil }
+            return .blocked
+        }
+        return .presented
+    }
+
+    func presentHeadsUpMoreOptions(
+        _ id: HeadsUpDeliveryID,
+        opportunity: HeadsUpOpportunityID,
+    ) -> BreakFlowOverlayCoordinator.PresentationResult {
+        let scope: BreakScope = switch opportunity {
+        case .visual: .visual
+        case .movement: .movement
+        case .merged: .merged
+        }
+        return breakFlowOverlayCoordinator?.presentSnooze(
+            actionID: id.rawValue,
+            scope: scope,
+        ) ?? .blocked
+    }
+
     var activeOverlayFamilies: Set<AppOverlayFamily> {
         var active: Set<AppOverlayFamily> = []
         if overlayCoordinator?.isPresenting == true { active.insert(.visualReset) }
@@ -29,6 +76,17 @@ extension AppDelegate {
         if mergedOverlayCoordinator?.isPresenting == true { active.insert(.merged) }
         if breakFlowOverlayCoordinator?.isPresenting == true { active.insert(.snooze) }
         return active
+    }
+
+    private func isHeadsUpOverlayPresenting(_ opportunity: HeadsUpOpportunityID) -> Bool {
+        switch opportunity {
+        case .visual:
+            overlayCoordinator?.isPresenting == true
+        case .movement:
+            movementOverlayCoordinator?.isPresenting == true
+        case .merged:
+            mergedOverlayCoordinator?.isPresenting == true
+        }
     }
 
     private func selectedDuration(for action: StatusMenuAction) -> TimeInterval? {

@@ -70,6 +70,16 @@ enum AppOverlayPresentationDecision: Equatable {
 
 enum AppOverlayArbitration {
     @discardableResult
+    static func performExclusivePresentation(
+        active: Set<AppOverlayFamily>,
+        operation: () -> Void,
+    ) -> AppOverlayPresentationDecision {
+        guard active.isEmpty else { return .blocked }
+        operation()
+        return .presented
+    }
+
+    @discardableResult
     static func performPresentation(
         requested: AppOverlayFamily,
         active: Set<AppOverlayFamily>,

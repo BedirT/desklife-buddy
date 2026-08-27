@@ -9,7 +9,7 @@ final class HeadsUpApproachDriver {
     private let now: () -> TimeInterval
     private let scheduleRefresh: Scheduler
 
-    private var startedAtSeconds: TimeInterval?
+    private var targetAtSeconds: TimeInterval?
     private var lastProgress: Double
     private var refreshCancellation: OverlayCancellation?
 
@@ -46,8 +46,8 @@ final class HeadsUpApproachDriver {
             return
         }
         lastProgress = max(lastProgress, model.approachProgress)
-        startedAtSeconds = validClockSample().map {
-            $0 - lastProgress * leadSeconds
+        targetAtSeconds = validClockSample().map {
+            $0 + (1 - lastProgress) * leadSeconds
         }
         refreshCancellation = scheduleRefresh { [weak self] in self?.update() }
         update()
@@ -59,13 +59,13 @@ final class HeadsUpApproachDriver {
         else {
             return
         }
-        guard let startedAtSeconds else {
-            self.startedAtSeconds = sample - lastProgress * leadSeconds
+        guard let targetAtSeconds else {
+            self.targetAtSeconds = sample + (1 - lastProgress) * leadSeconds
             return
         }
 
-        let elapsed = max(0, sample - startedAtSeconds)
-        let progress = min(max(elapsed / leadSeconds, 0), 1)
+        let remaining = max(0, targetAtSeconds - sample)
+        let progress = min(max(1 - remaining / leadSeconds, 0), 1)
         let monotonicProgress = max(lastProgress, progress)
         guard monotonicProgress > lastProgress else { return }
 
@@ -76,10 +76,24 @@ final class HeadsUpApproachDriver {
         }
     }
 
+    func retarget(remainingSeconds: TimeInterval) {
+        guard remainingSeconds.isFinite,
+              remainingSeconds >= 0,
+              let sample = validClockSample()
+        else {
+            return
+        }
+        if refreshCancellation != nil {
+            update()
+        }
+        targetAtSeconds = sample + remainingSeconds
+        update()
+    }
+
     func stop() {
         refreshCancellation?.cancel()
         refreshCancellation = nil
-        startedAtSeconds = nil
+        targetAtSeconds = nil
     }
 
     deinit {

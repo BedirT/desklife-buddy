@@ -13,8 +13,12 @@ struct BreakFlowOverlayCoordinatorTests {
         )
         let coordinator = harness.makeCoordinator()
 
-        coordinator.presentSnooze(scope: .merged)
+        let result = coordinator.presentSnooze(
+            actionID: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
+            scope: .merged,
+        )
 
+        #expect(result == .presented)
         #expect(harness.operations == ["capture", "activate"])
         #expect(harness.panels.map(\.displayID) == [.direct(1), .direct(2)])
         #expect(harness.panels.filter(\.wasMadeKey).map(\.displayID) == [.direct(1)])
@@ -24,6 +28,36 @@ struct BreakFlowOverlayCoordinatorTests {
             calendarEnd: nil,
         ))
         #expect(harness.screenObservationCount == 1)
+    }
+
+    @Test("Only the exact pending action may reuse an already presented snooze surface")
+    func exactActionReuse() {
+        let harness = BreakFlowOverlayHarness(
+            displays: [breakFlowDisplay(1, isMain: true)],
+        )
+        let coordinator = harness.makeCoordinator()
+        let firstID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+        let otherID = UUID(uuidString: "00000000-0000-0000-0000-000000000002")!
+
+        #expect(coordinator.presentSnooze(actionID: firstID, scope: .visual) == .presented)
+        #expect(coordinator.presentSnooze(actionID: firstID, scope: .visual) == .reused)
+        #expect(coordinator.presentSnooze(actionID: otherID, scope: .visual) == .blocked)
+        #expect(coordinator.presentSnooze(actionID: firstID, scope: .movement) == .blocked)
+        #expect(harness.panels.count == 1)
+    }
+
+    @Test("A snooze surface reports blocked when no display can actually present it")
+    func noDisplayIsBlocked() {
+        let harness = BreakFlowOverlayHarness(displays: [])
+        let coordinator = harness.makeCoordinator()
+
+        let result = coordinator.presentSnooze(
+            actionID: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
+            scope: .visual,
+        )
+
+        #expect(result == .blocked)
+        #expect(!coordinator.isPresenting)
     }
 
     @Test("Snooze persistence succeeds before every panel closes and focus restores once")

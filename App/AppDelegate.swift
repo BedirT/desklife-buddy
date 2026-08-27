@@ -1,12 +1,13 @@
 import AppKit
 import BreakFlow
 import Domain
+import HeadsUp
 import Movement
 import StatusMenu
 import VisualReset
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private var runtime: ProtocolRuntime?
+    var runtime: ProtocolRuntime?
     private var activitySource: SystemActivitySource?
     private var statusItemCoordinator: StatusItemCoordinator?
     private var dockMenuController: DockMenuController?
@@ -14,32 +15,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var movementOverlayCoordinator: MovementOverlayCoordinator?
     var mergedOverlayCoordinator: MergedOverlayCoordinator?
     var breakFlowOverlayCoordinator: BreakFlowOverlayCoordinator?
+    var headsUpLifecycleCoordinator: HeadsUpLifecycleCoordinator?
+    var headsUpOpeningBinding: HeadsUpOpeningBinding?
     #if DEBUG
         private var verificationOverlayCoordinator: VisualResetOverlayCoordinator?
     #endif
     private var activityTimer: Timer?
-    private let visualResetLifecycleQueue = VisualResetLifecycleQueue()
-    private let movementLifecycleQueue = MovementLifecycleQueue()
-    private let mergedLifecycleQueue = MergedLifecycleQueue()
+    let visualResetLifecycleQueue = VisualResetLifecycleQueue()
+    let movementLifecycleQueue = MovementLifecycleQueue()
+    let mergedLifecycleQueue = MergedLifecycleQueue()
     var configuration: ProtocolConfiguration?
     private var verificationPreviewState: StatusMenuModel.PreviewState?
     private var latestSnapshot = StatusMenuModel.preview(.normal).snapshot
+    private var headsUpStatusProjection: HeadsUpStatusMenuProjection?
     private var visualResetCaptureCount = 0
     private var movementCaptureCount = 0
     var mergedCaptureCount = 0
     var snoozeCaptureCount = 0
-    private(set) var lastRuntimeError: Error?
+    var lastRuntimeError: Error?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         do {
             let configuration = try ProtocolProfiles.configuration(for: .balanced)
-            let runtime = try ProtocolRuntime(
-                configuration: configuration,
-                store: SwiftDataProtocolStore(
-                    inMemory: Self.isRunningTests || Self.isVerificationRun,
-                ),
+            let store = try SwiftDataProtocolStore(
+                inMemory: Self.isRunningTests || Self.isVerificationRun,
             )
-            install(configuration: configuration, runtime: runtime)
+            let headsUpPolicy = Self.verificationHeadsUpPolicy(
+                arguments: ProcessInfo.processInfo.arguments,
+            )
+            let runtime = if let headsUpPolicy {
+                ProtocolRuntime(
+                    configuration: configuration,
+                    store: store,
+                    headsUpRuntimePolicy: headsUpPolicy,
+                )
+            } else {
+                ProtocolRuntime(configuration: configuration, store: store)
+            }
+            install(
+                configuration: configuration,
+                runtime: runtime,
+                headsUpPolicy: headsUpPolicy,
+            )
             restore(runtime)
         } catch {
             lastRuntimeError = error
@@ -56,33 +73,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         movementOverlayCoordinator?.tearDown()
         mergedOverlayCoordinator?.tearDown()
         breakFlowOverlayCoordinator?.tearDown()
+        headsUpLifecycleCoordinator?.tearDown()
         #if DEBUG
             verificationOverlayCoordinator?.tearDown()
         #endif
     }
 }
 
-private extension AppDelegate {
-    func install(configuration: ProtocolConfiguration, runtime: ProtocolRuntime) {
+extension AppDelegate {
+    func install(
+        configuration: ProtocolConfiguration,
+        runtime: ProtocolRuntime,
+        headsUpPolicy: HeadsUpRuntimePolicy?,
+    ) {
         let arguments = ProcessInfo.processInfo.arguments
         verificationPreviewState = Self.verificationState(from: arguments)
         self.configuration = configuration
         self.runtime = runtime
-        overlayCoordinator = VisualResetOverlayCoordinator(
-            durationSeconds: configuration.visual.durationOptionsSeconds[0],
-            onLifecycle: { [weak self] action, completion in
-                self?.enqueueVisualReset(action, completion: completion)
-            },
-            onAnnouncement: VisualResetAccessibilityAnnouncer.post,
-        )
-        movementOverlayCoordinator = MovementOverlayCoordinator(
-            schedule: configuration.movement,
-            onLifecycle: { [weak self] action, completion in
-                self?.enqueueMovement(action, completion: completion)
-            },
-            onAnnouncement: MovementAccessibilityAnnouncer.post,
-        )
+        installPrimaryOverlays(configuration: configuration)
         installStepSixOverlays(configuration: configuration)
+        installHeadsUpLifecycle(runtime: runtime, policy: headsUpPolicy)
         runtime.onChange = { [weak self] state, context in
             self?.refreshStatus(state: state, context: context)
         }
@@ -96,7 +106,11 @@ private extension AppDelegate {
             )
         statusItemCoordinator = StatusItemCoordinator(
             model: initialModel,
+            headsUpProjection: headsUpStatusProjection,
             onAction: { [weak self] action in self?.handle(action) },
+            onHeadsUpIntent: { [weak self] intent in
+                self?.headsUpLifecycleCoordinator?.send(intent)
+            },
         )
         dockMenuController = DockMenuController(
             onAction: { [weak self] action in self?.handle(action) },
@@ -112,7 +126,11 @@ private extension AppDelegate {
             visualDurationSeconds: configuration.visual.durationOptionsSeconds[0],
             movementSchedule: configuration.movement,
             onLifecycle: { [weak self] event, completion in
-                self?.enqueueMerged(event, completion: completion)
+                guard let self else {
+                    completion(.failure(AppDelegateLifecycleError.coordinatorUnavailable))
+                    return
+                }
+                enqueueMerged(event, completion: completion)
             },
             onVisualAnnouncement: VisualResetAccessibilityAnnouncer.post,
             onMovementAnnouncement: MovementAccessibilityAnnouncer.post,
@@ -120,7 +138,11 @@ private extension AppDelegate {
         breakFlowOverlayCoordinator = BreakFlowOverlayCoordinator(
             snoozeDurationsSeconds: configuration.delivery.snoozeOptionsSeconds,
             onAction: { [weak self] action, completion in
-                self?.enqueueBreakFlow(action, completion: completion)
+                guard let self else {
+                    completion(.failure(AppDelegateLifecycleError.coordinatorUnavailable))
+                    return
+                }
+                enqueueBreakFlow(action, completion: completion)
             },
             onAnnouncement: BreakFlowAccessibilityAnnouncer.post,
         )
@@ -129,6 +151,13 @@ private extension AppDelegate {
     func restore(_ runtime: ProtocolRuntime) {
         Task { [weak self] in
             guard let self else { return }
+            if let headsUpLifecycleCoordinator {
+                await headsUpLifecycleCoordinator.start(
+                    initialSample: activitySource?.sample(),
+                )
+                startActivityTimer()
+                return
+            }
             do {
                 try await runtime.restore()
                 if let activitySource {
@@ -256,6 +285,10 @@ private extension AppDelegate {
     #endif
 
     func observe(_ sample: ActivitySample) {
+        if let headsUpLifecycleCoordinator {
+            headsUpLifecycleCoordinator.observe(sample)
+            return
+        }
         guard let runtime else { return }
         Task { [weak self] in
             do {
@@ -286,7 +319,25 @@ private extension AppDelegate {
                 context: context,
             )
         latestSnapshot = model.snapshot
-        statusItemCoordinator?.update(model: model)
+        statusItemCoordinator?.update(
+            model: model,
+            headsUpProjection: headsUpStatusProjection,
+        )
+    }
+
+    func updateHeadsUpStatusProjection(_ projection: HeadsUpStatusMenuProjection?) {
+        headsUpStatusProjection = projection
+        guard let runtime, let configuration else { return }
+        let model = verificationPreviewState.map(StatusMenuModel.preview)
+            ?? StatusMenuModel(
+                state: runtime.state,
+                configuration: configuration,
+                context: runtime.statusContext,
+            )
+        statusItemCoordinator?.update(
+            model: model,
+            headsUpProjection: projection,
+        )
     }
 
     func route(_ action: StatusMenuAction) {
@@ -314,83 +365,4 @@ private extension AppDelegate {
         }
     }
 
-    func enqueueVisualReset(
-        _ action: VisualResetAction,
-        completion: @escaping (Result<Void, any Error>) -> Void,
-    ) {
-        let event: VisualResetLifecycleEvent = switch action {
-        case .opened: .opened
-        case .timerFinished: .timerFinished
-        case .doneEarly: .doneEarly
-        case .skipped: .skipped
-        }
-        visualResetLifecycleQueue.enqueue(
-            event,
-            operation: { [weak self] event in
-                guard let self, let runtime else { return }
-                try await runtime.handleVisualReset(event)
-            },
-            onFailure: { [weak self] error in self?.lastRuntimeError = error },
-            completion: completion,
-        )
-    }
-
-    func enqueueMovement(
-        _ action: MovementAction,
-        completion: @escaping (Result<Void, any Error>) -> Void,
-    ) {
-        let event: MovementLifecycleEvent
-        switch action {
-        case .opened: event = .opened
-        case let .selectedDuration(duration): event = .selectedDuration(duration)
-        case .timerFinished: event = .timerFinished
-        case .doneEarly: event = .doneEarly
-        case .alreadyMoved: event = .alreadyMoved
-        case .positionChanged: event = .positionChanged
-        case .skipped: event = .skipped
-        case .visualOnly:
-            completion(.failure(ProtocolLifecycleError.invalidTransition))
-            return
-        }
-        movementLifecycleQueue.enqueue(
-            event,
-            operation: { [weak self] event in
-                guard let self, let runtime else { return }
-                try await runtime.handleMovement(event)
-            },
-            onFailure: { [weak self] error in self?.lastRuntimeError = error },
-            completion: completion,
-        )
-    }
-
-    func enqueueMerged(
-        _ event: MergedLifecycleEvent,
-        completion: @escaping (Result<Void, any Error>) -> Void,
-    ) {
-        mergedLifecycleQueue.enqueue(
-            event,
-            operation: { [weak self] event in
-                guard let self, let runtime else { return }
-                try await runtime.handleMerged(event)
-            },
-            onFailure: { [weak self] error in self?.lastRuntimeError = error },
-            completion: completion,
-        )
-    }
-
-    func enqueueBreakFlow(
-        _ action: BreakFlowAction,
-        completion: @escaping (Result<Void, any Error>) -> Void,
-    ) {
-        Task { [weak self] in
-            guard let self, let runtime else { return }
-            do {
-                try await runtime.handleBreakFlow(action)
-                completion(.success(()))
-            } catch {
-                lastRuntimeError = error
-                completion(.failure(error))
-            }
-        }
-    }
 }

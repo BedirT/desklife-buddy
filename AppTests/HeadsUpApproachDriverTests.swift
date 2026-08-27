@@ -97,6 +97,44 @@ struct HeadsUpApproachDriverTests {
         #expect(harness.cancellationCount == 1)
     }
 
+    @Test("Retargeting later pauses progress so the capsule cannot land at the old target")
+    func laterRetarget() {
+        let harness = HeadsUpApproachDriverHarness()
+        let driver = harness.makeDriver(leadSeconds: 40)
+        driver.start()
+        harness.now = 20
+        driver.update()
+        #expect(harness.model.approachProgress == 0.5)
+
+        driver.retarget(remainingSeconds: 40)
+        harness.now = 40
+        driver.update()
+        #expect(harness.model.approachProgress == 0.5)
+
+        harness.now = 60
+        driver.update()
+        #expect(harness.model.approachProgress == 1)
+    }
+
+    @Test("Retargeting earlier advances against the exact remaining interval")
+    func earlierRetarget() {
+        let harness = HeadsUpApproachDriverHarness()
+        let driver = harness.makeDriver(leadSeconds: 40)
+        driver.start()
+        harness.now = 10
+        driver.update()
+        #expect(harness.model.approachProgress == 0.25)
+
+        driver.retarget(remainingSeconds: 10)
+        #expect(harness.model.approachProgress == 0.75)
+        harness.now = 15
+        driver.update()
+        #expect(harness.model.approachProgress == 0.875)
+        harness.now = 20
+        driver.update()
+        #expect(harness.model.approachProgress == 1)
+    }
+
     @Test("Explicit stop cancels once and makes a retained callback inert")
     func stop() {
         let harness = HeadsUpApproachDriverHarness()

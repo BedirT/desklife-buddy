@@ -3,6 +3,12 @@ import BreakFlow
 import CoreGraphics
 
 final class BreakFlowOverlayCoordinator {
+    enum PresentationResult: Equatable {
+        case presented
+        case reused
+        case blocked
+    }
+
     typealias PanelFactory = (
         OverlayDisplay,
         BreakFlowModel,
@@ -33,6 +39,7 @@ final class BreakFlowOverlayCoordinator {
     private var screenCancellation: OverlayCancellation?
     private var isDismissing = false
     private var restorationPending = false
+    private var presentationIdentity: (actionID: UUID, scope: BreakScope)?
 
     init(
         policy: OverlayDisplayPolicy = .allDisplays,
@@ -96,10 +103,19 @@ final class BreakFlowOverlayCoordinator {
         )
     }
 
-    func presentSnooze(scope: BreakScope) {
-        guard model == nil else { return }
+    @discardableResult
+    func presentSnooze(
+        actionID: UUID,
+        scope: BreakScope,
+    ) -> PresentationResult {
+        if let presentationIdentity {
+            return presentationIdentity.actionID == actionID && presentationIdentity.scope == scope
+                ? .reused
+                : .blocked
+        }
+        guard model == nil else { return .blocked }
         let plan = OverlayDisplayPlan.resolve(displays(), policy: policy)
-        guard !plan.displays.isEmpty else { return }
+        guard !plan.displays.isEmpty else { return .blocked }
 
         priorProcessIdentifier = captureFrontmostProcessIdentifier()
         let model = BreakFlowModel(
@@ -108,6 +124,7 @@ final class BreakFlowOverlayCoordinator {
             recoveryDurationsSeconds: [300, 600],
             onAction: { [weak self] action in self?.handle(action) },
         )
+        presentationIdentity = (actionID, scope)
         self.model = model
         reconcile(to: plan, model: model, presenting: true)
         activate()
@@ -120,6 +137,11 @@ final class BreakFlowOverlayCoordinator {
         screenCancellation = observeScreenChanges { [weak self] in
             self?.screenParametersChanged()
         }
+        return .presented
+    }
+
+    func presentSnooze(scope: BreakScope) {
+        _ = presentSnooze(actionID: UUID(), scope: scope)
     }
 
     var isPresenting: Bool {
@@ -150,6 +172,7 @@ final class BreakFlowOverlayCoordinator {
         panels.values.forEach { $0.close() }
         panels.removeAll()
         model = nil
+        presentationIdentity = nil
         priorProcessIdentifier = nil
         restorationPending = false
         isDismissing = false
@@ -178,21 +201,6 @@ final class BreakFlowOverlayCoordinator {
         }
     }
 
-    private static func announcement(for action: BreakFlowAction) -> BreakFlowAnnouncement? {
-        switch action {
-        case let .snooze(_, durationSeconds):
-            .snoozed(minutes: Int(durationSeconds / 60))
-        case .pauseOneHour:
-            .pausedOneHour
-        case .notAppropriate:
-            .notedForSession
-        case .skip:
-            .skipped
-        case .acknowledgementFinished, .snoozeUntil, .chooseRecovery, .dismissRecovery:
-            nil
-        }
-    }
-
     private func dismissPanels() {
         guard !isDismissing, model != nil else { return }
         isDismissing = true
@@ -201,6 +209,7 @@ final class BreakFlowOverlayCoordinator {
         panels.values.forEach { $0.close() }
         panels.removeAll()
         model = nil
+        presentationIdentity = nil
         restorationPending = true
         isDismissing = false
     }
@@ -256,6 +265,23 @@ final class BreakFlowOverlayCoordinator {
     deinit {
         MainActor.assumeIsolated {
             tearDown()
+        }
+    }
+}
+
+private extension BreakFlowOverlayCoordinator {
+    static func announcement(for action: BreakFlowAction) -> BreakFlowAnnouncement? {
+        switch action {
+        case let .snooze(_, durationSeconds):
+            .snoozed(minutes: Int(durationSeconds / 60))
+        case .pauseOneHour:
+            .pausedOneHour
+        case .notAppropriate:
+            .notedForSession
+        case .skip:
+            .skipped
+        case .acknowledgementFinished, .snoozeUntil, .chooseRecovery, .dismissRecovery:
+            nil
         }
     }
 }

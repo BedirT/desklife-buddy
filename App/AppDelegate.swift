@@ -40,53 +40,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var lastRuntimeError: Error?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        do {
-            let arguments = ProcessInfo.processInfo.arguments
-            let configuration = try ProtocolProfiles.configuration(for: .balanced)
-            let baseStore = try SwiftDataProtocolStore(
-                inMemory: Self.isRunningTests || Self.isVerificationRun,
-            )
-            #if DEBUG
-                let verificationMode = HeadsUpVerificationMode(arguments: arguments)
-                headsUpVerificationMode = verificationMode
-                let store: any ProtocolRuntimeStore
-                if verificationMode?.enablesRuntime == true {
-                    let tracingStore = HeadsUpVerificationRuntimeStore(base: baseStore)
-                    headsUpVerificationStore = tracingStore
-                    store = tracingStore
-                } else {
-                    store = baseStore
-                }
-            #else
-                let store: any ProtocolRuntimeStore = baseStore
-            #endif
-            let headsUpPolicy = Self.verificationHeadsUpPolicy(
-                arguments: arguments,
-            )
-            let runtime = if let headsUpPolicy {
-                ProtocolRuntime(
-                    configuration: configuration,
-                    store: store,
-                    headsUpRuntimePolicy: headsUpPolicy,
-                    makeID: {
-                        #if DEBUG
-                            HeadsUpVerificationRoute.deliveryID
-                        #else
-                            UUID()
-                        #endif
-                    },
-                )
-            } else {
-                ProtocolRuntime(configuration: configuration, store: store)
+        let arguments = ProcessInfo.processInfo.arguments
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await startApplication(arguments: arguments)
+            } catch {
+                lastRuntimeError = error
             }
-            install(
-                configuration: configuration,
-                runtime: runtime,
-                headsUpPolicy: headsUpPolicy,
-            )
-            restore(runtime)
-        } catch {
-            lastRuntimeError = error
         }
     }
 
@@ -124,6 +85,10 @@ extension AppDelegate {
         runtime.onChange = { [weak self] state, context in
             self?.refreshStatus(state: state, context: context)
         }
+        runtime.onConfigurationChange = { [weak self] configuration in
+            self?.applyRuntimeConfiguration(configuration)
+        }
+        installSettingsPresentationBoundary(on: runtime)
         runtime.onRoute = { [weak self] action in self?.route(action) }
 
         let initialModel = verificationPreviewState.map(StatusMenuModel.preview)
@@ -147,6 +112,13 @@ extension AppDelegate {
             onAvailabilityChange: { [weak self] sample in self?.observe(sample) },
         )
         configureVerification(arguments: arguments)
+    }
+
+    func installSettingsPresentationBoundary(on runtime: ProtocolRuntime) {
+        runtime.settingsPresentationBusyReason = { [weak self] in
+            guard self?.activeOverlayFamilies.isEmpty == false else { return nil }
+            return .activeBreak
+        }
     }
 
     func installStepSixOverlays(configuration: ProtocolConfiguration) {
@@ -317,6 +289,18 @@ extension AppDelegate {
         )
     }
 
+    func applyRuntimeConfiguration(_ configuration: ProtocolConfiguration) {
+        self.configuration = configuration
+        overlayCoordinator?.tearDown()
+        movementOverlayCoordinator?.tearDown()
+        mergedOverlayCoordinator?.tearDown()
+        breakFlowOverlayCoordinator?.tearDown()
+        installPrimaryOverlays(configuration: configuration)
+        installStepSixOverlays(configuration: configuration)
+        guard let runtime else { return }
+        refreshStatus(state: runtime.state, context: runtime.statusContext)
+    }
+
     func updateHeadsUpStatusProjection(_ projection: HeadsUpStatusMenuProjection?) {
         headsUpStatusProjection = projection
         guard let runtime, let configuration else { return }
@@ -356,5 +340,4 @@ extension AppDelegate {
             break
         }
     }
-
 }

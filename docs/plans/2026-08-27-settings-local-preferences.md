@@ -47,7 +47,7 @@ telemetry.
       semantics. Implement value models and store protocols only after RED. Done =
       `scripts/test.sh Domain` green. Gating suites: `AppPreferencesTests`,
       `AppPreferencesMutationTests`, `HistoryPolicyTests`, and `HistoryExportTests`.
-- [ ] 2. App persistence and runtime application: write failing App tests for additive/versioned
+- [x] 2. App persistence and runtime application: write failing App tests for additive/versioned
       SwiftData preference storage, custom configuration round-trip, pre-Settings store migration,
       restart persistence, event-retention pruning, human-readable export, history-only deletion,
       reset-all deletion, and runtime reconfiguration that preserves honest clocks. Implement real
@@ -146,3 +146,23 @@ telemetry.
   integration choices, and live state before installing a fresh Balanced zero state. Neither
   operation claims to revoke macOS notification authorization or other external system state.
   Keep-nothing applies to all future history and Weekly aggregates, not only raw events.
+- 2026-08-27: Step 2 is retained after three adversarial repair rounds. App-owned SwiftData now
+  stores one versioned preference value plus the exact generated configuration snapshot, opens a
+  separately seeded pre-Settings SQLite store additively, enforces the default or selected
+  retention boundary on startup, reads, writes, and export, and keeps preference/state profiles
+  atomic. Human-readable JSON/CSV handles finite numeric extremes without trapping; delete
+  history keeps preferences and crash-recovery state; reset all also removes legacy harness rows.
+  Injected save failures prove shared-context mutations roll back instead of leaking staged work.
+- 2026-08-27: Runtime reconfiguration preserves both clocks, cycle generations, both snooze
+  deadlines, recovery debt, session choices, and the complete Heads-Up ledger while emitting no
+  event. Relaunch uses the retained exact configuration and working-hours choice. Active lifecycle
+  work, running clocks, Heads-Up delivery/action state, BreakFlow, and pre-open panels all return a
+  typed busy result. Overlay-presenting menu routes share the lifecycle gate, closing the delayed
+  commit race that previously allowed a newly presented panel to be torn down by configuration
+  publication.
+- 2026-08-27: Retained RED artifacts cover the original Step 2 contract, review repairs, real
+  App-overlay composition, and the delayed route race under `artifacts/settings-step2-*.txt`.
+  Final verification passed 117 Domain tests / 15 suites and 339 direct App tests / 41 suites;
+  App build-for-testing and the signed build passed; `scripts/lint.sh` reported `LINT OK` with
+  only the two unrelated existing warnings; `git diff --check` was clean. Final independent
+  persistence and runtime re-reviews found no remaining P0-P2 findings.

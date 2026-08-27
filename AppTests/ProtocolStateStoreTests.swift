@@ -548,7 +548,7 @@ extension ProtocolStateStoreTests {
         #expect(loaded.headsUpDeliveryState == HeadsUpDeliveryState())
     }
 
-    private func seedLegacyProtocolStore(at storeURL: URL, sourceURL: URL) throws {
+    func seedLegacyProtocolStore(at storeURL: URL, sourceURL: URL) throws {
         let source = #"""
         import Foundation
         import SwiftData
@@ -579,13 +579,13 @@ extension ProtocolStateStoreTests {
             var opportunity: String?
             var selectedDurationSeconds: Double?
 
-            init() {
-                id = UUID()
+            init(id: UUID, sequence: Int64, recordedAt: Date) {
+                self.id = id
                 schemaVersion = 1
-                appendSequence = 0
-                kind = "prompt_presented"
-                recordedAt = Date(timeIntervalSince1970: 0)
-                source = "local_timer"
+                appendSequence = sequence
+                kind = "promptPresented"
+                self.recordedAt = recordedAt
+                source = "localTimer"
                 opportunity = "visual"
                 selectedDurationSeconds = nil
             }
@@ -634,6 +634,16 @@ extension ProtocolStateStoreTests {
         let container = try ModelContainer(for: schema, configurations: [configuration])
         let context = ModelContext(container)
         context.insert(StoredProtocolState())
+        context.insert(StoredOpportunityEvent(
+            id: UUID(uuidString: "00000000-0000-4000-8000-000000000001")!,
+            sequence: 0,
+            recordedAt: Date(timeIntervalSince1970: -1),
+        ))
+        context.insert(StoredOpportunityEvent(
+            id: UUID(uuidString: "00000000-0000-4000-8000-000000000002")!,
+            sequence: 1,
+            recordedAt: Date(timeIntervalSince1970: 0),
+        ))
         try context.save()
         """#
         try source.write(to: sourceURL, atomically: true, encoding: .utf8)
@@ -698,7 +708,10 @@ extension ProtocolStateStoreTests {
 
     @Test("Events and counters can be committed atomically through one App store")
     func atomicCommit() async throws {
-        let store = try SwiftDataProtocolStore(inMemory: true)
+        let store = try SwiftDataProtocolStore(
+            inMemory: true,
+            now: { Date(timeIntervalSince1970: 300) },
+        )
         let state = ProtocolState(
             visualClock: OpportunityClockState(accumulatedActiveUseSeconds: 10),
             movementClock: OpportunityClockState(accumulatedActiveUseSeconds: 20),

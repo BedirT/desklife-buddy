@@ -21,35 +21,77 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
     private static let schemaVersion = 1
     private static let stateKey = "current"
 
-    private let container: ModelContainer
-    private let context: ModelContext
+    let container: ModelContainer
+    let context: ModelContext
+    let now: () -> Date
+    let saveContext: () throws -> Void
 
-    convenience init(inMemory: Bool = false) throws {
-        try self.init(container: AppModelContainer.make(inMemory: inMemory))
+    convenience init(
+        inMemory: Bool = false,
+        now: @escaping () -> Date = Date.init,
+        save: ((ModelContext) throws -> Void)? = nil,
+    ) throws {
+        try self.init(
+            container: AppModelContainer.make(inMemory: inMemory),
+            now: now,
+            save: save,
+        )
     }
 
-    init(container: ModelContainer) throws {
+    init(
+        container: ModelContainer,
+        now: @escaping () -> Date = Date.init,
+        save: ((ModelContext) throws -> Void)? = nil,
+    ) throws {
         self.container = container
-        context = ModelContext(container)
+        self.now = now
+        let context = ModelContext(container)
+        self.context = context
+        saveContext = {
+            if let save {
+                try save(context)
+            } else {
+                try context.save()
+            }
+        }
     }
 
     func append(_ event: OpportunityEvent) async throws {
-        try insert(event)
-        try context.save()
+        do {
+            if try storedRetentionPolicy() == .keepNothing { return }
+            try insert(event)
+            try pruneStoredHistoryIfConfigured()
+            try saveContext()
+        } catch {
+            context.rollback()
+            throw error
+        }
     }
 
     func loadEvents() async throws -> [OpportunityEvent] {
-        let descriptor = FetchDescriptor<StoredOpportunityEvent>(
-            sortBy: [SortDescriptor(\.appendSequence)],
-        )
-        return try context.fetch(descriptor).map(event(from:))
+        do {
+            try pruneStoredHistoryIfConfigured()
+            try saveContext()
+            let descriptor = FetchDescriptor<StoredOpportunityEvent>(
+                sortBy: [SortDescriptor(\.appendSequence)],
+            )
+            return try context.fetch(descriptor).map(event(from:))
+        } catch {
+            context.rollback()
+            throw error
+        }
     }
 
     func deleteAllEvents() async throws {
-        for event in try context.fetch(FetchDescriptor<StoredOpportunityEvent>()) {
-            context.delete(event)
+        do {
+            for event in try context.fetch(FetchDescriptor<StoredOpportunityEvent>()) {
+                context.delete(event)
+            }
+            try saveContext()
+        } catch {
+            context.rollback()
+            throw error
         }
-        try context.save()
     }
 
     func loadState() async throws -> ProtocolState? {
@@ -57,9 +99,11 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
         guard stored.schemaVersion == Self.schemaVersion else {
             throw ProtocolPersistenceError.unsupportedSchemaVersion(stored.schemaVersion)
         }
-        guard let profileID = ProtocolProfileID(rawValue: stored.profileID),
-              ProtocolProfileID.builtInCases.contains(profileID)
+        guard let profileID = ProtocolProfileID(rawValue: stored.profileID)
         else {
+            throw ProtocolPersistenceError.invalidProfileID(stored.profileID)
+        }
+        guard try isSupportedPersistedProfile(profileID) else {
             throw ProtocolPersistenceError.invalidProfileID(stored.profileID)
         }
         guard isValidCounter(stored.visualAccumulatedActiveUseSeconds),
@@ -82,23 +126,36 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
     }
 
     func saveState(_ state: ProtocolState) async throws {
-        try upsert(state)
-        try context.save()
+        do {
+            try upsert(state)
+            try saveContext()
+        } catch {
+            context.rollback()
+            throw error
+        }
     }
 
     func deleteState() async throws {
-        guard let stored = try fetchState() else { return }
-        context.delete(stored)
-        try context.save()
+        do {
+            guard let stored = try fetchState() else { return }
+            context.delete(stored)
+            try saveContext()
+        } catch {
+            context.rollback()
+            throw error
+        }
     }
 
     func commit(events: [OpportunityEvent], state: ProtocolState) async throws {
         do {
-            for event in events {
-                try insert(event)
+            if try storedRetentionPolicy() != .keepNothing {
+                for event in events {
+                    try insert(event)
+                }
             }
             try upsert(state)
-            try context.save()
+            try pruneStoredHistoryIfConfigured()
+            try saveContext()
         } catch {
             context.rollback()
             throw error
@@ -126,8 +183,9 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
         ))
     }
 
-    private func upsert(_ state: ProtocolState) throws {
-        guard ProtocolProfileID.builtInCases.contains(state.profileID) else {
+    func upsert(_ state: ProtocolState) throws {
+        try validateStateProfileMatchesPreferences(state.profileID)
+        guard try isSupportedPersistedProfile(state.profileID) else {
             throw ProtocolPersistenceError.invalidProfileID(state.profileID.rawValue)
         }
         let visual = state.visualClock.accumulatedActiveUseSeconds
@@ -318,7 +376,9 @@ private extension SwiftDataProtocolStore {
         )
         return try context.fetch(descriptor).first
     }
+}
 
+private extension SwiftDataProtocolStore {
     private func isValidCounter(_ value: TimeInterval) -> Bool {
         value.isFinite && value >= 0
     }

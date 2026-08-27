@@ -6,6 +6,7 @@ enum AppModelContainer {
         StoredItem.self,
         StoredOpportunityEvent.self,
         StoredProtocolState.self,
+        StoredAppPreferences.self,
     ])
 
     static func make(inMemory: Bool = false, url: URL? = nil) throws -> ModelContainer {

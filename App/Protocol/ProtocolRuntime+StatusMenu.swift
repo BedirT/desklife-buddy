@@ -2,27 +2,49 @@ import Domain
 import StatusMenu
 
 extension ProtocolRuntime {
-    func handle(_ action: StatusMenuAction) async throws {
+    @discardableResult
+    func handle(_ action: StatusMenuAction) async throws -> SettingsRuntimeMutationResult? {
         switch action {
         case let .pause(choice):
             try await withLifecycleGate {
                 try await pause(choice)
             }
+            return nil
         case .resume:
             try await withLifecycleGate {
                 resumeManualSuppression()
             }
+            return nil
         case .toggleWorkingHours:
-            try await withLifecycleGate {
-                toggleWorkingHoursStatus()
+            guard let preferences else {
+                throw ProtocolRuntimeSettingsError.persistenceUnavailable
             }
+            let schedule = SchedulePreferences(
+                profile: preferences.schedule.profile,
+                headsUpEnabled: preferences.schedule.headsUpEnabled,
+                workingHoursOnly: !preferences.schedule.workingHoursOnly,
+            )
+            return try await reconfigure(AppPreferences(
+                schedule: schedule,
+                historyRetention: preferences.historyRetention,
+                content: preferences.content,
+                context: preferences.context,
+                accessibility: preferences.accessibility,
+                integrations: preferences.integrations,
+            ))
         case let .snooze(duration):
             try await withLifecycleGate {
                 try await snooze(duration)
             }
-        case .startHeadsUpNow, .openSnoozeOptions, .startVisualReset, .startMovement,
-             .openWeeklyRhythm, .openSettings, .quit:
+            return nil
+        case .startHeadsUpNow, .openSnoozeOptions, .startVisualReset, .startMovement:
+            try await withLifecycleGate {
+                route(action)
+            }
+            return nil
+        case .openWeeklyRhythm, .openSettings, .quit:
             route(action)
+            return nil
         }
     }
 

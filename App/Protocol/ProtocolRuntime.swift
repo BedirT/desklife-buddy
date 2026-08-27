@@ -18,23 +18,26 @@ enum VisualResetLifecycleEvent: Equatable, Sendable {
 
 /// App-owned bridge from coarse system samples to retained protocol state.
 final class ProtocolRuntime {
-    private let configuration: ProtocolConfiguration
-    private let store: ProtocolRuntimeStore
+    var configuration: ProtocolConfiguration
+    let store: ProtocolRuntimeStore
     let now: () -> Date
     let makeID: () -> UUID
     private let endOfDay: (Date) -> Date
     var headsUpRuntimePolicy: HeadsUpRuntimePolicy?
     var engine: ProtocolEngine
-    private var pauseUntil: Date?
-    private var indefiniteSuppression: SuppressionReason?
-    private var observedSuppressions: Set<SuppressionReason> = []
+    var pauseUntil: Date?
+    var indefiniteSuppression: SuppressionReason?
+    var observedSuppressions: Set<SuppressionReason> = []
     let lifecycleGate = ProtocolLifecycleGate()
     var lifecycleSession: LifecycleSession?
+    var preferences: AppPreferences?
+    var settingsPresentationBusyReason: () -> SettingsRuntimeBusyReason?
 
     private(set) var state: ProtocolState
-    private(set) var statusContext: StatusMenuContext
+    var statusContext: StatusMenuContext
     private(set) var lastRoutedAction: StatusMenuAction?
     var onChange: ((ProtocolState, StatusMenuContext) -> Void)?
+    var onConfigurationChange: ((ProtocolConfiguration) -> Void)?
     var onRoute: ((StatusMenuAction) -> Void)?
     var onHeadsUpEffect: ((HeadsUpRuntimeEffect) -> Void)?
     var onHeadsUpPromptFactReady: ((HeadsUpDeliveryID) -> Void)?
@@ -49,12 +52,16 @@ final class ProtocolRuntime {
         configuration: ProtocolConfiguration,
         store: ProtocolRuntimeStore,
         profileID: ProtocolProfileID = .balanced,
+        initialPreferences: AppPreferences? = nil,
+        settingsPresentationBusyReason: @escaping () -> SettingsRuntimeBusyReason? = { nil },
         now: @escaping () -> Date = Date.init,
         makeID: @escaping () -> UUID = UUID.init,
         endOfDay: ((Date) -> Date)? = nil,
     ) {
         self.configuration = configuration
         self.store = store
+        preferences = initialPreferences
+        self.settingsPresentationBusyReason = settingsPresentationBusyReason
         self.now = now
         self.makeID = makeID
         headsUpRuntimePolicy = nil
@@ -67,7 +74,9 @@ final class ProtocolRuntime {
         let initialState = ProtocolState(profileID: profileID)
         engine = ProtocolEngine(configuration: configuration, state: initialState)
         state = initialState
-        statusContext = StatusMenuContext()
+        statusContext = StatusMenuContext(
+            workingHoursOnly: initialPreferences?.schedule.workingHoursOnly ?? true,
+        )
     }
 
     convenience init(
@@ -75,6 +84,8 @@ final class ProtocolRuntime {
         store: ProtocolRuntimeStore,
         headsUpRuntimePolicy: HeadsUpRuntimePolicy,
         profileID: ProtocolProfileID = .balanced,
+        initialPreferences: AppPreferences? = nil,
+        settingsPresentationBusyReason: @escaping () -> SettingsRuntimeBusyReason? = { nil },
         now: @escaping () -> Date = Date.init,
         makeID: @escaping () -> UUID = UUID.init,
         endOfDay: ((Date) -> Date)? = nil,
@@ -83,6 +94,8 @@ final class ProtocolRuntime {
             configuration: configuration,
             store: store,
             profileID: profileID,
+            initialPreferences: initialPreferences,
+            settingsPresentationBusyReason: settingsPresentationBusyReason,
             now: now,
             makeID: makeID,
             endOfDay: endOfDay,

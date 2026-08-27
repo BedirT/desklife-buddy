@@ -40,7 +40,7 @@ telemetry.
 
 ## Steps
 
-- [ ] 1. Domain preference contract: write failing tests first for versioned local preference
+- [x] 1. Domain preference contract: write failing tests first for versioned local preference
       defaults, all normative built-in profiles plus custom timing validation, explicit profile
       changes without clock facts, retention policy, content/context/accessibility choices,
       integration capability states, export projection, delete-history boundaries, and reset-all
@@ -117,3 +117,15 @@ telemetry.
 - 2026-08-27: Settings uses native macOS semantic materials, system accent, standard controls,
   and no app-owned motion. The explored round-2 artboard guides hierarchy; it is not canonical
   pixel output and cannot override accessibility or the current neutral product identity.
+- 2026-08-27: Step 1 is complete. Domain now owns versioned preference values, stable profile
+  identifiers plus validated Custom schedules, all local content/context/accessibility/integration
+  choices, a protocol-first store seam, 30/90/keep-nothing history policy, deterministic export
+  projection, and distinct history-delete/reset-all boundaries. Built-in timing remains solely
+  App-generated from the normative YAML: Domain applies preferences to a caller-resolved base and
+  contains no copied timing, snooze, delivery, or recovery table. Independent review found and
+  repaired six issues before retention: generated-source drift, unenforced format versions,
+  missing working-hours durability, unvalidated bundle identifiers, incomplete mutation coverage,
+  and a tautological lifecycle test. Root verification passed 117 Domain tests / 15 suites;
+  `scripts/lint.sh` reported `LINT OK` with only the two unrelated existing warnings; final
+  independent re-review found no remaining P0-P2 findings. RED evidence is retained under
+  `artifacts/settings-domain-step1-*.txt`.

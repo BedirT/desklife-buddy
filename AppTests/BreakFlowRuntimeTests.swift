@@ -116,7 +116,7 @@ struct BreakFlowRuntimeTests {
         let commit = try #require(store.commits.first)
         #expect(commit.events.map(\.kind) == [.skipped])
         #expect(commit.events.map(\.opportunity) == [.visual])
-        #expect(commit.state.visualClock == OpportunityClockState())
+        #expect(commit.state.visualClock == OpportunityClockState(cycleID: 1))
         #expect(commit.state.movementClock == dueState.movementClock)
     }
 

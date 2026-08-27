@@ -186,7 +186,7 @@ struct MovementLifecycleRuntimeTests {
         try await runtime.handleMovement(.skipped)
 
         #expect(runtime.state.visualClock == dueState.visualClock)
-        #expect(runtime.state.movementClock == OpportunityClockState())
+        #expect(runtime.state.movementClock == OpportunityClockState(cycleID: 1))
         #expect(store.commits.last?.events.map(\.kind) == [.skipped])
     }
 

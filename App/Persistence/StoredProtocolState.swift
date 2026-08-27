@@ -16,6 +16,9 @@ final class StoredProtocolState {
     var recoveryLastObservedAt: Date?
     var visualNotAppropriateThisSession: Bool?
     var movementNotAppropriateThisSession: Bool?
+    var visualCycleIDStorage: Int64?
+    var movementCycleIDStorage: Int64?
+    var headsUpDeliveryStatePayload: Data?
 
     init(
         key: String,
@@ -31,6 +34,9 @@ final class StoredProtocolState {
         recoveryLastObservedAt: Date?,
         visualNotAppropriateThisSession: Bool? = nil,
         movementNotAppropriateThisSession: Bool? = nil,
+        visualCycleIDStorage: Int64? = nil,
+        movementCycleIDStorage: Int64? = nil,
+        headsUpDeliveryStatePayload: Data? = nil,
     ) {
         self.key = key
         self.schemaVersion = schemaVersion
@@ -45,15 +51,22 @@ final class StoredProtocolState {
         self.recoveryLastObservedAt = recoveryLastObservedAt
         self.visualNotAppropriateThisSession = visualNotAppropriateThisSession
         self.movementNotAppropriateThisSession = movementNotAppropriateThisSession
+        self.visualCycleIDStorage = visualCycleIDStorage
+        self.movementCycleIDStorage = movementCycleIDStorage
+        self.headsUpDeliveryStatePayload = headsUpDeliveryStatePayload
     }
 
     func updateClocks(
         profileID: String,
+        visualCycleIDStorage: Int64,
         visualAccumulatedActiveUseSeconds: Double,
+        movementCycleIDStorage: Int64,
         movementAccumulatedActiveUseSeconds: Double,
     ) {
         self.profileID = profileID
+        self.visualCycleIDStorage = visualCycleIDStorage
         self.visualAccumulatedActiveUseSeconds = visualAccumulatedActiveUseSeconds
+        self.movementCycleIDStorage = movementCycleIDStorage
         self.movementAccumulatedActiveUseSeconds = movementAccumulatedActiveUseSeconds
     }
 
@@ -77,5 +90,9 @@ final class StoredProtocolState {
     func updateNotAppropriateOpportunities(visual: Bool, movement: Bool) {
         visualNotAppropriateThisSession = visual
         movementNotAppropriateThisSession = movement
+    }
+
+    func updateHeadsUpDeliveryStatePayload(_ payload: Data) {
+        headsUpDeliveryStatePayload = payload
     }
 }

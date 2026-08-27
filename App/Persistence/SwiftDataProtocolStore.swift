@@ -12,6 +12,8 @@ enum ProtocolPersistenceError: Error, Equatable {
     case invalidCounter
     case invalidRecoveryState
     case invalidSnoozeDeadline
+    case invalidHeadsUpDeliveryState
+    case unsupportedHeadsUpDeliverySchemaVersion(Int)
     case unsupportedSchemaVersion(Int)
 }
 
@@ -76,26 +78,7 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
         else {
             throw ProtocolPersistenceError.invalidSnoozeDeadline
         }
-        return ProtocolState(
-            profileID: profileID,
-            visualClock: OpportunityClockState(
-                accumulatedActiveUseSeconds: stored.visualAccumulatedActiveUseSeconds,
-                phase: stored.visualSnoozeDeadline == nil ? .gracedAfterSuppression : .snoozed,
-            ),
-            movementClock: OpportunityClockState(
-                accumulatedActiveUseSeconds: stored.movementAccumulatedActiveUseSeconds,
-                phase: stored.movementSnoozeDeadline == nil ? .gracedAfterSuppression : .snoozed,
-            ),
-            visualSnoozeDeadline: stored.visualSnoozeDeadline,
-            movementSnoozeDeadline: stored.movementSnoozeDeadline,
-            recoveryState: RecoveryState(
-                accumulatedEligibleActiveUseSeconds: stored.recoveryActiveUseSeconds,
-                movementDeferralCount: stored.recoveryMovementDeferralCount,
-                wasOfferedThisSession: stored.recoveryWasOfferedThisSession,
-            ),
-            recoveryLastObservedAt: stored.recoveryLastObservedAt,
-            notAppropriateOpportunities: notAppropriateOpportunities(from: stored),
-        )
+        return try protocolState(from: stored, profileID: profileID)
     }
 
     func saveState(_ state: ProtocolState) async throws {
@@ -162,17 +145,28 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
         else {
             throw ProtocolPersistenceError.invalidSnoozeDeadline
         }
+        let headsUpDeliveryStatePayload = try HeadsUpDeliveryStateCodec.encode(
+            state.headsUpDeliveryState,
+            visualCycleID: state.visualClock.cycleID,
+            movementCycleID: state.movementClock.cycleID,
+        )
         if let stored = try fetchState() {
-            update(stored, from: state)
+            update(stored, from: state, headsUpDeliveryStatePayload: headsUpDeliveryStatePayload)
         } else {
-            insertState(state)
+            insertState(state, headsUpDeliveryStatePayload: headsUpDeliveryStatePayload)
         }
     }
 
-    private func update(_ stored: StoredProtocolState, from state: ProtocolState) {
+    private func update(
+        _ stored: StoredProtocolState,
+        from state: ProtocolState,
+        headsUpDeliveryStatePayload: Data,
+    ) {
         stored.updateClocks(
             profileID: state.profileID.rawValue,
+            visualCycleIDStorage: Int64(bitPattern: state.visualClock.cycleID),
             visualAccumulatedActiveUseSeconds: state.visualClock.accumulatedActiveUseSeconds,
+            movementCycleIDStorage: Int64(bitPattern: state.movementClock.cycleID),
             movementAccumulatedActiveUseSeconds: state.movementClock.accumulatedActiveUseSeconds,
         )
         stored.updateSnoozes(
@@ -189,9 +183,13 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
             visual: state.notAppropriateOpportunities.contains(.visual),
             movement: state.notAppropriateOpportunities.contains(.movement),
         )
+        stored.updateHeadsUpDeliveryStatePayload(headsUpDeliveryStatePayload)
     }
 
-    private func insertState(_ state: ProtocolState) {
+    private func insertState(
+        _ state: ProtocolState,
+        headsUpDeliveryStatePayload: Data,
+    ) {
         context.insert(StoredProtocolState(
             key: Self.stateKey,
             schemaVersion: Self.schemaVersion,
@@ -206,7 +204,47 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
             recoveryLastObservedAt: state.recoveryLastObservedAt,
             visualNotAppropriateThisSession: state.notAppropriateOpportunities.contains(.visual),
             movementNotAppropriateThisSession: state.notAppropriateOpportunities.contains(.movement),
+            visualCycleIDStorage: Int64(bitPattern: state.visualClock.cycleID),
+            movementCycleIDStorage: Int64(bitPattern: state.movementClock.cycleID),
+            headsUpDeliveryStatePayload: headsUpDeliveryStatePayload,
         ))
+    }
+}
+
+private extension SwiftDataProtocolStore {
+    private func protocolState(
+        from stored: StoredProtocolState,
+        profileID: ProtocolProfileID,
+    ) throws -> ProtocolState {
+        let visualCycleID = stored.visualCycleIDStorage.map(UInt64.init(bitPattern:)) ?? 0
+        let movementCycleID = stored.movementCycleIDStorage.map(UInt64.init(bitPattern:)) ?? 0
+        return try ProtocolState(
+            profileID: profileID,
+            visualClock: OpportunityClockState(
+                cycleID: visualCycleID,
+                accumulatedActiveUseSeconds: stored.visualAccumulatedActiveUseSeconds,
+                phase: stored.visualSnoozeDeadline == nil ? .gracedAfterSuppression : .snoozed,
+            ),
+            movementClock: OpportunityClockState(
+                cycleID: movementCycleID,
+                accumulatedActiveUseSeconds: stored.movementAccumulatedActiveUseSeconds,
+                phase: stored.movementSnoozeDeadline == nil ? .gracedAfterSuppression : .snoozed,
+            ),
+            visualSnoozeDeadline: stored.visualSnoozeDeadline,
+            movementSnoozeDeadline: stored.movementSnoozeDeadline,
+            recoveryState: RecoveryState(
+                accumulatedEligibleActiveUseSeconds: stored.recoveryActiveUseSeconds,
+                movementDeferralCount: stored.recoveryMovementDeferralCount,
+                wasOfferedThisSession: stored.recoveryWasOfferedThisSession,
+            ),
+            recoveryLastObservedAt: stored.recoveryLastObservedAt,
+            notAppropriateOpportunities: notAppropriateOpportunities(from: stored),
+            headsUpDeliveryState: HeadsUpDeliveryStateCodec.decode(
+                stored.headsUpDeliveryStatePayload,
+                visualCycleID: visualCycleID,
+                movementCycleID: movementCycleID,
+            ),
+        )
     }
 
     private func notAppropriateOpportunities(

@@ -30,7 +30,273 @@ struct ProtocolStateStoreTests {
         #expect(loaded.visualClock.phase == .gracedAfterSuppression)
         #expect(loaded.movementClock.phase == .gracedAfterSuppression)
     }
+}
 
+@Suite("Restart-safe heads-up delivery state")
+struct HeadsUpDeliveryStateStoreTests {
+    @Test("Clock cycles and a presented heads-up delivery round-trip exactly")
+    func headsUpDeliveryRoundTrip() async throws {
+        let directory = try makeTemporaryStoreDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let storeURL = directory.appending(path: "protocol.store")
+        let deliveryID = HeadsUpDeliveryID(
+            rawValue: UUID(uuidString: "A1B2C3D4-E5F6-47A8-9012-3456789ABCDE")!,
+        )
+        let movementCycleID = UInt64.max
+        let visualSnooze = Date(timeIntervalSince1970: 1_750_000_000)
+        let state = ProtocolState(
+            visualClock: OpportunityClockState(
+                cycleID: 41,
+                accumulatedActiveUseSeconds: 1234,
+            ),
+            movementClock: OpportunityClockState(
+                cycleID: movementCycleID,
+                accumulatedActiveUseSeconds: 4321,
+            ),
+            headsUpDeliveryState: HeadsUpDeliveryState(
+                visualClock: HeadsUpClockLedger(
+                    cycleID: 41,
+                    presentationCount: 2,
+                    snoozeDeadline: visualSnooze,
+                ),
+                movementClock: HeadsUpClockLedger(
+                    cycleID: movementCycleID,
+                    presentationCount: 1,
+                ),
+                activeDelivery: HeadsUpActiveDelivery(
+                    id: deliveryID,
+                    opportunity: .movement(cycleID: movementCycleID),
+                    phase: .presented,
+                    channel: .capsule,
+                    promptFactStatus: .acknowledged,
+                    countdownMark: .seconds5,
+                    didLand: true,
+                ),
+            ),
+        )
+
+        do {
+            let container = try AppModelContainer.make(url: storeURL)
+            let store = try SwiftDataProtocolStateStore(container: container)
+            try await store.saveState(state)
+        }
+
+        let reopenedContainer = try AppModelContainer.make(url: storeURL)
+        let reopenedStore = try SwiftDataProtocolStateStore(container: reopenedContainer)
+        let loaded = try #require(try await reopenedStore.loadState())
+        #expect(loaded.visualClock.cycleID == 41)
+        #expect(loaded.movementClock.cycleID == movementCycleID)
+        #expect(loaded.headsUpDeliveryState == state.headsUpDeliveryState)
+    }
+
+    @Test("A reserved heads-up delivery retains its stable identity and phase")
+    func reservedHeadsUpDeliveryRoundTrip() async throws {
+        let store = try SwiftDataProtocolStateStore(inMemory: true)
+        let delivery = HeadsUpActiveDelivery(
+            id: HeadsUpDeliveryID(
+                rawValue: UUID(uuidString: "12345678-90AB-4CDE-8F01-23456789ABCD")!,
+            ),
+            opportunity: .merged(visualCycleID: 8, movementCycleID: 9),
+            countdownMark: .seconds45,
+        )
+        let state = ProtocolState(
+            visualClock: OpportunityClockState(cycleID: 8),
+            movementClock: OpportunityClockState(cycleID: 9),
+            headsUpDeliveryState: HeadsUpDeliveryState(
+                visualClock: HeadsUpClockLedger(cycleID: 8),
+                movementClock: HeadsUpClockLedger(cycleID: 9),
+                activeDelivery: delivery,
+            ),
+        )
+
+        try await store.saveState(state)
+
+        #expect(try await store.loadState()?.headsUpDeliveryState.activeDelivery == delivery)
+    }
+
+    @Test("Saving a replacement state clears a stale active heads-up delivery")
+    func replacementClearsActiveHeadsUpDelivery() async throws {
+        let store = try SwiftDataProtocolStateStore(inMemory: true)
+        let activeState = ProtocolState(
+            visualClock: OpportunityClockState(cycleID: 3),
+            headsUpDeliveryState: HeadsUpDeliveryState(
+                visualClock: HeadsUpClockLedger(cycleID: 3),
+                activeDelivery: HeadsUpActiveDelivery(
+                    id: HeadsUpDeliveryID(rawValue: UUID()),
+                    opportunity: .visual(cycleID: 3),
+                    countdownMark: .seconds30,
+                ),
+            ),
+        )
+        try await store.saveState(activeState)
+
+        let replacement = ProtocolState(
+            visualClock: OpportunityClockState(cycleID: 4),
+            movementClock: OpportunityClockState(cycleID: 5),
+        )
+        try await store.saveState(replacement)
+
+        let loaded = try #require(try await store.loadState())
+        #expect(loaded.visualClock.cycleID == 4)
+        #expect(loaded.movementClock.cycleID == 5)
+        #expect(loaded.headsUpDeliveryState == HeadsUpDeliveryState())
+    }
+
+    @Test("Malformed and semantically corrupt delivery payloads are rejected explicitly")
+    func invalidHeadsUpDeliveryPayloads() async throws {
+        let validPayload = try HeadsUpDeliveryStateCodec.encode(HeadsUpDeliveryState(
+            visualClock: HeadsUpClockLedger(cycleID: 1, presentationCount: 1),
+        ))
+        var corruptObject = try #require(
+            JSONSerialization.jsonObject(with: validPayload) as? [String: Any],
+        )
+        var corruptState = try #require(corruptObject["state"] as? [String: Any])
+        var corruptLedger = try #require(
+            corruptState["visualClock"] as? [String: Any],
+        )
+        corruptLedger["presentationCount"] = -1
+        corruptState["visualClock"] = corruptLedger
+        corruptObject["state"] = corruptState
+        let semanticallyCorruptPayload = try JSONSerialization.data(withJSONObject: corruptObject)
+
+        for payload in [Data([0xFF]), semanticallyCorruptPayload] {
+            let container = try AppModelContainer.make(inMemory: true)
+            let context = ModelContext(container)
+            context.insert(storedProtocolState(headsUpDeliveryStatePayload: payload))
+            try context.save()
+            let store = try SwiftDataProtocolStateStore(container: container)
+
+            await #expect(throws: ProtocolPersistenceError.invalidHeadsUpDeliveryState) {
+                _ = try await store.loadState()
+            }
+        }
+    }
+
+    @Test("A persisted presentation count cannot overflow on the next acknowledgement")
+    func presentationCountOverflowIsRejected() async throws {
+        let state = HeadsUpDeliveryState(
+            visualClock: HeadsUpClockLedger(
+                cycleID: 1,
+                presentationCount: .max,
+            ),
+            activeDelivery: HeadsUpActiveDelivery(
+                id: HeadsUpDeliveryID(rawValue: UUID()),
+                opportunity: .visual(cycleID: 1),
+                countdownMark: .seconds30,
+            ),
+        )
+
+        #expect(throws: ProtocolPersistenceError.invalidHeadsUpDeliveryState) {
+            _ = try HeadsUpDeliveryStateCodec.encode(
+                state,
+                visualCycleID: 1,
+                movementCycleID: 0,
+            )
+        }
+    }
+
+    @Test("Unsupported delivery payload versions are rejected explicitly")
+    func unsupportedHeadsUpDeliveryPayloadVersion() async throws {
+        let validPayload = try HeadsUpDeliveryStateCodec.encode(HeadsUpDeliveryState())
+        var object = try #require(
+            JSONSerialization.jsonObject(with: validPayload) as? [String: Any],
+        )
+        object["schemaVersion"] = 2
+        let payload = try JSONSerialization.data(withJSONObject: object)
+        let container = try AppModelContainer.make(inMemory: true)
+        let context = ModelContext(container)
+        context.insert(storedProtocolState(headsUpDeliveryStatePayload: payload))
+        try context.save()
+        let store = try SwiftDataProtocolStateStore(container: container)
+
+        await #expect(
+            throws: ProtocolPersistenceError.unsupportedHeadsUpDeliverySchemaVersion(2),
+        ) {
+            _ = try await store.loadState()
+        }
+    }
+
+    @Test("An unknown delivery schema is identified before its state is decoded")
+    func incompatibleFutureHeadsUpDeliveryPayloadVersion() throws {
+        let payload = try JSONSerialization.data(withJSONObject: [
+            "schemaVersion": 2,
+            "state": ["futureShape": true],
+        ])
+
+        #expect(
+            throws: ProtocolPersistenceError.unsupportedHeadsUpDeliverySchemaVersion(2),
+        ) {
+            _ = try HeadsUpDeliveryStateCodec.decode(payload)
+        }
+    }
+
+    @Test(
+        "Saving rejects heads-up cycles that disagree with the outer clocks",
+        arguments: HeadsUpCycleMismatch.allCases,
+    )
+    func saveRejectsHeadsUpCycleMismatch(_ mismatch: HeadsUpCycleMismatch) async throws {
+        let store = try SwiftDataProtocolStateStore(inMemory: true)
+
+        await #expect(throws: ProtocolPersistenceError.invalidHeadsUpDeliveryState) {
+            try await store.saveState(mismatch.protocolState)
+        }
+        #expect(try await store.loadState() == nil)
+    }
+
+    @Test(
+        "Loading rejects heads-up cycles that disagree with the stored outer clocks",
+        arguments: HeadsUpCycleMismatch.allCases,
+    )
+    func loadRejectsHeadsUpCycleMismatch(_ mismatch: HeadsUpCycleMismatch) async throws {
+        let state = mismatch.protocolState
+        let payload = try HeadsUpDeliveryStateCodec.encode(state.headsUpDeliveryState)
+        let container = try AppModelContainer.make(inMemory: true)
+        let context = ModelContext(container)
+        context.insert(storedProtocolState(
+            headsUpDeliveryStatePayload: payload,
+            visualCycleID: state.visualClock.cycleID,
+            movementCycleID: state.movementClock.cycleID,
+        ))
+        try context.save()
+        let store = try SwiftDataProtocolStateStore(container: container)
+
+        await #expect(throws: ProtocolPersistenceError.invalidHeadsUpDeliveryState) {
+            _ = try await store.loadState()
+        }
+    }
+
+    private func storedProtocolState(
+        headsUpDeliveryStatePayload: Data,
+        visualCycleID: UInt64? = nil,
+        movementCycleID: UInt64? = nil,
+    ) -> StoredProtocolState {
+        StoredProtocolState(
+            key: "current",
+            schemaVersion: 1,
+            profileID: ProtocolProfileID.balanced.rawValue,
+            visualAccumulatedActiveUseSeconds: 0,
+            movementAccumulatedActiveUseSeconds: 0,
+            visualSnoozeDeadline: nil,
+            movementSnoozeDeadline: nil,
+            recoveryActiveUseSeconds: 0,
+            recoveryMovementDeferralCount: 0,
+            recoveryWasOfferedThisSession: false,
+            recoveryLastObservedAt: nil,
+            visualCycleIDStorage: visualCycleID.map(Int64.init(bitPattern:)),
+            movementCycleIDStorage: movementCycleID.map(Int64.init(bitPattern:)),
+            headsUpDeliveryStatePayload: headsUpDeliveryStatePayload,
+        )
+    }
+
+    private func makeTemporaryStoreDirectory() throws -> URL {
+        let directory = FileManager.default.temporaryDirectory
+            .appending(path: "protocol-state-\(UUID().uuidString)", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory
+    }
+}
+
+extension ProtocolStateStoreTests {
     @Test("A restored engine establishes a new baseline instead of adding offline time")
     func noOfflineCatchUp() async throws {
         let store = try SwiftDataProtocolStateStore(inMemory: true)
@@ -123,6 +389,163 @@ struct ProtocolStateStoreTests {
         let store = try SwiftDataProtocolStateStore(container: container)
         let loaded = try #require(try await store.loadState())
         #expect(loaded.notAppropriateOpportunities.isEmpty)
+        #expect(loaded.visualClock.cycleID == 0)
+        #expect(loaded.movementClock.cycleID == 0)
+        #expect(loaded.headsUpDeliveryState == HeadsUpDeliveryState())
+    }
+
+    @Test("The exact additive schema opens and preserves a pre-heads-up SQLite store")
+    func additiveHeadsUpFieldsMigrateLegacySQLiteStore() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appending(path: "protocol-legacy-\(UUID().uuidString)", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let storeURL = directory.appending(path: "protocol.store")
+        let visualSnooze = Date(timeIntervalSince1970: 1_750_000_000)
+        let recoveryAnchor = Date(timeIntervalSince1970: 1_750_000_100)
+
+        try seedLegacyProtocolStore(
+            at: storeURL,
+            sourceURL: directory.appending(path: "LegacyProtocolStoreSeeder.swift"),
+        )
+
+        let migratedContainer = try AppModelContainer.make(url: storeURL)
+        let store = try SwiftDataProtocolStateStore(container: migratedContainer)
+        let loaded = try #require(try await store.loadState())
+        #expect(loaded.profileID == .frequentMovement)
+        #expect(loaded.visualClock.cycleID == 0)
+        #expect(loaded.visualClock.accumulatedActiveUseSeconds == 111)
+        #expect(loaded.movementClock.cycleID == 0)
+        #expect(loaded.movementClock.accumulatedActiveUseSeconds == 222)
+        #expect(loaded.visualSnoozeDeadline == visualSnooze)
+        #expect(loaded.recoveryState == RecoveryState(
+            accumulatedEligibleActiveUseSeconds: 333,
+            movementDeferralCount: 2,
+            wasOfferedThisSession: true,
+        ))
+        #expect(loaded.recoveryLastObservedAt == recoveryAnchor)
+        #expect(loaded.notAppropriateOpportunities == [.visual])
+        #expect(loaded.headsUpDeliveryState == HeadsUpDeliveryState())
+    }
+
+    private func seedLegacyProtocolStore(at storeURL: URL, sourceURL: URL) throws {
+        let source = #"""
+        import Foundation
+        import SwiftData
+
+        @Model
+        final class StoredItem {
+            @Attribute(.unique) var id: UUID
+            var title: String
+            var isDone: Bool
+            var createdAt: Date
+
+            init(id: UUID, title: String, isDone: Bool, createdAt: Date) {
+                self.id = id
+                self.title = title
+                self.isDone = isDone
+                self.createdAt = createdAt
+            }
+        }
+
+        @Model
+        final class StoredOpportunityEvent {
+            @Attribute(.unique) var id: UUID
+            var schemaVersion: Int
+            var appendSequence: Int64
+            var kind: String
+            var recordedAt: Date
+            var source: String
+            var opportunity: String?
+            var selectedDurationSeconds: Double?
+
+            init() {
+                id = UUID()
+                schemaVersion = 1
+                appendSequence = 0
+                kind = "prompt_presented"
+                recordedAt = Date(timeIntervalSince1970: 0)
+                source = "local_timer"
+                opportunity = "visual"
+                selectedDurationSeconds = nil
+            }
+        }
+
+        @Model
+        final class StoredProtocolState {
+            @Attribute(.unique) var key: String
+            var schemaVersion: Int
+            var profileID: String
+            var visualAccumulatedActiveUseSeconds: Double
+            var movementAccumulatedActiveUseSeconds: Double
+            var visualSnoozeDeadline: Date?
+            var movementSnoozeDeadline: Date?
+            var recoveryActiveUseSeconds: Double = 0
+            var recoveryMovementDeferralCount: Int = 0
+            var recoveryWasOfferedThisSession: Bool = false
+            var recoveryLastObservedAt: Date?
+            var visualNotAppropriateThisSession: Bool?
+            var movementNotAppropriateThisSession: Bool?
+
+            init() {
+                key = "current"
+                schemaVersion = 1
+                profileID = "frequent_movement"
+                visualAccumulatedActiveUseSeconds = 111
+                movementAccumulatedActiveUseSeconds = 222
+                visualSnoozeDeadline = Date(timeIntervalSince1970: 1_750_000_000)
+                movementSnoozeDeadline = nil
+                recoveryActiveUseSeconds = 333
+                recoveryMovementDeferralCount = 2
+                recoveryWasOfferedThisSession = true
+                recoveryLastObservedAt = Date(timeIntervalSince1970: 1_750_000_100)
+                visualNotAppropriateThisSession = true
+                movementNotAppropriateThisSession = false
+            }
+        }
+
+        let storeURL = URL(fileURLWithPath: CommandLine.arguments[1])
+        let schema = Schema([
+            StoredItem.self,
+            StoredOpportunityEvent.self,
+            StoredProtocolState.self,
+        ])
+        let configuration = ModelConfiguration("App", schema: schema, url: storeURL)
+        let container = try ModelContainer(for: schema, configurations: [configuration])
+        let context = ModelContext(container)
+        context.insert(StoredProtocolState())
+        try context.save()
+        """#
+        try source.write(to: sourceURL, atomically: true, encoding: .utf8)
+
+        let process = Process()
+        let errorPipe = Pipe()
+        let moduleCacheURL = sourceURL.deletingLastPathComponent()
+            .appending(path: "ModuleCache", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(
+            at: moduleCacheURL,
+            withIntermediateDirectories: true,
+        )
+        var environment = ProcessInfo.processInfo.environment
+        environment["CLANG_MODULE_CACHE_PATH"] = moduleCacheURL.path()
+        environment["SWIFT_MODULECACHE_PATH"] = moduleCacheURL.path()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
+        process.arguments = ["swift", "-disable-sandbox", sourceURL.path(), storeURL.path()]
+        process.environment = environment
+        process.standardError = errorPipe
+        try process.run()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0 else {
+            let error = String(
+                decoding: errorPipe.fileHandleForReading.readDataToEndOfFile(),
+                as: UTF8.self,
+            )
+            throw NSError(
+                domain: "LegacyProtocolStoreSeeder",
+                code: Int(process.terminationStatus),
+                userInfo: [NSLocalizedDescriptionKey: error],
+            )
+        }
     }
 
     @Test("Completing a snoozed visual opportunity cannot resurrect snooze after restart")
@@ -147,6 +570,7 @@ struct ProtocolStateStoreTests {
         let restored = try #require(try await store.loadState())
         #expect(restored.visualSnoozeDeadline == nil)
         #expect(restored.visualClock == OpportunityClockState(
+            cycleID: 1,
             accumulatedActiveUseSeconds: 0,
             phase: .gracedAfterSuppression,
         ))
@@ -241,5 +665,61 @@ struct ProtocolStateStoreTests {
                 lockoutAllowed: false,
             ),
         )
+    }
+}
+
+enum HeadsUpCycleMismatch: CaseIterable, Sendable {
+    case visual
+    case movement
+    case merged
+
+    var protocolState: ProtocolState {
+        let outerVisualCycleID: UInt64 = 10
+        let outerMovementCycleID: UInt64 = 20
+        return switch self {
+        case .visual:
+            ProtocolState(
+                visualClock: OpportunityClockState(cycleID: outerVisualCycleID),
+                movementClock: OpportunityClockState(cycleID: outerMovementCycleID),
+                headsUpDeliveryState: HeadsUpDeliveryState(
+                    visualClock: HeadsUpClockLedger(cycleID: outerVisualCycleID + 1),
+                    activeDelivery: HeadsUpActiveDelivery(
+                        id: HeadsUpDeliveryID(rawValue: UUID()),
+                        opportunity: .visual(cycleID: outerVisualCycleID + 1),
+                        countdownMark: .seconds30,
+                    ),
+                ),
+            )
+        case .movement:
+            ProtocolState(
+                visualClock: OpportunityClockState(cycleID: outerVisualCycleID),
+                movementClock: OpportunityClockState(cycleID: outerMovementCycleID),
+                headsUpDeliveryState: HeadsUpDeliveryState(
+                    movementClock: HeadsUpClockLedger(cycleID: outerMovementCycleID + 1),
+                    activeDelivery: HeadsUpActiveDelivery(
+                        id: HeadsUpDeliveryID(rawValue: UUID()),
+                        opportunity: .movement(cycleID: outerMovementCycleID + 1),
+                        countdownMark: .seconds30,
+                    ),
+                ),
+            )
+        case .merged:
+            ProtocolState(
+                visualClock: OpportunityClockState(cycleID: outerVisualCycleID),
+                movementClock: OpportunityClockState(cycleID: outerMovementCycleID),
+                headsUpDeliveryState: HeadsUpDeliveryState(
+                    visualClock: HeadsUpClockLedger(cycleID: outerVisualCycleID + 1),
+                    movementClock: HeadsUpClockLedger(cycleID: outerMovementCycleID + 1),
+                    activeDelivery: HeadsUpActiveDelivery(
+                        id: HeadsUpDeliveryID(rawValue: UUID()),
+                        opportunity: .merged(
+                            visualCycleID: outerVisualCycleID + 1,
+                            movementCycleID: outerMovementCycleID + 1,
+                        ),
+                        countdownMark: .seconds30,
+                    ),
+                ),
+            )
+        }
     }
 }

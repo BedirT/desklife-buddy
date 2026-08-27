@@ -121,6 +121,10 @@ public extension ProtocolEngine {
 extension ProtocolEngine {
     func recommendedPresentation() -> OpportunityPresentation? {
         if recoveryIsEligible { return .recovery }
+        return recommendedActionablePresentation()
+    }
+
+    func recommendedActionablePresentation() -> OpportunityPresentation? {
         let visualIsAllowed = !notAppropriateOpportunities.contains(.visual)
         let movementIsAllowed = !notAppropriateOpportunities.contains(.movement)
         let visualPresentable = visualClock.phase.isPresentable && visualIsAllowed

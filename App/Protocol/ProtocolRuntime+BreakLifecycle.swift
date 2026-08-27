@@ -2,14 +2,15 @@ import Domain
 import Foundation
 
 extension ProtocolRuntime {
-    func withLifecycleGate(
-        _ operation: () async throws -> Void,
-    ) async throws {
+    func withLifecycleGate<Result>(
+        _ operation: () async throws -> Result,
+    ) async throws -> Result {
         await lifecycleGate.acquire()
         do {
             try Task.checkCancellation()
-            try await operation()
+            let result = try await operation()
             await lifecycleGate.release()
+            return result
         } catch {
             await lifecycleGate.release()
             throw error
@@ -211,10 +212,15 @@ extension ProtocolRuntime {
         drafts: [OpportunityEventDraft],
         nextSession: LifecycleSession?,
     ) async throws {
-        try await persist(drafts, state: candidate.state)
+        var candidate = candidate
+        let synchronization = try await persistProtocolMutation(
+            candidate: &candidate,
+            drafts: drafts,
+        )
         engine = candidate
         lifecycleSession = nextSession
         publish(liveHeadsUp: nil)
+        emitHeadsUpEffects(synchronization)
     }
 }
 

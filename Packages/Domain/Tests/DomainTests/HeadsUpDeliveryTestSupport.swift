@@ -6,8 +6,9 @@ extension HeadsUpDeliveryTests {
     func acknowledgedReducer(
         _ opportunity: HeadsUpOpportunityID,
         id deliveryID: HeadsUpDeliveryID,
+        maximumReoffers: Int = 2,
     ) -> HeadsUpDeliveryReducer {
-        var reducer = HeadsUpDeliveryReducer(maximumSnoozeReoffers: 2)
+        var reducer = HeadsUpDeliveryReducer(maximumSnoozeReoffers: maximumReoffers)
         _ = reducer.observe(snapshot(opportunity, target: 45), proposedDeliveryID: deliveryID)
         _ = reducer.acknowledgePresented(deliveryID, channel: .notification)
         _ = reducer.acknowledgePromptFact(deliveryID)

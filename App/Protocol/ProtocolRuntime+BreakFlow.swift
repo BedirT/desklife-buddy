@@ -47,6 +47,11 @@ extension ProtocolRuntime {
             }
             drafts += output.events
         }
+        mirrorBreakFlowSnoozeInHeadsUpLedger(
+            scope: scope,
+            deadline: actionDate.addingTimeInterval(durationSeconds),
+            candidate: &candidate,
+        )
         try await commitBreakFlow(
             candidate: candidate,
             drafts: drafts,
@@ -99,10 +104,16 @@ extension ProtocolRuntime {
         drafts: [OpportunityEventDraft],
         recordedAt: Date? = nil,
     ) async throws {
-        try await persist(drafts, state: candidate.state, recordedAt: recordedAt)
+        var candidate = candidate
+        let synchronization = try await persistProtocolMutation(
+            candidate: &candidate,
+            drafts: drafts,
+            recordedAt: recordedAt,
+        )
         engine = candidate
         lifecycleSession = nil
         publish(liveHeadsUp: nil)
+        emitHeadsUpEffects(synchronization)
     }
 
     private func opportunities(for scope: BreakScope) -> [OpportunityType] {
@@ -111,5 +122,24 @@ extension ProtocolRuntime {
         case .movement: [.movement]
         case .merged: [.visual, .movement]
         }
+    }
+
+    private func mirrorBreakFlowSnoozeInHeadsUpLedger(
+        scope: BreakScope,
+        deadline: Date,
+        candidate: inout ProtocolEngine,
+    ) {
+        guard let headsUpRuntimePolicy else { return }
+        var reducer = HeadsUpDeliveryReducer(
+            state: candidate.state.headsUpDeliveryState,
+            maximumSnoozeReoffers: headsUpRuntimePolicy.maximumSnoozeReoffers,
+        )
+        let clocks: [HeadsUpClock] = switch scope {
+        case .visual: [.visual]
+        case .movement: [.movement]
+        case .merged: [.visual, .movement]
+        }
+        reducer.snoozePreviouslyPresentedClocks(clocks, until: deadline)
+        candidate.synchronizeHeadsUpDeliveryState(reducer.state)
     }
 }

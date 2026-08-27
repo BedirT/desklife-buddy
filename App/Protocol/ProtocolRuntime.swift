@@ -21,8 +21,9 @@ final class ProtocolRuntime {
     private let configuration: ProtocolConfiguration
     private let store: ProtocolRuntimeStore
     let now: () -> Date
-    private let makeID: () -> UUID
+    let makeID: () -> UUID
     private let endOfDay: (Date) -> Date
+    var headsUpRuntimePolicy: HeadsUpRuntimePolicy?
     var engine: ProtocolEngine
     private var pauseUntil: Date?
     private var indefiniteSuppression: SuppressionReason?
@@ -35,6 +36,14 @@ final class ProtocolRuntime {
     private(set) var lastRoutedAction: StatusMenuAction?
     var onChange: ((ProtocolState, StatusMenuContext) -> Void)?
     var onRoute: ((StatusMenuAction) -> Void)?
+    var onHeadsUpEffect: ((HeadsUpRuntimeEffect) -> Void)?
+    var onHeadsUpPromptFactReady: ((HeadsUpDeliveryID) -> Void)?
+    var onHeadsUpRestoredDelivery: ((HeadsUpActiveDelivery) -> Void)?
+    var onHeadsUpSettled: ((HeadsUpDeliveryID, HeadsUpDeliveryResponse) -> Void)?
+
+    var configuredSnoozeOptionsSeconds: [TimeInterval] {
+        configuration.delivery.snoozeOptionsSeconds
+    }
 
     init(
         configuration: ProtocolConfiguration,
@@ -48,6 +57,7 @@ final class ProtocolRuntime {
         self.store = store
         self.now = now
         self.makeID = makeID
+        headsUpRuntimePolicy = nil
         self.endOfDay = endOfDay ?? { date in
             let calendar = Calendar.autoupdatingCurrent
             let start = calendar.startOfDay(for: date)
@@ -60,18 +70,49 @@ final class ProtocolRuntime {
         statusContext = StatusMenuContext()
     }
 
+    convenience init(
+        configuration: ProtocolConfiguration,
+        store: ProtocolRuntimeStore,
+        headsUpRuntimePolicy: HeadsUpRuntimePolicy,
+        profileID: ProtocolProfileID = .balanced,
+        now: @escaping () -> Date = Date.init,
+        makeID: @escaping () -> UUID = UUID.init,
+        endOfDay: ((Date) -> Date)? = nil,
+    ) {
+        self.init(
+            configuration: configuration,
+            store: store,
+            profileID: profileID,
+            now: now,
+            makeID: makeID,
+            endOfDay: endOfDay,
+        )
+        self.headsUpRuntimePolicy = headsUpRuntimePolicy
+    }
+
     func restore() async throws {
         try await withLifecycleGate {
             if let restored = try await store.loadState() {
                 engine = ProtocolEngine(configuration: configuration, state: restored)
             }
+            let restoreDate = now()
             let retained = engine.state
-            engine.resumeRecoverySession(at: now())
-            let resumed = engine.resumeExpiredSnoozes(at: now())
-            if engine.state != retained {
-                try await persist([], state: engine.state)
+            engine.resumeInterruptedBreak()
+            engine.resumeRecoverySession(at: restoreDate)
+            let resumed = engine.resumeExpiredSnoozes(at: restoreDate)
+            var candidate = engine
+            let synchronization = synchronizeHeadsUpCycles(in: &candidate)
+            let restoredDelivery = prepareRestoredHeadsUpDelivery(in: &candidate)
+            if candidate.state != retained {
+                try await persist([], state: candidate.state)
             }
-            publish(liveHeadsUp: resumed.presentation)
+            engine = candidate
+            publish(liveHeadsUp: publishedHeadsUpPresentation(
+                schedulerPresentation: resumed.presentation,
+                in: candidate,
+            ))
+            emitHeadsUpEffects(synchronization)
+            publishRestoredHeadsUpDelivery(restoredDelivery)
         }
     }
 
@@ -81,7 +122,8 @@ final class ProtocolRuntime {
         isLowFrictionMoment: Bool = false,
     ) async throws {
         try await withLifecycleGate {
-            expireTimedPauseIfNeeded()
+            let observationDate = now()
+            expireTimedPauseIfNeeded(at: observationDate)
             observedSuppressions = activeSuppressions
             if !sample.systemAwake || !sample.sessionActive || sample.screenLocked {
                 observedSuppressions.insert(.systemInactiveOrLocked)
@@ -93,52 +135,38 @@ final class ProtocolRuntime {
 
             var candidate = engine
             candidate.observeRecoverySession(
-                at: now(),
+                at: observationDate,
                 systemAvailable: sample.systemAwake && sample.sessionActive && !sample.screenLocked,
             )
-            _ = candidate.resumeExpiredSnoozes(at: now())
+            _ = candidate.resumeExpiredSnoozes(at: observationDate)
             let output = candidate.observe(
                 sample,
                 activeSuppressions: suppressions,
                 isLowFrictionMoment: isLowFrictionMoment,
             )
-            try await persist(output.events, state: candidate.state)
+            let headsUpOutput = reduceHeadsUpObservation(
+                in: &candidate,
+                observedAt: observationDate,
+                isLowFrictionMoment: isLowFrictionMoment,
+                suppressionReason: SuppressionResolver.resolve(
+                    activeReasons: suppressions,
+                ).reason,
+            )
+            let synchronization = try await persistProtocolMutation(
+                candidate: &candidate,
+                drafts: output.events,
+                recordedAt: observationDate,
+            )
             engine = candidate
-            publish(liveHeadsUp: output.presentation)
-        }
-    }
-
-    func handle(_ action: StatusMenuAction) async throws {
-        switch action {
-        case let .pause(choice):
-            try await withLifecycleGate {
-                applyPause(choice)
-                publish(liveHeadsUp: nil)
-            }
-        case .resume:
-            try await withLifecycleGate {
-                pauseUntil = nil
-                indefiniteSuppression = nil
-                publish(liveHeadsUp: nil)
-            }
-        case .toggleWorkingHours:
-            try await withLifecycleGate {
-                statusContext = StatusMenuContext(
-                    estimatedActiveUseSeconds: statusContext.estimatedActiveUseSeconds,
-                    activeSuppression: statusContext.activeSuppression,
-                    manualPause: statusContext.manualPause,
-                    liveHeadsUp: statusContext.liveHeadsUp,
-                    workingHoursOnly: !statusContext.workingHoursOnly,
-                )
-                notifyChange()
-            }
-        case let .snooze(duration):
-            try await withLifecycleGate {
-                try await snooze(duration)
-            }
-        case .startHeadsUpNow, .openSnoozeOptions, .startVisualReset, .startMovement,
-             .openWeeklyRhythm, .openSettings, .quit:
-            route(action)
+            publish(liveHeadsUp: publishedHeadsUpPresentation(
+                schedulerPresentation: output.presentation,
+                in: candidate,
+            ))
+            emitHeadsUpEffects(synchronization)
+            emitHeadsUpEffects(
+                headsUpOutput.effects,
+                retiringDeliveryID: headsUpOutput.retiringDeliveryID,
+            )
         }
     }
 
@@ -163,32 +191,33 @@ final class ProtocolRuntime {
                 opportunity: .visual,
                 source: fact.source,
             )
-            try await persist(output.events, state: candidate.state)
+            let synchronization = try await persistProtocolMutation(
+                candidate: &candidate,
+                drafts: output.events,
+            )
             engine = candidate
             publish(liveHeadsUp: nil)
+            emitHeadsUpEffects(synchronization)
         }
     }
 
-    func acknowledgePromptPresented(
-        _ presentation: OpportunityPresentation,
+    func acknowledgeRecoveryPromptPresented(
         source: OpportunityEventSource = .localTimer,
     ) async throws {
         try await withLifecycleGate {
-            let opportunity: OpportunityType? = switch presentation {
-            case .visual: .visual
-            case .movement: .movement
-            case .merged: nil
-            case .recovery: .recovery
-            }
             var candidate = engine
             let output = candidate.record(
                 .promptPresented,
-                opportunity: opportunity,
+                opportunity: .recovery,
                 source: source,
             )
-            try await persist(output.events, state: candidate.state)
+            let synchronization = try await persistProtocolMutation(
+                candidate: &candidate,
+                drafts: output.events,
+            )
             engine = candidate
-            publish(liveHeadsUp: presentation)
+            publish(liveHeadsUp: .recovery)
+            emitHeadsUpEffects(synchronization)
         }
     }
 
@@ -251,8 +280,25 @@ extension ProtocolRuntime {
         }
     }
 
-    func expireTimedPauseIfNeeded() {
-        guard let pauseUntil, now() >= pauseUntil else { return }
+    func resumeManualSuppression() {
+        pauseUntil = nil
+        indefiniteSuppression = nil
+        publish(liveHeadsUp: nil)
+    }
+
+    func toggleWorkingHoursStatus() {
+        statusContext = StatusMenuContext(
+            estimatedActiveUseSeconds: statusContext.estimatedActiveUseSeconds,
+            activeSuppression: statusContext.activeSuppression,
+            manualPause: statusContext.manualPause,
+            liveHeadsUp: statusContext.liveHeadsUp,
+            workingHoursOnly: !statusContext.workingHoursOnly,
+        )
+        notifyChange()
+    }
+
+    func expireTimedPauseIfNeeded(at date: Date) {
+        guard let pauseUntil, date >= pauseUntil else { return }
         self.pauseUntil = nil
     }
 
@@ -281,9 +327,14 @@ extension ProtocolRuntime {
             route(.snooze(duration))
             return
         }
-        try await persist(drafts, state: candidate.state, recordedAt: actionDate)
+        let synchronization = try await persistProtocolMutation(
+            candidate: &candidate,
+            drafts: drafts,
+            recordedAt: actionDate,
+        )
         engine = candidate
         publish(liveHeadsUp: nil)
+        emitHeadsUpEffects(synchronization)
     }
 
     func persist(

@@ -78,12 +78,52 @@ enum HeadsUpDeliveryStateCodec {
         )
         return state
     }
+}
 
+extension HeadsUpDeliveryStateCodec {
     private static func validate(_ state: HeadsUpDeliveryState) throws {
         try validate(state.visualClock)
         try validate(state.movementClock)
-        guard let active = state.activeDelivery else { return }
-        guard active.countdownMark.rawValue > 0 else {
+        guard state.activeDelivery == nil || state.pendingAction == nil else {
+            throw ProtocolPersistenceError.invalidHeadsUpDeliveryState
+        }
+        if let pendingAction = state.pendingAction {
+            try validate(pendingAction, in: state)
+        }
+        if let active = state.activeDelivery {
+            try validate(active, in: state)
+        }
+    }
+
+    private static func validate(
+        _ action: HeadsUpPendingAction,
+        in state: HeadsUpDeliveryState,
+    ) throws {
+        let sourceIsValid = switch action.kind {
+        case .openBreak:
+            action.source == .user || action.source == .localTimer
+        case .openMoreOptions:
+            action.source == .user
+        }
+        guard sourceIsValid else {
+            throw ProtocolPersistenceError.invalidHeadsUpDeliveryState
+        }
+        let requiresPresentation = action.source == .user
+        try validatePendingOpportunity(
+            action.opportunity,
+            visualClock: state.visualClock,
+            movementClock: state.movementClock,
+            requiresPresentation: requiresPresentation,
+        )
+    }
+
+    private static func validate(
+        _ active: HeadsUpActiveDelivery,
+        in state: HeadsUpDeliveryState,
+    ) throws {
+        guard active.countdownMark.rawValue > 0,
+              active.targetAt?.timeIntervalSinceReferenceDate.isFinite ?? true
+        else {
             throw ProtocolPersistenceError.invalidHeadsUpDeliveryState
         }
 
@@ -130,10 +170,44 @@ enum HeadsUpDeliveryStateCodec {
         }
     }
 
+    private static func validatePendingOpportunity(
+        _ opportunity: HeadsUpOpportunityID,
+        visualClock: HeadsUpClockLedger,
+        movementClock: HeadsUpClockLedger,
+        requiresPresentation: Bool,
+    ) throws {
+        switch opportunity {
+        case let .visual(cycleID):
+            try validatePendingClock(
+                visualClock,
+                cycleID: cycleID,
+                requiresPresentation: requiresPresentation,
+            )
+        case let .movement(cycleID):
+            try validatePendingClock(
+                movementClock,
+                cycleID: cycleID,
+                requiresPresentation: requiresPresentation,
+            )
+        case let .merged(visualCycleID, movementCycleID):
+            try validatePendingClock(
+                visualClock,
+                cycleID: visualCycleID,
+                requiresPresentation: requiresPresentation,
+            )
+            try validatePendingClock(
+                movementClock,
+                cycleID: movementCycleID,
+                requiresPresentation: requiresPresentation,
+            )
+        }
+    }
+
     private static func validate(_ ledger: HeadsUpClockLedger) throws {
         guard ledger.presentationCount >= 0,
               ledger.presentationCount < Int.max,
-              ledger.snoozeDeadline?.timeIntervalSinceReferenceDate.isFinite ?? true
+              ledger.snoozeDeadline?.timeIntervalSinceReferenceDate.isFinite ?? true,
+              ledger.presentationCount > 0 || ledger.snoozeDeadline == nil
         else {
             throw ProtocolPersistenceError.invalidHeadsUpDeliveryState
         }
@@ -148,21 +222,25 @@ enum HeadsUpDeliveryStateCodec {
         try validate(state.visualClock, expectedCycleID: visualCycleID)
         try validate(state.movementClock, expectedCycleID: movementCycleID)
 
-        guard let opportunity = state.activeDelivery?.opportunity else { return }
-        switch opportunity {
-        case let .visual(cycleID):
-            guard cycleID == visualCycleID else {
-                throw ProtocolPersistenceError.invalidHeadsUpDeliveryState
-            }
-        case let .movement(cycleID):
-            guard cycleID == movementCycleID else {
-                throw ProtocolPersistenceError.invalidHeadsUpDeliveryState
-            }
-        case let .merged(activeVisualCycleID, activeMovementCycleID):
-            guard activeVisualCycleID == visualCycleID,
-                  activeMovementCycleID == movementCycleID
-            else {
-                throw ProtocolPersistenceError.invalidHeadsUpDeliveryState
+        for opportunity in [
+            state.activeDelivery?.opportunity,
+            state.pendingAction?.opportunity,
+        ].compactMap({ $0 }) {
+            switch opportunity {
+            case let .visual(cycleID):
+                guard cycleID == visualCycleID else {
+                    throw ProtocolPersistenceError.invalidHeadsUpDeliveryState
+                }
+            case let .movement(cycleID):
+                guard cycleID == movementCycleID else {
+                    throw ProtocolPersistenceError.invalidHeadsUpDeliveryState
+                }
+            case let .merged(activeVisualCycleID, activeMovementCycleID):
+                guard activeVisualCycleID == visualCycleID,
+                      activeMovementCycleID == movementCycleID
+                else {
+                    throw ProtocolPersistenceError.invalidHeadsUpDeliveryState
+                }
             }
         }
     }
@@ -192,6 +270,19 @@ enum HeadsUpDeliveryStateCodec {
         guard ledger.cycleID == cycleID,
               ledger.snoozeDeadline == nil,
               phase == .reserved || ledger.presentationCount > 0
+        else {
+            throw ProtocolPersistenceError.invalidHeadsUpDeliveryState
+        }
+    }
+
+    private static func validatePendingClock(
+        _ ledger: HeadsUpClockLedger,
+        cycleID: UInt64,
+        requiresPresentation: Bool,
+    ) throws {
+        guard ledger.cycleID == cycleID,
+              ledger.snoozeDeadline == nil,
+              !requiresPresentation || ledger.presentationCount > 0
         else {
             throw ProtocolPersistenceError.invalidHeadsUpDeliveryState
         }

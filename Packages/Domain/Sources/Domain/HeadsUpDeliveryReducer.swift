@@ -2,8 +2,8 @@ import Foundation
 
 /// Pure restart-safe reducer for actionable heads-up reservation and response delivery.
 public struct HeadsUpDeliveryReducer: Sendable {
-    public private(set) var state: HeadsUpDeliveryState
-    private let maximumSnoozeReoffers: Int
+    public internal(set) var state: HeadsUpDeliveryState
+    let maximumSnoozeReoffers: Int
 
     /// Restores delivery state with an explicitly injected, unresolved re-offer policy.
     public init(
@@ -24,13 +24,20 @@ public struct HeadsUpDeliveryReducer: Sendable {
             visualCycleID: visualCycleID,
             movementCycleID: movementCycleID,
         )
-        guard let cancelledID = discardStaleActiveDelivery(
+        var effects: [HeadsUpDeliveryEffect] = []
+        if let cancelledAction = discardStalePendingAction(
             visualCycleID: visualCycleID,
             movementCycleID: movementCycleID,
-        ) else {
-            return HeadsUpDeliveryOutput()
+        ) {
+            effects.append(.cancelPendingAction(cancelledAction))
         }
-        return HeadsUpDeliveryOutput(effects: [.cancel(cancelledID)])
+        if let cancelledID = discardStaleActiveDelivery(
+            visualCycleID: visualCycleID,
+            movementCycleID: movementCycleID,
+        ) {
+            effects.append(.cancel(cancelledID))
+        }
+        return HeadsUpDeliveryOutput(effects: effects)
     }
 
     /// Reduces a scheduler snapshot and reserves, updates, holds, or opens as needed.
@@ -45,6 +52,14 @@ public struct HeadsUpDeliveryReducer: Sendable {
         if !synchronization.effects.isEmpty {
             return synchronization
         }
+        if state.pendingAction != nil {
+            if snapshot.suppressionReason != nil {
+                if let cancelled = cancelPendingAutomaticOpen() {
+                    return HeadsUpDeliveryOutput(effects: [.cancelPendingAction(cancelled)])
+                }
+            }
+            return HeadsUpDeliveryOutput()
+        }
         guard opportunityMatchesCycles(
             snapshot.opportunity,
             visualCycleID: snapshot.currentVisualCycleID,
@@ -56,39 +71,46 @@ public struct HeadsUpDeliveryReducer: Sendable {
         if let reason = snapshot.suppressionReason {
             return applySuppression(reason)
         }
-        if shouldOpenBreak(snapshot) {
-            state.activeDelivery = nil
-            return HeadsUpDeliveryOutput(effects: [.openBreak(snapshot.opportunity)])
-        }
         if var active = state.activeDelivery {
-            return updateActiveDelivery(&active, snapshot: snapshot)
+            let effectiveSnapshot = activeDeliverySnapshot(active, schedulerSnapshot: snapshot)
+            if shouldOpenBreak(effectiveSnapshot) {
+                return openBreak(
+                    opportunity: active.opportunity,
+                    id: active.id,
+                    source: .localTimer,
+                )
+            }
+            return updateActiveDelivery(&active, snapshot: effectiveSnapshot)
+        }
+        if let snoozeReturn = reserveExpiredSnoozeReturn(snapshot, id: proposedDeliveryID) {
+            return snoozeReturn
+        }
+        if shouldOpenBreak(snapshot) {
+            return openBreak(
+                opportunity: snapshot.opportunity,
+                id: proposedDeliveryID,
+                source: .localTimer,
+            )
         }
 
-        guard snapshot.headsUpEnabled,
-              snapshot.secondsUntilTarget > 0,
-              let opportunity = uncoveredOpportunity(
-                  from: snapshot.opportunity,
-                  observedAt: snapshot.observedAt,
-              )
-        else {
-            return HeadsUpDeliveryOutput()
-        }
+        return reserveNewDelivery(snapshot, id: proposedDeliveryID)
+    }
 
-        let mark = HeadsUpCountdownMark.coarseValue(
-            secondsUntilTarget: snapshot.secondsUntilTarget,
-            leadSeconds: snapshot.headsUpLeadSeconds,
-        )
-        let active = HeadsUpActiveDelivery(
-            id: proposedDeliveryID,
+    mutating func openBreak(
+        opportunity: HeadsUpOpportunityID,
+        id: HeadsUpDeliveryID,
+        source: OpportunityEventSource,
+    ) -> HeadsUpDeliveryOutput {
+        clearSnoozeDeadline(for: opportunity)
+        let pendingAction = HeadsUpPendingAction(
+            id: id,
+            kind: .openBreak,
             opportunity: opportunity,
-            countdownMark: mark,
+            source: source,
         )
-        state.activeDelivery = active
-        return HeadsUpDeliveryOutput(effects: [.reserve(HeadsUpDeliveryReservation(
-            id: proposedDeliveryID,
-            opportunity: opportunity,
-            countdownMark: mark,
-        ))])
+        state.activeDelivery = nil
+        state.pendingAction = pendingAction
+        return HeadsUpDeliveryOutput(effects: [.openBreak(opportunity)])
     }
 
     /// Records adapter-confirmed presentation and emits its one pending prompt fact.
@@ -145,6 +167,12 @@ public struct HeadsUpDeliveryReducer: Sendable {
         state.activeDelivery = nil
         switch response {
         case .startNow:
+            state.pendingAction = HeadsUpPendingAction(
+                id: id,
+                kind: .openBreak,
+                opportunity: active.opportunity,
+                source: .user,
+            )
             return HeadsUpDeliveryOutput(effects: [.openBreak(active.opportunity)])
         case let .snooze(until: deadline):
             setSnoozeDeadline(deadline, for: active.opportunity)
@@ -159,12 +187,74 @@ public struct HeadsUpDeliveryReducer: Sendable {
                 opportunity: active.opportunity,
             )])
         case .moreOptions:
+            state.pendingAction = HeadsUpPendingAction(
+                id: id,
+                kind: .openMoreOptions,
+                opportunity: active.opportunity,
+                source: .user,
+            )
             return HeadsUpDeliveryOutput(effects: [.openMoreOptions(
                 id,
                 opportunity: active.opportunity,
             )])
         case .dismissedWithoutAction:
             return HeadsUpDeliveryOutput()
+        }
+    }
+
+    /// Clears only the matching recoverable action after its exact surface opened.
+    @discardableResult
+    public mutating func completePendingAction(
+        _ id: HeadsUpDeliveryID,
+        kind: HeadsUpPendingActionKind,
+    ) -> HeadsUpPendingAction? {
+        guard let pendingAction = state.pendingAction,
+              pendingAction.id == id,
+              pendingAction.kind == kind
+        else {
+            return nil
+        }
+        state.pendingAction = nil
+        return pendingAction
+    }
+
+    /// Clears only an automatic break-opening request that suppression may safely retract.
+    @discardableResult
+    public mutating func cancelPendingAutomaticOpen() -> HeadsUpPendingAction? {
+        guard let pendingAction = state.pendingAction,
+              pendingAction.kind == .openBreak,
+              pendingAction.source == .localTimer
+        else {
+            return nil
+        }
+        state.pendingAction = nil
+        return pendingAction
+    }
+
+    /// Applies a newly selected suppression to the one App-visible delivery or automatic open.
+    public mutating func suppress(_ reason: SuppressionReason) -> HeadsUpDeliveryOutput {
+        if let action = cancelPendingAutomaticOpen() {
+            return HeadsUpDeliveryOutput(effects: [.cancelPendingAction(action)])
+        }
+        guard state.pendingAction == nil else { return HeadsUpDeliveryOutput() }
+        return applySuppression(reason)
+    }
+
+    /// Mirrors a shared snooze-sheet selection only for clocks already presented this cycle.
+    public mutating func snoozePreviouslyPresentedClocks(
+        _ clocks: [HeadsUpClock],
+        until deadline: Date,
+    ) {
+        guard deadline.timeIntervalSinceReferenceDate.isFinite else { return }
+        for clock in clocks {
+            switch clock {
+            case .visual where state.visualClock.presentationCount > 0:
+                state.visualClock.snoozeDeadline = deadline
+            case .movement where state.movementClock.presentationCount > 0:
+                state.movementClock.snoozeDeadline = deadline
+            case .visual, .movement:
+                break
+            }
         }
     }
 }
@@ -210,6 +300,22 @@ extension HeadsUpDeliveryReducer {
         return nil
     }
 
+    mutating func discardStalePendingAction(
+        visualCycleID: UInt64,
+        movementCycleID: UInt64,
+    ) -> HeadsUpPendingAction? {
+        if let pendingAction = state.pendingAction,
+           !opportunityMatchesCycles(
+               pendingAction.opportunity,
+               visualCycleID: visualCycleID,
+               movementCycleID: movementCycleID,
+           ) {
+            state.pendingAction = nil
+            return pendingAction
+        }
+        return nil
+    }
+
     mutating func applySuppression(_ reason: SuppressionReason) -> HeadsUpDeliveryOutput {
         guard let active = state.activeDelivery else {
             return HeadsUpDeliveryOutput()
@@ -222,48 +328,6 @@ extension HeadsUpDeliveryReducer {
             state.activeDelivery = nil
             return HeadsUpDeliveryOutput(effects: [.holdThenRetract(active.id, reason)])
         }
-    }
-
-    func shouldOpenBreak(_ snapshot: HeadsUpDeliverySnapshot) -> Bool {
-        snapshot.secondsUntilLatest <= 0
-            || (snapshot.secondsUntilTarget <= 0
-                && (!snapshot.waitsForLowFrictionMoment || snapshot.isLowFrictionMoment))
-    }
-
-    mutating func updateActiveDelivery(
-        _ active: inout HeadsUpActiveDelivery,
-        snapshot: HeadsUpDeliverySnapshot,
-    ) -> HeadsUpDeliveryOutput {
-        if active.phase == .reserved {
-            let mark = HeadsUpCountdownMark.coarseValue(
-                secondsUntilTarget: snapshot.secondsUntilTarget,
-                leadSeconds: snapshot.headsUpLeadSeconds,
-            )
-            active.countdownMark = mark
-            state.activeDelivery = active
-            return HeadsUpDeliveryOutput(effects: [.reserve(HeadsUpDeliveryReservation(
-                id: active.id,
-                opportunity: active.opportunity,
-                countdownMark: mark,
-            ))])
-        }
-        if snapshot.secondsUntilTarget <= 0 {
-            guard !active.didLand else { return HeadsUpDeliveryOutput() }
-            active.didLand = true
-            state.activeDelivery = active
-            return HeadsUpDeliveryOutput(effects: [.land(active.id)])
-        }
-
-        let mark = HeadsUpCountdownMark.coarseValue(
-            secondsUntilTarget: snapshot.secondsUntilTarget,
-            leadSeconds: snapshot.headsUpLeadSeconds,
-        )
-        guard active.countdownMark != mark else {
-            return HeadsUpDeliveryOutput()
-        }
-        active.countdownMark = mark
-        state.activeDelivery = active
-        return HeadsUpDeliveryOutput(effects: [.updateCountdown(active.id, mark)])
     }
 
     mutating func incrementPresentationCount(for opportunity: HeadsUpOpportunityID) {
@@ -327,7 +391,8 @@ extension HeadsUpDeliveryReducer {
         guard ledger.presentationCount > 0 else { return true }
         guard let deadline = ledger.snoozeDeadline else { return false }
         guard observedAt >= deadline else { return false }
+        guard ledger.presentationCount <= maximumSnoozeReoffers else { return false }
         ledger.snoozeDeadline = nil
-        return ledger.presentationCount <= maximumSnoozeReoffers
+        return true
     }
 }

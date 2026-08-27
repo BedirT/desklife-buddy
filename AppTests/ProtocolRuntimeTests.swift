@@ -75,10 +75,12 @@ struct ProtocolRuntimeTests {
         let runtime = try ProtocolRuntime(
             configuration: ProtocolProfiles.configuration(for: .balanced),
             store: store,
+            headsUpRuntimePolicy: HeadsUpRuntimePolicy(maximumSnoozeReoffers: 1),
             now: { Date(timeIntervalSince1970: 200) },
             makeID: { ids.next() },
         )
         try await runtime.restore()
+        store.commits.removeAll()
 
         try await runtime.observe(ActivitySample(
             uptimeSeconds: 10,
@@ -100,11 +102,27 @@ struct ProtocolRuntimeTests {
         #expect(store.commits.last?.events.isEmpty == true)
         #expect(runtime.statusContext.liveHeadsUp == .visual)
 
-        try await runtime.acknowledgePromptPresented(.visual)
+        try await runtime.observeHeadsUp(HeadsUpDeliverySnapshot(
+            opportunity: .visual(cycleID: 0),
+            currentVisualCycleID: 0,
+            currentMovementCycleID: 0,
+            observedAt: Date(timeIntervalSince1970: 200),
+            secondsUntilTarget: 20,
+            secondsUntilLatest: 100,
+            headsUpEnabled: true,
+            headsUpLeadSeconds: 45,
+            waitsForLowFrictionMoment: false,
+            isLowFrictionMoment: true,
+        ))
+        try await runtime.acknowledgeHeadsUpPresented(
+            HeadsUpDeliveryID(rawValue: UUID(0)),
+            channel: .capsule,
+        )
 
-        #expect(store.commits.last?.events.map(\.kind) == [.promptPresented])
-        #expect(store.commits.last?.events.map(\.opportunity) == [.visual])
-        #expect(store.commits.last?.events.first?.recordedAt == Date(timeIntervalSince1970: 200))
+        let promptCommit = store.commits.last { !$0.events.isEmpty }
+        #expect(promptCommit?.events.map(\.kind) == [.promptPresented])
+        #expect(promptCommit?.events.map(\.opportunity) == [.visual])
+        #expect(promptCommit?.events.first?.recordedAt == Date(timeIntervalSince1970: 200))
     }
 
     @Test("Recovery delivery acknowledgement atomically latches the once-per-session offer")
@@ -124,7 +142,7 @@ struct ProtocolRuntimeTests {
         )
         try await runtime.restore()
 
-        try await runtime.acknowledgePromptPresented(.recovery)
+        try await runtime.acknowledgeRecoveryPromptPresented()
 
         #expect(store.commits.last?.events.map(\.kind) == [.promptPresented])
         #expect(store.commits.last?.events.map(\.opportunity) == [.recovery])

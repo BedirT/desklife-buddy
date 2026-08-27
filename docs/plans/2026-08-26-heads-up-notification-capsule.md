@@ -1,7 +1,7 @@
 # Notification-first heads-up and capsule - plan
 
 Status: in-progress
-Intake/escalation status: executable for recovery-independent delivery plumbing; two
+Intake/escalation status: executable for recovery-independent delivery plumbing; three
 owner-facing action-policy answers remain open before production routing
 
 ## Outcome
@@ -224,3 +224,14 @@ production action-policy answers above remain open.
   `BUILD OK`; and `scripts/lint.sh` reported `LINT OK`. Step 7 still owns real foreground-app
   retention, full-screen/multi-display visual proof, native keyboard interaction, and live AX
   evidence.
+- 2026-08-27: The PM-01 native permission route and App-owned opening-source tracker are retained
+  in `ef11a59`. Authorization channel selection is coalesced before its suspending Notification
+  Center settings read; generation-scoped waiter tracking lets one caller cancel without closing
+  the shared explainer, while final cancellation closes it without persisting a choice or consuming
+  eligibility. A gated-settings test reproduced the prior close/reopen race before the repair.
+  Manual and explicit Heads-Up openings are tagged `.user`; automatic target/latest openings are
+  tagged `.localTimer`; same-family retries retain the first stable request until the matching
+  successful opening write. Focused permission coverage passed 26 tests / 4 suites, the rebuilt App
+  bundle passed 258 tests / 36 suites, `scripts/build.sh` and `scripts/lint.sh` passed, and independent
+  final review found no P0-P2. Real first-responder/Tab/VoiceOver behavior, cross-app panel behavior,
+  current text-scale injection, and AppDelegate opening-source consumption remain Steps 6-7 proof.

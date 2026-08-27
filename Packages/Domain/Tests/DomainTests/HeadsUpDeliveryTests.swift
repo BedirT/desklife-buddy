@@ -27,13 +27,16 @@ struct HeadsUpDeliveryTests {
             id: deliveryID,
             opportunity: .visual(cycleID: 4),
             countdownMark: .seconds45,
+            targetAt: start.addingTimeInterval(45),
         ))])
         #expect(acknowledgement.events == [OpportunityEventDraft(
             kind: .promptPresented,
             source: .localTimer,
             opportunity: .visual,
         )])
-        #expect(duplicate.effects.isEmpty)
+        #expect(duplicate.effects == [
+            .updateTiming(deliveryID, targetAt: start.addingTimeInterval(44)),
+        ])
         #expect(duplicateAcknowledgement == HeadsUpDeliveryOutput())
         #expect(reducer.state.visualClock.presentationCount == 1)
     }
@@ -59,7 +62,9 @@ struct HeadsUpDeliveryTests {
             snapshot(.visual(cycleID: 8), target: 44),
             proposedDeliveryID: id(5),
         )
-        #expect(afterRestore.effects.isEmpty)
+        #expect(afterRestore.effects == [
+            .updateTiming(deliveryID, targetAt: start.addingTimeInterval(44)),
+        ])
         #expect(presented.state.activeDelivery?.id == deliveryID)
     }
 
@@ -83,6 +88,7 @@ struct HeadsUpDeliveryTests {
             id: deliveryID,
             opportunity: .visual(cycleID: 8),
             countdownMark: .seconds15,
+            targetAt: start.addingTimeInterval(15),
         ))])
         #expect(restored.state.activeDelivery?.countdownMark == .seconds15)
     }
@@ -325,31 +331,10 @@ extension HeadsUpDeliveryTests {
             id: id(21),
             opportunity: .visual(cycleID: 2),
             countdownMark: .seconds45,
+            targetAt: start.addingTimeInterval(45),
         ))])
         #expect(reducer.state.movementClock.cycleID == 1)
         #expect(reducer.state.movementClock.presentationCount == 1)
-    }
-
-    @Test("Synchronizing one rotated cycle resets only its ledger")
-    func synchronizeRotatedSingleCycles() {
-        var movement = acknowledgedReducer(.movement(cycleID: 7), id: id(79))
-        let movementState = movement.state
-        #expect(movement.synchronizeCycles(
-            visualCycleID: 4,
-            movementCycleID: 7,
-        ) == HeadsUpDeliveryOutput())
-        #expect(movement.state.visualClock == HeadsUpClockLedger(cycleID: 4))
-        #expect(movement.state.movementClock == movementState.movementClock)
-        #expect(movement.state.activeDelivery == movementState.activeDelivery)
-        var visual = acknowledgedReducer(.visual(cycleID: 5), id: id(80))
-        let visualState = visual.state
-        #expect(visual.synchronizeCycles(
-            visualCycleID: 5,
-            movementCycleID: 9,
-        ) == HeadsUpDeliveryOutput())
-        #expect(visual.state.visualClock == visualState.visualClock)
-        #expect(visual.state.movementClock == HeadsUpClockLedger(cycleID: 9))
-        #expect(visual.state.activeDelivery == visualState.activeDelivery)
     }
 
     @Test("Cycle synchronization cancels stale delivery and rejects stale candidates")

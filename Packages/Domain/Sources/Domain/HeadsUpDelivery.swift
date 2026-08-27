@@ -144,6 +144,7 @@ public struct HeadsUpActiveDelivery: Equatable, Codable, Sendable {
     public internal(set) var promptFactStatus: HeadsUpPromptFactStatus?
     public internal(set) var countdownMark: HeadsUpCountdownMark
     public internal(set) var didLand: Bool
+    public internal(set) var targetAt: Date?
 
     /// Restores an exact active delivery without manufacturing another presentation.
     public init(
@@ -154,6 +155,7 @@ public struct HeadsUpActiveDelivery: Equatable, Codable, Sendable {
         promptFactStatus: HeadsUpPromptFactStatus? = nil,
         countdownMark: HeadsUpCountdownMark,
         didLand: Bool = false,
+        targetAt: Date? = nil,
     ) {
         self.id = id
         self.opportunity = opportunity
@@ -162,6 +164,33 @@ public struct HeadsUpActiveDelivery: Equatable, Codable, Sendable {
         self.promptFactStatus = promptFactStatus
         self.countdownMark = countdownMark
         self.didLand = didLand
+        self.targetAt = targetAt
+    }
+}
+
+/// Restart-safe App action that remains pending until its exact surface confirms presentation.
+public enum HeadsUpPendingActionKind: String, Codable, Sendable {
+    case openBreak
+    case openMoreOptions
+}
+
+/// Stable generation-protected identity for one recoverable action leaving the runtime.
+public struct HeadsUpPendingAction: Equatable, Codable, Sendable {
+    public let id: HeadsUpDeliveryID
+    public let kind: HeadsUpPendingActionKind
+    public let opportunity: HeadsUpOpportunityID
+    public let source: OpportunityEventSource
+
+    public init(
+        id: HeadsUpDeliveryID,
+        kind: HeadsUpPendingActionKind,
+        opportunity: HeadsUpOpportunityID,
+        source: OpportunityEventSource,
+    ) {
+        self.id = id
+        self.kind = kind
+        self.opportunity = opportunity
+        self.source = source
     }
 }
 
@@ -188,16 +217,19 @@ public struct HeadsUpDeliveryState: Equatable, Codable, Sendable {
     public internal(set) var visualClock: HeadsUpClockLedger
     public internal(set) var movementClock: HeadsUpClockLedger
     public internal(set) var activeDelivery: HeadsUpActiveDelivery?
+    public internal(set) var pendingAction: HeadsUpPendingAction?
 
     /// Creates an empty or restored delivery ledger without selecting a re-offer policy.
     public init(
         visualClock: HeadsUpClockLedger = HeadsUpClockLedger(),
         movementClock: HeadsUpClockLedger = HeadsUpClockLedger(),
         activeDelivery: HeadsUpActiveDelivery? = nil,
+        pendingAction: HeadsUpPendingAction? = nil,
     ) {
         self.visualClock = visualClock
         self.movementClock = movementClock
         self.activeDelivery = activeDelivery
+        self.pendingAction = pendingAction
     }
 }
 
@@ -248,23 +280,31 @@ public struct HeadsUpDeliveryReservation: Equatable, Sendable {
     public let id: HeadsUpDeliveryID
     public let opportunity: HeadsUpOpportunityID
     public let countdownMark: HeadsUpCountdownMark
+    public let targetAt: Date?
 
     /// Captures the stable identity and initial coarse presentation state.
     public init(
         id: HeadsUpDeliveryID,
         opportunity: HeadsUpOpportunityID,
         countdownMark: HeadsUpCountdownMark,
+        targetAt: Date? = nil,
     ) {
         self.id = id
         self.opportunity = opportunity
         self.countdownMark = countdownMark
+        self.targetAt = targetAt
     }
 }
 
 /// Presentation-independent work emitted by one pure delivery reduction.
 public enum HeadsUpDeliveryEffect: Equatable, Sendable {
     case reserve(HeadsUpDeliveryReservation)
-    case updateCountdown(HeadsUpDeliveryID, HeadsUpCountdownMark)
+    case updateCountdown(
+        HeadsUpDeliveryID,
+        HeadsUpCountdownMark,
+        targetAt: Date
+    )
+    case updateTiming(HeadsUpDeliveryID, targetAt: Date)
     case land(HeadsUpDeliveryID)
     case openBreak(HeadsUpOpportunityID)
     case holdThenRetract(HeadsUpDeliveryID, SuppressionReason)
@@ -272,16 +312,19 @@ public enum HeadsUpDeliveryEffect: Equatable, Sendable {
     case skip(HeadsUpDeliveryID, opportunity: HeadsUpOpportunityID)
     case openMoreOptions(HeadsUpDeliveryID, opportunity: HeadsUpOpportunityID)
     case cancel(HeadsUpDeliveryID)
+    case cancelPendingAction(HeadsUpPendingAction)
 
     /// Stable delivery identity for effects tied to an adapter presentation.
     public var deliveryID: HeadsUpDeliveryID? {
         switch self {
         case let .reserve(reservation):
             reservation.id
-        case let .updateCountdown(id, _), let .land(id),
+        case let .updateCountdown(id, _, _), let .updateTiming(id, _), let .land(id),
              let .holdThenRetract(id, _), let .snooze(id, _, _),
              let .skip(id, _), let .openMoreOptions(id, _), let .cancel(id):
             id
+        case let .cancelPendingAction(action):
+            action.id
         case .openBreak:
             nil
         }

@@ -71,6 +71,7 @@ struct HeadsUpDeliveryStateStoreTests {
                     promptFactStatus: .acknowledged,
                     countdownMark: .seconds5,
                     didLand: true,
+                    targetAt: Date(timeIntervalSince1970: 1_750_000_030),
                 ),
             ),
         )
@@ -112,6 +113,125 @@ struct HeadsUpDeliveryStateStoreTests {
         try await store.saveState(state)
 
         #expect(try await store.loadState()?.headsUpDeliveryState.activeDelivery == delivery)
+    }
+
+    @Test("Pending App action and exact reservation timing round-trip without a new identity")
+    func pendingActionAndTimingRoundTrip() async throws {
+        let store = try SwiftDataProtocolStateStore(inMemory: true)
+        let action = HeadsUpPendingAction(
+            id: HeadsUpDeliveryID(
+                rawValue: UUID(uuidString: "22345678-90AB-4CDE-8F01-23456789ABCD")!,
+            ),
+            kind: .openBreak,
+            opportunity: .merged(visualCycleID: 8, movementCycleID: 9),
+            source: .localTimer,
+        )
+        let state = ProtocolState(
+            visualClock: OpportunityClockState(cycleID: 8),
+            movementClock: OpportunityClockState(cycleID: 9),
+            headsUpDeliveryState: HeadsUpDeliveryState(
+                visualClock: HeadsUpClockLedger(cycleID: 8),
+                movementClock: HeadsUpClockLedger(cycleID: 9),
+                pendingAction: action,
+            ),
+        )
+
+        try await store.saveState(state)
+
+        #expect(try await store.loadState()?.headsUpDeliveryState.pendingAction == action)
+    }
+
+    @Test("Legacy delivery payloads decode with no pending action or exact target")
+    func legacyDeliveryPayloadDefaultsNewFieldsToNil() throws {
+        let state = HeadsUpDeliveryState(
+            visualClock: HeadsUpClockLedger(cycleID: 2),
+            activeDelivery: HeadsUpActiveDelivery(
+                id: HeadsUpDeliveryID(rawValue: UUID()),
+                opportunity: .visual(cycleID: 2),
+                countdownMark: .seconds30,
+                targetAt: Date(timeIntervalSince1970: 200),
+            ),
+        )
+        let encoded = try HeadsUpDeliveryStateCodec.encode(state)
+        var object = try #require(
+            JSONSerialization.jsonObject(with: encoded) as? [String: Any],
+        )
+        var encodedState = try #require(object["state"] as? [String: Any])
+        var active = try #require(encodedState["activeDelivery"] as? [String: Any])
+        active.removeValue(forKey: "targetAt")
+        encodedState["activeDelivery"] = active
+        encodedState.removeValue(forKey: "pendingAction")
+        object["state"] = encodedState
+        let legacy = try JSONSerialization.data(withJSONObject: object)
+
+        let decoded = try HeadsUpDeliveryStateCodec.decode(legacy)
+
+        #expect(decoded.activeDelivery?.targetAt == nil)
+        #expect(decoded.pendingAction == nil)
+    }
+
+    @Test("Codec rejects simultaneous delivery and action or mismatched pending cycles")
+    func invalidPendingActionsAreRejected() {
+        let id = HeadsUpDeliveryID(rawValue: UUID())
+        let pending = HeadsUpPendingAction(
+            id: id,
+            kind: .openMoreOptions,
+            opportunity: .visual(cycleID: 3),
+            source: .user,
+        )
+        let simultaneous = HeadsUpDeliveryState(
+            visualClock: HeadsUpClockLedger(cycleID: 3),
+            activeDelivery: HeadsUpActiveDelivery(
+                id: id,
+                opportunity: .visual(cycleID: 3),
+                countdownMark: .seconds30,
+            ),
+            pendingAction: pending,
+        )
+        let mismatched = HeadsUpDeliveryState(
+            visualClock: HeadsUpClockLedger(cycleID: 4),
+            pendingAction: pending,
+        )
+        let snoozed = HeadsUpDeliveryState(
+            visualClock: HeadsUpClockLedger(
+                cycleID: 3,
+                presentationCount: 1,
+                snoozeDeadline: Date(timeIntervalSince1970: 500),
+            ),
+            pendingAction: HeadsUpPendingAction(
+                id: id,
+                kind: .openBreak,
+                opportunity: .visual(cycleID: 3),
+                source: .localTimer,
+            ),
+        )
+        let userActionWithoutPresentation = HeadsUpDeliveryState(
+            visualClock: HeadsUpClockLedger(cycleID: 3),
+            pendingAction: HeadsUpPendingAction(
+                id: id,
+                kind: .openBreak,
+                opportunity: .visual(cycleID: 3),
+                source: .user,
+            ),
+        )
+        let snoozeWithoutPresentation = HeadsUpDeliveryState(
+            visualClock: HeadsUpClockLedger(
+                cycleID: 3,
+                snoozeDeadline: Date(timeIntervalSince1970: 500),
+            ),
+        )
+
+        for invalid in [
+            simultaneous,
+            mismatched,
+            snoozed,
+            userActionWithoutPresentation,
+            snoozeWithoutPresentation,
+        ] {
+            #expect(throws: ProtocolPersistenceError.invalidHeadsUpDeliveryState) {
+                _ = try HeadsUpDeliveryStateCodec.encode(invalid)
+            }
+        }
     }
 
     @Test("Saving a replacement state clears a stale active heads-up delivery")

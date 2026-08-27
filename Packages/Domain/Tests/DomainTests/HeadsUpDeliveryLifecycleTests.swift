@@ -3,6 +3,133 @@ import Testing
 @testable import Domain
 
 extension HeadsUpDeliveryTests {
+    @Test("Presented delivery refreshes exact target timing even when its coarse mark is unchanged")
+    func presentedDeliveryRefreshesExactTargetTiming() {
+        let opportunity = HeadsUpOpportunityID.visual(cycleID: 6)
+        let deliveryID = id(5)
+        var reducer = acknowledgedReducer(opportunity, id: deliveryID)
+
+        let refreshed = reducer.observe(
+            snapshot(
+                opportunity,
+                target: 44,
+                observedAt: start.addingTimeInterval(10),
+            ),
+            proposedDeliveryID: id(6),
+        )
+
+        #expect(refreshed.effects == [
+            .updateTiming(deliveryID, targetAt: start.addingTimeInterval(54)),
+        ])
+        #expect(reducer.state.activeDelivery?.countdownMark == .seconds45)
+        #expect(reducer.state.activeDelivery?.targetAt == start.addingTimeInterval(54))
+    }
+
+    @Test("Countdown transition carries the refreshed exact target timing")
+    func countdownTransitionCarriesTargetTiming() {
+        let opportunity = HeadsUpOpportunityID.visual(cycleID: 6)
+        let deliveryID = id(6)
+        var reducer = acknowledgedReducer(opportunity, id: deliveryID)
+
+        let refreshed = reducer.observe(
+            snapshot(
+                opportunity,
+                target: 30,
+                observedAt: start.addingTimeInterval(10),
+            ),
+            proposedDeliveryID: id(7),
+        )
+
+        #expect(refreshed.effects == [
+            .updateCountdown(
+                deliveryID,
+                .seconds30,
+                targetAt: start.addingTimeInterval(40),
+            ),
+        ])
+    }
+
+    @Test("Cycle rotation cancels an exact pending App action")
+    func cycleRotationCancelsPendingAction() {
+        let opportunity = HeadsUpOpportunityID.visual(cycleID: 3)
+        let action = HeadsUpPendingAction(
+            id: id(7),
+            kind: .openBreak,
+            opportunity: opportunity,
+            source: .localTimer,
+        )
+        var reducer = HeadsUpDeliveryReducer(
+            state: HeadsUpDeliveryState(
+                visualClock: HeadsUpClockLedger(cycleID: 3),
+                movementClock: HeadsUpClockLedger(cycleID: 0),
+                pendingAction: action,
+            ),
+            maximumSnoozeReoffers: 0,
+        )
+
+        let synchronization = reducer.synchronizeCycles(
+            visualCycleID: 4,
+            movementCycleID: 0,
+        )
+
+        #expect(synchronization.effects == [.cancelPendingAction(action)])
+        #expect(reducer.state.pendingAction == nil)
+    }
+
+    @Test("Engine derives exact merged timing and ignores recovery for actionable delivery")
+    func engineDerivesActionableSnapshot() throws {
+        let base = try configuration()
+        let configuration = ProtocolConfiguration(
+            visual: base.visual,
+            movement: base.movement,
+            activityEstimator: base.activityEstimator,
+            delivery: base.delivery,
+            recovery: try RecoveryConfiguration(
+                eligibleAfterSeconds: 1,
+                requiredMovementDeferrals: 1,
+            ),
+        )
+        let observedAt = Date(timeIntervalSince1970: 20)
+        let merged = ProtocolEngine(
+            configuration: configuration,
+            visualClock: OpportunityClockState(
+                cycleID: 7,
+                accumulatedActiveUseSeconds: 18,
+                phase: .headsUpPresented,
+            ),
+            movementClock: OpportunityClockState(
+                cycleID: 9,
+                accumulatedActiveUseSeconds: 47,
+                phase: .headsUpPresented,
+            ),
+        ).actionableHeadsUpSnapshot(
+            observedAt: observedAt,
+            isLowFrictionMoment: false,
+            suppressionReason: nil,
+        )
+        let recoveryMasked = ProtocolEngine(
+            configuration: configuration,
+            visualClock: OpportunityClockState(
+                cycleID: 8,
+                accumulatedActiveUseSeconds: 18,
+                phase: .headsUpPresented,
+            ),
+            recoveryState: RecoveryState(
+                accumulatedEligibleActiveUseSeconds: 1,
+                movementDeferralCount: 1,
+            ),
+        ).actionableHeadsUpSnapshot(
+            observedAt: observedAt,
+            isLowFrictionMoment: true,
+            suppressionReason: nil,
+        )
+
+        #expect(merged?.opportunity == .merged(visualCycleID: 7, movementCycleID: 9))
+        #expect(merged?.secondsUntilTarget == 2)
+        #expect(merged?.secondsUntilLatest == 12)
+        #expect(recoveryMasked == nil)
+    }
+
     @Test("Merged snooze returns typed actions for both independent clocks")
     func mergedSnoozeActions() {
         let opportunity = HeadsUpOpportunityID.merged(visualCycleID: 4, movementCycleID: 9)

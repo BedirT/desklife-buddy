@@ -1,6 +1,7 @@
 enum HeadsUpNotificationExplainerChoice: Equatable, Sendable {
     case continueWithNotifications
     case useInAppHeadsUp
+    case cancelled
 }
 
 struct HeadsUpNotificationAuthorizationState: Equatable, Sendable {
@@ -11,11 +12,19 @@ struct HeadsUpNotificationAuthorizationState: Equatable, Sendable {
 }
 
 final class HeadsUpAuthorizationCoordinator {
+    private struct PendingChannelSelection {
+        let generation: Int
+        let task: Task<HeadsUpPresentationChannel, Never>
+    }
+
     private let center: any HeadsUpNotificationCenterClient
     private let store: any HeadsUpAuthorizationStore
     private(set) var state: HeadsUpNotificationAuthorizationState
     private(set) var resolvedAuthorizationStatus: HeadsUpNotificationAuthorizationStatus?
-    private var explainerSelectionTask: Task<HeadsUpPresentationChannel, Never>?
+    private var channelSelectionTask: PendingChannelSelection?
+    private var channelSelectionGeneration = 0
+    private var nextChannelWaiterID = 0
+    private var channelWaiterGenerations: [Int: Int] = [:]
 
     init(
         center: any HeadsUpNotificationCenterClient,
@@ -29,17 +38,31 @@ final class HeadsUpAuthorizationCoordinator {
     func selectChannel(
         presentExplainer: @escaping () async -> HeadsUpNotificationExplainerChoice,
     ) async -> HeadsUpPresentationChannel {
-        if let explainerSelectionTask {
-            return await explainerSelectionTask.value
+        if let channelSelectionTask {
+            return await waitForChannelSelection(channelSelectionTask)
         }
         guard !state.usesInAppHeadsUp else { return .capsule }
 
+        channelSelectionGeneration &+= 1
+        let generation = channelSelectionGeneration
+        let task = Task<HeadsUpPresentationChannel, Never> {
+            await resolveChannel(presentExplainer: presentExplainer)
+        }
+        let selection = PendingChannelSelection(generation: generation, task: task)
+        channelSelectionTask = selection
+        return await waitForChannelSelection(selection)
+    }
+
+    private func resolveChannel(
+        presentExplainer: @escaping () async -> HeadsUpNotificationExplainerChoice,
+    ) async -> HeadsUpPresentationChannel {
         let settings: HeadsUpNotificationSettings
         do {
             settings = try await center.notificationSettings()
         } catch {
             return .capsule
         }
+        guard !Task.isCancelled else { return .capsule }
 
         let status = resolvedStatus(for: settings.authorizationStatus)
         resolvedAuthorizationStatus = status
@@ -57,32 +80,62 @@ final class HeadsUpAuthorizationCoordinator {
     private func resolveNotDetermined(
         presentExplainer: @escaping () async -> HeadsUpNotificationExplainerChoice,
     ) async -> HeadsUpPresentationChannel {
-        if let explainerSelectionTask {
-            return await explainerSelectionTask.value
-        }
         guard !state.hasRequestedAuthorization else { return .capsule }
         guard !state.hasPresentedExplainer else { return .capsule }
 
-        let task = Task {
-            await resolveExplainerChoice(presentExplainer: presentExplainer)
+        return await resolveExplainerChoice(presentExplainer: presentExplainer)
+    }
+
+    private func waitForChannelSelection(
+        _ selection: PendingChannelSelection,
+    ) async -> HeadsUpPresentationChannel {
+        nextChannelWaiterID &+= 1
+        let waiterID = nextChannelWaiterID
+        channelWaiterGenerations[waiterID] = selection.generation
+
+        return await withTaskCancellationHandler {
+            let channel = await selection.task.value
+            channelWaiterGenerations[waiterID] = nil
+            if channelSelectionTask?.generation == selection.generation {
+                channelSelectionTask = nil
+            }
+            return channel
+        } onCancel: {
+            Task { [weak self] in
+                await self?.cancelChannelWaiter(
+                    waiterID,
+                    generation: selection.generation,
+                )
+            }
         }
-        explainerSelectionTask = task
-        let channel = await task.value
-        explainerSelectionTask = nil
-        return channel
+    }
+
+    private func cancelChannelWaiter(_ waiterID: Int, generation: Int) {
+        guard channelWaiterGenerations.removeValue(forKey: waiterID) == generation else {
+            return
+        }
+        let hasLiveWaiter = channelWaiterGenerations.values.contains(generation)
+        guard !hasLiveWaiter,
+              let selection = channelSelectionTask,
+              selection.generation == generation
+        else {
+            return
+        }
+        selection.task.cancel()
     }
 
     private func resolveExplainerChoice(
         presentExplainer: @escaping () async -> HeadsUpNotificationExplainerChoice,
     ) async -> HeadsUpPresentationChannel {
         let choice = await presentExplainer()
-        state.hasPresentedExplainer = true
         switch choice {
         case .useInAppHeadsUp:
+            state.hasPresentedExplainer = true
             state.usesInAppHeadsUp = true
             store.save(state)
             return .capsule
         case .continueWithNotifications:
+            state.hasPresentedExplainer = true
             state.hasRequestedAuthorization = true
             store.save(state)
             do {
@@ -100,6 +153,8 @@ final class HeadsUpAuthorizationCoordinator {
             } catch {
                 return .capsule
             }
+        case .cancelled:
+            return .capsule
         }
     }
 

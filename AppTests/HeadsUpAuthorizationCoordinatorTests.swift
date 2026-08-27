@@ -1,4 +1,5 @@
 import Foundation
+import HeadsUp
 import Testing
 @testable import App
 
@@ -188,6 +189,144 @@ struct HeadsUpAuthorizationCoordinatorTests {
 
 @Suite("Heads-up authorization explainer lifecycle")
 struct HeadsUpAuthorizationExplainerTests {
+    @Test("Cancelling the only authorization waiter closes PM-01 without persisting a choice")
+    func finalAuthorizationWaiterCancellation() async {
+        let store = FakeHeadsUpAuthorizationStore()
+        let center = FakeHeadsUpNotificationCenter(settings: [
+            .init(authorizationStatus: .notDetermined, alertsEnabled: false),
+            .init(authorizationStatus: .notDetermined, alertsEnabled: false),
+        ])
+        let authorization = HeadsUpAuthorizationCoordinator(center: center, store: store)
+        let panelHarness = HeadsUpPermissionPanelHarness()
+        let permission = panelHarness.makeCoordinator()
+        let first = Task {
+            await authorization.selectChannel { await permission.present() }
+        }
+        await panelHarness.waitForPanel(count: 1)
+
+        first.cancel()
+        for _ in 0 ..< 20 where panelHarness.panels[0].closeCount == 0 {
+            await Task.yield()
+        }
+        let cancelledPanelClosed = panelHarness.panels[0].closeCount == 1
+        if !cancelledPanelClosed {
+            permission.tearDown()
+        }
+
+        #expect(cancelledPanelClosed)
+        #expect(await first.value == .capsule)
+        #expect(store.state == HeadsUpNotificationAuthorizationState())
+
+        let retry = Task {
+            await authorization.selectChannel { await permission.present() }
+        }
+        await panelHarness.waitForPanel(count: 2)
+        panelHarness.panels[1].send(.useInAppHeadsUp)
+
+        #expect(await retry.value == .capsule)
+        #expect(store.state.hasPresentedExplainer)
+        #expect(store.state.usesInAppHeadsUp)
+    }
+
+    @Test("Only cancelling the final coalesced authorization waiter closes PM-01")
+    func coalescedAuthorizationWaiterCancellation() async {
+        let store = FakeHeadsUpAuthorizationStore()
+        let center = FakeHeadsUpNotificationCenter(settings: [
+            .init(authorizationStatus: .notDetermined, alertsEnabled: false),
+            .init(authorizationStatus: .notDetermined, alertsEnabled: false),
+        ])
+        let authorization = HeadsUpAuthorizationCoordinator(center: center, store: store)
+        let panelHarness = HeadsUpPermissionPanelHarness()
+        let permission = panelHarness.makeCoordinator()
+        let first = Task {
+            await authorization.selectChannel { await permission.present() }
+        }
+        let second = Task {
+            await authorization.selectChannel { await permission.present() }
+        }
+        await panelHarness.waitForPanel(count: 1)
+
+        first.cancel()
+        for _ in 0 ..< 20 {
+            await Task.yield()
+        }
+        #expect(panelHarness.panels[0].closeCount == 0)
+
+        second.cancel()
+        for _ in 0 ..< 20 where panelHarness.panels[0].closeCount == 0 {
+            await Task.yield()
+        }
+        let finalCancellationClosedPanel = panelHarness.panels[0].closeCount == 1
+        if !finalCancellationClosedPanel {
+            permission.tearDown()
+        }
+
+        #expect(finalCancellationClosedPanel)
+        #expect(await [first.value, second.value] == [.capsule, .capsule])
+        #expect(panelHarness.panels.count == 1)
+        #expect(store.state == HeadsUpNotificationAuthorizationState())
+    }
+
+    @Test("Settings lookup is coalesced before cancellation counts authorization waiters")
+    func settingsLookupCancellationRace() async {
+        let center = GatedAuthorizationNotificationCenter()
+        let authorization = HeadsUpAuthorizationCoordinator(
+            center: center,
+            store: FakeHeadsUpAuthorizationStore(),
+        )
+        let panelHarness = HeadsUpPermissionPanelHarness()
+        let permission = panelHarness.makeCoordinator()
+        let first = Task { await authorization.selectChannel { await permission.present() } }
+        let second = Task { await authorization.selectChannel { await permission.present() } }
+        await center.waitForSettingsCalls(count: 1)
+        await settleConcurrentTasks()
+        let settingsWereCoalesced = center.settingsCallCount == 1
+
+        center.releaseSettings(call: 0)
+        await panelHarness.waitForPanel()
+        first.cancel()
+        await settleConcurrentTasks()
+        let sharedPanelWasPreserved = panelHarness.panels[0].closeCount == 0
+
+        if center.settingsCallCount > 1 {
+            center.releaseSettings(call: 1)
+            await settleConcurrentTasks()
+        }
+        panelHarness.panel?.send(.useInAppHeadsUp)
+
+        #expect(settingsWereCoalesced)
+        #expect(sharedPanelWasPreserved)
+        #expect(await [first.value, second.value] == [.capsule, .capsule])
+        #expect(panelHarness.panels.count == 1)
+    }
+
+    @Test("Cancelled explainer is not persisted and remains eligible")
+    func cancelledExplainerRemainsEligible() async {
+        let store = FakeHeadsUpAuthorizationStore()
+        let center = FakeHeadsUpNotificationCenter(settings: [
+            .init(authorizationStatus: .notDetermined, alertsEnabled: false),
+            .init(authorizationStatus: .notDetermined, alertsEnabled: false),
+        ])
+        let coordinator = HeadsUpAuthorizationCoordinator(center: center, store: store)
+        var explainerCount = 0
+
+        #expect(await coordinator.selectChannel {
+            explainerCount += 1
+            return .cancelled
+        } == .capsule)
+        #expect(store.state == HeadsUpNotificationAuthorizationState())
+        #expect(center.authorizationRequestCount == 0)
+
+        #expect(await coordinator.selectChannel {
+            explainerCount += 1
+            return .useInAppHeadsUp
+        } == .capsule)
+        #expect(explainerCount == 2)
+        #expect(store.state.hasPresentedExplainer)
+        #expect(store.state.usesInAppHeadsUp)
+        #expect(center.authorizationRequestCount == 0)
+    }
+
     @Test("Concurrent selection presents once and persists only after explicit choice")
     func concurrentSelectionDedupe() async {
         let store = FakeHeadsUpAuthorizationStore()

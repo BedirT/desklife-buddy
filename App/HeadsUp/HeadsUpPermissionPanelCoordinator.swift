@@ -244,4 +244,14 @@ final class HeadsUpPermissionPanel: NSPanel, HeadsUpPermissionPanelPresenting {
         }
         return super.performKeyEquivalent(with: event)
     }
+
+    #if DEBUG
+        @discardableResult
+        func captureForVerification() -> Bool {
+            OverlayVerificationCapture.write(
+                view: contentView,
+                prefix: "heads-up-permission",
+            )
+        }
+    #endif
 }

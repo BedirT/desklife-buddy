@@ -120,6 +120,13 @@ final class HeadsUpCapsuleCoordinator: HeadsUpCapsulePresenting {
         tearDown()
     }
 
+    #if DEBUG
+        @discardableResult
+        func captureForVerification() -> Bool {
+            (panel as? HeadsUpCapsulePanel)?.captureForVerification() ?? false
+        }
+    #endif
+
     func tearDown() {
         layoutObservationGeneration &+= 1
         layoutObservationIdentity = nil

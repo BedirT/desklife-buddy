@@ -3,6 +3,20 @@ import Foundation
 import HeadsUp
 
 extension HeadsUpLifecycleCoordinator {
+    func drain() async {
+        await serialTaskTail?.value
+        let tasks = deliveryTasks.values
+        for task in tasks { await task.value }
+        await serialTaskTail?.value
+    }
+
+    #if DEBUG
+        @discardableResult
+        func captureCapsuleForVerification() -> Bool {
+            verificationCapture?() ?? false
+        }
+    #endif
+
     func tearDown() {
         deliveryTasks.values.forEach { $0.cancel() }
         deliveryTasks.removeAll()

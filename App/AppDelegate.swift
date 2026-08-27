@@ -18,7 +18,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var headsUpLifecycleCoordinator: HeadsUpLifecycleCoordinator?
     var headsUpOpeningBinding: HeadsUpOpeningBinding?
     #if DEBUG
-        private var verificationOverlayCoordinator: VisualResetOverlayCoordinator?
+        var verificationOverlayCoordinator: VisualResetOverlayCoordinator?
+        var headsUpVerificationStore: HeadsUpVerificationRuntimeStore?
+        var headsUpVerificationMode: HeadsUpVerificationMode?
+        var headsUpVerificationSettings: HeadsUpNotificationSettings?
+        var headsUpVerificationPermissionPanel: HeadsUpPermissionPanel?
+        var headsUpVerificationCaptureCount = 0
     #endif
     private var activityTimer: Timer?
     let visualResetLifecycleQueue = VisualResetLifecycleQueue()
@@ -36,18 +41,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         do {
+            let arguments = ProcessInfo.processInfo.arguments
             let configuration = try ProtocolProfiles.configuration(for: .balanced)
-            let store = try SwiftDataProtocolStore(
+            let baseStore = try SwiftDataProtocolStore(
                 inMemory: Self.isRunningTests || Self.isVerificationRun,
             )
+            #if DEBUG
+                let verificationMode = HeadsUpVerificationMode(arguments: arguments)
+                headsUpVerificationMode = verificationMode
+                let store: any ProtocolRuntimeStore
+                if verificationMode?.enablesRuntime == true {
+                    let tracingStore = HeadsUpVerificationRuntimeStore(base: baseStore)
+                    headsUpVerificationStore = tracingStore
+                    store = tracingStore
+                } else {
+                    store = baseStore
+                }
+            #else
+                let store: any ProtocolRuntimeStore = baseStore
+            #endif
             let headsUpPolicy = Self.verificationHeadsUpPolicy(
-                arguments: ProcessInfo.processInfo.arguments,
+                arguments: arguments,
             )
             let runtime = if let headsUpPolicy {
                 ProtocolRuntime(
                     configuration: configuration,
                     store: store,
                     headsUpRuntimePolicy: headsUpPolicy,
+                    makeID: {
+                        #if DEBUG
+                            HeadsUpVerificationRoute.deliveryID
+                        #else
+                            UUID()
+                        #endif
+                    },
                 )
             } else {
                 ProtocolRuntime(configuration: configuration, store: store)
@@ -76,6 +103,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         headsUpLifecycleCoordinator?.tearDown()
         #if DEBUG
             verificationOverlayCoordinator?.tearDown()
+            headsUpVerificationPermissionPanel?.close()
         #endif
     }
 }
@@ -152,9 +180,20 @@ extension AppDelegate {
         Task { [weak self] in
             guard let self else { return }
             if let headsUpLifecycleCoordinator {
+                #if DEBUG
+                    let initialSample = headsUpVerificationMode?.enablesRuntime == true
+                        ? nil
+                        : activitySource?.sample()
+                #else
+                    let initialSample = activitySource?.sample()
+                #endif
                 await headsUpLifecycleCoordinator.start(
-                    initialSample: activitySource?.sample(),
+                    initialSample: initialSample,
                 )
+                #if DEBUG
+                    await runHeadsUpVerificationAfterRestore()
+                    if headsUpVerificationMode?.enablesRuntime == true { return }
+                #endif
                 startActivityTimer()
                 return
             }
@@ -168,53 +207,6 @@ extension AppDelegate {
                 lastRuntimeError = error
             }
         }
-    }
-
-    func configureVerification(arguments: [String]) {
-        #if DEBUG
-            if arguments.contains("--verify-status-menu") {
-                addVerificationTimer(delay: 1, selector: #selector(openVerificationMenu))
-                for delay in [2.0, 2.4, 2.8, 3.2] {
-                    addVerificationTimer(delay: delay, selector: #selector(captureVerificationMenu))
-                }
-            }
-            if arguments.contains("--verify-visual-reset") {
-                let coordinator = VisualResetOverlayCoordinator(
-                    durationSeconds: configuration?.visual.durationOptionsSeconds[0] ?? 20,
-                    onLifecycle: { _, completion in completion(.success(())) },
-                    onAnnouncement: VisualResetAccessibilityAnnouncer.post,
-                )
-                verificationOverlayCoordinator = coordinator
-                coordinator.present()
-                for delay in [1.0, 2.0, 3.0] {
-                    addVerificationTimer(
-                        delay: delay,
-                        selector: #selector(captureVerificationVisualReset),
-                    )
-                }
-            }
-            if arguments.contains("--verify-movement") {
-                addVerificationTimer(delay: 0.5, selector: #selector(openVerificationMovement))
-                for delay in [1.0, 2.0, 3.0] {
-                    addVerificationTimer(
-                        delay: delay,
-                        selector: #selector(captureVerificationMovement),
-                    )
-                }
-            }
-            if arguments.contains("--verify-merged") {
-                addVerificationTimer(delay: 0.5, selector: #selector(openVerificationMerged))
-                for delay in [1.0, 2.0, 3.0] {
-                    addVerificationTimer(delay: delay, selector: #selector(captureVerificationMerged))
-                }
-            }
-            if arguments.contains("--verify-snooze") {
-                addVerificationTimer(delay: 0.5, selector: #selector(openVerificationSnooze))
-                for delay in [1.0, 2.0, 3.0] {
-                    addVerificationTimer(delay: delay, selector: #selector(captureVerificationSnooze))
-                }
-            }
-        #endif
     }
 
     func startActivityTimer() {

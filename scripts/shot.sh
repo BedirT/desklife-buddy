@@ -132,6 +132,156 @@ if [[ "$name" == "snooze" ]]; then
   exit 1
 fi
 
+if [[ "$name" == "heads-up-capsule" ]]; then
+  for running_pid in $(app_pids); do
+    /bin/kill "$running_pid"
+  done
+  pid=""
+  trap 'if [[ -n "${pid:-}" ]]; then /bin/kill "$pid" 2>/dev/null || true; fi' EXIT
+  /usr/bin/open -na "$APP_PATH" --args --verify-heads-up-capsule
+  /bin/sleep 5
+  pid="$(app_pid)"
+  cache="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/heads-up-capsule-$pid.png"
+  state="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/heads-up-capsule-state-$pid.json"
+  if [[ -s "$cache" && -s "$state" && "$(/usr/bin/stat -f %z "$cache")" -ge 10000 ]]; then
+    delivery_id="$(/usr/bin/plutil -extract deliveryID raw "$state")"
+    channel="$(/usr/bin/plutil -extract channel raw "$state")"
+    phase="$(/usr/bin/plutil -extract phase raw "$state")"
+    prompt="$(/usr/bin/plutil -extract promptFactStatus raw "$state")"
+    status_scope="$(/usr/bin/plutil -extract statusProjectionScope raw "$state")"
+    runtime_status="$(/usr/bin/plutil -extract runtimeStatus raw "$state")"
+    captured="$(/usr/bin/plutil -extract capsuleCaptured raw "$state")"
+    first_phase="$(/usr/bin/plutil -extract persistedPhases.0 raw "$state")"
+    last_phase="$(/usr/bin/plutil -extract persistedPhases.2 raw "$state")"
+    prompt_count="$(/usr/bin/plutil -extract promptPresentedEventCount raw "$state")"
+    progress="$(/usr/bin/plutil -extract approachProgress raw "$state")"
+    [[ "$delivery_id" == "00000000-0000-4000-8000-0000000000c7" \
+      && "$channel" == "capsule" \
+      && "$phase" == "presented" \
+      && "$prompt" == "acknowledged" \
+      && "$status_scope" == "visual" \
+      && "$runtime_status" == "ok" \
+      && "$captured" == "true" \
+      && "$first_phase" == "reserved" \
+      && "$last_phase" == "presented-prompt-acknowledged" \
+      && "$prompt_count" == "1" ]] || {
+      echo "The Heads-Up capsule evidence did not prove the exact persisted delivery chain." >&2
+      /bin/cat "$state" >&2
+      exit 1
+    }
+    /usr/bin/awk -v value="$progress" 'BEGIN { exit value >= 0 && value <= 1 ? 0 : 1 }' || {
+      echo "The Heads-Up capsule reported invalid approach progress: $progress" >&2
+      exit 1
+    }
+    /bin/cp "$cache" "$output"
+    /bin/cp "$state" "$ARTIFACTS/heads-up-capsule-state.json"
+    context="$ARTIFACTS/heads-up-capsule-context.png"
+    /bin/rm -f "$context"
+    if ! /usr/sbin/screencapture -x -t png "$context"; then
+      echo "Screen-context capture unavailable; grant Screen Recording permission for that evidence." >&2
+    fi
+    /bin/kill "$pid"
+    pid=""
+    trap - EXIT
+    echo "SHOT OK: $output (state: $ARTIFACTS/heads-up-capsule-state.json)"
+    exit 0
+  fi
+  echo "The real Heads-Up capsule did not produce complete Debug verification evidence." >&2
+  [[ ! -s "$state" ]] || /bin/cat "$state" >&2
+  exit 1
+fi
+
+if [[ "$name" == "heads-up-notification" ]]; then
+  for running_pid in $(app_pids); do
+    /bin/kill "$running_pid"
+  done
+  pid=""
+  trap 'if [[ -n "${pid:-}" ]]; then /bin/kill "$pid" 2>/dev/null || true; fi' EXIT
+  /usr/bin/open -na "$APP_PATH" --args --verify-heads-up-notification
+  /bin/sleep 5
+  pid="$(app_pid)"
+  state="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/heads-up-capsule-state-$pid.json"
+  [[ -s "$state" ]] || {
+    echo "The live notification authorization probe did not produce state." >&2
+    exit 1
+  }
+  /bin/cp "$state" "$ARTIFACTS/heads-up-notification-state.json"
+  outcome="$(/usr/bin/plutil -extract outcome raw "$state")"
+  if [[ "$outcome" == "blocked-authorization-unavailable" ]]; then
+    status="$(/usr/bin/plutil -extract authorizationStatus raw "$state")"
+    alerts="$(/usr/bin/plutil -extract alertsEnabled raw "$state")"
+    echo "Heads-Up notification proof blocked: live authorization=$status alertsEnabled=$alerts; no permission request was made." >&2
+    exit 1
+  fi
+  delivery_id="$(/usr/bin/plutil -extract deliveryID raw "$state")"
+  channel="$(/usr/bin/plutil -extract channel raw "$state")"
+  phase="$(/usr/bin/plutil -extract phase raw "$state")"
+  prompt="$(/usr/bin/plutil -extract promptFactStatus raw "$state")"
+  status_scope="$(/usr/bin/plutil -extract statusProjectionScope raw "$state")"
+  runtime_status="$(/usr/bin/plutil -extract runtimeStatus raw "$state")"
+  authorization_status="$(/usr/bin/plutil -extract authorizationStatus raw "$state")"
+  alerts="$(/usr/bin/plutil -extract alertsEnabled raw "$state")"
+  adapter="$(/usr/bin/plutil -extract adapter raw "$state")"
+  first_phase="$(/usr/bin/plutil -extract persistedPhases.0 raw "$state")"
+  pending_phase="$(/usr/bin/plutil -extract persistedPhases.1 raw "$state")"
+  last_phase="$(/usr/bin/plutil -extract persistedPhases.2 raw "$state")"
+  prompt_count="$(/usr/bin/plutil -extract promptPresentedEventCount raw "$state")"
+  [[ "$outcome" == "presented" \
+    && "$delivery_id" == "00000000-0000-4000-8000-0000000000c7" \
+    && "$channel" == "notification" \
+    && "$phase" == "presented" \
+    && "$prompt" == "acknowledged" \
+    && "$status_scope" == "visual" \
+    && "$runtime_status" == "ok" \
+    && "$authorization_status" == "authorized" \
+    && "$alerts" == "true" \
+    && "$adapter" == "UNUserNotificationCenterAdapter" \
+    && "$first_phase" == "reserved" \
+    && "$pending_phase" == "presented-prompt-pending" \
+    && "$last_phase" == "presented-prompt-acknowledged" \
+    && "$prompt_count" == "1" ]] || {
+    echo "The notification route did not prove the exact native and persisted delivery chain." >&2
+    /bin/cat "$state" >&2
+    exit 1
+  }
+  /bin/kill "$pid"
+  pid=""
+  trap - EXIT
+  echo "SHOT OK: $ARTIFACTS/heads-up-notification-state.json"
+  exit 0
+fi
+
+if [[ "$name" == "heads-up-permission" ]]; then
+  for running_pid in $(app_pids); do
+    /bin/kill "$running_pid"
+  done
+  pid=""
+  trap 'if [[ -n "${pid:-}" ]]; then /bin/kill "$pid" 2>/dev/null || true; fi' EXIT
+  /usr/bin/open -na "$APP_PATH" --args --verify-heads-up-permission
+  /bin/sleep 5
+  pid="$(app_pid)"
+  cache="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/heads-up-permission-$pid.png"
+  state="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/heads-up-permission-state-$pid.json"
+  if [[ -s "$cache" && -s "$state" && "$(/usr/bin/stat -f %z "$cache")" -ge 10000 ]]; then
+    outcome="$(/usr/bin/plutil -extract outcome raw "$state")"
+    captured="$(/usr/bin/plutil -extract capsuleCaptured raw "$state")"
+    [[ "$outcome" == "presented-without-system-request" && "$captured" == "true" ]] || {
+      echo "The PM-01 verification route did not prove an isolated in-app explainer." >&2
+      /bin/cat "$state" >&2
+      exit 1
+    }
+    /bin/cp "$cache" "$output"
+    /bin/cp "$state" "$ARTIFACTS/heads-up-permission-state.json"
+    /bin/kill "$pid"
+    pid=""
+    trap - EXIT
+    echo "SHOT OK: $output (state: $ARTIFACTS/heads-up-permission-state.json)"
+    exit 0
+  fi
+  echo "The real Heads-Up permission panel did not produce complete Debug verification evidence." >&2
+  exit 1
+fi
+
 if [[ "$name" == status-menu* ]]; then
   state="${name#status-menu-}"
   [[ "$name" == "status-menu" ]] && state="operating"

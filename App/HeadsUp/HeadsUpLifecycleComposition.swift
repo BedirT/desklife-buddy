@@ -12,6 +12,7 @@ enum HeadsUpLifecycleComposition {
 
     static func makeLive(
         runtime: ProtocolRuntime,
+        authorizationStore: (any HeadsUpAuthorizationStore)? = nil,
         presentBreak: @escaping HeadsUpLifecycleCoordinator.BreakPresenter,
         presentMoreOptions: @escaping HeadsUpLifecycleCoordinator.MoreOptionsPresenter,
         onStatusProjection: @escaping (HeadsUpStatusMenuProjection?) -> Void,
@@ -43,7 +44,7 @@ enum HeadsUpLifecycleComposition {
         let coordinator = HeadsUpLifecycleCoordinator(
             runtime: runtime,
             center: center,
-            authorizationStore: UserDefaultsHeadsUpAuthorizationStore(),
+            authorizationStore: authorizationStore ?? UserDefaultsHeadsUpAuthorizationStore(),
             permissionPanelCoordinator: HeadsUpPermissionPanelCoordinator(),
             capsule: capsule,
             presentBreak: presentBreak,
@@ -51,6 +52,11 @@ enum HeadsUpLifecycleComposition {
             onStatusProjection: onStatusProjection,
             onError: onError,
         )
+        #if DEBUG
+            coordinator.verificationCapture = { [weak capsule] in
+                capsule?.captureForVerification() ?? false
+            }
+        #endif
         relay.coordinator = coordinator
         return coordinator
     }

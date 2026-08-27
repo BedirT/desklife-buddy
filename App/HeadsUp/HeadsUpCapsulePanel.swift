@@ -89,6 +89,16 @@ final class HeadsUpCapsulePanel: NSPanel, HeadsUpCapsulePanelPresenting {
         ))
     }
 
+    #if DEBUG
+        @discardableResult
+        func captureForVerification() -> Bool {
+            OverlayVerificationCapture.write(
+                view: contentView,
+                prefix: "heads-up-capsule",
+            )
+        }
+    #endif
+
     private static func capsuleContent(model: HeadsUpModel) -> AnyView {
         AnyView(HeadsUpView(model: model).id(ObjectIdentifier(model)))
     }

@@ -57,6 +57,9 @@ final class HeadsUpLifecycleCoordinator {
     var deliveryTasks: [HeadsUpDeliveryID: Task<Void, Never>] = [:]
     var serialTaskTail: Task<Void, Never>?
     var didStart = false
+    #if DEBUG
+        var verificationCapture: (() -> Bool)?
+    #endif
 
     var activeDeliveryID: HeadsUpDeliveryID? { activePresentation?.id }
     var statusProjection: HeadsUpStatusMenuProjection? {
@@ -263,13 +266,6 @@ final class HeadsUpLifecycleCoordinator {
                 completion(.failure(error))
             }
         }
-    }
-
-    func drain() async {
-        await serialTaskTail?.value
-        let tasks = deliveryTasks.values
-        for task in tasks { await task.value }
-        await serialTaskTail?.value
     }
 
 }

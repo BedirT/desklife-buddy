@@ -36,6 +36,15 @@ extension AppDelegate {
             make: { [weak self] in
                 HeadsUpLifecycleComposition.makeLive(
                     runtime: runtime,
+                    authorizationStore: {
+                        #if DEBUG
+                            self?.headsUpVerificationMode.map(
+                                HeadsUpVerificationAuthorizationStore.init,
+                            )
+                        #else
+                            nil
+                        #endif
+                    }(),
                     presentBreak: { [weak self] id, opportunity in
                         guard let result = self?.presentHeadsUpBreak(
                             id,

@@ -6,6 +6,7 @@ public enum ProtocolConfigurationError: Error, Equatable {
     case invalidOpportunityWindow
     case invalidActivityThresholds
     case invalidDeliveryOptions
+    case invalidRecoveryOptions
 }
 
 /// Injected timing for one independently scheduled opportunity.
@@ -109,6 +110,47 @@ public struct OpportunityDeliveryConfiguration: Equatable, Sendable {
     }
 }
 
+/// Optional recovery-suggestion policy sourced from the normative protocol profile.
+public struct RecoveryConfiguration: Equatable, Sendable {
+    public let eligibleAfterSeconds: TimeInterval
+    public let latestTypicalSeconds: TimeInterval
+    public let suggestedDurationMinSeconds: TimeInterval
+    public let suggestedDurationMaxSeconds: TimeInterval
+    public let requiredMovementDeferrals: Int
+    public let maximumOffersPerSession: Int
+
+    public init(
+        eligibleAfterSeconds: TimeInterval,
+        latestTypicalSeconds: TimeInterval? = nil,
+        suggestedDurationMinSeconds: TimeInterval = 300,
+        suggestedDurationMaxSeconds: TimeInterval = 600,
+        requiredMovementDeferrals: Int,
+        maximumOffersPerSession: Int = 1,
+    ) throws {
+        let latestTypicalSeconds = latestTypicalSeconds ?? eligibleAfterSeconds
+        guard eligibleAfterSeconds.isFinite,
+              latestTypicalSeconds.isFinite,
+              suggestedDurationMinSeconds.isFinite,
+              suggestedDurationMaxSeconds.isFinite,
+              eligibleAfterSeconds > 0,
+              latestTypicalSeconds >= eligibleAfterSeconds,
+              suggestedDurationMinSeconds > 0,
+              suggestedDurationMaxSeconds >= suggestedDurationMinSeconds,
+              requiredMovementDeferrals > 0,
+              maximumOffersPerSession == 1
+        else {
+            throw ProtocolConfigurationError.invalidRecoveryOptions
+        }
+
+        self.eligibleAfterSeconds = eligibleAfterSeconds
+        self.latestTypicalSeconds = latestTypicalSeconds
+        self.suggestedDurationMinSeconds = suggestedDurationMinSeconds
+        self.suggestedDurationMaxSeconds = suggestedDurationMaxSeconds
+        self.requiredMovementDeferrals = requiredMovementDeferrals
+        self.maximumOffersPerSession = maximumOffersPerSession
+    }
+}
+
 /// Stable identifiers for machine-readable built-in profiles and user-supplied custom timing.
 public enum ProtocolProfileID: String, CaseIterable, Codable, Sendable {
     case gentle
@@ -132,6 +174,7 @@ public struct ProtocolConfiguration: Equatable, Sendable {
     public let movement: OpportunitySchedule
     public let activityEstimator: ActivityEstimatorConfiguration
     public let delivery: OpportunityDeliveryConfiguration
+    public let recovery: RecoveryConfiguration?
 
     /// Groups already validated configuration without introducing hidden defaults.
     public init(
@@ -139,10 +182,12 @@ public struct ProtocolConfiguration: Equatable, Sendable {
         movement: OpportunitySchedule,
         activityEstimator: ActivityEstimatorConfiguration,
         delivery: OpportunityDeliveryConfiguration,
+        recovery: RecoveryConfiguration? = nil,
     ) {
         self.visual = visual
         self.movement = movement
         self.activityEstimator = activityEstimator
         self.delivery = delivery
+        self.recovery = recovery
     }
 }

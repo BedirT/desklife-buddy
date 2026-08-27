@@ -54,6 +54,7 @@ public enum OpportunityPresentation: Equatable, Sendable {
     case visual
     case movement
     case merged
+    case recovery
 }
 
 /// Observable result of one pure protocol-engine reduction.
@@ -64,12 +65,16 @@ public struct ProtocolEngineOutput: Equatable, Sendable {
 
 /// Deterministic reducer for independent clocks, holds, and exhaustive event effects.
 public struct ProtocolEngine: Sendable {
-    private let configuration: ProtocolConfiguration
+    let configuration: ProtocolConfiguration
     private var activityEstimator: ActivityEstimator
 
     public private(set) var profileID: ProtocolProfileID
-    public private(set) var visualClock: OpportunityClockState
-    public private(set) var movementClock: OpportunityClockState
+    public internal(set) var visualClock: OpportunityClockState
+    public internal(set) var movementClock: OpportunityClockState
+    public internal(set) var recoveryState: RecoveryState
+    var visualSnoozeDeadline: Date?
+    var movementSnoozeDeadline: Date?
+    var recoveryLastObservedAt: Date?
 
     /// Creates an engine with injected configuration and optional restored clock values.
     public init(
@@ -77,12 +82,20 @@ public struct ProtocolEngine: Sendable {
         profileID: ProtocolProfileID = .balanced,
         visualClock: OpportunityClockState = OpportunityClockState(),
         movementClock: OpportunityClockState = OpportunityClockState(),
+        visualSnoozeDeadline: Date? = nil,
+        movementSnoozeDeadline: Date? = nil,
+        recoveryState: RecoveryState = RecoveryState(),
+        recoveryLastObservedAt: Date? = nil,
     ) {
         self.configuration = configuration
         activityEstimator = ActivityEstimator(configuration: configuration.activityEstimator)
         self.profileID = profileID
         self.visualClock = visualClock
         self.movementClock = movementClock
+        self.visualSnoozeDeadline = visualSnoozeDeadline
+        self.movementSnoozeDeadline = movementSnoozeDeadline
+        self.recoveryState = recoveryState
+        self.recoveryLastObservedAt = recoveryLastObservedAt
     }
 
     /// Reduces one coarse system observation and returns newly emitted event facts.
@@ -114,8 +127,8 @@ public struct ProtocolEngine: Sendable {
             return ProtocolEngineOutput(events: [], presentation: nil)
         }
 
-        let events = exitSuppressionOrUpdatePhases(isLowFrictionMoment: isLowFrictionMoment)
-        return ProtocolEngineOutput(events: events, presentation: recommendedPresentation())
+        exitSuppressionOrUpdatePhases(isLowFrictionMoment: isLowFrictionMoment)
+        return ProtocolEngineOutput(events: [], presentation: recommendedPresentation())
     }
 
     /// Applies one canonical event and returns the same distinct fact for persistence.
@@ -125,6 +138,13 @@ public struct ProtocolEngine: Sendable {
         selectedDurationSeconds: TimeInterval? = nil,
         source: OpportunityEventSource = .user,
     ) -> ProtocolEngineOutput {
+        guard isValidRecord(
+            kind,
+            opportunity: opportunity,
+            selectedDurationSeconds: selectedDurationSeconds,
+        ) else {
+            return ProtocolEngineOutput(events: [], presentation: recommendedPresentation())
+        }
         applyEventEffect(
             kind,
             opportunity: opportunity,
@@ -158,11 +178,12 @@ public struct ProtocolEngine: Sendable {
     }
 }
 
-private extension ProtocolEngine {
+extension ProtocolEngine {
     mutating func addActiveUse(_ seconds: TimeInterval) {
         guard seconds.isFinite, seconds > 0 else { return }
         visualClock.accumulatedActiveUseSeconds += seconds
         movementClock.accumulatedActiveUseSeconds += seconds
+        recoveryState.accumulatedEligibleActiveUseSeconds += seconds
     }
 
     mutating func applySuppression(_ reason: SuppressionReason) {
@@ -175,17 +196,35 @@ private extension ProtocolEngine {
     }
 
     mutating func applyNaturalInterruption() {
-        if visualClock.phase != .running {
-            visualClock.phase = .gracedAfterSuppression
+        visualClock.phase = phaseAfterNaturalInterruption(
+            visualClock,
+            schedule: configuration.visual,
+        )
+        movementClock.phase = phaseAfterNaturalInterruption(
+            movementClock,
+            schedule: configuration.movement,
+        )
+        recoveryState = RecoveryState()
+    }
+
+    func phaseAfterNaturalInterruption(
+        _ clock: OpportunityClockState,
+        schedule: OpportunitySchedule,
+    ) -> OpportunityPhase {
+        if clock.phase == .running { return .running }
+        if clock.phase == .gracedAfterSuppression {
+            return scheduledPhase(
+                for: clock,
+                schedule: schedule,
+                isLowFrictionMoment: true,
+            )
         }
-        if movementClock.phase != .running {
-            movementClock.phase = .gracedAfterSuppression
-        }
+        return .gracedAfterSuppression
     }
 
     mutating func exitSuppressionOrUpdatePhases(
         isLowFrictionMoment: Bool,
-    ) -> [OpportunityEventDraft] {
+    ) {
         if case .suppressed = visualClock.phase {
             visualClock.phase = .gracedAfterSuppression
         }
@@ -193,50 +232,36 @@ private extension ProtocolEngine {
             movementClock.phase = .gracedAfterSuppression
         }
 
-        var events: [OpportunityEventDraft] = []
-        events += updatePhase(
+        updatePhase(
             clock: &visualClock,
             schedule: configuration.visual,
-            opportunity: .visual,
             isLowFrictionMoment: isLowFrictionMoment,
         )
-        events += updatePhase(
+        updatePhase(
             clock: &movementClock,
             schedule: configuration.movement,
-            opportunity: .movement,
             isLowFrictionMoment: isLowFrictionMoment,
         )
-        return events
     }
 
     func updatePhase(
         clock: inout OpportunityClockState,
         schedule: OpportunitySchedule,
-        opportunity: OpportunityType,
         isLowFrictionMoment: Bool,
-    ) -> [OpportunityEventDraft] {
+    ) {
         switch clock.phase {
         case .running, .snoozed, .suppressed, .gracedAfterSuppression:
-            return []
+            return
         case .accumulating, .softDue, .headsUpPresented,
              .waitingForLowFrictionMoment, .readyToPresent:
             break
         }
 
-        let previousPhase = clock.phase
         clock.phase = scheduledPhase(
             for: clock,
             schedule: schedule,
             isLowFrictionMoment: isLowFrictionMoment,
         )
-        guard previousPhase != .headsUpPresented, clock.phase == .headsUpPresented else {
-            return []
-        }
-        return [OpportunityEventDraft(
-            kind: .promptPresented,
-            source: .localTimer,
-            opportunity: opportunity,
-        )]
     }
 
     func scheduledPhase(
@@ -268,6 +293,9 @@ private extension ProtocolEngine {
         opportunity: OpportunityType?,
         selectedDurationSeconds: TimeInterval?,
     ) {
+        if kind == .promptPresented, opportunity == .recovery {
+            recoveryState.wasOfferedThisSession = true
+        }
         if applyLifecycleEffect(
             kind,
             opportunity: opportunity,
@@ -282,7 +310,9 @@ private extension ProtocolEngine {
         switch kind {
         case .likelyNaturalInterruption:
             applyNaturalInterruption()
-        case .positionChanged, .notAppropriate:
+        case .positionChanged:
+            movementClock.phase = .gracedAfterSuppression
+        case .notAppropriate:
             break
         case .promptPresented, .breakStarted, .timerFinished,
              .userDeclaredCompleted, .userDeclaredAlreadyMoved, .snoozed, .skipped:
@@ -297,93 +327,17 @@ private extension ProtocolEngine {
     ) -> Bool {
         switch kind {
         case .promptPresented:
-            setPhase(.headsUpPresented, for: opportunity)
+            break
         case .breakStarted:
             applyBreakStarted(
                 opportunity: opportunity,
                 selectedDurationSeconds: selectedDurationSeconds,
             )
         case .snoozed:
-            setPhase(.snoozed, for: opportunity)
+            return false
         default:
             return false
         }
         return true
-    }
-
-    mutating func applyCompletionEffect(
-        _ kind: OpportunityEventKind,
-        opportunity: OpportunityType?,
-    ) -> Bool {
-        switch kind {
-        case .timerFinished:
-            if opportunity == .visual { reset(.visual) }
-        case .userDeclaredCompleted:
-            if let opportunity { reset(opportunity) }
-        case .userDeclaredAlreadyMoved:
-            reset(.movement)
-        case .skipped:
-            if let opportunity { reset(opportunity) }
-        default:
-            return false
-        }
-        return true
-    }
-
-    mutating func applyBreakStarted(
-        opportunity: OpportunityType?,
-        selectedDurationSeconds: TimeInterval?,
-    ) {
-        let isAcceptedMovementStart = opportunity == .movement
-            && selectedDurationSeconds.map(
-                configuration.movement.durationOptionsSeconds.contains,
-            ) == true
-        if isAcceptedMovementStart {
-            reset(.movement)
-        }
-        setPhase(.running, for: opportunity)
-    }
-
-    mutating func reset(_ opportunity: OpportunityType) {
-        switch opportunity {
-        case .visual:
-            visualClock = OpportunityClockState()
-        case .movement:
-            movementClock = OpportunityClockState()
-        case .positionChange, .recovery:
-            break
-        }
-    }
-
-    mutating func setPhase(_ phase: OpportunityPhase, for opportunity: OpportunityType?) {
-        switch opportunity {
-        case .visual:
-            visualClock.phase = phase
-        case .movement:
-            movementClock.phase = phase
-        case .positionChange, .recovery, nil:
-            break
-        }
-    }
-
-    func recommendedPresentation() -> OpportunityPresentation? {
-        let visualReady = visualClock.phase == .readyToPresent
-        let movementReady = movementClock.phase == .readyToPresent
-        let visualRemaining = max(
-            0,
-            configuration.visual.targetSeconds - visualClock.accumulatedActiveUseSeconds,
-        )
-        let movementRemaining = max(
-            0,
-            configuration.movement.targetSeconds - movementClock.accumulatedActiveUseSeconds,
-        )
-        let mergeEligible = abs(visualRemaining - movementRemaining) <= configuration.delivery.mergeWindowSeconds
-
-        if mergeEligible, visualReady || movementReady {
-            return .merged
-        }
-        if movementReady { return .movement }
-        if visualReady { return .visual }
-        return nil
     }
 }

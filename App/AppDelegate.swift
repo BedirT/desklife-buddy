@@ -25,7 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let configuration = try ProtocolProfiles.configuration(for: .balanced)
             let runtime = try ProtocolRuntime(
                 configuration: configuration,
-                store: SwiftDataProtocolStore(),
+                store: SwiftDataProtocolStore(inMemory: Self.isRunningTests),
             )
             install(configuration: configuration, runtime: runtime)
             restore(runtime)
@@ -44,6 +44,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         #if DEBUG
             verificationOverlayCoordinator?.tearDown()
         #endif
+    }
+}
+
+private extension AppDelegate {
+    static var isRunningTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }
 }
 

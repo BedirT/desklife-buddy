@@ -23,6 +23,9 @@ struct ProtocolProfilesTests {
         #expect(configuration.delivery.headsUpSecondsBeforeTarget == 45)
         #expect(configuration.delivery.snoozeOptionsSeconds == [300, 600, 900])
         #expect(configuration.delivery.maximumRepeatedEscalations == 1)
+        #expect(configuration.recovery?.eligibleAfterSeconds == 5400)
+        #expect(configuration.recovery?.requiredMovementDeferrals == 2)
+        #expect(configuration.recovery?.maximumOffersPerSession == 1)
     }
 
     @Test("Every built-in profile is projected and custom remains user-supplied")

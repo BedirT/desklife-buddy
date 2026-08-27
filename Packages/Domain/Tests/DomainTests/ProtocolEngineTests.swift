@@ -31,7 +31,10 @@ struct ProtocolEngineTests {
 
         let headsUp = engine.observe(.active(uptimeSeconds: 18, secondsSinceInput: 0))
         #expect(engine.visualClock.phase == .headsUpPresented)
-        #expect(headsUp.events.map(\.kind) == [.promptPresented])
+        #expect(headsUp.events.isEmpty)
+
+        let delivered = engine.record(.promptPresented, opportunity: .visual)
+        #expect(delivered.events.map(\.kind) == [.promptPresented])
 
         _ = engine.observe(.active(uptimeSeconds: 20, secondsSinceInput: 0))
         #expect(engine.visualClock.phase == .waitingForLowFrictionMoment)
@@ -138,7 +141,11 @@ struct ProtocolEngineTests {
     func snoozeAndSkip() {
         var engine = accumulatedEngine(seconds: 20)
 
-        _ = engine.record(.snoozed, opportunity: .visual, selectedDurationSeconds: 3)
+        _ = engine.snooze(
+            .visual,
+            durationSeconds: 3,
+            at: Date(timeIntervalSince1970: 100),
+        )
         #expect(engine.visualClock.accumulatedActiveUseSeconds == 20)
         #expect(engine.visualClock.phase == .snoozed)
 

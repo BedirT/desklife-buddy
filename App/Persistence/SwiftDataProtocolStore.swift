@@ -10,6 +10,8 @@ enum ProtocolPersistenceError: Error, Equatable {
     case invalidOpportunityType(String)
     case invalidProfileID(String)
     case invalidCounter
+    case invalidRecoveryState
+    case invalidSnoozeDeadline
     case unsupportedSchemaVersion(Int)
 }
 
@@ -63,16 +65,35 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
         else {
             throw ProtocolPersistenceError.invalidCounter
         }
+        guard isValidCounter(stored.recoveryActiveUseSeconds),
+              stored.recoveryMovementDeferralCount >= 0
+        else {
+            throw ProtocolPersistenceError.invalidRecoveryState
+        }
+        guard isValidDeadline(stored.visualSnoozeDeadline),
+              isValidDeadline(stored.movementSnoozeDeadline),
+              isValidDeadline(stored.recoveryLastObservedAt)
+        else {
+            throw ProtocolPersistenceError.invalidSnoozeDeadline
+        }
         return ProtocolState(
             profileID: profileID,
             visualClock: OpportunityClockState(
                 accumulatedActiveUseSeconds: stored.visualAccumulatedActiveUseSeconds,
-                phase: .gracedAfterSuppression,
+                phase: stored.visualSnoozeDeadline == nil ? .gracedAfterSuppression : .snoozed,
             ),
             movementClock: OpportunityClockState(
                 accumulatedActiveUseSeconds: stored.movementAccumulatedActiveUseSeconds,
-                phase: .gracedAfterSuppression,
+                phase: stored.movementSnoozeDeadline == nil ? .gracedAfterSuppression : .snoozed,
             ),
+            visualSnoozeDeadline: stored.visualSnoozeDeadline,
+            movementSnoozeDeadline: stored.movementSnoozeDeadline,
+            recoveryState: RecoveryState(
+                accumulatedEligibleActiveUseSeconds: stored.recoveryActiveUseSeconds,
+                movementDeferralCount: stored.recoveryMovementDeferralCount,
+                wasOfferedThisSession: stored.recoveryWasOfferedThisSession,
+            ),
+            recoveryLastObservedAt: stored.recoveryLastObservedAt,
         )
     }
 
@@ -127,14 +148,34 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
         }
         let visual = state.visualClock.accumulatedActiveUseSeconds
         let movement = state.movementClock.accumulatedActiveUseSeconds
+        let recovery = state.recoveryState.accumulatedEligibleActiveUseSeconds
         guard isValidCounter(visual), isValidCounter(movement) else {
             throw ProtocolPersistenceError.invalidCounter
         }
+        guard isValidCounter(recovery), state.recoveryState.movementDeferralCount >= 0 else {
+            throw ProtocolPersistenceError.invalidRecoveryState
+        }
+        guard isValidDeadline(state.visualSnoozeDeadline),
+              isValidDeadline(state.movementSnoozeDeadline),
+              isValidDeadline(state.recoveryLastObservedAt)
+        else {
+            throw ProtocolPersistenceError.invalidSnoozeDeadline
+        }
         if let stored = try fetchState() {
-            stored.update(
+            stored.updateClocks(
                 profileID: state.profileID.rawValue,
                 visualAccumulatedActiveUseSeconds: visual,
                 movementAccumulatedActiveUseSeconds: movement,
+            )
+            stored.updateSnoozes(
+                visual: state.visualSnoozeDeadline,
+                movement: state.movementSnoozeDeadline,
+            )
+            stored.updateRecovery(
+                activeUseSeconds: recovery,
+                movementDeferralCount: state.recoveryState.movementDeferralCount,
+                wasOfferedThisSession: state.recoveryState.wasOfferedThisSession,
+                lastObservedAt: state.recoveryLastObservedAt,
             )
         } else {
             context.insert(StoredProtocolState(
@@ -143,6 +184,12 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
                 profileID: state.profileID.rawValue,
                 visualAccumulatedActiveUseSeconds: visual,
                 movementAccumulatedActiveUseSeconds: movement,
+                visualSnoozeDeadline: state.visualSnoozeDeadline,
+                movementSnoozeDeadline: state.movementSnoozeDeadline,
+                recoveryActiveUseSeconds: recovery,
+                recoveryMovementDeferralCount: state.recoveryState.movementDeferralCount,
+                recoveryWasOfferedThisSession: state.recoveryState.wasOfferedThisSession,
+                recoveryLastObservedAt: state.recoveryLastObservedAt,
             ))
         }
     }
@@ -208,6 +255,10 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
 
     private func isValidCounter(_ value: TimeInterval) -> Bool {
         value.isFinite && value >= 0
+    }
+
+    private func isValidDeadline(_ value: Date?) -> Bool {
+        value?.timeIntervalSinceReferenceDate.isFinite ?? true
     }
 }
 

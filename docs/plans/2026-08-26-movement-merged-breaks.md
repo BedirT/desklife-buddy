@@ -1,8 +1,8 @@
 # Movement, position, merged breaks, snooze, and recovery - plan
 
-Status: intake-needed
-Intake/escalation status: blocked-owner on three retained lifecycle semantics and final
-movement art acceptance
+Status: in-progress
+Intake/escalation status: clear for behavior implementation; final movement art acceptance
+remains staged
 
 ## Outcome
 
@@ -32,17 +32,8 @@ claims/accessibility review.
 
 ## Open escalations - clear before step 1
 
-- **Automatic start:** recommended - an automatically opened surface starts its presentation
-  timer but does not reset movement until 1/2/3/Q, Done, or Already moved is explicitly chosen.
-  Alternative readings are that automatic open itself is an accepted start, or that movement
-  never auto-opens. The current documents require both auto-open and explicit user action, so
-  retained history cannot choose silently.
-- **Merged Escape:** recommended - persist Skip while preserving the unfinished active clock;
-  retain only a segment already explicitly finished. Alternatives reset the active clock or
-  both clocks. This changes weekly facts and restart state.
-- **Recovery “repeated”:** recommended - two movement snoozes/skips plus 90 minutes eligible
-  active use, with one recovery offer per session. Three deferrals or deferring recovery are
-  viable, but no normative threshold exists.
+- None. On 2026-08-26 the owner selected the recommended semantics for automatic start,
+  merged Escape, and recovery eligibility; the retained rules are recorded below.
 
 CP-MV16 itself is resolved from the governing L03 card as “Small space - march or step gently
 in place, or use a seated equivalent.” No copy or research escalation remains for that string.
@@ -63,7 +54,7 @@ in place, or use a seated equivalent.” No copy or research escalation remains 
       localized gallery states, and Previews without feature behavior - done = focused
       DesignSystem tests and `scripts/snapshot.sh DesignSystem` green with exported light/dark
       catalog PNGs inspected.
-- [ ] 1. Domain and runtime semantics first, after the three owner answers above: write and
+- [x] 1. Domain and runtime semantics first, after the three owner answers above: write and
       observe RED tests for accepted 5/2-minute `breakStarted`, movement `timerFinished` without
       inferred completion, Done early and already-moved declarations, resolved Skip behavior,
       position change without movement reset, independent visual effects, merged partial
@@ -129,3 +120,31 @@ in place, or use a seated equivalent.” No copy or research escalation remains 
   anti-aliasing flake; two consecutive strict DesignSystem snapshot runs then passed exactly.
   The exported `movementControls` and `tokens` light/dark PNGs were inspected, and the final
   implementation review reported no P1/P2 findings.
+- 2026-08-26: Owner-confirmed automatic start semantics: an automatically opened Movement or
+  Merged movement segment starts its self-running presentation timer and may emit its opening
+  fact, but does not reset the movement clock. An explicit movement path/duration, Done early,
+  or Already moved is an accepted completion reset; standalone Skip retains the canonical
+  cycle-reset behavior without claiming completion, while merged Escape uses the exception
+  below.
+- 2026-08-26: Owner-confirmed merged Escape semantics: retain any segment already explicitly
+  finished, persist Skip for only the active unfinished segment, close the surface, and leave
+  that active segment's clock due. Escape never resets both clocks.
+- 2026-08-26: Owner-confirmed recovery threshold: after two movement snoozes/skips plus 90
+  minutes of eligible active use, offer one recovery suggestion per session. The offer remains
+  optional and non-escalating.
+- 2026-08-26: Step 1 defines a recovery session as a contiguous available-use episode. The
+  restart-safe last-available anchor preserves debt across an immediate crash/relaunch, while a
+  real long idle, lock/unavailable interval, or offline gap rotates recovery only after the
+  configured 300-second long-idle boundary. This boundary never adds offline active use and
+  never changes either opportunity clock.
+- 2026-08-26: Delivery acknowledgement, not scheduling eligibility, now owns
+  `promptPresented`. Automatic movement opening records a durationless `breakStarted`; an
+  accepted 5/2-minute selection atomically records the duration-bearing `breakStarted` that
+  authorizes its reset. One serialized App transaction lane prevents observations, lifecycle
+  actions, pause/resume, snooze, and delivery acknowledgement from overwriting each other.
+- 2026-08-26: Step 1 retained after red-first compile/behavior failures and green repair.
+  `scripts/test.sh Domain` passed 56 tests, `scripts/test.sh App` ended `Test Succeeded`, and
+  `scripts/lint.sh` ended `LINT OK`. Independent code and contract re-reviews found no remaining
+  P0/P1/P2 in the Step 1 contract. The additive SwiftData fields use optional/default values;
+  a pre-change disk-fixture migration proof remains a later persistence evidence item because
+  explicit schema-migration work is ask-first and there is no released product schema.

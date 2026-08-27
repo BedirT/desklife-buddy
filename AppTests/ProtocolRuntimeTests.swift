@@ -28,7 +28,47 @@ struct ProtocolRuntimeTests {
         #expect(store.commits.isEmpty)
     }
 
-    @Test("Observed active use commits the exhaustive event facts and state atomically")
+    @Test("Restore rotates recovery only after a retained offline session gap")
+    func restoreRecoverySessionBoundary() async throws {
+        let debt = RecoveryState(
+            accumulatedEligibleActiveUseSeconds: 5400,
+            movementDeferralCount: 2,
+            wasOfferedThisSession: true,
+        )
+        let staleStore = RuntimeStore(state: ProtocolState(
+            recoveryState: debt,
+            recoveryLastObservedAt: Date(timeIntervalSince1970: 100),
+        ))
+        let staleRuntime = try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
+            store: staleStore,
+            now: { Date(timeIntervalSince1970: 400) },
+            makeID: { UUID(0) },
+        )
+
+        try await staleRuntime.restore()
+
+        #expect(staleRuntime.state.recoveryState == RecoveryState())
+        #expect(staleStore.commits.count == 1)
+
+        let currentStore = RuntimeStore(state: ProtocolState(
+            recoveryState: debt,
+            recoveryLastObservedAt: Date(timeIntervalSince1970: 200),
+        ))
+        let currentRuntime = try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
+            store: currentStore,
+            now: { Date(timeIntervalSince1970: 400) },
+            makeID: { UUID(0) },
+        )
+
+        try await currentRuntime.restore()
+
+        #expect(currentRuntime.state.recoveryState == debt)
+        #expect(currentStore.commits.isEmpty)
+    }
+
+    @Test("Scheduling stays fact-free until delivery acknowledgement commits promptPresented")
     func observe() async throws {
         let store = RuntimeStore()
         let ids = IDSequence()
@@ -57,8 +97,38 @@ struct ProtocolRuntimeTests {
 
         #expect(runtime.state.visualClock.accumulatedActiveUseSeconds == 1480)
         #expect(store.commits.count == 2)
+        #expect(store.commits.last?.events.isEmpty == true)
+        #expect(runtime.statusContext.liveHeadsUp == .visual)
+
+        try await runtime.acknowledgePromptPresented(.visual)
+
         #expect(store.commits.last?.events.map(\.kind) == [.promptPresented])
+        #expect(store.commits.last?.events.map(\.opportunity) == [.visual])
         #expect(store.commits.last?.events.first?.recordedAt == Date(timeIntervalSince1970: 200))
+    }
+
+    @Test("Recovery delivery acknowledgement atomically latches the once-per-session offer")
+    func recoveryDeliveryAcknowledgement() async throws {
+        let retained = ProtocolState(
+            recoveryState: RecoveryState(
+                accumulatedEligibleActiveUseSeconds: 5400,
+                movementDeferralCount: 2,
+            ),
+        )
+        let store = RuntimeStore(state: retained)
+        let runtime = try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
+            store: store,
+            now: { Date(timeIntervalSince1970: 250) },
+            makeID: { UUID(0) },
+        )
+        try await runtime.restore()
+
+        try await runtime.acknowledgePromptPresented(.recovery)
+
+        #expect(store.commits.last?.events.map(\.kind) == [.promptPresented])
+        #expect(store.commits.last?.events.map(\.opportunity) == [.recovery])
+        #expect(runtime.state.recoveryState.wasOfferedThisSession)
     }
 
     @Test("Menu pause and resume alter presentation context without logging fake break completion")

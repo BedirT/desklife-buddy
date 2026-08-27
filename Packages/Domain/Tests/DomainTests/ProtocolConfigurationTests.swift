@@ -64,4 +64,29 @@ struct ProtocolConfigurationTests {
             )
         }
     }
+
+    @Test("Recovery timing rejects non-finite policy values")
+    func rejectsNonFiniteRecoveryTiming() {
+        #expect(throws: ProtocolConfigurationError.invalidRecoveryOptions) {
+            _ = try RecoveryConfiguration(
+                eligibleAfterSeconds: .infinity,
+                requiredMovementDeferrals: 2,
+            )
+        }
+        #expect(throws: ProtocolConfigurationError.invalidRecoveryOptions) {
+            _ = try RecoveryConfiguration(
+                eligibleAfterSeconds: 5400,
+                latestTypicalSeconds: .infinity,
+                requiredMovementDeferrals: 2,
+            )
+        }
+        #expect(throws: ProtocolConfigurationError.invalidRecoveryOptions) {
+            _ = try RecoveryConfiguration(
+                eligibleAfterSeconds: 5400,
+                suggestedDurationMinSeconds: 300,
+                suggestedDurationMaxSeconds: .infinity,
+                requiredMovementDeferrals: 2,
+            )
+        }
+    }
 }

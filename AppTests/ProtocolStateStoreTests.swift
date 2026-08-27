@@ -52,6 +52,63 @@ struct ProtocolStateStoreTests {
         #expect(engine.state.movementClock.accumulatedActiveUseSeconds == 210)
     }
 
+    @Test("Snooze deadlines and recovery debt round-trip without becoming elapsed use")
+    func lifecycleStateRoundTrip() async throws {
+        let store = try SwiftDataProtocolStateStore(inMemory: true)
+        let deadline = Date(timeIntervalSince1970: 1300)
+        let recoveryAnchor = Date(timeIntervalSince1970: 900)
+        let state = ProtocolState(
+            profileID: .balanced,
+            visualClock: OpportunityClockState(accumulatedActiveUseSeconds: 1500),
+            movementClock: OpportunityClockState(
+                accumulatedActiveUseSeconds: 3600,
+                phase: .snoozed,
+            ),
+            movementSnoozeDeadline: deadline,
+            recoveryState: RecoveryState(
+                accumulatedEligibleActiveUseSeconds: 5400,
+                movementDeferralCount: 2,
+                wasOfferedThisSession: true,
+            ),
+            recoveryLastObservedAt: recoveryAnchor,
+        )
+
+        try await store.saveState(state)
+
+        let loaded = try #require(try await store.loadState())
+        #expect(loaded.movementClock.phase == .snoozed)
+        #expect(loaded.movementSnoozeDeadline == deadline)
+        #expect(loaded.recoveryState == state.recoveryState)
+        #expect(loaded.recoveryLastObservedAt == recoveryAnchor)
+    }
+
+    @Test("Completing a snoozed visual opportunity cannot resurrect snooze after restart")
+    func completedVisualClearsSnoozeDeadline() async throws {
+        let store = try SwiftDataProtocolStateStore(inMemory: true)
+        var engine = try ProtocolEngine(
+            configuration: testConfiguration(),
+            visualClock: OpportunityClockState(
+                accumulatedActiveUseSeconds: 2000,
+                phase: .readyToPresent,
+            ),
+        )
+        _ = engine.snooze(
+            .visual,
+            durationSeconds: 300,
+            at: Date(timeIntervalSince1970: 1000),
+        )
+        _ = engine.record(.userDeclaredCompleted, opportunity: .visual)
+
+        try await store.saveState(engine.state)
+
+        let restored = try #require(try await store.loadState())
+        #expect(restored.visualSnoozeDeadline == nil)
+        #expect(restored.visualClock == OpportunityClockState(
+            accumulatedActiveUseSeconds: 0,
+            phase: .gracedAfterSuppression,
+        ))
+    }
+
     @Test("Events and counters can be committed atomically through one App store")
     func atomicCommit() async throws {
         let store = try SwiftDataProtocolStore(inMemory: true)

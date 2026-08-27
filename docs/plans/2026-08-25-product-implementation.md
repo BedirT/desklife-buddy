@@ -99,3 +99,7 @@ data, even if its query model is explored earlier.
 - 2026-08-26: Phase 5 now has an executable child plan. Its order-safe DesignSystem capsule
   vocabulary is complete and preview-verified; notification/capsule runtime steps remain behind
   Phase 4's three owner-semantic answers rather than bypassing the required implementation chain.
+- 2026-08-26: The owner resolved all three Phase 4 lifecycle semantics using the recommended
+  interpretations: explicit action resets automatically presented movement; merged Escape skips
+  only the active segment and leaves it due; recovery becomes eligible once per session after
+  two movement deferrals plus 90 minutes of eligible active use. Phase 4 Domain work resumes.

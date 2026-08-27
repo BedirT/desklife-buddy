@@ -65,6 +65,14 @@ enum ProtocolProfiles {
             ),
             activityEstimator: activityEstimator(),
             delivery: delivery(),
+            recovery: RecoveryConfiguration(
+                eligibleAfterSeconds: 5400,
+                latestTypicalSeconds: 7200,
+                suggestedDurationMinSeconds: 300,
+                suggestedDurationMaxSeconds: 600,
+                requiredMovementDeferrals: 2,
+                maximumOffersPerSession: 1,
+            ),
         )
     }
 

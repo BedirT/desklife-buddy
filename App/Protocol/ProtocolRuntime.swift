@@ -23,10 +23,12 @@ final class ProtocolRuntime {
     private let now: () -> Date
     private let makeID: () -> UUID
     private let endOfDay: (Date) -> Date
-    private var engine: ProtocolEngine
+    var engine: ProtocolEngine
     private var pauseUntil: Date?
     private var indefiniteSuppression: SuppressionReason?
     private var observedSuppressions: Set<SuppressionReason> = []
+    let lifecycleGate = ProtocolLifecycleGate()
+    var lifecycleSession: LifecycleSession?
 
     private(set) var state: ProtocolState
     private(set) var statusContext: StatusMenuContext
@@ -59,10 +61,18 @@ final class ProtocolRuntime {
     }
 
     func restore() async throws {
-        if let restored = try await store.loadState() {
-            engine = ProtocolEngine(configuration: configuration, state: restored)
+        try await withLifecycleGate {
+            if let restored = try await store.loadState() {
+                engine = ProtocolEngine(configuration: configuration, state: restored)
+            }
+            let retained = engine.state
+            engine.resumeRecoverySession(at: now())
+            let resumed = engine.resumeExpiredSnoozes(at: now())
+            if engine.state != retained {
+                try await persist([], state: engine.state)
+            }
+            publish(liveHeadsUp: resumed.presentation)
         }
-        publish(liveHeadsUp: nil)
     }
 
     func observe(
@@ -70,47 +80,62 @@ final class ProtocolRuntime {
         activeSuppressions: Set<SuppressionReason> = [],
         isLowFrictionMoment: Bool = false,
     ) async throws {
-        expireTimedPauseIfNeeded()
-        observedSuppressions = activeSuppressions
-        if !sample.systemAwake || !sample.sessionActive || sample.screenLocked {
-            observedSuppressions.insert(.systemInactiveOrLocked)
-        }
-        var suppressions = observedSuppressions
-        if let suppression = currentSuppression {
-            suppressions.insert(suppression)
-        }
+        try await withLifecycleGate {
+            expireTimedPauseIfNeeded()
+            observedSuppressions = activeSuppressions
+            if !sample.systemAwake || !sample.sessionActive || sample.screenLocked {
+                observedSuppressions.insert(.systemInactiveOrLocked)
+            }
+            var suppressions = observedSuppressions
+            if let suppression = currentSuppression {
+                suppressions.insert(suppression)
+            }
 
-        var candidate = engine
-        let output = candidate.observe(
-            sample,
-            activeSuppressions: suppressions,
-            isLowFrictionMoment: isLowFrictionMoment,
-        )
-        try await persist(output.events, state: candidate.state)
-        engine = candidate
-        publish(liveHeadsUp: output.presentation)
+            var candidate = engine
+            candidate.observeRecoverySession(
+                at: now(),
+                systemAvailable: sample.systemAwake && sample.sessionActive && !sample.screenLocked,
+            )
+            _ = candidate.resumeExpiredSnoozes(at: now())
+            let output = candidate.observe(
+                sample,
+                activeSuppressions: suppressions,
+                isLowFrictionMoment: isLowFrictionMoment,
+            )
+            try await persist(output.events, state: candidate.state)
+            engine = candidate
+            publish(liveHeadsUp: output.presentation)
+        }
     }
 
     func handle(_ action: StatusMenuAction) async throws {
         switch action {
         case let .pause(choice):
-            applyPause(choice)
-            publish(liveHeadsUp: nil)
+            try await withLifecycleGate {
+                applyPause(choice)
+                publish(liveHeadsUp: nil)
+            }
         case .resume:
-            pauseUntil = nil
-            indefiniteSuppression = nil
-            publish(liveHeadsUp: nil)
+            try await withLifecycleGate {
+                pauseUntil = nil
+                indefiniteSuppression = nil
+                publish(liveHeadsUp: nil)
+            }
         case .toggleWorkingHours:
-            statusContext = StatusMenuContext(
-                estimatedActiveUseSeconds: statusContext.estimatedActiveUseSeconds,
-                activeSuppression: statusContext.activeSuppression,
-                manualPause: statusContext.manualPause,
-                liveHeadsUp: statusContext.liveHeadsUp,
-                workingHoursOnly: !statusContext.workingHoursOnly,
-            )
-            notifyChange()
+            try await withLifecycleGate {
+                statusContext = StatusMenuContext(
+                    estimatedActiveUseSeconds: statusContext.estimatedActiveUseSeconds,
+                    activeSuppression: statusContext.activeSuppression,
+                    manualPause: statusContext.manualPause,
+                    liveHeadsUp: statusContext.liveHeadsUp,
+                    workingHoursOnly: !statusContext.workingHoursOnly,
+                )
+                notifyChange()
+            }
         case let .snooze(duration):
-            try await snooze(duration)
+            try await withLifecycleGate {
+                try await snooze(duration)
+            }
         case .startHeadsUpNow, .startVisualReset, .startMovement,
              .openWeeklyRhythm, .openSettings, .quit:
             route(action)
@@ -121,29 +146,72 @@ final class ProtocolRuntime {
         _ event: VisualResetLifecycleEvent,
         openingSource: OpportunityEventSource = .user,
     ) async throws {
-        let fact: (kind: OpportunityEventKind, source: OpportunityEventSource) = switch event {
-        case .opened:
-            (.breakStarted, openingSource)
-        case .timerFinished:
-            (.timerFinished, .localTimer)
-        case .doneEarly:
-            (.userDeclaredCompleted, .user)
-        case .skipped:
-            (.skipped, .user)
+        try await withLifecycleGate {
+            let fact: (kind: OpportunityEventKind, source: OpportunityEventSource) = switch event {
+            case .opened:
+                (.breakStarted, openingSource)
+            case .timerFinished:
+                (.timerFinished, .localTimer)
+            case .doneEarly:
+                (.userDeclaredCompleted, .user)
+            case .skipped:
+                (.skipped, .user)
+            }
+            var candidate = engine
+            let output = candidate.record(
+                fact.kind,
+                opportunity: .visual,
+                source: fact.source,
+            )
+            try await persist(output.events, state: candidate.state)
+            engine = candidate
+            publish(liveHeadsUp: nil)
         }
-        var candidate = engine
-        let output = candidate.record(
-            fact.kind,
-            opportunity: .visual,
-            source: fact.source,
-        )
-        try await persist(output.events, state: candidate.state)
-        engine = candidate
-        publish(liveHeadsUp: nil)
+    }
+
+    func acknowledgePromptPresented(
+        _ presentation: OpportunityPresentation,
+        source: OpportunityEventSource = .localTimer,
+    ) async throws {
+        try await withLifecycleGate {
+            let opportunity: OpportunityType? = switch presentation {
+            case .visual: .visual
+            case .movement: .movement
+            case .merged: nil
+            case .recovery: .recovery
+            }
+            var candidate = engine
+            let output = candidate.record(
+                .promptPresented,
+                opportunity: opportunity,
+                source: source,
+            )
+            try await persist(output.events, state: candidate.state)
+            engine = candidate
+            publish(liveHeadsUp: presentation)
+        }
+    }
+
+    func handleMovement(
+        _ event: MovementLifecycleEvent,
+        openingSource: OpportunityEventSource = .user,
+    ) async throws {
+        try await withLifecycleGate {
+            try await reduceMovement(event, openingSource: openingSource)
+        }
+    }
+
+    func handleMerged(
+        _ event: MergedLifecycleEvent,
+        openingSource: OpportunityEventSource = .user,
+    ) async throws {
+        try await withLifecycleGate {
+            try await reduceMerged(event, openingSource: openingSource)
+        }
     }
 }
 
-private extension ProtocolRuntime {
+extension ProtocolRuntime {
     var currentSuppression: SuppressionReason? {
         var suppressions = observedSuppressions
         if let indefiniteSuppression {
@@ -193,28 +261,37 @@ private extension ProtocolRuntime {
         case .visual: [.visual]
         case .movement: [.movement]
         case .merged: [.visual, .movement]
+        case .recovery: [.recovery]
         case nil: []
+        }
+        guard configuration.delivery.snoozeOptionsSeconds.contains(duration) else {
+            throw ProtocolLifecycleError.invalidSnoozeDuration
         }
         var candidate = engine
         var drafts: [OpportunityEventDraft] = []
+        let actionDate = now()
         for opportunity in opportunities {
-            drafts += candidate.record(
-                .snoozed,
-                opportunity: opportunity,
-                selectedDurationSeconds: duration,
+            drafts += candidate.snooze(
+                opportunity,
+                durationSeconds: duration,
+                at: actionDate,
             ).events
         }
         guard !drafts.isEmpty else {
             route(.snooze(duration))
             return
         }
-        try await persist(drafts, state: candidate.state)
+        try await persist(drafts, state: candidate.state, recordedAt: actionDate)
         engine = candidate
         publish(liveHeadsUp: nil)
     }
 
-    func persist(_ drafts: [OpportunityEventDraft], state: ProtocolState) async throws {
-        let recordedAt = now()
+    func persist(
+        _ drafts: [OpportunityEventDraft],
+        state: ProtocolState,
+        recordedAt: Date? = nil,
+    ) async throws {
+        let recordedAt = recordedAt ?? now()
         let events = drafts.map { draft in
             OpportunityEvent(
                 id: makeID(),

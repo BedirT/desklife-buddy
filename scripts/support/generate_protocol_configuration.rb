@@ -75,6 +75,23 @@ profile_factories = profile_cases.map do |yaml_name, swift_name|
   movement = fetch_hash(profile, "movement", "profiles.#{yaml_name}")
   visual_path = "profiles.#{yaml_name}.visual"
   movement_path = "profiles.#{yaml_name}.movement"
+  recovery_argument = if profile.key?("recovery")
+                        recovery = fetch_hash(profile, "recovery", "profiles.#{yaml_name}")
+                        recovery_path = "profiles.#{yaml_name}.recovery"
+                        <<~SWIFT.chomp
+                          ,
+                                      recovery: try RecoveryConfiguration(
+                                          eligibleAfterSeconds: #{fetch_number(recovery, "eligible_after_seconds", recovery_path)},
+                                          latestTypicalSeconds: #{fetch_number(recovery, "latest_typical_seconds", recovery_path)},
+                                          suggestedDurationMinSeconds: #{fetch_number(recovery, "suggested_duration_min_seconds", recovery_path)},
+                                          suggestedDurationMaxSeconds: #{fetch_number(recovery, "suggested_duration_max_seconds", recovery_path)},
+                                          requiredMovementDeferrals: #{fetch_number(recovery, "required_movement_deferrals", recovery_path)},
+                                          maximumOffersPerSession: #{fetch_number(recovery, "maximum_offers_per_session", recovery_path)}
+                                      )
+                        SWIFT
+                      else
+                        ""
+                      end
 
   <<~SWIFT.chomp
     private static func #{swift_name}() throws -> ProtocolConfiguration {
@@ -95,7 +112,7 @@ profile_factories = profile_cases.map do |yaml_name, swift_name|
                 ]
             ),
             activityEstimator: activityEstimator(),
-            delivery: delivery()
+            delivery: delivery()#{recovery_argument}
         )
     }
   SWIFT
@@ -142,6 +159,7 @@ swift = <<~SWIFT
               lockoutAllowed: #{swift_boolean(fetch_boolean(delivery, "lockout_allowed", "opportunity_delivery"))}
           )
       }
+
   }
 SWIFT
 

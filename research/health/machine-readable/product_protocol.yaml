@@ -43,6 +43,8 @@ profiles:
       latest_typical_seconds: 7200
       suggested_duration_min_seconds: 300
       suggested_duration_max_seconds: 600
+      required_movement_deferrals: 2
+      maximum_offers_per_session: 1
   frequent_movement:
     visual:
       soft_due_seconds: 1200

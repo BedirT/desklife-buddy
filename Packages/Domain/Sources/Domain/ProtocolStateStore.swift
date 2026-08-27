@@ -1,18 +1,49 @@
+import Foundation
+
+/// Restart-safe debt used only to decide whether one optional recovery suggestion is eligible.
+public struct RecoveryState: Equatable, Sendable {
+    public internal(set) var accumulatedEligibleActiveUseSeconds: TimeInterval
+    public internal(set) var movementDeferralCount: Int
+    public internal(set) var wasOfferedThisSession: Bool
+
+    public init(
+        accumulatedEligibleActiveUseSeconds: TimeInterval = 0,
+        movementDeferralCount: Int = 0,
+        wasOfferedThisSession: Bool = false,
+    ) {
+        self.accumulatedEligibleActiveUseSeconds = max(0, accumulatedEligibleActiveUseSeconds)
+        self.movementDeferralCount = max(0, movementDeferralCount)
+        self.wasOfferedThisSession = wasOfferedThisSession
+    }
+}
+
 /// Restart-safe protocol counters and their current in-process presentation phases.
 public struct ProtocolState: Equatable, Sendable {
     public let profileID: ProtocolProfileID
     public let visualClock: OpportunityClockState
     public let movementClock: OpportunityClockState
+    public let visualSnoozeDeadline: Date?
+    public let movementSnoozeDeadline: Date?
+    public let recoveryState: RecoveryState
+    public let recoveryLastObservedAt: Date?
 
     /// Creates a state snapshot from two independent opportunity clocks.
     public init(
         profileID: ProtocolProfileID = .balanced,
         visualClock: OpportunityClockState = OpportunityClockState(),
         movementClock: OpportunityClockState = OpportunityClockState(),
+        visualSnoozeDeadline: Date? = nil,
+        movementSnoozeDeadline: Date? = nil,
+        recoveryState: RecoveryState = RecoveryState(),
+        recoveryLastObservedAt: Date? = nil,
     ) {
         self.profileID = profileID
         self.visualClock = visualClock
         self.movementClock = movementClock
+        self.visualSnoozeDeadline = visualSnoozeDeadline
+        self.movementSnoozeDeadline = movementSnoozeDeadline
+        self.recoveryState = recoveryState
+        self.recoveryLastObservedAt = recoveryLastObservedAt
     }
 }
 
@@ -58,6 +89,10 @@ public extension ProtocolEngine {
             profileID: state.profileID,
             visualClock: state.visualClock,
             movementClock: state.movementClock,
+            visualSnoozeDeadline: state.visualSnoozeDeadline,
+            movementSnoozeDeadline: state.movementSnoozeDeadline,
+            recoveryState: state.recoveryState,
+            recoveryLastObservedAt: state.recoveryLastObservedAt,
         )
     }
 
@@ -67,6 +102,10 @@ public extension ProtocolEngine {
             profileID: profileID,
             visualClock: visualClock,
             movementClock: movementClock,
+            visualSnoozeDeadline: visualSnoozeDeadline,
+            movementSnoozeDeadline: movementSnoozeDeadline,
+            recoveryState: recoveryState,
+            recoveryLastObservedAt: recoveryLastObservedAt,
         )
     }
 }

@@ -10,7 +10,6 @@ struct HeadsUpDeliveryTests {
     func visualCycleDeliversOnce() {
         let deliveryID = id(1)
         var reducer = HeadsUpDeliveryReducer(maximumSnoozeReoffers: 1)
-
         let reservation = reducer.observe(
             snapshot(.visual(cycleID: 4), target: 45),
             proposedDeliveryID: deliveryID,
@@ -24,7 +23,6 @@ struct HeadsUpDeliveryTests {
             deliveryID,
             channel: .notification,
         )
-
         #expect(reservation.effects == [.reserve(HeadsUpDeliveryReservation(
             id: deliveryID,
             opportunity: .visual(cycleID: 4),
@@ -46,14 +44,12 @@ struct HeadsUpDeliveryTests {
         var original = HeadsUpDeliveryReducer(maximumSnoozeReoffers: 1)
         let due = snapshot(.visual(cycleID: 8), target: 45)
         _ = original.observe(due, proposedDeliveryID: deliveryID)
-
         var reserved = HeadsUpDeliveryReducer(
             state: original.state,
             maximumSnoozeReoffers: 1,
         )
         let retry = reserved.observe(due, proposedDeliveryID: id(4))
         #expect(retry.effects.first?.deliveryID == deliveryID)
-
         _ = reserved.acknowledgePresented(deliveryID, channel: .capsule)
         var presented = HeadsUpDeliveryReducer(
             state: reserved.state,
@@ -79,12 +75,10 @@ struct HeadsUpDeliveryTests {
             state: original.state,
             maximumSnoozeReoffers: 0,
         )
-
         let retry = restored.observe(
             snapshot(.visual(cycleID: 8), target: 15),
             proposedDeliveryID: id(76),
         )
-
         #expect(retry.effects == [.reserve(HeadsUpDeliveryReservation(
             id: deliveryID,
             opportunity: .visual(cycleID: 8),
@@ -327,7 +321,6 @@ extension HeadsUpDeliveryTests {
             snapshot(.merged(visualCycleID: 2, movementCycleID: 1), target: 45),
             proposedDeliveryID: id(21),
         )
-
         #expect(output.effects == [.reserve(HeadsUpDeliveryReservation(
             id: id(21),
             opportunity: .visual(cycleID: 2),
@@ -335,5 +328,73 @@ extension HeadsUpDeliveryTests {
         ))])
         #expect(reducer.state.movementClock.cycleID == 1)
         #expect(reducer.state.movementClock.presentationCount == 1)
+    }
+
+    @Test("Synchronizing one rotated cycle resets only its ledger")
+    func synchronizeRotatedSingleCycles() {
+        var movement = acknowledgedReducer(.movement(cycleID: 7), id: id(79))
+        let movementState = movement.state
+        #expect(movement.synchronizeCycles(
+            visualCycleID: 4,
+            movementCycleID: 7,
+        ) == HeadsUpDeliveryOutput())
+        #expect(movement.state.visualClock == HeadsUpClockLedger(cycleID: 4))
+        #expect(movement.state.movementClock == movementState.movementClock)
+        #expect(movement.state.activeDelivery == movementState.activeDelivery)
+        var visual = acknowledgedReducer(.visual(cycleID: 5), id: id(80))
+        let visualState = visual.state
+        #expect(visual.synchronizeCycles(
+            visualCycleID: 5,
+            movementCycleID: 9,
+        ) == HeadsUpDeliveryOutput())
+        #expect(visual.state.visualClock == visualState.visualClock)
+        #expect(visual.state.movementClock == HeadsUpClockLedger(cycleID: 9))
+        #expect(visual.state.activeDelivery == visualState.activeDelivery)
+    }
+
+    @Test("Cycle synchronization cancels stale delivery and rejects stale candidates")
+    func synchronizeRotatedMergedConstituent() throws {
+        for (index, cycles) in [(12, 21), (11, 22)].enumerated() {
+            let deliveryID = id(81 + index)
+            var reducer = acknowledgedReducer(.merged(
+                visualCycleID: 11,
+                movementCycleID: 21,
+            ), id: deliveryID)
+            let original = reducer.state
+            let inert = reducer.synchronizeCycles(visualCycleID: 11, movementCycleID: 21)
+            #expect(inert == HeadsUpDeliveryOutput())
+            #expect(reducer.state == original)
+            let output = reducer.synchronizeCycles(
+                visualCycleID: UInt64(cycles.0),
+                movementCycleID: UInt64(cycles.1),
+            )
+            #expect(output.effects == [.cancel(deliveryID)])
+            #expect(reducer.state.activeDelivery == nil)
+            let data = try JSONEncoder().encode(reducer.state)
+            #expect(try JSONDecoder().decode(HeadsUpDeliveryState.self, from: data) == reducer.state)
+        }
+        let staleCandidates: [(HeadsUpOpportunityID, HeadsUpOpportunityID)] = [
+            (.visual(cycleID: 1), .visual(cycleID: 2)),
+            (.movement(cycleID: 1), .movement(cycleID: 2)),
+            (.merged(visualCycleID: 1, movementCycleID: 1), .merged(visualCycleID: 2, movementCycleID: 1)),
+            (.merged(visualCycleID: 1, movementCycleID: 1), .merged(visualCycleID: 1, movementCycleID: 2)),
+        ]
+        for candidate in staleCandidates {
+            let cycles = currentCycles(for: candidate.1)
+            for target in [0.0, 45.0] {
+                var reducer = HeadsUpDeliveryReducer(maximumSnoozeReoffers: 0)
+                let output = reducer.observe(
+                    snapshot(
+                        candidate.0,
+                        target: target,
+                        latest: target,
+                        currentVisualCycleID: cycles.visual,
+                        currentMovementCycleID: cycles.movement,
+                    ),
+                    proposedDeliveryID: id(85),
+                )
+                #expect(output == HeadsUpDeliveryOutput())
+            }
+        }
     }
 }

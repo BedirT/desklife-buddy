@@ -15,14 +15,42 @@ public struct HeadsUpDeliveryReducer: Sendable {
         self.maximumSnoozeReoffers = maximumSnoozeReoffers
     }
 
+    /// Aligns persisted delivery coverage with the scheduler's current outer cycles.
+    public mutating func synchronizeCycles(
+        visualCycleID: UInt64,
+        movementCycleID: UInt64,
+    ) -> HeadsUpDeliveryOutput {
+        synchronizeLedgers(
+            visualCycleID: visualCycleID,
+            movementCycleID: movementCycleID,
+        )
+        guard let cancelledID = discardStaleActiveDelivery(
+            visualCycleID: visualCycleID,
+            movementCycleID: movementCycleID,
+        ) else {
+            return HeadsUpDeliveryOutput()
+        }
+        return HeadsUpDeliveryOutput(effects: [.cancel(cancelledID)])
+    }
+
     /// Reduces a scheduler snapshot and reserves, updates, holds, or opens as needed.
     public mutating func observe(
         _ snapshot: HeadsUpDeliverySnapshot,
         proposedDeliveryID: HeadsUpDeliveryID,
     ) -> HeadsUpDeliveryOutput {
-        synchronizeLedgers(with: snapshot)
-        if let cancelledID = discardStaleActiveDelivery(for: snapshot) {
-            return HeadsUpDeliveryOutput(effects: [.cancel(cancelledID)])
+        let synchronization = synchronizeCycles(
+            visualCycleID: snapshot.currentVisualCycleID,
+            movementCycleID: snapshot.currentMovementCycleID,
+        )
+        if !synchronization.effects.isEmpty {
+            return synchronization
+        }
+        guard opportunityMatchesCycles(
+            snapshot.opportunity,
+            visualCycleID: snapshot.currentVisualCycleID,
+            movementCycleID: snapshot.currentMovementCycleID,
+        ) else {
+            return HeadsUpDeliveryOutput()
         }
 
         if let reason = snapshot.suppressionReason {
@@ -142,24 +170,38 @@ public struct HeadsUpDeliveryReducer: Sendable {
 }
 
 extension HeadsUpDeliveryReducer {
-    mutating func synchronizeLedgers(with snapshot: HeadsUpDeliverySnapshot) {
-        if state.visualClock.cycleID != snapshot.currentVisualCycleID {
-            state.visualClock = HeadsUpClockLedger(cycleID: snapshot.currentVisualCycleID)
+    func opportunityMatchesCycles(
+        _ opportunity: HeadsUpOpportunityID,
+        visualCycleID: UInt64,
+        movementCycleID: UInt64,
+    ) -> Bool {
+        let visualMatches = opportunity.visualCycleID.map { $0 == visualCycleID } ?? true
+        let movementMatches = opportunity.movementCycleID.map { $0 == movementCycleID } ?? true
+        return visualMatches && movementMatches
+    }
+
+    mutating func synchronizeLedgers(
+        visualCycleID: UInt64,
+        movementCycleID: UInt64,
+    ) {
+        if state.visualClock.cycleID != visualCycleID {
+            state.visualClock = HeadsUpClockLedger(cycleID: visualCycleID)
         }
-        if state.movementClock.cycleID != snapshot.currentMovementCycleID {
-            state.movementClock = HeadsUpClockLedger(cycleID: snapshot.currentMovementCycleID)
+        if state.movementClock.cycleID != movementCycleID {
+            state.movementClock = HeadsUpClockLedger(cycleID: movementCycleID)
         }
     }
 
     mutating func discardStaleActiveDelivery(
-        for snapshot: HeadsUpDeliverySnapshot,
+        visualCycleID: UInt64,
+        movementCycleID: UInt64,
     ) -> HeadsUpDeliveryID? {
         guard let active = state.activeDelivery else { return nil }
         let activeVisualIsCurrent = active.opportunity.visualCycleID.map {
-            $0 == snapshot.currentVisualCycleID
+            $0 == visualCycleID
         } ?? true
         let activeMovementIsCurrent = active.opportunity.movementCycleID.map {
-            $0 == snapshot.currentMovementCycleID
+            $0 == movementCycleID
         } ?? true
         if !activeVisualIsCurrent || !activeMovementIsCurrent {
             state.activeDelivery = nil

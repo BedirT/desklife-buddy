@@ -247,3 +247,16 @@ production action-policy answers above remain open.
   direct App tests / 36 suites; `scripts/lint.sh` reported `LINT OK` with two unrelated existing
   warnings; `git diff --check` was clean; and final adversarial review found no P0-P2. Step 6 now
   owns the serialized AppDelegate lifecycle, exact adapter routing, and restored-response ordering.
+- 2026-08-27: The serialized App lifecycle composition is retained in `2af28ab`. One
+  `HeadsUpLifecycleCoordinator` now owns restore ordering, exact response buffering, permission and
+  authorization work, notification/capsule fallback, model/driver lifetimes, status projection,
+  and a serialized runtime-effect tail. Exact delivery IDs survive every adapter and pending-action
+  route; prompt acknowledgement persists before actions; break facts persist only after the exact
+  newly presented overlay opens; More Options acknowledges only the exact action and scope; and
+  deallocated App lifecycle boundaries report failure rather than silently succeeding. Final review
+  repaired same-family overlay reuse and no-display presentation so neither can leave or consume a
+  stale exact binding. Root verification passed 301 direct App tests / 37 suites, a signed
+  `scripts/build.sh`, `scripts/lint.sh` with only two unrelated existing warnings, and a clean diff.
+  Production Heads-Up remains policy-nil and constructs zero adapters until the three owner action
+  policies are resolved. Step 7 owns real Notification Center, capsule, window, keyboard, and AX
+  proof before any production policy is enabled.

@@ -129,3 +129,20 @@ telemetry.
   `scripts/lint.sh` reported `LINT OK` with only the two unrelated existing warnings; final
   independent re-review found no remaining P0-P2 findings. RED evidence is retained under
   `artifacts/settings-domain-step1-*.txt`.
+- 2026-08-27: Step 2 reconfiguration is fail-closed while any break overlay, active/reserved
+  Heads-Up delivery, or exact pending action exists. Settings returns a typed busy result and may
+  retry after settlement; it does not hot-retarget an on-screen countdown, invalidate a duration
+  already offered, or maintain a hidden desired-vs-applied revision queue. An idle reconfiguration
+  preserves both accumulated clocks, cycle generations, snoozes, recovery state, session choices,
+  and the complete Heads-Up ledger; it emits no event and resets only the estimator's monotonic
+  baseline so the first new sample cannot double-count time.
+- 2026-08-27: A stored built-in preference retains the exact generated configuration snapshot used
+  when it was chosen, so an app update cannot silently retune it. The profile identifier remains
+  metadata; the versioned payload is authoritative. Legacy stores derive that first snapshot from
+  their retained profile when available and otherwise use Balanced.
+- 2026-08-27: "Delete history" removes event/history entities but preserves preferences,
+  integrations, and the live crash-recovery protocol state so scheduling continues. "Reset all"
+  requires the same quiescent boundary as reconfiguration, then removes history, preferences,
+  integration choices, and live state before installing a fresh Balanced zero state. Neither
+  operation claims to revoke macOS notification authorization or other external system state.
+  Keep-nothing applies to all future history and Weekly aggregates, not only raw events.

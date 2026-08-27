@@ -55,7 +55,9 @@ None blocks Phase 1. Later phases stop only at their explicit constitution-level
       retained and recovery-independent Domain/Feature delivery work is active; production
       re-offer and notification-body policies remain owner-gated - done = notification and
       no-permission paths, capsule/menu keyboard parity, snapshots, and real-flow proof pass.
-- [ ] 6. Settings and optional integrations - child plan created at phase start - done =
+- [ ] 6. Settings and optional integrations - child plan:
+      `docs/plans/2026-08-27-settings-local-preferences.md` - active; Calendar/Focus and final
+      owed art remain owner-gated while the complete local Settings foundation proceeds - done =
       SE-01...SE-15, local preferences/history/export/delete, claims review, snapshots, and
       real-flow proof pass; owner-gated integrations remain absent unless authorized.
 - [ ] 7. Onboarding - child plan created at phase start - done = ON-01...ON-07, skip-anywhere
@@ -108,3 +110,7 @@ data, even if its query model is explored earlier.
   `37c9cf2`, with 63 Domain, 58 Feature, and 134 direct App tests plus exact real-process merged
   and snooze captures. The separate recovery-duration lifecycle remains unrouted. Phase 5 may
   now proceed for visual, movement, and merged delivery without acknowledging recovery.
+- 2026-08-27: Phase 5 implementation and debug-only real-process proof are retained through
+  `cc699d7`; production policy stays nil while its three owner action policies and host permission
+  gates remain open. Phase 6 now has an executable child plan. Local Settings work proceeds in
+  build order without enabling Calendar, Focus, telemetry, sound, or any other gated capability.

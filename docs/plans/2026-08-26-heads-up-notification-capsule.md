@@ -260,3 +260,19 @@ production action-policy answers above remain open.
   Production Heads-Up remains policy-nil and constructs zero adapters until the three owner action
   policies are resolved. Step 7 owns real Notification Center, capsule, window, keyboard, and AX
   proof before any production policy is enabled.
+- 2026-08-27: The real-process verification seams are retained in `cc699d7`. Debug-only routes now
+  launch the production lifecycle coordinator after restore, prove the exact persisted capsule
+  chain (`reserved` -> `presented-prompt-pending` -> `presented-prompt-acknowledged`) for stable
+  delivery `00000000-0000-4000-8000-0000000000c7`, and render the native PM-01 explainer without
+  requesting or changing notification permission. The native notification route probes actual
+  `UNUserNotificationCenter` state and refuses to claim success on this host because authorization
+  is `not-determined` with alerts disabled; no permission request was made. Exact-head verification
+  passed 307 direct App tests / 38 suites after one retry of the pre-existing one-yield hover-resize
+  timing flake, a signed `scripts/build.sh`, `scripts/lint.sh` with only the two unrelated existing
+  warnings, `bash -n scripts/shot.sh`, and `git diff --check`. Inspected evidence lives at
+  `artifacts/heads-up-capsule.png`, `artifacts/heads-up-capsule-state.json`,
+  `artifacts/heads-up-permission.png`, `artifacts/heads-up-permission-state.json`, and
+  `artifacts/heads-up-notification-state.json`. External AX proof remains host-blocked until
+  Accessibility permission is granted to the invoking process, and screen-context proof remains
+  blocked by Screen Recording permission. These blockers and the three owner action-policy answers
+  keep production policy nil; they do not block reversible Settings implementation.

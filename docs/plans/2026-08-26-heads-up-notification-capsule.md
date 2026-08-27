@@ -68,7 +68,7 @@ production action-policy answers above remain open.
       touchdown bounded by latest, mid-countdown suppression, snooze expiry/re-offer cap, and
       distinct merged-clock effects. Implement only after Phase 4 entry criteria are met. Done
       = `scripts/test.sh Domain` green. Gating suite: `HeadsUpDeliveryTests`.
-- [ ] 2. Feature model and notification content: scaffold `HeadsUp`, then write red model tests
+- [x] 2. Feature model and notification content: scaffold `HeadsUp`, then write red model tests
       for visual/movement/merged copy, `Start now`, 5/10/15-minute Later choices, optional
       Calendar/manual-hold rows, status-menu parity, event mapping, one-shot announcements,
       and the PM-01 in-context explainer plus PM-02 denied/revoked Settings state. No framework
@@ -82,7 +82,7 @@ production action-policy answers above remain open.
       request ID against Notification Center with a bounded wait and fall back to the capsule
       if it is not delivered. Queue launch responses until retained runtime state restores.
       Done = App adapter tests, `scripts/build.sh`, and `scripts/run.sh --verify` green.
-- [ ] 4. Capsule Feature states: compose the capsule from DesignSystem vocabulary with no
+- [x] 4. Capsule Feature states: compose the capsule from DesignSystem vocabulary with no
       focus theft, no truncation, identical action semantics, and no per-second accessibility
       updates. Every inventory state gets a `#Preview`: approach, each coarse step, hover,
       landed/waiting, honest hold, text-only, Reduce Motion, Reduce Transparency, Increase
@@ -184,3 +184,26 @@ production action-policy answers above remain open.
   proven and no production default. `scripts/test.sh Domain` passed 88 tests; final independent
   re-review found no P0/P1/P2 after repairing candidate-priority overlap, stale retry copy,
   in-flight suppression cancellation, and response-before-fact-commit races.
+- 2026-08-27: Steps 2 and 4 are complete at the Feature boundary. `HeadsUpModel` owns typed
+  visual/movement/merged content, exact notification copy, configured Later choices, optional
+  bounded hold rows, persistence acknowledgement guards for Start/snooze/skip/More options,
+  status-menu projection, independent
+  continuous approach progress, and one-shot localized accessibility announcements. Recovery
+  remains unrepresentable. PM-01 keeps the no-permission path equally weighted and initially
+  focused; PM-02 is an embeddable grouped macOS Settings section using the system accent.
+  Permission and capsule states merge live Reduce Motion, Reduce Transparency, Increase
+  Contrast, and app-owned text scaling with deterministic Preview overrides. Coarse review
+  renders use plausible independent progress at 45/30/15/5 seconds; they do not claim the App
+  has wired the live progress driver. `scripts/test.sh Features` passed 90 tests / 14 suites;
+  focused Heads-Up tests passed 32 / 8; `scripts/snapshot.sh Features HeadsUpSnapshotTests`
+  passed 19 tests / 38 renders. `scripts/test.sh DesignSystem` passed 4 tests / 2 suites and the
+  focused gallery snapshot passed 1 / 1 with 2 renders. The hovered-action, largest-text,
+  denied-settings, and light/dark gallery renders under `artifacts/preview-review/Features/`
+  and `artifacts/preview-review/DesignSystem/` were inspected at original resolution.
+  Fresh integration and design reviews repaired the final gaps: More options now waits for
+  matching durable acknowledgement and can reject/retry; the native status menu can consume
+  the exact projection and paired typed intents without hard-coded Heads-Up rows; and sun
+  geometry makes normalized progress 1 the first horizon contact. Final Feature/DesignSystem
+  re-review found no remaining P0-P2. Actual
+  `NSAccessibility.post`, native status-menu projection consumption, continuous live descent,
+  and real-window docking remain explicit App Steps 5-7 evidence, not Feature proof.

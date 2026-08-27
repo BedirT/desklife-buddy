@@ -31,22 +31,12 @@
         }
       }
     },
-    "breakFlow.recovery.minutes_away_format": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%d minutes away"
-          }
-        }
-      }
-    },
     "breakFlow.recovery.guidance": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Try 5–10 minutes away from the desk when it works."
+            "value": "Try 5\u201310 minutes away from the desk when it works."
           }
         }
       }
@@ -67,6 +57,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choose %d minutes away"
+          }
+        }
+      }
+    },
+    "breakFlow.recovery.minutes_away_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d minutes away"
           }
         }
       }
@@ -96,7 +96,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Both are due — one break covers them"
+            "value": "Both are due \u2014 one break covers them"
           }
         }
       }
@@ -207,6 +207,506 @@
           "stringUnit": {
             "state": "translated",
             "value": "Visual reset done. Movement is still open when you want it."
+          }
+        }
+      }
+    },
+    "headsUp.accessibility.status_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, %@"
+          }
+        }
+      }
+    },
+    "headsUp.action.after_meeting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After this meeting"
+          }
+        }
+      }
+    },
+    "headsUp.action.in_five_minutes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In 5 minutes"
+          }
+        }
+      }
+    },
+    "headsUp.action.later": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Later"
+          }
+        }
+      }
+    },
+    "headsUp.action.minutes_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d minutes"
+          }
+        }
+      }
+    },
+    "headsUp.action.more_options": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More options"
+          }
+        }
+      }
+    },
+    "headsUp.action.now": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Now"
+          }
+        }
+      }
+    },
+    "headsUp.action.presenting_one_hour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presenting for 1 hour"
+          }
+        }
+      }
+    },
+    "headsUp.action.start_now": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start now"
+          }
+        }
+      }
+    },
+    "headsUp.announcement.appearance_approach_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ in %d seconds. %@"
+          }
+        }
+      }
+    },
+    "headsUp.announcement.appearance_landed_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@. %@"
+          }
+        }
+      }
+    },
+    "headsUp.announcement.available_actions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Now, button. Later, menu button."
+          }
+        }
+      }
+    },
+    "headsUp.merged.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual reset and movement"
+          }
+        }
+      }
+    },
+    "headsUp.movement.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement opportunity"
+          }
+        }
+      }
+    },
+    "headsUp.notification.merged_body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Both are due — one break covers them."
+          }
+        }
+      }
+    },
+    "headsUp.notification.movement_body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move in a way that works for you."
+          }
+        }
+      }
+    },
+    "headsUp.notification.visual_body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A short break from near focus."
+          }
+        }
+      }
+    },
+    "headsUp.permission.continue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue"
+          }
+        }
+      }
+    },
+    "headsUp.permission.continue_hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens the system notification permission prompt."
+          }
+        }
+      }
+    },
+    "headsUp.permission.explainer_message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uses notifications if you allow them. Without them, an in-app heads-up appears instead."
+          }
+        }
+      }
+    },
+    "headsUp.permission.explainer_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heads-up before a break"
+          }
+        }
+      }
+    },
+    "headsUp.permission.fallback": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heads-ups appear in the app instead."
+          }
+        }
+      }
+    },
+    "headsUp.permission.notifications_off": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications are off"
+          }
+        }
+      }
+    },
+    "headsUp.permission.open_settings": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Notification Settings…"
+          }
+        }
+      }
+    },
+    "headsUp.permission.use_in_app": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use in-app heads-up"
+          }
+        }
+      }
+    },
+    "headsUp.phase.busy_until_detail_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "busy until %@"
+          }
+        }
+      }
+    },
+    "headsUp.phase.hold_busy_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On hold · busy until %@"
+          }
+        }
+      }
+    },
+    "headsUp.phase.calendar_busy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quiet during Calendar busy time"
+          }
+        }
+      }
+    },
+    "headsUp.phase.calendar_busy_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "during Calendar busy time"
+          }
+        }
+      }
+    },
+    "headsUp.phase.excluded_application": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quiet in this app"
+          }
+        }
+      }
+    },
+    "headsUp.phase.excluded_application_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "in this app"
+          }
+        }
+      }
+    },
+    "headsUp.phase.focus_filter": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quiet in Focus"
+          }
+        }
+      }
+    },
+    "headsUp.phase.focus_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "in Focus"
+          }
+        }
+      }
+    },
+    "headsUp.phase.inactive_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "while the Mac is inactive"
+          }
+        }
+      }
+    },
+    "headsUp.phase.landed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "now — or whenever suits"
+          }
+        }
+      }
+    },
+    "headsUp.phase.manual_pause_indefinite": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paused until you resume"
+          }
+        }
+      }
+    },
+    "headsUp.phase.manual_pause_until_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paused until %@"
+          }
+        }
+      }
+    },
+    "headsUp.phase.outside_working_hours": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Outside working hours"
+          }
+        }
+      }
+    },
+    "headsUp.phase.on_hold_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On hold"
+          }
+        }
+      }
+    },
+    "headsUp.phase.paused_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paused"
+          }
+        }
+      }
+    },
+    "headsUp.phase.presentation_mode": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presenting — reminders off"
+          }
+        }
+      }
+    },
+    "headsUp.phase.presentation_mode_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "reminders off"
+          }
+        }
+      }
+    },
+    "headsUp.phase.presenting_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presenting"
+          }
+        }
+      }
+    },
+    "headsUp.phase.quiet_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quiet"
+          }
+        }
+      }
+    },
+    "headsUp.phase.seconds_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "in %d s"
+          }
+        }
+      }
+    },
+    "headsUp.phase.snoozed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snoozed"
+          }
+        }
+      }
+    },
+    "headsUp.phase.system_inactive": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quiet while the Mac is inactive"
+          }
+        }
+      }
+    },
+    "headsUp.phase.until_detail_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "until %@"
+          }
+        }
+      }
+    },
+    "headsUp.phase.until_resume_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "until you resume"
+          }
+        }
+      }
+    },
+    "headsUp.visual.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual reset"
           }
         }
       }

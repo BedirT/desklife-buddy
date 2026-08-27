@@ -21,6 +21,7 @@ let package = Package(
                 "VisualReset",
                 "Movement",
                 "BreakFlow",
+                "HeadsUp",
                 // agent:app-feature-targets
             ],
         ),
@@ -121,6 +122,24 @@ let package = Package(
             name: "BreakFlowTests",
             dependencies: [
                 "BreakFlow",
+                .product(name: "SnapshotSupport", package: "TestSupport"),
+            ],
+            exclude: ["__Snapshots__"],
+            swiftSettings: featureSettings,
+        ),
+        .target(
+            name: "HeadsUp",
+            dependencies: [
+                "FeatureLocalization",
+                .product(name: "Domain", package: "Domain"),
+                .product(name: "DesignSystem", package: "DesignSystem"),
+            ],
+            swiftSettings: featureSettings,
+        ),
+        .testTarget(
+            name: "HeadsUpTests",
+            dependencies: [
+                "HeadsUp",
                 .product(name: "SnapshotSupport", package: "TestSupport"),
             ],
             exclude: ["__Snapshots__"],

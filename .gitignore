@@ -2,6 +2,7 @@
 .build/
 DerivedData/
 *.xcresult
+*.profraw
 __pycache__/
 *.pyc
 

@@ -23,6 +23,7 @@ public struct DSHeadsUpCapsule: View {
     private let nowTitle: String
     private let laterTitle: String
     private let laterOptions: [String]
+    private let laterOptionAccessibilityIdentifiers: [String]
     private let statusAccessibilityLabel: String
     private let nowAccessibilityLabel: String
     private let laterAccessibilityLabel: String
@@ -56,6 +57,7 @@ public struct DSHeadsUpCapsule: View {
         nowTitle: String,
         laterTitle: String,
         laterOptions: [String] = [],
+        laterOptionAccessibilityIdentifiers: [String] = [],
         statusAccessibilityLabel: String,
         nowAccessibilityLabel: String,
         laterAccessibilityLabel: String,
@@ -72,6 +74,7 @@ public struct DSHeadsUpCapsule: View {
         self.nowTitle = nowTitle
         self.laterTitle = laterTitle
         self.laterOptions = laterOptions
+        self.laterOptionAccessibilityIdentifiers = laterOptionAccessibilityIdentifiers
         self.statusAccessibilityLabel = statusAccessibilityLabel
         self.nowAccessibilityLabel = nowAccessibilityLabel
         self.laterAccessibilityLabel = laterAccessibilityLabel
@@ -96,6 +99,17 @@ public struct DSHeadsUpCapsule: View {
             .clipShape(shape)
             .shadow(color: Color.black.opacity(0.44), radius: 14, y: 8)
             .accessibilityIdentifier(accessibilityIdentifier)
+            .accessibilityActions {
+                if !showsActions {
+                    Button(nowAccessibilityLabel, action: nowAction)
+                        .accessibilityIdentifier("\(accessibilityIdentifier).now")
+
+                    ForEach(Array(laterOptions.enumerated()), id: \.offset) { index, option in
+                        Button(option) { laterAction(index) }
+                            .accessibilityIdentifier(laterOptionIdentifier(at: index))
+                    }
+                }
+            }
     }
 
     @ViewBuilder
@@ -141,11 +155,20 @@ public struct DSHeadsUpCapsule: View {
 
     private var statusContent: some View {
         HStack(spacing: 4) {
-            Text(title)
-                .foregroundStyle(Color.dsCapsuleTextPrimary)
-            Text(detail)
-                .foregroundStyle(Color.dsCapsuleTextSecondary)
-                .monospacedDigit()
+            if !title.isEmpty {
+                Text(title)
+                    .foregroundStyle(Color.dsCapsuleTextPrimary)
+            }
+            if !title.isEmpty, !canonicalDetail.isEmpty {
+                Text(verbatim: "·")
+                    .foregroundStyle(detailColor)
+                    .accessibilityHidden(true)
+            }
+            if !canonicalDetail.isEmpty {
+                Text(canonicalDetail)
+                    .foregroundStyle(detailColor)
+                    .monospacedDigit()
+            }
         }
         .font(DSTypography.headsUpText(pointSize: textSize))
         .fixedSize(horizontal: true, vertical: true)
@@ -161,11 +184,12 @@ public struct DSHeadsUpCapsule: View {
             Menu {
                 ForEach(Array(laterOptions.enumerated()), id: \.offset) { index, option in
                     Button(option) { laterAction(index) }
+                        .accessibilityIdentifier(laterOptionIdentifier(at: index))
                 }
             } label: {
                 Text(verbatim: "\(laterTitle) ▾")
                     .font(DSTypography.headsUpAction(pointSize: actionSize))
-                    .foregroundStyle(Color.dsCapsuleActionSecondary)
+                    .foregroundStyle(laterActionColor)
                     .padding(.horizontal, 8)
                     .frame(minHeight: actionHeight)
                     .fixedSize(horizontal: true, vertical: true)
@@ -179,7 +203,7 @@ public struct DSHeadsUpCapsule: View {
             }
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
-            .tint(Color.dsCapsuleActionSecondary)
+            .tint(laterActionColor)
             .onHover { laterHovered = $0 }
             .simultaneousGesture(
                 DragGesture(minimumDistance: 0)
@@ -235,9 +259,32 @@ public struct DSHeadsUpCapsule: View {
             shape.fill(Color.dsCapsuleSurface)
         }
     }
+}
 
-    private var indicatorCanBeDropped: Bool {
+private extension DSHeadsUpCapsule {
+    var indicatorCanBeDropped: Bool {
         if case .sun = indicator { true } else { false }
+    }
+
+    var detailColor: Color {
+        increaseContrast ? .dsCapsuleTextPrimary : .dsCapsuleTextSecondary
+    }
+
+    var canonicalDetail: String {
+        let withoutLeadingWhitespace = detail.drop(while: \.isWhitespace)
+        guard withoutLeadingWhitespace.first == "·" else { return detail }
+        return String(withoutLeadingWhitespace.dropFirst().drop(while: \.isWhitespace))
+    }
+
+    var laterActionColor: Color {
+        increaseContrast ? .dsCapsuleTextPrimary : .dsCapsuleActionSecondary
+    }
+
+    func laterOptionIdentifier(at index: Int) -> String {
+        guard laterOptionAccessibilityIdentifiers.indices.contains(index) else {
+            return "\(accessibilityIdentifier).later.option.\(index)"
+        }
+        return laterOptionAccessibilityIdentifiers[index]
     }
 }
 
@@ -261,9 +308,10 @@ private struct DSCapsuleSky: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let sunSize: CGFloat = 11
-            let horizontalOffset = 1 + clamped(horizontal) * (proxy.size.width - sunSize - 2)
-            let verticalOffset = 1 + clamped(descent) * 10
+            let horizontalOffset = DSCapsuleSkyGeometry.inset
+                + DSCapsuleSkyGeometry.clamped(horizontal)
+                * (proxy.size.width - DSCapsuleSkyGeometry.sunSize
+                    - 2 * DSCapsuleSkyGeometry.inset)
 
             ZStack(alignment: .topLeading) {
                 LinearGradient(
@@ -274,18 +322,20 @@ private struct DSCapsuleSky: View {
                 Rectangle()
                     .fill(Color.dsCapsuleHoldRing.opacity(0.72))
                     .frame(height: 1)
-                    .offset(y: 18)
+                    .offset(y: DSCapsuleSkyGeometry.horizonY)
                 DSCapsuleSun()
-                    .frame(width: sunSize, height: sunSize)
-                    .offset(x: horizontalOffset, y: verticalOffset)
+                    .frame(
+                        width: DSCapsuleSkyGeometry.sunSize,
+                        height: DSCapsuleSkyGeometry.sunSize,
+                    )
+                    .offset(
+                        x: horizontalOffset,
+                        y: DSCapsuleSkyGeometry.verticalOffset(for: descent),
+                    )
             }
         }
         .frame(width: 24, height: 24)
         .clipShape(Circle())
-    }
-
-    private func clamped(_ value: CGFloat) -> CGFloat {
-        min(1, max(0, value))
     }
 }
 

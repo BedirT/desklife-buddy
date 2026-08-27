@@ -1,5 +1,6 @@
 import AppKit
 import DesignSystem
+import HeadsUp
 import StatusMenu
 import SwiftUI
 
@@ -7,7 +8,9 @@ import SwiftUI
 final class StatusItemCoordinator: NSObject, NSMenuDelegate {
     private let statusItem: NSStatusItem?
     private let onAction: (StatusMenuAction) -> Void
+    private let onHeadsUpIntent: (HeadsUpIntent) -> Void
     private var model: StatusMenuModel
+    private var headsUpProjection: HeadsUpStatusMenuProjection?
     private var isMenuOpen = false
     private let menuPointSize: CGFloat
     private var lastAccessibilityValue: String?
@@ -15,12 +18,16 @@ final class StatusItemCoordinator: NSObject, NSMenuDelegate {
 
     init(
         model: StatusMenuModel,
+        headsUpProjection: HeadsUpStatusMenuProjection? = nil,
         installsStatusItem: Bool = true,
         menuPointSize: CGFloat = NSFont.menuFont(ofSize: 0).pointSize,
         onAction: @escaping (StatusMenuAction) -> Void = { _ in },
+        onHeadsUpIntent: @escaping (HeadsUpIntent) -> Void = { _ in },
     ) {
         self.model = model
+        self.headsUpProjection = headsUpProjection
         self.onAction = onAction
+        self.onHeadsUpIntent = onHeadsUpIntent
         self.menuPointSize = menuPointSize
         statusItem = installsStatusItem ? NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength) : nil
         super.init()
@@ -29,8 +36,12 @@ final class StatusItemCoordinator: NSObject, NSMenuDelegate {
         configureStatusButton()
     }
 
-    func update(model: StatusMenuModel) {
+    func update(
+        model: StatusMenuModel,
+        headsUpProjection: HeadsUpStatusMenuProjection? = nil,
+    ) {
         self.model = model
+        self.headsUpProjection = headsUpProjection
         configureStatusButton()
         if !isMenuOpen {
             rebuildMenu()
@@ -117,8 +128,11 @@ final class StatusItemCoordinator: NSObject, NSMenuDelegate {
     #endif
 
     @objc private func activateMenuItem(_ item: NSMenuItem) {
-        guard let action = (item.representedObject as? StatusMenuActionBox)?.action else { return }
-        onAction(action)
+        if let intent = (item.representedObject as? HeadsUpIntentBox)?.intent {
+            onHeadsUpIntent(intent)
+        } else if let action = (item.representedObject as? StatusMenuActionBox)?.action {
+            onAction(action)
+        }
     }
 
     var statusRegionWidth: CGFloat {
@@ -134,17 +148,7 @@ private extension StatusItemCoordinator {
         rebuilt.addItem(statusRegionItem())
         rebuilt.addItem(.separator())
 
-        if model.snapshot.hasActionableHeadsUp {
-            rebuilt.addItem(actionItem(StatusMenuCopy.startNow, action: .startHeadsUpNow))
-            rebuilt.addItem(submenuItem(
-                StatusMenuCopy.later,
-                choices: [
-                    (StatusMenuCopy.snoozeFiveMinutes, .snooze(300)),
-                    (StatusMenuCopy.snoozeTenMinutes, .snooze(600)),
-                    (StatusMenuCopy.snoozeFifteenMinutes, .snooze(900)),
-                    (StatusMenuCopy.moreOptions, .openSnoozeOptions),
-                ],
-            ))
+        if let headsUpProjection, addHeadsUpRows(headsUpProjection, to: rebuilt) {
             rebuilt.addItem(.separator())
         }
 
@@ -217,6 +221,72 @@ private extension StatusItemCoordinator {
         return item
     }
 
+    @discardableResult
+    func addHeadsUpRows(
+        _ projection: HeadsUpStatusMenuProjection,
+        to menu: NSMenu,
+    ) -> Bool {
+        guard let startIntent = projection.intents.first,
+              projection.intents.count == projection.laterOptions.count + 1
+        else {
+            return false
+        }
+
+        menu.addItem(headsUpItem(
+            projection.startTitle,
+            intent: startIntent,
+            accessibilityIdentifier: "statusMenu.headsUp.start",
+        ))
+
+        let later = NSMenuItem(title: projection.laterTitle, action: nil, keyEquivalent: "")
+        later.setAccessibilityIdentifier("statusMenu.headsUp.later")
+        let submenu = NSMenu(title: projection.laterTitle)
+        submenu.autoenablesItems = false
+        for (option, intent) in zip(projection.laterOptions, projection.intents.dropFirst()) {
+            submenu.addItem(headsUpItem(
+                title(for: option, projection: projection),
+                intent: intent,
+                accessibilityIdentifier: accessibilityIdentifier(for: option),
+            ))
+        }
+        later.submenu = submenu
+        menu.addItem(later)
+        return true
+    }
+
+    func headsUpItem(
+        _ title: String,
+        intent: HeadsUpIntent,
+        accessibilityIdentifier: String,
+    ) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: #selector(activateMenuItem(_:)), keyEquivalent: "")
+        item.target = self
+        item.representedObject = HeadsUpIntentBox(intent)
+        item.isEnabled = true
+        item.setAccessibilityIdentifier(accessibilityIdentifier)
+        return item
+    }
+
+    func title(
+        for option: HeadsUpLaterOption,
+        projection: HeadsUpStatusMenuProjection,
+    ) -> String {
+        option == .moreOptions ? projection.moreOptionsTitle : option.title
+    }
+
+    func accessibilityIdentifier(for option: HeadsUpLaterOption) -> String {
+        switch option {
+        case let .snooze(durationSeconds):
+            "statusMenu.headsUp.later.snooze.\(Int(durationSeconds))"
+        case .afterMeeting:
+            "statusMenu.headsUp.later.afterMeeting"
+        case let .manualHold(durationSeconds):
+            "statusMenu.headsUp.later.manualHold.\(Int(durationSeconds))"
+        case .moreOptions:
+            "statusMenu.headsUp.later.moreOptions"
+        }
+    }
+
     func submenuItem(
         _ title: String,
         choices: [(String, StatusMenuAction)],
@@ -274,5 +344,13 @@ final class StatusMenuActionBox: NSObject {
 
     init(_ action: StatusMenuAction) {
         self.action = action
+    }
+}
+
+final class HeadsUpIntentBox: NSObject {
+    let intent: HeadsUpIntent
+
+    init(_ intent: HeadsUpIntent) {
+        self.intent = intent
     }
 }

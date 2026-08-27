@@ -191,6 +191,476 @@
         }
       }
     },
+    "movement.accessibility.already_moved": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I already moved, A"
+          }
+        }
+      }
+    },
+    "movement.accessibility.done_early": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done early, Return"
+          }
+        }
+      }
+    },
+    "movement.accessibility.position_change": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change position instead, P — logged separately"
+          }
+        }
+      }
+    },
+    "movement.accessibility.seated": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seated, 3"
+          }
+        }
+      }
+    },
+    "movement.accessibility.skip": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip, Escape"
+          }
+        }
+      }
+    },
+    "movement.accessibility.small_space": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Small space, 2"
+          }
+        }
+      }
+    },
+    "movement.accessibility.two_minutes_instead": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Two minutes instead, Q"
+          }
+        }
+      }
+    },
+    "movement.accessibility.walk_or_wheel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Walk or wheel, 1"
+          }
+        }
+      }
+    },
+    "movement.already_moved": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I already moved"
+          }
+        }
+      }
+    },
+    "movement.announcement.already_moved": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I already moved."
+          }
+        }
+      }
+    },
+    "movement.announcement.done_early": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done early."
+          }
+        }
+      }
+    },
+    "movement.announcement.finished": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finished."
+          }
+        }
+      }
+    },
+    "movement.announcement.one_minute": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One minute remaining."
+          }
+        }
+      }
+    },
+    "movement.announcement.opened_five_minutes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement opportunity. Move in a way that works for you. Five minutes."
+          }
+        }
+      }
+    },
+    "movement.announcement.opened_seconds": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement opportunity. Move in a way that works for you. %d seconds."
+          }
+        }
+      }
+    },
+    "movement.announcement.opened_two_minutes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement opportunity. Move in a way that works for you. Two minutes."
+          }
+        }
+      }
+    },
+    "movement.announcement.position_changed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change position instead. Logged separately."
+          }
+        }
+      }
+    },
+    "movement.announcement.selection": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@. %2$@"
+          }
+        }
+      }
+    },
+    "movement.announcement.skipped": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skipped."
+          }
+        }
+      }
+    },
+    "movement.automatic_ending": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ends on its own."
+          }
+        }
+      }
+    },
+    "movement.choice.seated": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seated"
+          }
+        }
+      }
+    },
+    "movement.choice.small_space": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Small space"
+          }
+        }
+      }
+    },
+    "movement.choice.walk_or_wheel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Walk or wheel"
+          }
+        }
+      }
+    },
+    "movement.done_early": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done early"
+          }
+        }
+      }
+    },
+    "movement.eyebrow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement opportunity"
+          }
+        }
+      }
+    },
+    "movement.guidance.seated": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seated — alternate lifting each foot, move the ankles, reach the arms easily."
+          }
+        }
+      }
+    },
+    "movement.guidance.small_space": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Small space — march or step gently in place, or use a seated equivalent."
+          }
+        }
+      }
+    },
+    "movement.guidance.walk_or_wheel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Walk or wheel — away from the desk, at an easy, comfortable pace."
+          }
+        }
+      }
+    },
+    "movement.instruction": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move in a way that works for you."
+          }
+        }
+      }
+    },
+    "movement.instruction_emphasis": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "works for you"
+          }
+        }
+      }
+    },
+    "movement.key.already_moved": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A"
+          }
+        }
+      }
+    },
+    "movement.key.escape": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "esc"
+          }
+        }
+      }
+    },
+    "movement.key.escape_accessibility": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escape"
+          }
+        }
+      }
+    },
+    "movement.key.one": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1"
+          }
+        }
+      }
+    },
+    "movement.key.position_change": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "P"
+          }
+        }
+      }
+    },
+    "movement.key.quick": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Q"
+          }
+        }
+      }
+    },
+    "movement.key.return": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Return"
+          }
+        }
+      }
+    },
+    "movement.key.three": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3"
+          }
+        }
+      }
+    },
+    "movement.key.two": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2"
+          }
+        }
+      }
+    },
+    "movement.logged_separately": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "logged separately"
+          }
+        }
+      }
+    },
+    "movement.navigation_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement"
+          }
+        }
+      }
+    },
+    "movement.preview_error": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't load movement."
+          }
+        }
+      }
+    },
+    "movement.position_change": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change position instead"
+          }
+        }
+      }
+    },
+    "movement.position_change_with_logging": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change position instead · logged separately"
+          }
+        }
+      }
+    },
+    "movement.safety": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move comfortably and use support if needed. Stop or choose another option if you feel pain, dizziness, unusual shortness of breath, weakness, or instability."
+          }
+        }
+      }
+    },
+    "movement.skip": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip"
+          }
+        }
+      }
+    },
+    "movement.two_minutes_instead": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2 minutes instead"
+          }
+        }
+      }
+    },
     "status_menu.accessibility_due_format": {
       "localizations": {
         "en": {

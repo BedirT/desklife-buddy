@@ -39,6 +39,7 @@ public struct DSBreakPill: View {
     private let focusOverride: Bool?
     private let reduceTransparency: Bool
     private let increaseContrast: Bool
+    private let selected: Bool?
     private let enabled: Bool
     private let action: () -> Void
 
@@ -52,6 +53,7 @@ public struct DSBreakPill: View {
         focusOverride: Bool? = nil,
         reduceTransparency: Bool = false,
         increaseContrast: Bool = false,
+        selected: Bool? = nil,
         enabled: Bool = true,
         action: @escaping () -> Void,
     ) {
@@ -64,6 +66,7 @@ public struct DSBreakPill: View {
         self.focusOverride = focusOverride
         self.reduceTransparency = reduceTransparency
         self.increaseContrast = increaseContrast
+        self.selected = selected
         self.enabled = enabled
         self.action = action
     }
@@ -105,13 +108,20 @@ public struct DSBreakPill: View {
         }
     }
 
+    @ViewBuilder
     private var baseButton: some View {
-        Button(action: action) {
+        let button = Button(action: action) {
             styledLabel
         }
         .disabled(!enabled)
         .accessibilityLabel(accessibilityLabel)
         .accessibilityIdentifier(accessibilityIdentifier)
+
+        if selected == true {
+            button.accessibilityAddTraits(.isSelected)
+        } else {
+            button
+        }
     }
 
     @ViewBuilder
@@ -119,6 +129,14 @@ public struct DSBreakPill: View {
         let label = HStack(spacing: 10) {
             Text(title)
                 .font(DSTypography.breakAction(pointSize: pointSize))
+            if selected != nil {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(Color.dsMovementChoiceCheck)
+                    .frame(width: 14, height: 14)
+                    .opacity(selected == true ? 1 : 0)
+                    .accessibilityHidden(true)
+            }
             DSKeycap(keycap, increaseContrast: increaseContrast)
         }
         .foregroundStyle(
@@ -139,14 +157,17 @@ public struct DSBreakPill: View {
             .overlay {
                 shape
                     .strokeBorder(
-                        increaseContrast
-                            ? Color.dsBreakControlBorderIncreased
-                            : Color.dsBreakControlBorder,
-                        lineWidth: increaseContrast ? 2 : 1,
+                        borderInk,
+                        lineWidth: increaseContrast || selected == true ? 2 : 1,
                     )
             }
             .clipShape(shape)
             .padding(focusExpansion)
+            .background {
+                if reduceTransparency, hasFocus {
+                    focusShape.fill(Color.dsMovementControlSolid)
+                }
+            }
             .overlay {
                 if hasFocus {
                     focusShape
@@ -159,6 +180,11 @@ public struct DSBreakPill: View {
 
     private var hasFocus: Bool {
         focusOverride ?? focus?.wrappedValue ?? localFocus
+    }
+
+    private var borderInk: Color {
+        if selected == true { return .dsMovementChoiceSelected }
+        return increaseContrast ? .dsBreakControlBorderIncreased : .dsBreakControlBorder
     }
 
     private var focusLineWidth: CGFloat {

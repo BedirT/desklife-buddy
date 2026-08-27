@@ -206,3 +206,14 @@ extension ProtocolRuntime {
         publish(liveHeadsUp: nil)
     }
 }
+
+#if DEBUG
+    extension ProtocolRuntime {
+        var movementSessionDurationForVerification: TimeInterval? {
+            switch lifecycleSession {
+            case let .movement(selectedDuration): selectedDuration
+            case .merged, nil: nil
+            }
+        }
+    }
+#endif

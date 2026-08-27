@@ -62,17 +62,17 @@ in place, or use a seated equivalent.” No copy or research escalation remains 
       eligibility; implement transactional App routing without adding event kinds - done =
       `scripts/test.sh Domain` and `scripts/test.sh App` green - gating suites:
       `ProtocolEngineTests`, `ProtocolRuntimeTests`, movement lifecycle queue tests.
-- [ ] 2. Movement Feature model: scaffold `Movement`; observe RED tests for YAML-derived five and
+- [x] 2. Movement Feature model: scaffold `Movement`; observe RED tests for YAML-derived five and
       two-minute durations, self-start, injected monotonic deadline, 1/2/3 equal selections,
       selection-bound guidance, Q duration switch, 800 ms declaration-key arming, immediate
       Escape, once-only terminal actions, open/selection/1:00/terminal announcements, and live
       accessibility changes - done = focused model tests and `scripts/test.sh Features` green.
-- [ ] 3. Preview-first working movement surface: add only recurring DS choice-chip/glyph/field
+- [x] 3. Preview-first working movement surface: add only recurring DS choice-chip/glyph/field
       tokens, localize the approved CP-MV/CP-VO/safety copy, and render BR-05/06/07/08/11 with
       stable D-027 ground geometry, parity, visible keycaps, high contrast, reduced motion,
       reduced transparency, light/dark, +35% text, and every selection/duration/focus state -
       done = focused DesignSystem and Movement snapshot suites green and exported PNGs inspected.
-- [ ] 4. Wire the native movement overlay: reuse the App-owned display/panel lifecycle, route
+- [x] 4. Wire the native movement overlay: reuse the App-owned display/panel lifecycle, route
       menu and Dock movement intents with explicit durations, share one session/timer across
       panels, keep one real key panel, persist ordered lifecycle facts transactionally, restore
       focus cooperatively, and prove every printed key plus display reconciliation - done = App
@@ -148,3 +148,36 @@ in place, or use a seated equivalent.” No copy or research escalation remains 
   P0/P1/P2 in the Step 1 contract. The additive SwiftData fields use optional/default values;
   a pre-change disk-fixture migration proof remains a later persistence evidence item because
   explicit schema-migration work is ask-first and there is no released product schema.
+- 2026-08-26: Step 2 treats `OpportunitySchedule.durationOptionsSeconds[0]` as recommended and
+  `[1]` as quick, proving the values are injected with a non-production 420/150-second test.
+  Automatic open highlights Walk or wheel and starts one monotonic session without emitting an
+  explicit duration selection. Q is a one-way explicit switch to quick duration and recomputes
+  the deadline from the original session origin, so elapsed time is never restarted.
+- 2026-08-26: The older offered/Start and four-choice descriptions in `USER_FLOWS.md` and
+  `ACCESSIBILITY.md` remain superseded by D-024 and `SCREEN_INVENTORY.md` K.2. The
+  `quick_option_seconds` name in `INTERACTION_SPEC.md` is a documentation typo; normative YAML
+  and generation use `quick_duration_seconds`.
+- 2026-08-26: Step 2 was observed RED at the missing typed Movement action, announcement,
+  selection, guidance, terminal, clock, and accessibility APIs. After implementation,
+  `scripts/test.sh Features` passed 38 tests across four suites and `scripts/lint.sh` ended
+  `LINT OK`; the two emitted warnings predate Movement. Review then found and repaired the
+  default-versus-explicit recommended-duration distinction and narrowed quick selection so it
+  cannot extend the same session back to the recommended deadline.
+- 2026-08-26: Step 3 retains 24 Movement renders across the working reference, all choice and
+  duration states, light/dark, Increase Contrast, Reduce Transparency, Reduce Motion, static
+  presentation, +35 percent and largest text, and all eight focus states. The shared controls
+  retain eight DesignSystem renders. Human inspection plus independent visual, accessibility,
+  and claims reviews found no working-reference P1/P2; DQ-18 final masters and representative
+  desktop-context proof remain staged rather than being inferred from the deterministic field.
+- 2026-08-26: Step 4 routes verification through the production status action, runtime reducer,
+  in-memory SwiftData store, and primary overlay coordinator. The retained shot state
+  `3 298 300.0 300.0 ok` proves three captures, a ticking countdown, matching UI/runtime
+  duration, and no runtime error. Failed opening, duration, or terminal writes now defer
+  announcements and leave the same surface retryable; every printed shortcut is exercised
+  through the hosted `NSPanel`. `scripts/build.sh`, `scripts/run.sh --verify`, and the 24-render
+  strict Movement suite passed. Direct execution of the built App test bundle passed 91 tests
+  in 14 suites; the official hosted Xcode runner remained blocked before test connection while
+  an unrelated Hundreds Xcode UI run owned the host, and `scripts/ui.sh` remains unavailable
+  until Accessibility permission is granted. Two independent review rounds found and repaired
+  the failure-acknowledgement race and active-session quick-route mismatch; the final narrow
+  P0/P1/P2 re-review was clear.

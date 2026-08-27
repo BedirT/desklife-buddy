@@ -36,7 +36,7 @@ public extension Color {
 
     /// Working-reference break-field ink. Final field colors remain gated by DQ-18.
     static let dsBreakTextPrimary = Color(light: Color(hex: 0x241D2E), dark: Color(hex: 0xFDF6EF))
-    static let dsBreakTextSecondary = Color(light: Color(hex: 0x665C70), dark: Color(hex: 0xD5CBD1))
+    static let dsBreakTextSecondary = Color(light: Color(hex: 0x594F63), dark: Color(hex: 0xD5CBD1))
     static let dsBreakEyebrow = Color(light: Color(hex: 0x7A4234), dark: Color(hex: 0xE4BFA8))
     static let dsBreakTextPrimaryIncreased = Color(light: Color(hex: 0x120C18), dark: Color(hex: 0xFFFFFF))
     static let dsBreakTextSecondaryIncreased = Color(light: Color(hex: 0x403648), dark: Color(hex: 0xFFF7FB))
@@ -73,6 +73,9 @@ public extension Color {
         light: Color(hex: 0xF8E9E1).opacity(0.96),
         dark: Color(hex: 0x2A121C).opacity(0.96),
     )
+    static let dsStaticDesktopScrim = Color(hex: 0x000000).opacity(0.35)
+    static let dsStaticTextScrim = Color(hex: 0x000000).opacity(0.68)
+    static let dsStaticText = Color(hex: 0xFFFFFF)
     static let dsMovementChoiceScrim = Color(
         light: Color(hex: 0xFFF8F4).opacity(0.45),
         dark: Color(hex: 0x180A16).opacity(0.45),

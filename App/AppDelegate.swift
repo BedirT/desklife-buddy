@@ -1,5 +1,6 @@
 import AppKit
 import Domain
+import Movement
 import StatusMenu
 import VisualReset
 
@@ -9,15 +10,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItemCoordinator: StatusItemCoordinator?
     private var dockMenuController: DockMenuController?
     private var overlayCoordinator: VisualResetOverlayCoordinator?
+    private var movementOverlayCoordinator: MovementOverlayCoordinator?
     #if DEBUG
         private var verificationOverlayCoordinator: VisualResetOverlayCoordinator?
     #endif
     private var activityTimer: Timer?
     private let visualResetLifecycleQueue = VisualResetLifecycleQueue()
+    private let movementLifecycleQueue = MovementLifecycleQueue()
     private var configuration: ProtocolConfiguration?
     private var verificationPreviewState: StatusMenuModel.PreviewState?
     private var latestSnapshot = StatusMenuModel.preview(.normal).snapshot
     private var visualResetCaptureCount = 0
+    private var movementCaptureCount = 0
     private(set) var lastRuntimeError: Error?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -25,7 +29,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let configuration = try ProtocolProfiles.configuration(for: .balanced)
             let runtime = try ProtocolRuntime(
                 configuration: configuration,
-                store: SwiftDataProtocolStore(inMemory: Self.isRunningTests),
+                store: SwiftDataProtocolStore(
+                    inMemory: Self.isRunningTests || Self.isVerificationRun,
+                ),
             )
             install(configuration: configuration, runtime: runtime)
             restore(runtime)
@@ -41,6 +47,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         activityTimer?.invalidate()
         overlayCoordinator?.tearDown()
+        movementOverlayCoordinator?.tearDown()
         #if DEBUG
             verificationOverlayCoordinator?.tearDown()
         #endif
@@ -50,6 +57,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 private extension AppDelegate {
     static var isRunningTests: Bool {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
+    static var isVerificationRun: Bool {
+        ProcessInfo.processInfo.arguments.contains { $0.hasPrefix("--verify-") }
     }
 }
 
@@ -63,6 +74,13 @@ private extension AppDelegate {
             durationSeconds: configuration.visual.durationOptionsSeconds[0],
             onLifecycle: { [weak self] action in self?.enqueueVisualReset(action) },
             onAnnouncement: VisualResetAccessibilityAnnouncer.post,
+        )
+        movementOverlayCoordinator = MovementOverlayCoordinator(
+            schedule: configuration.movement,
+            onLifecycle: { [weak self] action, completion in
+                self?.enqueueMovement(action, completion: completion)
+            },
+            onAnnouncement: MovementAccessibilityAnnouncer.post,
         )
         runtime.onChange = { [weak self] state, context in
             self?.refreshStatus(state: state, context: context)
@@ -126,6 +144,15 @@ private extension AppDelegate {
                     )
                 }
             }
+            if arguments.contains("--verify-movement") {
+                addVerificationTimer(delay: 0.5, selector: #selector(openVerificationMovement))
+                for delay in [1.0, 2.0, 3.0] {
+                    addVerificationTimer(
+                        delay: delay,
+                        selector: #selector(captureVerificationMovement),
+                    )
+                }
+            }
         #endif
     }
 
@@ -160,6 +187,10 @@ private extension AppDelegate {
         statusItemCoordinator?.openMenuForVerification()
     }
 
+    @objc func openVerificationMovement() {
+        handle(.startMovement(.recommended))
+    }
+
     #if DEBUG
         @objc func captureVerificationMenu() {
             _ = statusItemCoordinator?.captureMenuForVerification()
@@ -178,6 +209,26 @@ private extension AppDelegate {
             )
             let monotonicSeconds = coordinator.monotonicSecondsForVerification
             let value = "\(visualResetCaptureCount) \(remainingSeconds) \(monotonicSeconds)"
+            try? value.write(to: state, atomically: true, encoding: .utf8)
+            _ = coordinator.captureForVerification()
+        }
+
+        @objc func captureVerificationMovement() {
+            guard let coordinator = movementOverlayCoordinator,
+                  let remainingSeconds = coordinator.remainingSecondsForVerification,
+                  let selectedDuration = coordinator.selectedDurationForVerification,
+                  let runtimeSelectedDuration = runtime?.movementSessionDurationForVerification,
+                  let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            else {
+                return
+            }
+            movementCaptureCount += 1
+            let state = caches.appendingPathComponent(
+                "movement-state-\(ProcessInfo.processInfo.processIdentifier).txt",
+            )
+            let runtimeStatus = lastRuntimeError == nil ? "ok" : "error"
+            let value = "\(movementCaptureCount) \(remainingSeconds) "
+                + "\(selectedDuration) \(runtimeSelectedDuration) \(runtimeStatus)"
             try? value.write(to: state, atomically: true, encoding: .utf8)
             _ = coordinator.captureForVerification()
         }
@@ -226,7 +277,17 @@ private extension AppDelegate {
             NSApp.terminate(nil)
         case .startVisualReset:
             overlayCoordinator?.present()
-        case .startHeadsUpNow, .startMovement, .openWeeklyRhythm:
+        case let .startMovement(choice):
+            let selectedDuration: TimeInterval? = switch choice {
+            case .recommended:
+                configuration?.movement.durationOptionsSeconds.first
+            case .quick:
+                configuration?.movement.durationOptionsSeconds.dropFirst().first
+            case .positionChange:
+                nil
+            }
+            movementOverlayCoordinator?.present(selectedDurationSeconds: selectedDuration)
+        case .startHeadsUpNow, .openWeeklyRhythm:
             NSApp.activate()
             NotificationCenter.default.post(name: .statusMenuRoute, object: action)
         case .snooze, .pause, .resume, .toggleWorkingHours:
@@ -248,6 +309,30 @@ private extension AppDelegate {
                 try await runtime.handleVisualReset(event)
             },
             onFailure: { [weak self] error in self?.lastRuntimeError = error },
+        )
+    }
+
+    func enqueueMovement(
+        _ action: MovementAction,
+        completion: @escaping (Result<Void, any Error>) -> Void,
+    ) {
+        let event: MovementLifecycleEvent = switch action {
+        case .opened: .opened
+        case let .selectedDuration(duration): .selectedDuration(duration)
+        case .timerFinished: .timerFinished
+        case .doneEarly: .doneEarly
+        case .alreadyMoved: .alreadyMoved
+        case .positionChanged: .positionChanged
+        case .skipped: .skipped
+        }
+        movementLifecycleQueue.enqueue(
+            event,
+            operation: { [weak self] event in
+                guard let self, let runtime else { return }
+                try await runtime.handleMovement(event)
+            },
+            onFailure: { [weak self] error in self?.lastRuntimeError = error },
+            completion: completion,
         )
     }
 

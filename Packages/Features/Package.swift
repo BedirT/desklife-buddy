@@ -19,6 +19,7 @@ let package = Package(
                 "ItemList",
                 "StatusMenu",
                 "VisualReset",
+                "Movement",
                 // agent:app-feature-targets
             ],
         ),
@@ -83,6 +84,24 @@ let package = Package(
             name: "VisualResetTests",
             dependencies: [
                 "VisualReset",
+                .product(name: "SnapshotSupport", package: "TestSupport"),
+            ],
+            exclude: ["__Snapshots__"],
+            swiftSettings: featureSettings,
+        ),
+        .target(
+            name: "Movement",
+            dependencies: [
+                "FeatureLocalization",
+                .product(name: "Domain", package: "Domain"),
+                .product(name: "DesignSystem", package: "DesignSystem"),
+            ],
+            swiftSettings: featureSettings,
+        ),
+        .testTarget(
+            name: "MovementTests",
+            dependencies: [
+                "Movement",
                 .product(name: "SnapshotSupport", package: "TestSupport"),
             ],
             exclude: ["__Snapshots__"],

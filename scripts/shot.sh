@@ -38,6 +38,44 @@ if [[ "$name" == "visual-reset" ]]; then
   exit 1
 fi
 
+if [[ "$name" == "movement" ]]; then
+  for running_pid in $(app_pids); do
+    /bin/kill "$running_pid"
+  done
+  /usr/bin/open -na "$APP_PATH" --args --verify-movement
+  /bin/sleep 4
+  pid="$(app_pid)"
+  cache="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/movement-$pid.png"
+  if [[ -s "$cache" && "$(/usr/bin/stat -f %z "$cache")" -ge 100000 ]]; then
+    /bin/cp "$cache" "$output"
+    state="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/movement-state-$pid.txt"
+    [[ -s "$state" ]] || {
+      echo "The real movement panel did not report its live timer state." >&2
+      exit 1
+    }
+    /usr/bin/awk '
+      NF == 5 && $1 >= 3 && $2 < 300 && $2 > 0 && $3 == 300 && $4 == 300 && $5 == "ok" {
+        verified = 1
+      }
+      END { exit verified ? 0 : 1 }
+    ' "$state" || {
+      echo "The movement capture did not prove a ticking production-routed persisted session." >&2
+      /bin/cat "$state" >&2
+      exit 1
+    }
+    context="$ARTIFACTS/movement-context.png"
+    /bin/rm -f "$context"
+    if ! /usr/sbin/screencapture -x -t png "$context"; then
+      echo "Screen-context capture unavailable; grant Screen Recording permission for that evidence." >&2
+    fi
+    /bin/kill "$pid"
+    echo "SHOT OK: $output (captures, remaining, UI/runtime duration, status: $(/bin/cat "$state"))"
+    exit 0
+  fi
+  echo "The real movement panel did not produce a complete Debug verification capture." >&2
+  exit 1
+fi
+
 if [[ "$name" == status-menu* ]]; then
   state="${name#status-menu-}"
   [[ "$name" == "status-menu" ]] && state="operating"

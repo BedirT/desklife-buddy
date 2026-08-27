@@ -118,6 +118,11 @@ public struct DSBreakChoiceChip: View {
 
         return bordered
             .padding(maximumRingExpansion)
+            .background {
+                if reduceTransparency, hasFocus {
+                    shape.fill(Color.dsMovementControlSolid)
+                }
+            }
             .overlay {
                 if selected {
                     DSControlRing(
@@ -234,6 +239,11 @@ public struct DSBreakQuietPill: View {
 
         return bordered
             .padding(maximumRingExpansion)
+            .background {
+                if reduceTransparency, hasFocus {
+                    shape.fill(Color.dsMovementControlSolid)
+                }
+            }
             .overlay {
                 if hasFocus {
                     DSControlRing(

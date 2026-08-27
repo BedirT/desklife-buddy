@@ -15,14 +15,17 @@ public enum OpportunityPhase: Equatable, Sendable {
 
 /// Current accumulated estimate and presentation phase for one opportunity.
 public struct OpportunityClockState: Equatable, Sendable {
+    public internal(set) var cycleID: UInt64
     public internal(set) var accumulatedActiveUseSeconds: TimeInterval
     public internal(set) var phase: OpportunityPhase
 
     /// Creates a clock state for restoration or deterministic testing.
     public init(
+        cycleID: UInt64 = 0,
         accumulatedActiveUseSeconds: TimeInterval = 0,
         phase: OpportunityPhase = .accumulating,
     ) {
+        self.cycleID = cycleID
         self.accumulatedActiveUseSeconds = max(0, accumulatedActiveUseSeconds)
         self.phase = phase
     }
@@ -73,6 +76,7 @@ public struct ProtocolEngine: Sendable {
     public internal(set) var movementClock: OpportunityClockState
     public internal(set) var recoveryState: RecoveryState
     public internal(set) var notAppropriateOpportunities: Set<OpportunityType>
+    public private(set) var headsUpDeliveryState: HeadsUpDeliveryState
     var visualSnoozeDeadline: Date?
     var movementSnoozeDeadline: Date?
     var recoveryLastObservedAt: Date?
@@ -88,6 +92,7 @@ public struct ProtocolEngine: Sendable {
         recoveryState: RecoveryState = RecoveryState(),
         recoveryLastObservedAt: Date? = nil,
         notAppropriateOpportunities: Set<OpportunityType> = [],
+        headsUpDeliveryState: HeadsUpDeliveryState = HeadsUpDeliveryState(),
     ) {
         self.configuration = configuration
         activityEstimator = ActivityEstimator(configuration: configuration.activityEstimator)
@@ -101,6 +106,7 @@ public struct ProtocolEngine: Sendable {
         self.notAppropriateOpportunities = Set(
             notAppropriateOpportunities.filter(\.supportsNotAppropriateSuppression),
         )
+        self.headsUpDeliveryState = headsUpDeliveryState
     }
 
     /// Reduces one coarse system observation and returns newly emitted event facts.
@@ -180,6 +186,11 @@ public struct ProtocolEngine: Sendable {
                 isLowFrictionMoment: false,
             )
         }
+    }
+
+    /// Synchronizes a separately reduced delivery ledger for the next persisted state snapshot.
+    public mutating func synchronizeHeadsUpDeliveryState(_ state: HeadsUpDeliveryState) {
+        headsUpDeliveryState = state
     }
 }
 

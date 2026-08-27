@@ -106,7 +106,7 @@ struct MovementProtocolSemanticsTests {
         let output = engine.record(.userDeclaredCompleted, opportunity: .movement)
 
         #expect(output.events.map(\.kind) == [.userDeclaredCompleted])
-        #expect(engine.movementClock == OpportunityClockState())
+        #expect(engine.movementClock == OpportunityClockState(cycleID: 1))
         #expect(engine.visualClock.accumulatedActiveUseSeconds == 1500)
     }
 
@@ -118,7 +118,7 @@ struct MovementProtocolSemanticsTests {
         let output = engine.record(.userDeclaredAlreadyMoved, opportunity: .movement)
 
         #expect(output.events.map(\.kind) == [.userDeclaredAlreadyMoved])
-        #expect(engine.movementClock == OpportunityClockState())
+        #expect(engine.movementClock == OpportunityClockState(cycleID: 1))
         #expect(engine.visualClock.accumulatedActiveUseSeconds == 1500)
     }
 
@@ -151,7 +151,7 @@ struct MovementProtocolSemanticsTests {
         let output = engine.record(.skipped, opportunity: .movement)
 
         #expect(output.events.map(\.kind) == [.skipped])
-        #expect(engine.movementClock == OpportunityClockState())
+        #expect(engine.movementClock == OpportunityClockState(cycleID: 1))
         #expect(engine.visualClock == OpportunityClockState())
     }
 
@@ -246,7 +246,7 @@ struct MovementProtocolSemanticsTests {
         let output = engine.skipMergedSegment(.movement)
 
         #expect(output.events.map(\.kind) == [.skipped])
-        #expect(engine.visualClock == OpportunityClockState())
+        #expect(engine.visualClock == OpportunityClockState(cycleID: 1))
         #expect(engine.movementClock.accumulatedActiveUseSeconds == 3600)
         #expect(engine.movementClock.phase == .gracedAfterSuppression)
         let nextObservation = engine.observe(.active(uptimeSeconds: 0, secondsSinceInput: 0))

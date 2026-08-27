@@ -68,10 +68,22 @@ any count of missed breaks, any numeric countdown (`D-004`).
 |---|---|---|---|
 | CP-HU01 | Visual reset in a moment | neutral UI | draft |
 | CP-HU02 | Time to move, when you're ready | neutral UI; autonomy framing `[C037]` | draft |
-| CP-HU03 | Start now | neutral UI | draft |
-| CP-HU04 | In 5 minutes | neutral UI | draft |
+| CP-HU03 | Start now | Class A explicit route; opens the exact visual, movement, or merged break, whose successful surface opening separately owns `breakStarted` | approved — Heads-Up claims review 2026-08-26 |
+| CP-HU04 | In 5 minutes | Class A exact duration action; maps only to the configured 300-second `snoozed` fact for the live scope | approved — Heads-Up claims review 2026-08-26 |
 | CP-HU05 | More options | Class A neutral route label; shown only during an actionable heads-up and opens BR-13 without recording a fact | approved — BreakFlow claims review 2026-08-26 |
 | CP-HU06 | Both are due — one break covers them | describes merge, asserts nothing `[03 §6.3]`; merged scope only, with visual and movement facts/clocks still independent | approved — BreakFlow claims review 2026-08-26 |
+| CP-HU22 | Visual reset | Class A approved opportunity title; notification visual scope only | approved — Heads-Up claims review 2026-08-26 |
+| CP-HU23 | A short break from near focus. | Class A `[C004]`; notification visual body, asserts no gaze or symptom state | approved — Heads-Up claims review 2026-08-26 |
+| CP-HU24 | Movement opportunity | Class A `[C010]`, `[C047]`; notification movement scope only | approved — Heads-Up claims review 2026-08-26 |
+| CP-HU25 | Move in a way that works for you. | Class A `[C047]`; equal-status invitation without instruction, measurement, or verification | approved — Heads-Up claims review 2026-08-26 |
+| CP-HU26 | Visual reset and movement | Class A neutral merged-state title; valid only when both independent clocks genuinely share one merged opportunity | approved — Heads-Up claims review 2026-08-26 |
+
+Capsule hold details reuse the exact approved suppression vocabulary rather than inventing a
+parallel family: CP-MB06 for a timed manual pause, CP-MB17 for an indefinite pause, CP-MB07/08/21
+for Calendar-without-deadline, working-hours, system, presentation, Focus, excluded-app, and
+snooze reasons, and CP-HU20 for a bounded Calendar hold. `lowFrictionWait` is the landed state
+CP-HU13, never a hold. Each string is valid only when driven by its matching sanctioned
+`SuppressionReason`; Focus and presentation are explicitly configured inputs, never inference.
 
 ---
 
@@ -149,7 +161,7 @@ before it can be promoted.
 | CP-BR27 | Suggested 5:00 | Class A; "suggested", never "required" | draft |
 | CP-HU07 | In 5 minutes / In 5 min | `snooze_options_seconds[0]` = 300 s | draft |
 | CP-SE11 | Quiet notice about 45 seconds before a break | `opportunity_delivery.heads_up_seconds_before_target` = 45. *(Renumbered from a duplicate CP-SE03, 2026-08-25.)* | draft |
-| CP-SE12 ⚠ | Uses notifications if you allow them. Without them, the menu-bar item changes instead. | `[07 §3]`, `permissions.required_for_core: []`; states the denied path in the same breath as the ask. *(Renumbered from CP-SE04.)* | draft |
+| CP-SE12 ⚠ | Uses notifications if you allow them. Without them, the menu-bar item changes instead. | Superseded: the denied path is now the in-app heads-up, not a menu-only change. Do not ship. *(Renumbered from CP-SE04.)* | rejected — stale behavior |
 | CP-SE13 | Only remind me during working hours | `suppression_precedence: outside_working_hours`. Menu form: "Only during working hours" (checked item), CP-MB14. *(Renumbered from CP-SE05.)* | draft |
 | CP-SE06 ⚠ | Timing is based on estimated active computer use — keyboard and pointer activity only. It doesn't know whether you are sitting, standing, or looking at the screen. | `[C033]`, `[C013]`; the sentence that has to appear wherever the schedule is explained | draft |
 | CP-SE07 | Gentle · Balanced · Frequent movement | profile names from `product_protocol.yaml`; `frequent_movement`, not "aggressive" | draft |
@@ -340,6 +352,13 @@ Strings the review pass found unregistered in the round-2 artboards, plus the D-
 | CP-SE31 | Heads-up before a break — About 45 seconds | A | `heads_up_seconds_before_target: 45` |
 | CP-SE32 | Wait for a low-friction moment | A | `low_friction_wait` toggle; describes delivery timing, no sensing implied |
 | CP-SE33 | Why these numbers? | A | Evidence-transparency entry point (`health-and-claims.md` §7) — the explanation behind it must include the uncertainty `[S014]` |
+| CP-SE34 | Heads-up before a break | A | In-context optional-notification explainer title; factual product timing surface |
+| CP-SE35 | Uses notifications if you allow them. Without them, an in-app heads-up appears instead. | A | `[07 §3]`, `permissions.required_for_core: []`; states the implemented no-permission path in the same breath as the ask |
+| CP-SE36 | Continue | A | Advances from the explainer to the ordinary system authorization request; grants nothing by itself |
+| CP-SE37 | Use in-app heads-up | A | Chooses the complete no-permission path without degradation or repeated prompting |
+| CP-SE38 | Notifications are off | A | Factual denied/revoked Settings state; never shown as a failure or warning |
+| CP-SE39 | Heads-ups appear in the app instead. | A | Factual fallback, valid only while the app-owned capsule path is active |
+| CP-SE40 | Open Notification Settings… | A | Standard system-settings route; never requests authorization again inside the app |
 
 Removed in this pass: the menu shortcut hints "⌥⌘V" and "⌥⌘M" (no default global
 hotkeys ship — D-029; ⌥⌘V also shadows Finder's move-paste); "Working hours: on".

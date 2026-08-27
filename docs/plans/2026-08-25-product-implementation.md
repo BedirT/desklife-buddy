@@ -46,14 +46,15 @@ None blocks Phase 1. Later phases stop only at their explicit constitution-level
       `docs/plans/2026-08-26-visual-reset-overlay.md` - working implementation complete;
       final acceptance remains owner-gated on DQ-18 art and BR-04 static presentation.
 - [ ] 4. Movement, position change, merge, snooze, and recovery - child plan:
-      `docs/plans/2026-08-26-movement-merged-breaks.md` - done = all explicit event semantics,
-      equal-status movement paths, snapshots,
-      keyboard/Escape, and real-flow proof pass.
+      `docs/plans/2026-08-26-movement-merged-breaks.md` - settled movement, merged, and snooze
+      implementation retained through `37c9cf2`; recovery selection behavior remains
+      owner-gated - done = all explicit event semantics, equal-status movement paths,
+      snapshots, keyboard/Escape, and real-flow proof pass.
 - [ ] 5. Notification-first heads-up, permission degradation, then capsule - child plan:
-      `docs/plans/2026-08-26-heads-up-notification-capsule.md` - DesignSystem enablement may
-      proceed while Phase 4 semantics are owner-gated; runtime waits for Phase 4 - done =
-      notification and no-permission paths, capsule/menu keyboard parity, snapshots, and
-      real-flow proof pass.
+      `docs/plans/2026-08-26-heads-up-notification-capsule.md` - DesignSystem enablement is
+      retained and recovery-independent Domain/Feature delivery work is active; production
+      re-offer and notification-body policies remain owner-gated - done = notification and
+      no-permission paths, capsule/menu keyboard parity, snapshots, and real-flow proof pass.
 - [ ] 6. Settings and optional integrations - child plan created at phase start - done =
       SE-01...SE-15, local preferences/history/export/delete, claims review, snapshots, and
       real-flow proof pass; owner-gated integrations remain absent unless authorized.
@@ -103,3 +104,7 @@ data, even if its query model is explored earlier.
   interpretations: explicit action resets automatically presented movement; merged Escape skips
   only the active segment and leaves it due; recovery becomes eligible once per session after
   two movement deferrals plus 90 minutes of eligible active use. Phase 4 Domain work resumes.
+- 2026-08-26: Phase 4's settled movement, merged, and snooze implementation is retained in
+  `37c9cf2`, with 63 Domain, 58 Feature, and 134 direct App tests plus exact real-process merged
+  and snooze captures. The separate recovery-duration lifecycle remains unrouted. Phase 5 may
+  now proceed for visual, movement, and merged delivery without acknowledging recovery.

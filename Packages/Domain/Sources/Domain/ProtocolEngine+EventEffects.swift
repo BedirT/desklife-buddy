@@ -37,7 +37,7 @@ extension ProtocolEngine {
     mutating func reset(_ opportunity: OpportunityType) {
         switch opportunity {
         case .visual:
-            visualClock = OpportunityClockState()
+            visualClock = OpportunityClockState(cycleID: visualClock.cycleID &+ 1)
             visualSnoozeDeadline = nil
         case .movement:
             resetMovement(clearingRecoveryDebt: true)
@@ -47,7 +47,7 @@ extension ProtocolEngine {
     }
 
     mutating func resetMovement(clearingRecoveryDebt: Bool) {
-        movementClock = OpportunityClockState()
+        movementClock = OpportunityClockState(cycleID: movementClock.cycleID &+ 1)
         movementSnoozeDeadline = nil
         guard clearingRecoveryDebt else { return }
         recoveryState = RecoveryState(

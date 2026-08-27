@@ -1,7 +1,8 @@
 # Notification-first heads-up and capsule - plan
 
 Status: in-progress
-Intake/escalation status: clear
+Intake/escalation status: executable for recovery-independent delivery plumbing; two
+owner-facing action-policy answers remain open before production routing
 
 ## Outcome
 
@@ -27,19 +28,31 @@ large-text variants without stealing focus, tracking a pointer path, or inventin
 - No station-keeping requirement for functional completion. The vertical descent and complete
   notification/capsule action parity land first; M3 is separately privacy-reviewed polish.
 
-## Open escalations - clear before step 1
+## Open escalations - clear before production routing
 
-- None. Phase 4 is an explicit sequencing dependency, not a separate Heads-Up intake round.
-  Provisional DQ-19 and the interim DQ-10 default remain centralized and replaceable rather
-  than being promoted to irreversible product claims.
+- Re-offer cap after explicit snoozes: `PRODUCT_MODEL.md` specifies one return, while
+  `USER_FLOWS.md` describes returns after both the first and second deferrals. The pure
+  delivery reducer may accept an injected cap and prove both policies, but App production
+  wiring must not choose between them until the owner answers.
+- Default notification-body tap: named notification actions are defined, but the default body
+  response is not. The App adapter may model this as a typed unresolved response, but must not
+  route it to Start, More options, or dismissal until the owner answers.
+- Recovery duration selection remains unresolved in the Movement/Merged plan. Recovery is
+  excluded from actionable heads-up delivery, acknowledgement, and routing so that Phase 5 can
+  proceed without inventing that lifecycle.
+
+Phase 4 is retained in commit `37c9cf2`. Provisional DQ-19 and the interim DQ-10 default remain
+centralized and replaceable rather than being promoted to irreversible product claims.
 
 ## Runtime entry criteria
 
-Steps 1-7 do not begin until `docs/plans/2026-08-26-movement-merged-breaks.md` records owner
-answers for automatic movement start, merged Escape, and recovery threshold and its Domain
-step is retained. Before the first runtime test, this plan will also record one narrow mapping
-for system-notification dismissal and the exact movement/merged notification bodies; absence
-of an explicit notification action must not be silently treated as a declaration.
+The Phase 4 entry criteria are met: automatic movement start, merged Escape, and recovery
+threshold are recorded, the Domain semantics are retained, and the settled merged/snooze slice
+is committed. Notification dismissal/no response is fact-free and normal target timing
+continues; absence of an explicit response is never a declaration. Exact visual, movement, and
+merged notification title/body compositions must be registered and claims-reviewed before
+Step 3 runtime delivery. Steps 1-2 may build typed, recovery-excluding behavior while the two
+production action-policy answers above remain open.
 
 ## Steps
 
@@ -50,7 +63,7 @@ of an explicit notification action must not be silently treated as a declaration
       `scripts/test.sh DesignSystem`, `scripts/snapshot.sh DesignSystem`, and
       `scripts/lint.sh` green; exported light/dark gallery PNGs inspected; no feature logic or
       pointer access in DesignSystem. Gating snapshots: `GallerySnapshotTests.headsUpCapsule`.
-- [ ] 1. Domain delivery reducer: write red tests first for one presentation per opportunity,
+- [x] 1. Domain delivery reducer: write red tests first for one presentation per opportunity,
       notification/capsule channel independence, 45/30/15/5 coarse values, low-friction
       touchdown bounded by latest, mid-countdown suppression, snooze expiry/re-offer cap, and
       distinct merged-clock effects. Implement only after Phase 4 entry criteria are met. Done
@@ -58,15 +71,17 @@ of an explicit notification action must not be silently treated as a declaration
 - [ ] 2. Feature model and notification content: scaffold `HeadsUp`, then write red model tests
       for visual/movement/merged copy, `Start now`, 5/10/15-minute Later choices, optional
       Calendar/manual-hold rows, status-menu parity, event mapping, one-shot announcements,
-      and notification-denied fallback. No framework permission calls live in Features. Done =
-      `scripts/test.sh Features` green. Gating suites: `HeadsUpModelTests`,
-      `HeadsUpNotificationContentTests`.
+      and the PM-01 in-context explainer plus PM-02 denied/revoked Settings state. No framework
+      permission calls live in Features. Done = `scripts/test.sh Features` green. Gating suites:
+      `HeadsUpModelTests`, `HeadsUpNotificationContentTests`.
 - [ ] 3. Notification path first: add an App-owned `UNUserNotificationCenter` adapter behind
       a protocol seam, request optional authorization only in context, register ordinary
       notification actions, and route responses through the same lifecycle reducer used by
       menu/capsule actions. Denied, revoked, and not-determined states select the in-app route
-      without nagging. Done = App adapter tests, `scripts/build.sh`, and
-      `scripts/run.sh --verify` green.
+      without nagging. Request acceptance alone is not delivery proof: reconcile the stable
+      request ID against Notification Center with a bounded wait and fall back to the capsule
+      if it is not delivered. Queue launch responses until retained runtime state restores.
+      Done = App adapter tests, `scripts/build.sh`, and `scripts/run.sh --verify` green.
 - [ ] 4. Capsule Feature states: compose the capsule from DesignSystem vocabulary with no
       focus theft, no truncation, identical action semantics, and no per-second accessibility
       updates. Every inventory state gets a `#Preview`: approach, each coarse step, hover,
@@ -111,11 +126,12 @@ of an explicit notification action must not be silently treated as a declaration
 - 2026-08-26: System notification dismissal remains intentionally unmapped until runtime entry.
   Only explicit actions may emit user-declaration events; notification delivery itself emits
   the already-defined `promptPresented` fact.
-- 2026-08-26: The architecture audit found two Phase 1 seams that Step 1 must repair red-first:
-  `ProtocolEngine` currently emits `promptPresented` when scheduling enters
-  `headsUpPresented`, before any channel confirms delivery, and `ProtocolRuntime` publishes
-  `liveHeadsUp` only from its later ready-to-open output. Delivery acknowledgement will own the
-  event, while approach and landed/waiting states keep the status-menu keyboard rows live.
+- 2026-08-26: The pre-Phase4 architecture audit found two seams: scheduling emitted
+  `promptPresented` before channel confirmation, and `ProtocolRuntime` published live actions
+  only from its later ready-to-open output. Phase 4 repaired both: scheduling is fact-free,
+  delivery acknowledgement owns the event, and approach/landed status-menu actions can remain
+  live. Step 1 now builds the missing delivery identity and restart-safe orchestration rather
+  than repeating that repair.
 - 2026-08-26: Step 0 retained `DSHeadsUpCapsule` as presentation-only vocabulary plus fixed-dark
   capsule/sun tokens and semantic typography. Gallery proof covers the full 45/30/15/5 cadence,
   action hover/pressed states, landed, an honest hold whose cue survives compact fallback,
@@ -128,3 +144,43 @@ of an explicit notification action must not be silently treated as a declaration
   Menu warnings. Inspected artifacts:
   `artifacts/preview-review/DesignSystem/DesignSystemTests-GallerySnapshotTests.swift-headsUpCapsule-light.png`
   and the matching dark render, plus light/dark token galleries.
+- 2026-08-26: Phase 4 is retained in `37c9cf2`. Current scheduling is already fact-free,
+  `ProtocolRuntime.acknowledgePromptPresented` owns delivery acknowledgement, and live
+  status-menu actions already exist; the older architecture-audit note above is historical,
+  not current work. A fresh audit found no HeadsUp Feature, notification adapter, capsule
+  coordinator, delivery identity, or restart-safe delivery state. Recovery remains excluded.
+- 2026-08-26: Notification dismissal/no response is resolved from the explicit-actions-only
+  contract as fact-free; it does not emit `skipped`, start a break, or record completion. The
+  same opportunity may continue to target/latest delivery. Capsule Escape remains the distinct
+  provisional DQ-19 `skipped` mapping.
+- 2026-08-26: Claims review approved exact notification compositions without an owner gate:
+  visual uses `Visual reset` / `A short break from near focus.`; movement uses
+  `Movement opportunity` / `Move in a way that works for you.`; merged uses
+  `Visual reset and movement` / `Both are due — one break covers them.`. All use the explicit
+  actions `Start now`, `In 5 minutes`, and `More options`. The body/default response remains a
+  separate unresolved typed action and never inherits `Start now` silently.
+- 2026-08-26: PM-01/PM-02 copy is now registered as an in-context explanation with `Continue`
+  and `Use in-app heads-up`, plus a denied/revoked Settings state. The stale draft claiming only
+  the menu-bar item changes is rejected. Authorization is still App-owned and requested only
+  after the explainer at the first moment of value.
+- 2026-08-26: Xcode 26.6 SDK audit confirms `UNUserNotificationCenter.add` accepts a request but
+  does not prove it was delivered or shown. The notification adapter therefore uses the stable
+  delivery UUID as request identity, checks `deliveredNotifications()` after a small injected,
+  bounded wait, and falls back to the capsule when the request is absent. `promptPresented`
+  means the system reports delivery into Notification Center or the app-owned capsule actually
+  presented; it never means the person noticed the heads-up. This is the strongest public API
+  truth available and avoids showing both channels proactively.
+- 2026-08-26: Notification delegate responses are buffered until `ProtocolRuntime.restore()`
+  finishes so launch-from-notification cannot race retained delivery identity. Default body tap
+  is typed but deliberately unrouted pending the owner answer; dismiss is fact-free; `More
+  options` is a distinct fact-free shared reducer response. Local notifications require no new
+  entitlement or usage-description key, and `aps-environment` remains absent.
+- 2026-08-26: Step 1 retained after three red-first passes and adversarial repair. A separate
+  pure reducer now owns stable delivery UUIDs, per-clock cycle generations and ledgers,
+  reservation/presentation/fact-acknowledgement ordering, configured 30-60 second lead marks,
+  low-friction/latest behavior, suppression cancellation and hold/retract, merged constituent
+  coverage, stale-response guards, and typed Start/snooze/Skip/More-options/dismiss responses.
+  Recovery is unrepresentable. The disputed snooze-return cap is injected with 0/1/2 policies
+  proven and no production default. `scripts/test.sh Domain` passed 88 tests; final independent
+  re-review found no P0/P1/P2 after repairing candidate-priority overlap, stale retry copy,
+  in-flight suppression cancellation, and response-before-fact-commit races.

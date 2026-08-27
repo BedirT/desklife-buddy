@@ -47,13 +47,13 @@ None blocks Phase 1. Later phases stop only at their explicit constitution-level
       final acceptance remains owner-gated on DQ-18 art and BR-04 static presentation.
 - [ ] 4. Movement, position change, merge, snooze, and recovery - child plan:
       `docs/plans/2026-08-26-movement-merged-breaks.md` - settled movement, merged, and snooze
-      implementation retained through `37c9cf2`; recovery selection behavior remains
-      owner-gated - done = all explicit event semantics, equal-status movement paths,
+      implementation retained through `37c9cf2`; recovery selection now has a dedicated-timer
+      owner decision - done = all explicit event semantics, equal-status movement paths,
       snapshots, keyboard/Escape, and real-flow proof pass.
 - [ ] 5. Notification-first heads-up, permission degradation, then capsule - child plan:
       `docs/plans/2026-08-26-heads-up-notification-capsule.md` - DesignSystem enablement is
       retained and recovery-independent Domain/Feature delivery work is active; production
-      re-offer and notification-body policies remain owner-gated - done = notification and
+      re-offer and notification-body policies are owner-set - done = notification and
       no-permission paths, capsule/menu keyboard parity, snapshots, and real-flow proof pass.
 - [ ] 6. Settings and optional integrations - child plan:
       `docs/plans/2026-08-27-settings-local-preferences.md` - active; Calendar/Focus and final

@@ -1,8 +1,8 @@
 # Notification-first heads-up and capsule - plan
 
 Status: in-progress
-Intake/escalation status: executable for recovery-independent delivery plumbing; three
-owner-facing action-policy answers remain open before production routing
+Intake/escalation status: owner-facing action policies are settled; production routing is
+executable subject to retained verification and real Notification Center authorization
 
 ## Outcome
 
@@ -30,16 +30,10 @@ large-text variants without stealing focus, tracking a pointer path, or inventin
 
 ## Open escalations - clear before production routing
 
-- Re-offer cap after explicit snoozes: `PRODUCT_MODEL.md` specifies one return, while
-  `USER_FLOWS.md` describes returns after both the first and second deferrals. The pure
-  delivery reducer may accept an injected cap and prove both policies, but App production
-  wiring must not choose between them until the owner answers.
-- Default notification-body tap: named notification actions are defined, but the default body
-  response is not. The App adapter may model this as a typed unresolved response, but must not
-  route it to Start, More options, or dismissal until the owner answers.
-- Recovery duration selection remains unresolved in the Movement/Merged plan. Recovery is
-  excluded from actionable heads-up delivery, acknowledgement, and routing so that Phase 5 can
-  proceed without inventing that lifecycle.
+- None. On 2026-08-27 the owner selected one re-offer after snooze, More Options for a default
+  notification-body response, and a dedicated recovery timer. Recovery remains excluded from
+  actionable Heads-Up delivery because its distinct timer belongs to the recovery flow rather
+  than an ordinary visual/movement delivery.
 
 Phase 4 is retained in commit `37c9cf2`. Provisional DQ-19 and the interim DQ-10 default remain
 centralized and replaceable rather than being promoted to irreversible product claims.
@@ -51,8 +45,7 @@ threshold are recorded, the Domain semantics are retained, and the settled merge
 is committed. Notification dismissal/no response is fact-free and normal target timing
 continues; absence of an explicit response is never a declaration. Exact visual, movement, and
 merged notification title/body compositions must be registered and claims-reviewed before
-Step 3 runtime delivery. Steps 1-2 may build typed, recovery-excluding behavior while the two
-production action-policy answers above remain open.
+Step 3 runtime delivery. The production action-policy answers above are now retained.
 
 ## Steps
 
@@ -274,5 +267,10 @@ production action-policy answers above remain open.
   `artifacts/heads-up-permission.png`, `artifacts/heads-up-permission-state.json`, and
   `artifacts/heads-up-notification-state.json`. External AX proof remains host-blocked until
   Accessibility permission is granted to the invoking process, and screen-context proof remains
-  blocked by Screen Recording permission. These blockers and the three owner action-policy answers
-  keep production policy nil; they do not block reversible Settings implementation.
+  blocked by Screen Recording permission. At that checkpoint, those blockers and the three open
+  owner action-policy answers kept production policy nil; they did not block reversible Settings
+  implementation.
+- 2026-08-27: The owner selected the already modeled one-return snooze policy and More Options
+  as the default notification-body route. Production wiring may now use re-offer cap `1` and
+  route a default notification response through the same persistence-acknowledged More Options
+  path as the named action; neither choice changes notification permission or delivery fallback.

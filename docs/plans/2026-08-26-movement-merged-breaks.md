@@ -1,8 +1,8 @@
 # Movement, position, merged breaks, snooze, and recovery - plan
 
 Status: in-progress
-Intake/escalation status: settled Step 6 behavior is implemented; recovery selection semantics
-still require the owner, and final movement art acceptance remains staged
+Intake/escalation status: settled Step 6 behavior is implemented; recovery selection starts a
+dedicated timer, and final movement art acceptance remains staged
 
 ## Outcome
 
@@ -40,9 +40,6 @@ in place, or use a seated equivalent.” No copy or research escalation remains 
 
 ## Staged owner gates - required before final visual acceptance
 
-- Recovery selection behavior: decide whether choosing 5 or 10 minutes starts a dedicated
-  recovery timer, reuses the movement break, or records an untimed break. Until answered,
-  recovery remains presentation-only and exposes no dead Start/Later actions.
 - DQ-18 final movement art: MovementLight, 2880x1800 masters/provenance, and the movement
   Increase Contrast/Reduce Transparency variants. Working-reference gradients and seams may
   proceed but are not promoted to canonical final pixels.
@@ -88,9 +85,9 @@ in place, or use a seated equivalent.” No copy or research escalation remains 
       reviewed exported variants establish the implementation spec.
 - [ ] 6. Implement and wire merged, snooze, and recovery flows: visual segment precedes movement,
       visual-only leaves movement due, Escape records only completed facts, snooze returns once
-      after the selected duration, and recovery remains an eligible suggestion without a score
-      or reprimand - done = Domain/Feature/App tests, focused snapshots, build/run, and real-flow
-      proof green.
+      after the selected duration, and a selected recovery duration starts a dedicated recovery
+      timer without completing movement or adding a score or reprimand - done = Domain/Feature/App
+      tests, focused snapshots, build/run, and real-flow proof green.
 - [ ] 7. Phase closeout: run built-UI design, claims, and accessibility reviews; reconcile
       BR-05...BR-13 and ED movement states; run the sufficient verification ladder and assemble
       the evidence pack - done = no P1/P2 code or working-reference UI blocker remains and every
@@ -212,3 +209,6 @@ in place, or use a seated equivalent.” No copy or research escalation remains 
   real-process captures pass. `scripts/ui.sh` remains host-blocked by Accessibility permission,
   and recovery duration selection remains intentionally unrouted until the owner chooses its
   lifecycle meaning.
+- 2026-08-27: The owner selected a dedicated recovery timer for the existing 5/10-minute
+  recovery choices. Selection does not reuse the movement break and does not create a movement
+  completion fact; the optional, non-escalating recovery lifecycle remains distinct.

@@ -123,8 +123,8 @@ Both due inside merge_window (300 s)
 
 ```
 snoozed(n) → suppression active for n → opportunity returns once
-Second deferral of the same opportunity → returns once more, same tone, same size
-Third+ → NO escalation: no bigger surface, no color change, no counter, no guilt copy
+Second deferral of the same opportunity → no immediate re-offer; wait for the next normal cycle
+Further deferrals → NO escalation: no bigger surface, no color change, no counter, no guilt copy
 Session pattern (ED-15): after the session, at most one neutral note in the
   weekly rhythm or a settings suggestion — "Balanced may be too frequent for how you
   work. Try Gentle?" — never mid-session, never as an interruption.

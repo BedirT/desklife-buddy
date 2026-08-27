@@ -235,3 +235,15 @@ production action-policy answers above remain open.
   bundle passed 258 tests / 36 suites, `scripts/build.sh` and `scripts/lint.sh` passed, and independent
   final review found no P0-P2. Real first-responder/Tab/VoiceOver behavior, cross-app panel behavior,
   current text-scale injection, and AppDelegate opening-source consumption remain Steps 6-7 proof.
+- 2026-08-27: The atomic Heads-Up Domain/runtime checkpoint is retained in `7676a6b`. Ordinary
+  scheduler observation and delivery reduction now share one candidate and persistence commit;
+  notification and capsule effects cannot precede that commit. Exact restart-safe pending actions
+  retain their UUID, kind, opportunity generations, and user/local-timer source until the matching
+  overlay-open or More Options presentation acknowledgement succeeds. Real snooze expiry honors the
+  injected re-offer cap, and More Options snoozing updates scheduler and delivery deadlines in the
+  same transaction. Manual pause and suppression durably cancel automatic pending work, nil policy
+  stays adapter-inert, and additive codec validation rejects corrupt outbox/ledger combinations
+  while preserving legacy payloads. Root verification passed 98 Domain tests / 11 suites and 277
+  direct App tests / 36 suites; `scripts/lint.sh` reported `LINT OK` with two unrelated existing
+  warnings; `git diff --check` was clean; and final adversarial review found no P0-P2. Step 6 now
+  owns the serialized AppDelegate lifecycle, exact adapter routing, and restored-response ordering.

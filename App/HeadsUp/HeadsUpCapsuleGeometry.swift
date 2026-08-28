@@ -18,8 +18,6 @@ struct HeadsUpScreen: Equatable {
 }
 
 enum HeadsUpCapsuleAnchor: Equatable {
-    case notch
-    case menuBarClockTrailing
     case topCenter
 }
 
@@ -57,13 +55,11 @@ struct HeadsUpCapsuleChromeInsets: Equatable {
 struct HeadsUpCapsuleLayoutMetrics: Equatable {
     let maximumContentWidth: CGFloat
     let edgeInset: CGFloat
-    let clockAreaTrailingInset: CGFloat
     let chromeInsets: HeadsUpCapsuleChromeInsets
 
     static let standard = HeadsUpCapsuleLayoutMetrics(
         maximumContentWidth: 520,
         edgeInset: 16,
-        clockAreaTrailingInset: 16,
         // DSHeadsUpCapsule's 14-point shadow is offset 8 points toward the bottom edge.
         chromeInsets: HeadsUpCapsuleChromeInsets(
             top: 6,
@@ -114,37 +110,16 @@ enum HeadsUpScreenResolver {
 }
 
 enum HeadsUpCapsuleGeometry {
-    private static let geometryTolerance: CGFloat = 0.5
-
     static func placement(
         on screen: HeadsUpScreen,
         contentSize: CGSize,
         metrics: HeadsUpCapsuleLayoutMetrics = .standard,
     ) -> HeadsUpCapsulePlacement {
         let size = fittedSize(contentSize, in: screen.frame, metrics: metrics)
-        let menuBarIsVisible = screen.frame.maxY - screen.visibleFrame.maxY > geometryTolerance
-        let anchor: HeadsUpCapsuleAnchor
-        let proposedOrigin: CGPoint
-
-        if !menuBarIsVisible {
-            anchor = .topCenter
-            proposedOrigin = CGPoint(
-                x: screen.frame.midX - size.width / 2,
-                y: screen.frame.maxY - metrics.edgeInset - size.height,
-            )
-        } else if hasNotch(screen) {
-            anchor = .notch
-            proposedOrigin = CGPoint(
-                x: screen.frame.midX - size.width / 2,
-                y: screen.frame.maxY - screen.safeAreaTopInset - size.height,
-            )
-        } else {
-            anchor = .menuBarClockTrailing
-            proposedOrigin = CGPoint(
-                x: screen.visibleFrame.maxX - metrics.clockAreaTrailingInset - size.width,
-                y: screen.visibleFrame.maxY - size.height,
-            )
-        }
+        let proposedOrigin = CGPoint(
+            x: screen.frame.midX - size.width / 2,
+            y: screen.frame.maxY - metrics.edgeInset - size.height,
+        )
 
         let capsuleFrame = CGRect(origin: clampedOrigin(
             proposedOrigin,
@@ -153,24 +128,10 @@ enum HeadsUpCapsuleGeometry {
             edgeInset: metrics.edgeInset,
         ), size: size)
         return HeadsUpCapsulePlacement(
-            anchor: anchor,
+            anchor: .topCenter,
             capsuleFrame: capsuleFrame,
             frame: metrics.chromeInsets.panelFrame(around: capsuleFrame),
         )
-    }
-
-    private static func hasNotch(_ screen: HeadsUpScreen) -> Bool {
-        guard screen.safeAreaTopInset > geometryTolerance,
-              let left = screen.auxiliaryTopLeftArea,
-              let right = screen.auxiliaryTopRightArea,
-              !left.isEmpty,
-              !right.isEmpty
-        else {
-            return false
-        }
-        return left.maxX + geometryTolerance < right.minX
-            && left.maxY >= screen.frame.maxY - geometryTolerance
-            && right.maxY >= screen.frame.maxY - geometryTolerance
     }
 
     private static func fittedSize(

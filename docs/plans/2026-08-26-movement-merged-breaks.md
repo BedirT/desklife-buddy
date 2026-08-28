@@ -212,3 +212,18 @@ in place, or use a seated equivalent.” No copy or research escalation remains 
 - 2026-08-27: The owner selected a dedicated recovery timer for the existing 5/10-minute
   recovery choices. Selection does not reuse the movement break and does not create a movement
   completion fact; the optional, non-escalating recovery lifecycle remains distinct.
+- 2026-08-28: Persisted Accessibility preferences now reach standalone and merged Movement
+  coordinators on both interactive and atmosphere-only displays. Standard retains the accepted
+  field; Static and Text only use the approved no-image softened-desktop field with persisted
+  brightness and no invented art or app motion; seated-first changes visible order without
+  changing the semantic `1`/`2`/`3` shortcuts; and timer-announcement Off suppresses progress,
+  opening, and finished timer speech while preserving state and terminal declarations. App-level
+  tests prove live preference changes rebuild primary and secondary overlays with the exact stored
+  values. The previously retained `largestTextCombinedAccessibility.dark.png` was also diagnosed
+  before recording: baseline and actual are both 2880 x 1800, but 1,829,159 pixels (35.2847%)
+  differed over `(0, 54)` through `(2879, 1799)`, with hashes `c088a3d4...` and `c00faaf8...`.
+  History shows the baseline predated the canonical 1.7x `DSTextScale` added in `37c9cf2`; the
+  current seated-order extraction did not alter typography. The corrected 1.7x render was inspected
+  at original resolution and recorded with the exact
+  `MovementSnapshotTests.largestTextCombinedAccessibility` filter only. The full Movement snapshot
+  suite then passed 19 tests and exported 37 exact renders with no tolerance change.

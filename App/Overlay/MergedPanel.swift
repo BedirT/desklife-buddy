@@ -1,6 +1,8 @@
 import AppKit
 import BreakFlow
 import CoreGraphics
+import DesignSystem
+import Domain
 import Movement
 import SwiftUI
 import VisualReset
@@ -14,33 +16,39 @@ enum MergedPanelContent {
 protocol MergedPanelPresenting: AnyObject {
     var displayID: OverlayDisplayID { get }
     func present(makeKey: Bool)
-    func update(frame: CGRect)
+    func update(frame: CGRect, role: OverlayDisplayRole)
     func update(content: MergedPanelContent)
     func close()
     func makeKey()
 }
 
-final class MergedPanel: NSPanel, MergedPanelPresenting {
+final class MergedPanel: BreakFieldAnimatedPanel, MergedPanelPresenting {
     let displayID: OverlayDisplayID
 
     private let onCancel: () -> Void
+    private let accessibilityPreferences: AccessibilityPreferences
     private let visualFocus = VisualResetFocusPresentation(showsDefaultAction: false)
     private let movementFocus = MovementFocusPresentation(showsDefaultAction: false)
     private let hostingView: NSHostingView<AnyView>
     private var content: MergedPanelContent
     private var receivesKeyFocus = false
+    private(set) var role: OverlayDisplayRole
 
-    override var canBecomeKey: Bool { true }
+    override var canBecomeKey: Bool { role == .interactive }
     override var canBecomeMain: Bool { false }
 
     init(
         displayID: OverlayDisplayID,
         frame: CGRect,
         content: MergedPanelContent,
+        role: OverlayDisplayRole,
+        accessibilityPreferences: AccessibilityPreferences = .defaults,
         onCancel: @escaping () -> Void,
     ) {
         self.displayID = displayID
         self.content = content
+        self.role = role
+        self.accessibilityPreferences = accessibilityPreferences
         self.onCancel = onCancel
         hostingView = NSHostingView(rootView: AnyView(EmptyView()))
         super.init(
@@ -58,24 +66,27 @@ final class MergedPanel: NSPanel, MergedPanelPresenting {
         isReleasedWhenClosed = false
         animationBehavior = .none
         contentView = hostingView
+        breakFieldMotionMode = motionMode(for: content)
         setAccessibilityIdentifier("merged.panel.\(displayID)")
+        updateRoleBehavior()
         updateHostedContent()
     }
 
     func present(makeKey: Bool) {
-        if makeKey {
-            makeKeyAndOrderFront(nil)
-        } else {
-            orderFront(nil)
-        }
+        presentBreakField(makeKey: makeKey && role == .interactive)
     }
 
-    func update(frame: CGRect) {
+    func update(frame: CGRect, role: OverlayDisplayRole) {
         setFrame(frame, display: true)
+        guard self.role != role else { return }
+        self.role = role
+        updateRoleBehavior()
+        updateHostedContent()
     }
 
     func update(content: MergedPanelContent) {
         self.content = content
+        breakFieldMotionMode = motionMode(for: content)
         updateHostedContent()
         updateFocusPresentation(receivesKeyFocus)
     }
@@ -103,11 +114,38 @@ final class MergedPanel: NSPanel, MergedPanelPresenting {
         }
     }
 
+    private func motionMode(for content: MergedPanelContent) -> BreakFieldPanelMotionMode {
+        let contentAccessibility = switch content {
+        case let .visual(model):
+            (
+                staticPresentation: model.accessibility.staticPresentation,
+                reduceMotion: model.accessibility.reduceMotion,
+            )
+        case let .movement(model):
+            (
+                staticPresentation: model.accessibility.staticPresentation,
+                reduceMotion: model.accessibility.reduceMotion,
+            )
+        case .acknowledgement:
+            (
+                staticPresentation: accessibilityPreferences.presentation != .standard,
+                reduceMotion: false,
+            )
+        }
+        return .resolve(
+            staticPresentation: contentAccessibility.staticPresentation,
+            reduceMotion: contentAccessibility.reduceMotion
+                || NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
+        )
+    }
+
     override func cancelOperation(_ sender: Any?) {
+        guard role == .interactive else { return }
         onCancel()
     }
 
     override func keyDown(with event: NSEvent) {
+        guard role == .interactive else { return }
         if isEscape(event) {
             onCancel()
             return
@@ -116,6 +154,7 @@ final class MergedPanel: NSPanel, MergedPanelPresenting {
     }
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        guard role == .interactive else { return false }
         if isEscape(event) || isCommandPeriod(event) {
             onCancel()
             return true
@@ -135,26 +174,72 @@ final class MergedPanel: NSPanel, MergedPanelPresenting {
         func captureForVerification() -> Bool {
             OverlayVerificationCapture.write(view: contentView, prefix: "merged")
         }
+
+        var atmosphereKindForTesting: String? {
+            guard role == .atmosphere else { return nil }
+            return switch content {
+            case .visual: "visual"
+            case .movement, .acknowledgement: "movement"
+            }
+        }
     #endif
 
     private func updateHostedContent() {
-        hostingView.rootView = switch content {
-        case let .visual(model):
-            AnyView(VisualResetView(
-                model: model,
-                focusPresentation: visualFocus,
-                opensAutomatically: false,
-                context: .merged,
-            ))
-        case let .movement(model):
-            AnyView(MovementView(
-                model: model,
-                focusPresentation: movementFocus,
-                opensAutomatically: false,
-            ))
-        case let .acknowledgement(model):
-            AnyView(BreakFlowView(model: model))
+        hostingView.rootView = switch role {
+        case .interactive:
+            switch content {
+            case let .visual(model):
+                AnyView(
+                    VisualResetView(
+                        model: model,
+                        staticField: AnyView(staticDesktopField),
+                        focusPresentation: visualFocus,
+                        opensAutomatically: false,
+                        context: .merged,
+                    )
+                    .environment(\.dsBreakEntrance, breakFieldEntranceState),
+                )
+            case let .movement(model):
+                AnyView(
+                    MovementView(
+                        model: model,
+                        staticField: AnyView(staticDesktopField),
+                        focusPresentation: movementFocus,
+                        opensAutomatically: false,
+                    )
+                    .environment(\.dsBreakEntrance, breakFieldEntranceState),
+                )
+            case let .acknowledgement(model):
+                AnyView(BreakFlowView(model: model))
+            }
+        case .atmosphere:
+            if accessibilityPreferences.presentation != .standard {
+                AnyView(staticDesktopField)
+            } else {
+                switch content {
+                case .visual:
+                    AnyView(VisualResetAtmosphereView())
+                case let .movement(model):
+                    AnyView(MovementAtmosphereView(model: model))
+                case .acknowledgement:
+                    AnyView(MovementAtmosphereView())
+                }
+            }
         }
+    }
+
+    private var staticDesktopField: some View {
+        DSStaticDesktopField(brightness: accessibilityPreferences.staticOverlayBrightness)
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+    }
+
+    private func updateRoleBehavior() {
+        receivesKeyFocus = role == .interactive && isKeyWindow
+        updateFocusPresentation(receivesKeyFocus)
+        ignoresMouseEvents = role == .atmosphere
+        hostingView.setAccessibilityElement(false)
+        setAccessibilityChildren(role == .interactive ? nil : [])
     }
 
     private func updateFocusPresentation(_ isKey: Bool) {

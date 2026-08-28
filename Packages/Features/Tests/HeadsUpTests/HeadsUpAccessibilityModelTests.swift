@@ -84,7 +84,7 @@ struct HeadsUpAccessibilityModelTests {
         #expect(announcements == [
             HeadsUpAnnouncement(
                 kind: .appearance,
-                localizedText: "Movement opportunity now — or whenever suits. Now, button. Later, menu button.",
+                localizedText: "Movement opportunity now, or whenever suits. Now, button. Later, menu button.",
             ),
         ])
     }

@@ -4,17 +4,13 @@ import SwiftData
 
 typealias SwiftDataSettingsStore = SwiftDataProtocolStore
 
-enum SettingsHistoryExportFormat {
-    case json
-    case csv
-}
-
 protocol ProtocolRuntimeSettingsStore {
     func resolve(_ preferences: AppPreferences) throws -> ResolvedAppPreferences
+    @discardableResult
     func commitPreferences(
         _ preferences: ResolvedAppPreferences,
         state: ProtocolState,
-    ) async throws
+    ) async throws -> Int
     func deleteHistory() async throws
     func resetAll(state: ProtocolState) async throws -> ResolvedAppPreferences
 }
@@ -26,6 +22,7 @@ extension SwiftDataProtocolStore: AppPreferencesStore, ProtocolRuntimeSettingsSt
 
     func loadResolvedPreferences() async throws -> ResolvedAppPreferences {
         do {
+            try removeLegacyHarnessItems()
             if let stored = try fetchStoredPreferences() {
                 let resolved = try resolvedPreferences(from: stored)
                 try pruneStoredHistory(
@@ -104,21 +101,23 @@ extension SwiftDataProtocolStore: AppPreferencesStore, ProtocolRuntimeSettingsSt
         return try SettingsPreferenceResolver.resolve(preferences)
     }
 
+    @discardableResult
     func commitPreferences(
         _ preferences: ResolvedAppPreferences,
         state: ProtocolState,
-    ) async throws {
+    ) async throws -> Int {
         guard preferences.profileID == state.profileID else {
             throw SettingsPersistenceError.profileStateMismatch
         }
         do {
             try upsertPreferences(preferences)
             try upsert(state)
-            try pruneStoredHistory(
+            let retainedHistoryCount = try pruneStoredHistory(
                 policy: preferences.preferences.historyRetention,
                 asOf: now(),
             )
             try saveContext()
+            return retainedHistoryCount
         } catch {
             context.rollback()
             throw error
@@ -141,11 +140,18 @@ extension SwiftDataProtocolStore: AppPreferencesStore, ProtocolRuntimeSettingsSt
             for event in try context.fetch(FetchDescriptor<StoredOpportunityEvent>()) {
                 context.delete(event)
             }
+            for run in try context.fetch(FetchDescriptor<StoredEstimatedActiveUseRun>()) {
+                context.delete(run)
+            }
             try saveContext()
         } catch {
             context.rollback()
             throw error
         }
+    }
+
+    func retainedHistoryCount() async throws -> Int {
+        try await loadEvents().count
     }
 
     func resetAll(state: ProtocolState) async throws -> ResolvedAppPreferences {
@@ -156,6 +162,9 @@ extension SwiftDataProtocolStore: AppPreferencesStore, ProtocolRuntimeSettingsSt
         do {
             for event in try context.fetch(FetchDescriptor<StoredOpportunityEvent>()) {
                 context.delete(event)
+            }
+            for run in try context.fetch(FetchDescriptor<StoredEstimatedActiveUseRun>()) {
+                context.delete(run)
             }
             for item in try context.fetch(FetchDescriptor<StoredItem>()) {
                 context.delete(item)
@@ -176,10 +185,10 @@ extension SwiftDataProtocolStore: AppPreferencesStore, ProtocolRuntimeSettingsSt
         }
     }
 
-    func exportHistory(format: SettingsHistoryExportFormat) async throws -> Data {
+    func exportHistory(request: HistoryExportRequest) async throws -> Data {
         let events = try await loadEvents()
-        let projection = HistoryExport.project(events: events)
-        switch format {
+        let projection = HistoryExport.project(events: events, fields: request.fields)
+        switch request.format {
         case .json:
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .iso8601
@@ -196,6 +205,12 @@ extension SwiftDataProtocolStore: AppPreferencesStore, ProtocolRuntimeSettingsSt
 private extension SwiftDataProtocolStore {
     static var settingsSchemaVersion: Int { 1 }
     static var settingsKey: String { "current" }
+
+    func removeLegacyHarnessItems() throws {
+        for item in try context.fetch(FetchDescriptor<StoredItem>()) {
+            context.delete(item)
+        }
+    }
 
     func fetchStoredPreferences() throws -> StoredAppPreferences? {
         let key = Self.settingsKey
@@ -260,16 +275,24 @@ private extension SwiftDataProtocolStore {
     func csv(_ export: HistoryExport) -> String {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let header = HistoryExportField.allCases.map(\.rawValue).joined(separator: ",")
+        let header = export.fields.map(\.rawValue).joined(separator: ",")
         let rows = export.records.map { record in
-            [
-                record.id.uuidString.lowercased(),
-                formatter.string(from: record.recordedAt),
-                record.kind,
-                record.source,
-                record.opportunity ?? "",
-                record.selectedDurationSeconds.map(stableNumber) ?? "",
-            ].joined(separator: ",")
+            export.fields.map { field in
+                switch field {
+                case .id:
+                    record.id.uuidString.lowercased()
+                case .recordedAt:
+                    formatter.string(from: record.recordedAt)
+                case .kind:
+                    record.kind
+                case .source:
+                    record.source
+                case .opportunity:
+                    record.opportunity ?? ""
+                case .selectedDurationSeconds:
+                    record.selectedDurationSeconds.map(stableNumber) ?? ""
+                }
+            }.joined(separator: ",")
         }
         return ([header] + rows).joined(separator: "\n") + "\n"
     }

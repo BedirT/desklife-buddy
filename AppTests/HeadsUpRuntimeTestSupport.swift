@@ -14,8 +14,8 @@ extension HeadsUpRuntimeTests {
         store: HeadsUpRuntimeStore,
         now: @escaping () -> Date,
     ) throws -> ProtocolRuntime {
-        ProtocolRuntime(
-            configuration: try ProtocolProfiles.configuration(for: .balanced),
+        try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
             store: store,
             headsUpRuntimePolicy: HeadsUpRuntimePolicy(maximumSnoozeReoffers: 1),
             now: now,

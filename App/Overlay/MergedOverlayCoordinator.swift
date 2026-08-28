@@ -8,14 +8,12 @@ import VisualReset
 final class MergedOverlayCoordinator {
     typealias PanelFactory = (
         OverlayDisplay,
+        OverlayDisplayRole,
         MergedPanelContent,
+        AccessibilityPreferences,
         @escaping () -> Void,
     ) -> any MergedPanelPresenting
     typealias Scheduler = (@escaping @MainActor @Sendable () -> Void) -> OverlayCancellation
-    typealias LifecycleCallback = (
-        MergedLifecycleEvent,
-        @escaping (Result<Void, any Error>) -> Void,
-    ) -> Void
     private enum Phase {
         case visual(VisualResetModel)
         case movement(MovementModel)
@@ -26,19 +24,21 @@ final class MergedOverlayCoordinator {
     private let visualDurationSeconds: TimeInterval
     private let movementSchedule: OpportunitySchedule
     private let acknowledgementDurationSeconds: TimeInterval
+    let accessibilityPreferences: AccessibilityPreferences
     private let now: () -> TimeInterval
     private let displays: () -> [OverlayDisplay]
-    private let makePanel: PanelFactory
+    let makePanel: PanelFactory
     private let captureFrontmostProcessIdentifier: () -> pid_t?
     private let activate: () -> Void
-    private let isAppFrontmost: () -> Bool
+    let isAppFrontmost: () -> Bool
     private let restore: (pid_t) -> Void
     private let scheduleRefresh: Scheduler
     private let observeScreenChanges: Scheduler
-    private let onLifecycle: LifecycleCallback
+    private let onLifecycle: MergedLifecycleCallback
     private let onVisualAnnouncement: (VisualResetAnnouncement) -> Void
     private let onMovementAnnouncement: (MovementAnnouncement) -> Void
-    private var panels: [OverlayDisplayID: any MergedPanelPresenting] = [:]
+    private let onCompletion: () -> Void
+    var panels: [OverlayDisplayID: any MergedPanelPresenting] = [:]
     private var phase: Phase?
     private var priorProcessIdentifier: pid_t?
     private var refreshCancellation: OverlayCancellation?
@@ -46,11 +46,14 @@ final class MergedOverlayCoordinator {
     private var acknowledgementDeadline: TimeInterval?
     private var isDismissing = false
     private var restorationPending = false
+    var interactiveDisplayID: OverlayDisplayID?
+    private var preActivationMainDisplayID: OverlayDisplayID?
     init(
         policy: OverlayDisplayPolicy = .allDisplays,
         visualDurationSeconds: TimeInterval = 20,
         movementSchedule: OpportunitySchedule,
         acknowledgementDurationSeconds: TimeInterval = 2,
+        accessibilityPreferences: AccessibilityPreferences = .defaults,
         now: @escaping () -> TimeInterval,
         displays: @escaping () -> [OverlayDisplay],
         makePanel: @escaping PanelFactory,
@@ -60,14 +63,16 @@ final class MergedOverlayCoordinator {
         restore: @escaping (pid_t) -> Void,
         scheduleRefresh: @escaping Scheduler,
         observeScreenChanges: @escaping Scheduler,
-        onLifecycle: @escaping LifecycleCallback,
+        onLifecycle: @escaping MergedLifecycleCallback,
         onVisualAnnouncement: @escaping (VisualResetAnnouncement) -> Void = { _ in },
         onMovementAnnouncement: @escaping (MovementAnnouncement) -> Void = { _ in },
+        onCompletion: @escaping () -> Void = {},
     ) {
         self.policy = policy
         self.visualDurationSeconds = visualDurationSeconds
         self.movementSchedule = movementSchedule
         self.acknowledgementDurationSeconds = acknowledgementDurationSeconds
+        self.accessibilityPreferences = accessibilityPreferences
         self.now = now
         self.displays = displays
         self.makePanel = makePanel
@@ -80,6 +85,7 @@ final class MergedOverlayCoordinator {
         self.onLifecycle = onLifecycle
         self.onVisualAnnouncement = onVisualAnnouncement
         self.onMovementAnnouncement = onMovementAnnouncement
+        self.onCompletion = onCompletion
     }
 
     func present() {
@@ -90,26 +96,35 @@ final class MergedOverlayCoordinator {
         guard phase == nil else { return }
         let plan = OverlayDisplayPlan.resolve(displays(), policy: policy)
         guard !plan.displays.isEmpty else { return }
+        interactiveDisplayID = plan.interactiveDisplayID
+        preActivationMainDisplayID = plan.canonicalMainDisplayID
         priorProcessIdentifier = captureFrontmostProcessIdentifier()
         let model = VisualResetModel(
             durationSeconds: visualDurationSeconds,
+            accessibility: accessibilityPreferences.visualResetAccessibility,
             requiresLifecycleConfirmation: true,
             now: now,
             onAction: { [weak self] action in self?.handleVisual(action) },
             onAnnouncement: { [weak self] announcement in
-                self?.onVisualAnnouncement(announcement)
+                guard let self,
+                      accessibilityPreferences.includes(announcement)
+                else {
+                    return
+                }
+                onVisualAnnouncement(announcement)
             },
         )
         phase = .visual(model)
         reconcile(to: plan, content: .visual(model), presenting: true)
         activate()
-        for display in plan.displays where display.id != plan.keyDisplayID {
-            panels[display.id]?.present(makeKey: false)
+        for assignment in plan.assignments where assignment.role == .atmosphere {
+            panels[assignment.display.id]?.present(makeKey: false)
         }
-        if let keyDisplayID = plan.keyDisplayID {
-            panels[keyDisplayID]?.present(makeKey: true)
+        if let interactiveDisplayID = plan.interactiveDisplayID {
+            panels[interactiveDisplayID]?.present(makeKey: true)
         }
         model.open()
+        guard case let .visual(activeModel) = phase, activeModel === model else { return }
         refreshCancellation = scheduleRefresh { [weak self] in self?.refresh() }
         screenCancellation = observeScreenChanges { [weak self] in self?.screenParametersChanged() }
     }
@@ -142,6 +157,10 @@ final class MergedOverlayCoordinator {
             case .acknowledgement, nil: nil
             }
         }
+
+        var accessibilityPreferencesForTesting: AccessibilityPreferences {
+            accessibilityPreferences
+        }
     #endif
     func tearDown() {
         refreshCancellation?.cancel()
@@ -153,6 +172,8 @@ final class MergedOverlayCoordinator {
         phase = nil
         acknowledgementDeadline = nil
         priorProcessIdentifier = nil
+        interactiveDisplayID = nil
+        preActivationMainDisplayID = nil
         restorationPending = false
         isDismissing = false
     }
@@ -192,6 +213,8 @@ extension MergedOverlayCoordinator {
                 }
             case .failure:
                 model.rejectLifecycle(action)
+                guard action == .opened else { return }
+                dismissAndRestore()
             }
         }
     }
@@ -231,6 +254,7 @@ extension MergedOverlayCoordinator {
             presentAcknowledgement()
         case .timerFinished, .doneEarly, .alreadyMoved, .positionChanged, .skipped:
             dismissAndRestore()
+            if action.showsMergedCompletion { onCompletion() }
         }
     }
 
@@ -238,11 +262,18 @@ extension MergedOverlayCoordinator {
         let model = MovementModel(
             schedule: movementSchedule,
             context: .merged,
+            accessibility: accessibilityPreferences.movementAccessibility,
+            seatedContentFirst: accessibilityPreferences.seatedContentFirst,
             requiresLifecycleConfirmation: true,
             now: now,
             onAction: { [weak self] action in self?.handleMovement(action) },
             onAnnouncement: { [weak self] announcement in
-                self?.onMovementAnnouncement(announcement)
+                guard let self,
+                      accessibilityPreferences.includes(announcement)
+                else {
+                    return
+                }
+                onMovementAnnouncement(announcement)
             },
         )
         phase = .movement(model)
@@ -284,7 +315,7 @@ extension MergedOverlayCoordinator {
         }
     }
 
-    private func cancelActiveSegment() {
+    func cancelActiveSegment() {
         switch phase {
         case let .visual(model): model.skip()
         case let .movement(model): model.skip()
@@ -332,7 +363,12 @@ extension MergedOverlayCoordinator {
 
     private func screenParametersChanged() {
         guard let content = activeContent else { return }
-        let plan = OverlayDisplayPlan.resolve(displays(), policy: policy)
+        let plan = OverlayDisplayPlan.resolve(
+            displays(),
+            policy: policy,
+            preferredInteractiveDisplayID: interactiveDisplayID,
+            fallbackInteractiveDisplayID: preActivationMainDisplayID,
+        )
         reconcile(to: plan, content: content, presenting: false)
     }
 
@@ -342,34 +378,6 @@ extension MergedOverlayCoordinator {
         case let .movement(model): .movement(model)
         case let .acknowledgement(model): .acknowledgement(model)
         case nil: nil
-        }
-    }
-
-    private func reconcile(
-        to plan: OverlayDisplayPlan,
-        content: MergedPanelContent,
-        presenting: Bool,
-    ) {
-        let retainedIDs = Set(plan.displays.map(\.id))
-        for display in plan.displays {
-            if let panel = panels[display.id] {
-                panel.update(frame: display.frame)
-            } else {
-                let panel = makePanel(display, content) { [weak self] in
-                    self?.cancelActiveSegment()
-                }
-                panels[display.id] = panel
-                if !presenting {
-                    panel.present(makeKey: false)
-                }
-            }
-        }
-        for (id, panel) in panels where !retainedIDs.contains(id) {
-            panel.close()
-            panels[id] = nil
-        }
-        if !presenting, isAppFrontmost(), let keyDisplayID = plan.keyDisplayID {
-            panels[keyDisplayID]?.makeKey()
         }
     }
 }

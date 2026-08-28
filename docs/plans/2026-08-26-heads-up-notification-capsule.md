@@ -1,4 +1,4 @@
-# Notification-first heads-up and capsule - plan
+# Capsule-first heads-up and notification fallback - plan
 
 Status: in-progress
 Intake/escalation status: owner-facing action policies are settled; production routing is
@@ -6,15 +6,16 @@ executable subject to retained verification and real Notification Center authori
 
 ## Outcome
 
-Every due visual, movement, or merged opportunity gets one calm, actionable heads-up before
-its break surface: a standard local notification when authorized and an equally capable
-app-owned capsule when notifications are unavailable. Both routes share one lifecycle,
-preserve the live status-menu keyboard path, name holds honestly, and never make the optional
-notification permission or the decorative sun necessary for core use.
+Every due visual, movement, or merged opportunity gets one calm, actionable app-owned capsule
+before its break surface. Only when the capsule cannot present may the same delivery use an
+already-authorized standard local notification as secondary fallback. Both routes share one
+lifecycle, preserve the live status-menu keyboard path, name holds honestly, and never make
+the optional notification permission or the decorative sun necessary for core use.
 
-The capsule is a non-activating, multi-display-safe presentation on the display containing the
-pointer. It supports text-only, Reduce Motion, Reduce Transparency, Increase Contrast, and
-large-text variants without stealing focus, tracking a pointer path, or inventing body claims.
+The capsule is a non-activating, multi-display-safe presentation fixed at top-center on the
+  active pointer/key display. It supports text-only, Reduce Motion, Reduce Transparency,
+  Increase Contrast, and large-text variants without stealing focus, tracking a pointer path,
+  or inventing body claims.
 
 ## Non-goals
 
@@ -25,8 +26,8 @@ large-text variants without stealing focus, tracking a pointer path, or inventin
 - No hard-coded working product name; recurring copy remains compatible with deferred identity.
 - No Heads-Up runtime implementation before the Movement/Merged child plan's clock semantics
   are resolved and retained.
-- No station-keeping requirement for functional completion. The vertical descent and complete
-  notification/capsule action parity land first; M3 is separately privacy-reviewed polish.
+- The restrained entrance, reactive glint, and completion one-shot are not required for core
+  action semantics. M3 remains ephemeral, visible-only, and independently privacy-reviewed.
 
 ## Open escalations - clear before production routing
 
@@ -35,8 +36,8 @@ large-text variants without stealing focus, tracking a pointer path, or inventin
   actionable Heads-Up delivery because its distinct timer belongs to the recovery flow rather
   than an ordinary visual/movement delivery.
 
-Phase 4 is retained in commit `37c9cf2`. Provisional DQ-19 and the interim DQ-10 default remain
-centralized and replaceable rather than being promoted to irreversible product claims.
+Phase 4 is retained in commit `37c9cf2`. Provisional DQ-19 remains centralized and replaceable.
+Owner review on 2026-08-28 closed DQ-03/10/11/15/16 for production direction.
 
 ## Runtime entry criteria
 
@@ -67,19 +68,17 @@ Step 3 runtime delivery. The production action-policy answers above are now reta
       and the PM-01 in-context explainer plus PM-02 denied/revoked Settings state. No framework
       permission calls live in Features. Done = `scripts/test.sh Features` green. Gating suites:
       `HeadsUpModelTests`, `HeadsUpNotificationContentTests`.
-- [ ] 3. Notification path first: add an App-owned `UNUserNotificationCenter` adapter behind
-      a protocol seam, request optional authorization only in context, register ordinary
-      notification actions, and route responses through the same lifecycle reducer used by
-      menu/capsule actions. Denied, revoked, and not-determined states select the in-app route
-      without nagging. Request acceptance alone is not delivery proof: reconcile the stable
-      request ID against Notification Center with a bounded wait and fall back to the capsule
-      if it is not delivered. Queue launch responses until retained runtime state restores.
+- [ ] 3. Capsule path first: present the app-owned capsule without reading Notification Center.
+      Only after capsule failure, query existing alert authorization without showing PM-01 or
+      requesting permission; when already authorized, reconcile an ordinary notification using
+      the same stable request ID. Explicit notification setup remains user-initiated. Queue
+      launch responses until retained runtime state restores.
       Done = App adapter tests, `scripts/build.sh`, and `scripts/run.sh --verify` green.
 - [x] 4. Capsule Feature states: compose the capsule from DesignSystem vocabulary with no
       focus theft, no truncation, identical action semantics, and no per-second accessibility
       updates. Every inventory state gets a `#Preview`: approach, each coarse step, hover,
       landed/waiting, honest hold, text-only, Reduce Motion, Reduce Transparency, Increase
-      Contrast, +35% text, no-notch dock, and acknowledgement endpoints. Done =
+      Contrast, +35% text, fixed top-center placement context, and acknowledgement endpoints. Done =
       `scripts/snapshot.sh Features HeadsUpTests` green and exported PNGs inspected.
 - [x] 5. Native capsule coordinator: implement an App-owned non-activating panel on the display
       containing the pointer, independent of menu-bar visibility, with explicit screen-change,
@@ -93,7 +92,10 @@ Step 3 runtime delivery. The production action-policy answers above are now reta
       `scripts/run.sh --verify`, and `scripts/ui.sh` prove the notification-permitted and
       notification-denied paths plus keyboard parity.
 - [ ] 7. Motion, privacy, accessibility, and real-flow closeout: implement only M1-M5/M9's
-      closed one-shot vocabulary, with Reduce Motion substitutions and no loops/pulses. Run
+      closed one-shot vocabulary: fixed top-center placement, restrained entrance, a bounded
+      pointer-reactive glint, atmosphere on every chosen display with controls once, and the
+      wordless ~2 s completion return. Reduce Motion/static/text-only omit M9, and no motion
+      loops or pulses. Run
       design, claims, accessibility, and privacy reviews; capture multi-display, full-screen,
       permission-revoked, suppression-mid-countdown, snooze, Escape, and end-to-break proof.
       Done = `scripts/verify.sh` green and the final evidence pack links snapshots, real-window
@@ -101,9 +103,54 @@ Step 3 runtime delivery. The production action-policy answers above are now reta
 
 ## Decision log
 
-- 2026-08-26: Follow the explicit build order: notification behavior first, app-owned capsule
-  second. DQ-10's notification-first policy remains configurable and is compared at real size;
-  neither channel is described as the "real" path.
+- 2026-08-28: Owner review makes the capsule the primary automatic route. Capsule success must
+  not touch Notification Center. Capsule failure may use an already-authorized notification
+  with the same delivery ID, but automatic fallback never opens PM-01 or requests permission;
+  notification setup remains an explicit user action.
+- 2026-08-28: The capsule is fixed at top-center on the active pointer/key display in every
+  notch, no-notch, menu-bar, and full-screen state. Only its restrained glint responds to
+  ephemeral pointer movement; the sun body and capsule stay fixed.
+- 2026-08-28: Phase 2 replaces notch-safe-area and clock-trailing geometry with one fixed
+  top-center formula. Live hover remeasurement grows around the same horizontal center, and
+  the placement Preview/snapshot now proves that single context rather than a clock dock.
+- 2026-08-28: Phase 3 adds only the approved restrained entrance and pointer-reactive glint.
+  Named `DSMotion` tokens own both responses; a cancellable App-owned sampler exists only while
+  the capsule is visible, passes a finite normalized value into Features, returns the glint to
+  center at rest/teardown, and never moves the sun body, capsule, or panel frame. Reduce Motion,
+  static presentation, and text-only skip authored entrance and glint. Multi-display atmosphere
+  and completion-return work remain deferred to the rest of Step 7.
+- 2026-08-28: All selected displays carry the atmosphere, but the complete content/control stack
+  appears exactly once on the active panel. Completion gets one wordless ~2 s capsule return,
+  absent under Reduce Motion, static presentation, and text-only. BR-10 remains the separate
+  textual partial-reset explanation after "Just the visual one."
+- 2026-08-28: Owner approval retains the wordless completion return as Phase 5's production
+  direction. A separate nonactivating, pointer-ignoring fixed-top-center panel now presents only
+  after durable visual `timerFinished`/`doneEarly`, movement `timerFinished`/`doneEarly`/
+  `alreadyMoved`, and equivalent final merged movement terminals have closed and attempted focus
+  restoration. It creates no delivery identity, notification, accessibility child, or protocol
+  fact; `skipped`, `positionChanged`, merged `visualOnly`, system Reduce Motion, static
+  presentation, and text-only create no completion panel. One generation-safe timer owns the
+  identical two-second lifetime and topology reconciliation retains the initially selected
+  pointer/main/first display without pointer chasing. The existing BR-10 textual partial-reset
+  acknowledgement is unchanged.
+- 2026-08-28: The approved Phase 5 pixels are retained narrowly in all six light/dark
+  `CompletionCapsuleSnapshotTests` endpoint/context baselines and the two affected light/dark
+  `GallerySnapshotTests.headsUpCapsule` baselines. Both recording commands reran their exact
+  comparison scopes to green, and the exported before/after/fixed-top-center and gallery PNGs
+  were inspected. A Debug-only `--verify-completion-capsule` route then exercised the real AppKit
+  panel and retained `artifacts/completion-capsule-presented-state.json` (one visible panel) plus
+  `artifacts/completion-capsule-dismissed-state.json` (zero after the shared lifetime). Focused
+  video remains a host-permission gap: `CGPreflightScreenCaptureAccess()` returned `false`, the
+  five-second `/usr/sbin/screencapture -v -V5` attempt exited `1`, and no motion file was created.
+  Final closeout rebuilt the signed app, passed 124 focused Heads-Up/overlay/Completion App tests
+  in 12 suites from the rebuilt direct bundle, all 185 Features tests in 30 suites (including 33
+  focused Heads-Up tests in 9 suites), and all 5 DesignSystem tests in 2 suites. The retained
+  Completion comparison passed 2 tests/6 renders, the affected gallery comparison passed 1 test/2
+  renders, `scripts/lint.sh` reported `LINT OK`, and `git diff --check` was clean.
+
+- 2026-08-26: The original build order put notification behavior before the app-owned capsule.
+  The 2026-08-28 owner choice above supersedes that route ordering; this entry remains only as
+  decision history.
 - 2026-08-26: Treat the round-2 `HeadsUp.dc.html` as a directional working reference, not
   canonical pixels. The later consolidated D-029/`INTERACTION_SPEC.md` contract outranks stale
   K.3 wording: the capsule is non-activating and the menu plus notification are keyboard routes.
@@ -274,3 +321,29 @@ Step 3 runtime delivery. The production action-policy answers above are now reta
   as the default notification-body route. Production wiring may now use re-offer cap `1` and
   route a default notification response through the same persistence-acknowledged More Options
   path as the named action; neither choice changes notification permission or delivery fallback.
+- 2026-08-28: The selected production policy is now active only after onboarding permits normal
+  runtime composition: ordinary launches use one snooze re-offer, while explicit verification
+  overrides retain their prior policy or adapter-inert behavior. A retained default notification
+  body response routes through the exact More Options acknowledgement path. Suppression during a
+  live countdown now holds the visible capsule for the bounded two-second dwell before withdrawing
+  that exact delivery, with stale scheduled work unable to retract a replacement. Runtime restore
+  is an activation boundary rather than a swallowed background error: status/menu publication
+  follows successful restore, a failed prepared composition is torn down, and a later retry starts
+  cleanly without rewriting onboarding choices. The isolated direct App bundle passed 94 tests
+  across the eight focused lifecycle, overlay, reconfiguration, and recovery suites; focused
+  Heads-Up Domain coverage passed 16 tests; `scripts/build.sh`, `scripts/run.sh --verify`, and
+  `scripts/lint.sh` passed. External `scripts/ui.sh` proof remains host-blocked by the existing
+  Accessibility permission, so no AX success is inferred.
+- 2026-08-28: A successful More Options surface presentation now retires the exact app-owned
+  delivery only after its pending-action completion commit succeeds. That retirement withdraws
+  either capsule or Notification Center presentation, clears the response buffer and active-ID
+  registry, removes the live status projection, and leaves the already presented shared options
+  surface in place. Blocked presentations and failed completion commits retain their restart-safe
+  pending action for retry. RED direct-bundle proof showed the prior capsule remained visible with
+  one registered stale identity after the outbox cleared. The repaired focused lifecycle suite
+  passed 24 tests, including capsule withdrawal, completion-commit retry, two successive unique
+  delivery identities, and default notification-body cleanup; the adjacent notification-delivery
+  and suppression-hold suites passed 19 and 2 tests. A normal signed App test bundle build,
+  `scripts/build.sh`, `scripts/run.sh --verify`, and `scripts/lint.sh` passed; focused Heads-Up
+  Feature tests passed 33 tests and Domain delivery tests passed 35 tests. `git diff --check` was
+  clean. No visual pixels or notification-permission policy changed.

@@ -191,6 +191,16 @@ locked. "No lockout" stated in copy is a promise; a working menu bar is evidence
 Consequence: the dim layer starts at the bottom edge of the menu bar, never at y=0, and no
 direction may use a window level that would cover it.
 
+### D-012a - Break surfaces suppress the Dock
+
+**Date** 2026-08-28 · **Status** Active · **Basis** Owner correction after live desktop review.
+
+While any full break surface is presented, the app uses the native application presentation
+option that hides the Dock. The menu bar remains visible and usable. The app restores the exact
+previous presentation options after the final break panel closes. Multi-display panels share one
+reference-counted suppression period, so closing one atmosphere panel cannot reveal the Dock under
+the remaining break surface.
+
 ---
 
 ## D-013 — Position change is offered on the movement surface, and never in the same tier
@@ -356,9 +366,9 @@ so at rest the chip is perfectly still.
   sun *is* on the horizon — the heads-up rehearses the break's shape (carries the round-1
   finding recorded under DQ-10).
 
-**Consequences logged elsewhere:** the character only exists on an app-drawn chip, which
-pressures DQ-10's notification-first default (updated there); the ephemeral pointer read is
-logged as DQ-15.
+**Consequences logged elsewhere:** the character only exists on the app-drawn primary capsule;
+DQ-10 records the already-authorized notification fallback, and DQ-15 records the ephemeral
+pointer read.
 
 ---
 
@@ -415,23 +425,24 @@ one. Escape never stops working; it just stops being the biggest thing on screen
 
 ---
 
-## D-022 — Level 1 lives in a notch capsule; holds are honest and one click away
+## D-022: Level 1 lives in a fixed top-center capsule; holds are honest and one click away
 
 **Date:** 2026-08-25 · **Tag:** Design heuristic (surfaces) + Protocol-mandated (hold
 sources) · **Status:** Accepted — supersedes the corner-chip framing of the heads-up
 
-**Surface.** The heads-up is a capsule that slides out from under the MacBook notch —
-fixed, top-center, dynamic-island-shaped. Inside it a miniature sky: the sun starts high
+**Surface.** The heads-up is a capsule with a restrained one-shot entrance at the fixed
+top-center of the active display. Inside it a miniature sky: the sun starts high
 and sinks for the whole heads-up window (45 s default, 30–60 s configurable `[03 §4.1]`);
 touchdown coincides with the break surface opening on the same sunset. Fixed position is
 chosen over LookAway's cursor-following notice: the capsule is unmissable *because* it is
 always in the same place (design-quality rule: "same actions, same positions, every single
 time"); the pointer-following alternative is logged as DQ-16.
 
-**Fallbacks (required, since not all displays have a notch and the menu bar can hide):**
-no notch → the capsule docks beneath the menu-bar clock; notifications-preferred users →
-the standard notification heads-up remains first-class (DQ-10 unchanged); full-screen
-apps → the capsule still presents at top-center.
+**Placement and fallback (amended 2026-08-28 by owner review):** notch, no-notch, hidden
+menu bar, and full-screen configurations all use the same top-center position. The capsule is
+the primary automatic route. Only if it cannot present may an already-authorized standard
+notification be attempted with the same delivery identity. Automatic fallback never requests
+notification permission.
 
 **Hover/keyboard exits on the capsule:** Now · Later ▸ (5 · 10 · 15 min `[03 §4.1]`,
 "After this meeting" only when Calendar is enabled `[03 §4.1, §9]`, "Presenting for
@@ -444,30 +455,28 @@ Focus filter, user-named meeting apps. The MVP never promises automatic meeting 
 
 ---
 
-## D-023 — The sun keeps station over the pointer: companionship, not gaze
+## D-023: The sun's glint responds to the pointer: companionship, not gaze
 
 **Date:** 2026-08-25 · **Tag:** Design heuristic · **Status:** Accepted
 
 The user asked for something with the *essence* of LookAway's cursor-following eye — a
 quirky, deliberate, alive-to-you dynamic — without copying it. The mechanic: in the notch
-capsule, the sun's position carries two meanings on two axes. **Vertical = time** (it sinks
-across the whole heads-up, D-022). **Horizontal = you**: the sun's place along its tiny sky
-mirrors the pointer's horizontal place on the full screen, damped and unhurried, so a
-glance up always finds it "above where you are."
+capsule, the sun carries two restrained signals. **Vertical = time** (it sinks across the
+whole heads-up, D-022). **Glint lean = you**: its small specular glint leans toward current
+pointer movement while the sun body, capsule, and controls remain fixed.
 
 Why this and not an eye or a follower:
 
-- It is **input-driven motion only** — the sun moves horizontally only while the pointer
-  moves. No autonomous loop, so it is photosensitivity-safe by construction and permitted
+- It is **input-driven motion only**: the glint leans only while the pointer moves. No
+  autonomous loop, so it is photosensitivity-safe by construction and permitted
   under the motion rules that ban continuous animation.
 - It is **companionship, not gaze**. Eyes that track the cursor imply watching; a sun that
   stays overhead implies accompaniment. The eyes stay closed (D-020a) and nothing about
   the mechanic suggests the app perceives more than pointer position, which it honestly has.
 - It quietly serves the "you cannot forget it's coming" function the user valued in
-  LookAway's follower — peripheral vision registers a thing that mirrors your own movement —
-  without the capsule ever leaving its fixed position (DQ-16 unchanged: the capsule itself
-  stays put; only the sun inside it drifts).
-- Reduce Motion: station-keeping is off; the sun stays centered. The time axis retains its
+  LookAway's follower without moving the capsule or sun body through peripheral vision.
+- Reduce Motion, in-app static presentation, and text-only: the glint response is absent and
+  centered. The time axis retains its
   stepped static equivalent (D-025).
 
 ---
@@ -596,7 +605,7 @@ choice-chip titles at 2.6–3.1:1 over the bright sky, and a family of secondary
 ### D-029 — Capsule interaction closure: keyboard route, coarse numerals, end-of-break return
 
 **Type: Design heuristic** (photosensitivity items evidence-bound to `accessibility.md` §3).
-**Status: Active. Amends D-022/D-023/D-025.**
+**Status: Active except for break entrance, exit, and keyboard arming, which D-032 supersedes.**
 
 Five gaps the reviews found in the heads-up/motion model, closed:
 
@@ -612,16 +621,20 @@ Five gaps the reviews found in the heads-up/motion model, closed:
   hold-change only.
 - **Moment 9 has a stage again**: the capsule retracts when the break opens, so at break
   end it **re-presents for ~2 s** for the one-shot eye-crinkle, then retracts. Reduce
-  Motion: it does not re-present (the break surface's own crossfade-out is the ending).
-- **Moment 6 is luminance-safe**: the sky's arrival ramps brightness over its 280 ms rise
-  (starting ≈60%), and the Reduce Motion equivalent is a **400 ms** crossfade — never
-  *faster* into a large luminance change than the standard motion (`accessibility.md` §3).
+  Motion, in-app static presentation, and text-only: it does not re-present (the break
+  surface's own exit is the ending).
+- **Moment 6 is luminance-safe and continuous**: the whole desktop progressively frosts over
+  1150 ms, holds alone for 200 ms, then cross-fades into a materially blurred version of the
+  selected break field over 750 ms. The field sharpens over 1100 ms while instructions and
+  controls have their own soft opacity, blur, scale, and position arrivals. There is no radial
+  mask, aperture, travel, hard cut, black frame, or modal pop. Reduce Motion uses a travel-free
+  800 ms cross-dissolve, and Reduce Transparency substitutes an opaque design-system surface for
+  glass (`accessibility.md` §3).
 - **Declaration keys arm after ~800 ms.** The surface opens mid-typing; a stray ↩ or
   letter in the first beat must not log a declaration. Esc is exempt — it always works,
   immediately (D-009 is not softened; a very fast Esc records an honest `skipped`).
-- **The capsule lives on the display containing the pointer** (docking under that
-  display's notch or clock), not pinned to the built-in display — the heads-up must
-  appear where the user is working.
+- **The capsule lives at fixed top-center on the active pointer/key display**, not pinned to
+  the built-in display. It uses the same position with or without a notch or visible menu bar.
 
 ---
 
@@ -638,3 +651,32 @@ package, harness, and production application sources together.
 scheme, module, display name, and bundle identifier remain unchanged while "Cadence" is a
 placeholder. This is intentional deferral: no production identity may depend on a working
 name until the owner settles it.
+
+### D-031: Privacy export uses one native format menu, one column disclosure, and one save action
+
+**Date:** 2026-08-28 · **Tag:** Owner decision · **Status:** Accepted
+
+The selected SE-11 composition in `exec-92630838-f799-4fa6-b5e8-dabcc974ba01.png` includes the
+controls that define the file, not only a static manifest. Keep the compact Local history summary,
+Contains, and Excludes rows. Beneath them use a native CSV/JSON Format menu, an initially collapsed
+Columns selector containing the six typed history fields, and one `Choose destination…` action.
+Do not replace this with parallel CSV/JSON buttons or a static field list.
+
+The selection crosses Feature and App as one immutable typed request so retry cannot drift. JSON
+uses schema v2 with required format and ordered-fields metadata; CSV uses the same canonical field
+order. The owner approved the narrow `com.apple.security.files.user-selected.read-write` sandbox
+entitlement needed for the explicit save-panel destination. No broader file access is permitted.
+
+### D-032: Immediate break presentation is the accepted motion baseline
+
+**Date:** 2026-08-28 · **Tag:** Owner decision · **Status:** Accepted
+
+The authored frost and sharpen entrance was rejected after real-process review. It showed a raw
+desktop gap at the start, regressed from sharp to blurred near completion, delayed usable focus,
+and made the final image appear globally darkened. The accepted checkpoint presents the selected
+image without a global tint or compositor transition. The app activates, reapplies Dock
+suppression, and makes the interactive panel key so Escape and Return work before mouse input.
+
+Return no longer has the former 800 ms declaration delay. This owner decision supersedes the
+break-specific motion and keyboard-arming bullets in D-029. A replacement animation must be
+reviewed as a separate change and must preserve the accepted first-frame input and Dock behavior.

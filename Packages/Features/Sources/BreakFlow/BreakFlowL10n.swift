@@ -30,7 +30,7 @@ enum BreakFlowL10n {
     )
     static let bothDue = FeatureL10n.string(
         "breakFlow.snooze.both_due",
-        default: "Both are due — one break covers them",
+        default: "Both are due. One break covers them.",
     )
     static let afterMeeting = FeatureL10n.string(
         "breakFlow.snooze.after_meeting",

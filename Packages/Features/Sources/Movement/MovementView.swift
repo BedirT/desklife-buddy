@@ -2,12 +2,24 @@ import DesignSystem
 import Foundation
 import SwiftUI
 
+enum MovementStandardLayoutMetrics {
+    static let instructionYFraction: CGFloat = 0.325
+    static let choicesYFraction: CGFloat = 0.51
+    static let controlsYFraction: CGFloat = 0.855
+
+    static func y(_ fraction: CGFloat, in height: CGFloat) -> CGFloat {
+        DSBreakForegroundLayout.y(fraction, in: height)
+    }
+}
+
 public struct MovementView: View {
+    @Environment(\.colorScheme) var colorScheme
     @Environment(\.colorSchemeContrast) var colorSchemeContrast
     @Environment(\.accessibilityReduceMotion) var reduceMotion
     @Environment(\.accessibilityReduceTransparency) var reduceTransparency
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
     @Environment(\.dsTextScale) var textScale
+    @Environment(\.dsBreakEntrance) var breakEntrance
     @State var model: MovementModel
     @State var focusPresentation: MovementFocusPresentation
     @State var showsInitialFocusFallback = true
@@ -21,7 +33,7 @@ public struct MovementView: View {
     @FocusState var positionChangeFocused: Bool
     @FocusState var visualOnlyFocused: Bool
 
-    let standardField: AnyView
+    let standardField: AnyView?
     let staticField: AnyView
     let accessibilityOverride: MovementAccessibility?
     let focusedControlOverride: MovementControl?
@@ -40,7 +52,7 @@ public struct MovementView: View {
         }
         _model = State(initialValue: model)
         _focusPresentation = State(initialValue: focusPresentation)
-        self.standardField = standardField ?? AnyView(MovementWorkingField())
+        self.standardField = standardField
         self.staticField = staticField ?? AnyView(MovementStaticField())
         self.accessibilityOverride = accessibilityOverride
         self.focusedControlOverride = focusedControlOverride
@@ -51,20 +63,26 @@ public struct MovementView: View {
             ZStack {
                 field
                     .accessibilityHidden(true)
+                Group {
+                    if usesLargeTextLayout {
+                        accessibilityLayout
+                    } else {
+                        standardLayout(in: proxy.size)
+                    }
 
-                if usesLargeTextLayout {
-                    accessibilityLayout
-                } else {
-                    standardLayout(in: proxy.size)
+                    if !effectiveAccessibility.staticPresentation, !usesLargeTextLayout {
+                        DSHorizonProgress(
+                            progress: model.progress,
+                            increaseContrast: usesContrastSafeTokens,
+                        )
+                        .dsBreakEntrance(phase: breakEntrance.phase, element: .control)
+                        .position(
+                            x: proxy.size.width / 2,
+                            y: MovementStandardLayoutMetrics.y(0.711, in: proxy.size.height),
+                        )
+                    }
                 }
-
-                if !effectiveAccessibility.staticPresentation, !usesLargeTextLayout {
-                    DSHorizonProgress(
-                        progress: model.progress,
-                        increaseContrast: usesContrastSafeTokens,
-                    )
-                    .position(x: proxy.size.width / 2, y: proxy.size.height * 0.711)
-                }
+                .environment(\.colorScheme, overlayColorScheme)
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
@@ -102,6 +120,10 @@ public struct MovementView: View {
             updateFocusPresentation(visible)
         }
     }
+
+    var overlayColorScheme: ColorScheme {
+        effectiveAccessibility.staticPresentation ? colorScheme : .dark
+    }
 }
 
 private extension MovementView {
@@ -109,8 +131,10 @@ private extension MovementView {
     var field: some View {
         if effectiveAccessibility.staticPresentation {
             staticField
-        } else {
+        } else if let standardField {
             standardField
+        } else {
+            MovementWorkingField(choice: model.selectedChoice)
         }
     }
 
@@ -118,15 +142,33 @@ private extension MovementView {
         ZStack {
             instructionStack
                 .frame(maxWidth: min(1100, size.width - 80))
-                .position(x: size.width / 2, y: size.height * 0.325)
+                .position(
+                    x: size.width / 2,
+                    y: MovementStandardLayoutMetrics.y(
+                        MovementStandardLayoutMetrics.instructionYFraction,
+                        in: size.height,
+                    ),
+                )
 
             choiceAndGuidance
                 .frame(maxWidth: min(1020, size.width - 80))
-                .position(x: size.width / 2, y: size.height * 0.51)
+                .position(
+                    x: size.width / 2,
+                    y: MovementStandardLayoutMetrics.y(
+                        MovementStandardLayoutMetrics.choicesYFraction,
+                        in: size.height,
+                    ),
+                )
 
             controlStack
                 .frame(maxWidth: size.width - 80)
-                .position(x: size.width / 2, y: size.height * 0.855)
+                .position(
+                    x: size.width / 2,
+                    y: MovementStandardLayoutMetrics.y(
+                        MovementStandardLayoutMetrics.controlsYFraction,
+                        in: size.height,
+                    ),
+                )
         }
     }
 
@@ -172,6 +214,7 @@ private extension MovementView {
             )
         }
         .accessibilityElement(children: .combine)
+        .dsBreakEntrance(phase: breakEntrance.phase, element: .instruction)
     }
 
     var choiceAndGuidance: some View {
@@ -193,82 +236,7 @@ private extension MovementView {
                 }
                 .accessibilityIdentifier("movement.guidance")
         }
-    }
-
-    @ViewBuilder
-    var choiceLayout: some View {
-        if usesLargeTextLayout {
-            Grid(
-                horizontalSpacing: DSSpacing.sm,
-                verticalSpacing: DSSpacing.sm,
-            ) {
-                GridRow {
-                    walkOrWheelChoice
-                    smallSpaceChoice
-                }
-                GridRow {
-                    seatedChoice
-                    Color.clear
-                        .frame(height: 64)
-                        .accessibilityHidden(true)
-                }
-            }
-            .frame(maxWidth: 940)
-        } else {
-            HStack(spacing: DSSpacing.md) {
-                walkOrWheelChoice
-                smallSpaceChoice
-                seatedChoice
-            }
-        }
-    }
-
-    var walkOrWheelChoice: some View {
-        choiceChip(
-            .walkOrWheel,
-            keycap: MovementL10n.oneKey,
-            glyph: .walkOrWheel,
-            focus: $walkOrWheelFocused,
-        )
-    }
-
-    var smallSpaceChoice: some View {
-        choiceChip(
-            .smallSpace,
-            keycap: MovementL10n.twoKey,
-            glyph: .smallSpace,
-            focus: $smallSpaceFocused,
-        )
-    }
-
-    var seatedChoice: some View {
-        choiceChip(
-            .seated,
-            keycap: MovementL10n.threeKey,
-            glyph: .seated,
-            focus: $seatedFocused,
-        )
-    }
-
-    func choiceChip(
-        _ choice: MovementChoice,
-        keycap: String,
-        glyph: DSMovementChoiceGlyph.Kind,
-        focus: FocusState<Bool>.Binding,
-    ) -> some View {
-        DSBreakChoiceChip(
-            MovementL10n.choiceTitle(choice),
-            keycap: keycap,
-            selected: model.selectedChoice == choice,
-            accessibilityLabel: MovementL10n.choiceAccessibility(choice),
-            accessibilityIdentifier: "movement.choice.\(choice.identifier)",
-            focus: focus,
-            focusOverride: focusOverride(for: choice.control, actual: focus.wrappedValue),
-            reduceTransparency: usesOpaqueControlBackgrounds,
-            increaseContrast: usesContrastSafeTokens,
-            action: { model.select(choice) },
-            glyph: { DSMovementChoiceGlyph(glyph) },
-        )
+        .dsBreakEntrance(phase: breakEntrance.phase, element: .control)
     }
 
     var controlStack: some View {
@@ -387,6 +355,7 @@ private extension MovementView {
                     )
                 }
         }
+        .dsBreakEntrance(phase: breakEntrance.phase, element: .control)
     }
 }
 

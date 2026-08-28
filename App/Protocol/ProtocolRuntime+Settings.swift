@@ -9,8 +9,13 @@ enum SettingsRuntimeBusyReason: Equatable {
 }
 
 enum SettingsRuntimeMutationResult: Equatable {
-    case applied
+    case applied(SettingsRuntimeMutationAcknowledgement)
     case busy(SettingsRuntimeBusyReason)
+}
+
+struct SettingsRuntimeMutationAcknowledgement: Equatable {
+    let resolvedPreferences: ResolvedAppPreferences
+    let retainedHistoryCount: Int
 }
 
 enum ProtocolRuntimeSettingsError: Error, Equatable {
@@ -33,7 +38,10 @@ extension ProtocolRuntime {
                 state: retained,
             )
             let synchronization = synchronizeHeadsUpCycles(in: &candidate)
-            try await settingsStore.commitPreferences(resolved, state: candidate.state)
+            let retainedHistoryCount = try await settingsStore.commitPreferences(
+                resolved,
+                state: candidate.state,
+            )
             configuration = resolved.configuration
             self.preferences = resolved.preferences
             engine = candidate
@@ -47,16 +55,30 @@ extension ProtocolRuntime {
             publish(liveHeadsUp: nil)
             onConfigurationChange?(resolved.configuration)
             emitHeadsUpEffects(synchronization)
-            return .applied
+            return .applied(SettingsRuntimeMutationAcknowledgement(
+                resolvedPreferences: resolved,
+                retainedHistoryCount: retainedHistoryCount,
+            ))
         }
     }
 
-    func deleteLocalHistory() async throws {
+    func deleteLocalHistory() async throws -> SettingsRuntimeMutationAcknowledgement {
         try await withLifecycleGate {
             guard let settingsStore = store as? any ProtocolRuntimeSettingsStore else {
                 throw ProtocolRuntimeSettingsError.persistenceUnavailable
             }
+            guard let preferences else {
+                throw ProtocolRuntimeSettingsError.persistenceUnavailable
+            }
+            let resolved = ResolvedAppPreferences(
+                preferences: preferences,
+                configuration: configuration,
+            )
             try await settingsStore.deleteHistory()
+            return SettingsRuntimeMutationAcknowledgement(
+                resolvedPreferences: resolved,
+                retainedHistoryCount: 0,
+            )
         }
     }
 
@@ -77,14 +99,18 @@ extension ProtocolRuntime {
             statusContext = StatusMenuContext(workingHoursOnly: true)
             publish(liveHeadsUp: nil)
             onConfigurationChange?(resolved.configuration)
-            return .applied
+            return .applied(SettingsRuntimeMutationAcknowledgement(
+                resolvedPreferences: resolved,
+                retainedHistoryCount: 0,
+            ))
         }
     }
 
     private var settingsBusyReason: SettingsRuntimeBusyReason? {
         if let appOwnedReason = settingsPresentationBusyReason() { return appOwnedReason }
         if lifecycleSession != nil || state.visualClock.phase == .running
-            || state.movementClock.phase == .running {
+            || state.movementClock.phase == .running
+        {
             return .activeBreak
         }
         let deliveryState = engine.state.headsUpDeliveryState

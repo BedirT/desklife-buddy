@@ -35,7 +35,7 @@ struct HeadsUpRuntimeTests {
         #expect(store.commits[0].state.movementClock.accumulatedActiveUseSeconds == 3555)
         #expect(
             store.commits[0].state.headsUpDeliveryState.activeDelivery?.opportunity
-                == .merged(visualCycleID: 0, movementCycleID: 0)
+                == .merged(visualCycleID: 0, movementCycleID: 0),
         )
         #expect(effects == [.reserve(HeadsUpDeliveryReservation(
             id: deliveryID(1),
@@ -168,11 +168,11 @@ struct HeadsUpRuntimeTests {
         let store = HeadsUpRuntimeStore(state: ProtocolState(
             visualClock: OpportunityClockState(accumulatedActiveUseSeconds: 1500),
         ))
-        let runtime = ProtocolRuntime(
-            configuration: try ProtocolProfiles.configuration(for: .balanced),
+        let runtime = try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
             store: store,
             now: { Date(timeIntervalSince1970: 100) },
-            makeID: { self.deliveryID(1).rawValue },
+            makeID: { deliveryID(1).rawValue },
         )
         var effects: [HeadsUpRuntimeEffect] = []
         runtime.onHeadsUpEffect = { effects.append($0) }
@@ -199,8 +199,8 @@ struct HeadsUpRuntimeTests {
                 activeDelivery: active,
             ),
         ))
-        let runtime = ProtocolRuntime(
-            configuration: try ProtocolProfiles.configuration(for: .balanced),
+        let runtime = try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
             store: store,
         )
         var effects: [HeadsUpRuntimeEffect] = []
@@ -311,12 +311,12 @@ struct HeadsUpRuntimeTests {
         #expect(store.commits[0].events.map(\.kind) == [.promptPresented])
         #expect(store.commits[0].events.map(\.opportunity) == [.visual])
         #expect(
-            store.commits[0].state.headsUpDeliveryState.activeDelivery?.promptFactStatus == .pending
+            store.commits[0].state.headsUpDeliveryState.activeDelivery?.promptFactStatus == .pending,
         )
         #expect(store.commits[1].events.isEmpty)
         #expect(
             store.commits[1].state.headsUpDeliveryState.activeDelivery?.promptFactStatus
-                == .acknowledged
+                == .acknowledged,
         )
         #expect(ready == [deliveryID(1)])
     }
@@ -398,7 +398,7 @@ struct HeadsUpRuntimeTests {
                 #expect(ready == (expectsReady ? [deliveryID(8)] : []))
                 #expect(
                     runtime.state.headsUpDeliveryState.activeDelivery?.promptFactStatus
-                        == .acknowledged
+                        == .acknowledged,
                 )
             }
         }
@@ -746,13 +746,13 @@ struct HeadsUpRuntimeTests {
                 Array(repeating: 300, count: opportunity == .visual(cycleID: 0) ? 1 : 2))
             #expect(store.commits[0].state.visualSnoozeDeadline == deadline)
             #expect(
-                store.commits[0].state.headsUpDeliveryState.visualClock.snoozeDeadline == deadline
+                store.commits[0].state.headsUpDeliveryState.visualClock.snoozeDeadline == deadline,
             )
             if opportunity == .merged(visualCycleID: 0, movementCycleID: 0) {
                 #expect(store.commits[0].state.movementSnoozeDeadline == deadline)
                 #expect(
                     store.commits[0].state.headsUpDeliveryState.movementClock.snoozeDeadline
-                        == deadline
+                        == deadline,
                 )
             }
         }
@@ -773,7 +773,7 @@ struct HeadsUpRuntimeTests {
         await #expect(throws: ProtocolLifecycleError.invalidSnoozeDuration) {
             try await runtime.respondToHeadsUp(
                 deliveryID(1),
-                response: .snooze(until: Date(timeIntervalSince1970: 3_700)),
+                response: .snooze(until: Date(timeIntervalSince1970: 3700)),
             )
         }
 
@@ -889,8 +889,8 @@ struct HeadsUpRuntimeTests {
 
             #expect(trace.values == ["commit", "effect"])
             #expect(effects == (presented
-                ? [.holdThenRetract(deliveryID(1), .manualPause)]
-                : [.cancel(deliveryID(1))]))
+                    ? [.holdThenRetract(deliveryID(1), .manualPause)]
+                    : [.cancel(deliveryID(1))]))
         }
     }
 
@@ -992,8 +992,8 @@ struct HeadsUpRuntimeTests {
 
             #expect(trace.values == ["commit", "effect"])
             #expect(effects == [presented
-                ? .holdThenRetract(deliveryID(1), .manualPause)
-                : .cancel(deliveryID(1))])
+                    ? .holdThenRetract(deliveryID(1), .manualPause)
+                    : .cancel(deliveryID(1))])
             #expect(runtime.state.headsUpDeliveryState.activeDelivery == nil)
         }
     }
@@ -1023,8 +1023,8 @@ struct HeadsUpRuntimeTests {
     @Test("Heads-Up routing fails closed when no policy was injected")
     func missingPolicyFailsClosed() async throws {
         let store = HeadsUpRuntimeStore()
-        let runtime = ProtocolRuntime(
-            configuration: try ProtocolProfiles.configuration(for: .balanced),
+        let runtime = try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
             store: store,
         )
         try await runtime.restore()

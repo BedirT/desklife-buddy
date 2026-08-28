@@ -18,18 +18,33 @@ extension SwiftDataProtocolStore {
     }
 
     func pruneStoredHistoryIfConfigured() throws {
-        try pruneStoredHistory(policy: storedRetentionPolicy(), asOf: now())
+        _ = try pruneStoredHistory(policy: storedRetentionPolicy(), asOf: now())
     }
 
+    @discardableResult
     func pruneStoredHistory(
         policy: HistoryRetentionPolicy,
         asOf date: Date,
-    ) throws {
+    ) throws -> Int {
         let events = try context.fetch(FetchDescriptor<StoredOpportunityEvent>())
+        let activeUseRuns = try context.fetch(FetchDescriptor<StoredEstimatedActiveUseRun>())
         let cutoff = date.addingTimeInterval(-policy.retentionDurationSeconds)
-        for event in events where policy == .keepNothing || event.recordedAt < cutoff {
-            context.delete(event)
+        var retainedCount = 0
+        for event in events {
+            if policy == .keepNothing || event.recordedAt < cutoff {
+                context.delete(event)
+            } else {
+                retainedCount += 1
+            }
         }
+        for run in activeUseRuns {
+            if policy == .keepNothing || run.endedAt <= cutoff {
+                context.delete(run)
+            } else if run.startedAt < cutoff {
+                run.startedAt = cutoff
+            }
+        }
+        return retainedCount
     }
 
     func isSupportedPersistedProfile(_ profileID: ProtocolProfileID) throws -> Bool {

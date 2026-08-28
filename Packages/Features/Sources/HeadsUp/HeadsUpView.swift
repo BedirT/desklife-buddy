@@ -8,9 +8,15 @@ public struct HeadsUpView: View {
     @Environment(\.colorSchemeContrast) private var systemContrast
     @Environment(\.dsTextScale) private var textScale
     @State private var model: HeadsUpModel
+    @State private var hasEntered = false
+    private let entranceEndpoint: HeadsUpEntranceEndpoint
 
-    public init(model: HeadsUpModel) {
+    public init(
+        model: HeadsUpModel,
+        entranceEndpoint: HeadsUpEntranceEndpoint = .automatic,
+    ) {
         _model = State(initialValue: model)
+        self.entranceEndpoint = entranceEndpoint
     }
 
     public var body: some View {
@@ -33,12 +39,18 @@ public struct HeadsUpView: View {
             nowAction: model.startNow,
             laterAction: chooseLater,
         )
+        .opacity(isEntered ? 1 : HeadsUpEntrancePresentation.initialOpacity)
+        .offset(y: isEntered ? 0 : -DSSpacing.sm)
+        .animation(
+            allowsAuthoredMotion ? DSMotion.headsUpGlint : nil,
+            value: presentation.normalizedGlint,
+        )
         .environment(
             \.dsTextScale,
             presentation.accessibility.largeText ? .largest : textScale,
         )
         .onHover(perform: model.setHovered)
-        .onAppear(perform: model.presentationDidAppear)
+        .onAppear(perform: appear)
     }
 
     private var presentation: HeadsUpPresentation {
@@ -51,13 +63,13 @@ public struct HeadsUpView: View {
         switch presentation.phase {
         case let .approaching(mark):
             return .sun(
-                horizontal: 0.5,
+                glint: CGFloat(presentation.normalizedGlint),
                 descent: reduceMotion
                     ? reducedMotionDescent(for: mark)
                     : CGFloat(presentation.approachProgress),
             )
         case .landedWaiting:
-            return .sun(horizontal: 0.5, descent: 1)
+            return .sun(glint: CGFloat(presentation.normalizedGlint), descent: 1)
         case .hold:
             return .hold
         }
@@ -65,6 +77,23 @@ public struct HeadsUpView: View {
 
     private var reduceMotion: Bool {
         renderedAccessibility.reduceMotion
+    }
+
+    private var allowsAuthoredMotion: Bool {
+        !reduceMotion
+            && !presentation.accessibility.staticPresentation
+            && !presentation.accessibility.textOnly
+    }
+
+    private var isEntered: Bool {
+        switch entranceEndpoint {
+        case .automatic:
+            hasEntered || !allowsAuthoredMotion
+        case .before:
+            false
+        case .after:
+            true
+        }
     }
 
     private var reduceTransparency: Bool {
@@ -100,6 +129,27 @@ public struct HeadsUpView: View {
         guard options.indices.contains(index) else { return }
         model.chooseLater(options[index])
     }
+
+    private func appear() {
+        model.presentationDidAppear()
+        guard entranceEndpoint == .automatic, allowsAuthoredMotion else {
+            hasEntered = true
+            return
+        }
+        withAnimation(DSMotion.headsUpEnter) {
+            hasEntered = true
+        }
+    }
+}
+
+public enum HeadsUpEntranceEndpoint: CaseIterable, Equatable, Sendable {
+    case automatic
+    case before
+    case after
+}
+
+private enum HeadsUpEntrancePresentation {
+    static let initialOpacity = 0.55
 }
 
 struct HeadsUpRenderedAccessibility: Equatable {
@@ -186,6 +236,21 @@ private struct HeadsUpPreviewCanvas: View {
         phase: .approaching(.seconds15),
         accessibility: .init(reduceMotion: true),
     ))
+}
+
+#Preview("Static presentation") {
+    HeadsUpPreviewCanvas(model: .preview(
+        scope: .visual,
+        accessibility: .init(staticPresentation: true),
+    ))
+}
+
+#Preview("Reactive glint left") {
+    HeadsUpPreviewCanvas(model: .preview(scope: .visual, normalizedGlint: -1))
+}
+
+#Preview("Reactive glint right") {
+    HeadsUpPreviewCanvas(model: .preview(scope: .visual, normalizedGlint: 1))
 }
 
 #Preview("Reduce Transparency") {

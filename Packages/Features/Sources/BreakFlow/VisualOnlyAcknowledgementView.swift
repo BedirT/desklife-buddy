@@ -2,6 +2,7 @@ import DesignSystem
 import SwiftUI
 
 struct VisualOnlyAcknowledgementView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
@@ -34,6 +35,7 @@ struct VisualOnlyAcknowledgementView: View {
                         x: proxy.size.width / 2,
                         y: proxy.size.height * verticalPosition,
                     )
+                    .environment(\.colorScheme, overlayColorScheme)
                     .accessibilityIdentifier("merged.visualOnly.status")
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
@@ -76,6 +78,10 @@ struct VisualOnlyAcknowledgementView: View {
     private var primaryInk: Color {
         if accessibility.staticPresentation { return .dsStaticText }
         return accessibility.increaseContrast ? .dsBreakTextPrimaryIncreased : .dsBreakTextPrimary
+    }
+
+    private var overlayColorScheme: ColorScheme {
+        accessibility.staticPresentation ? colorScheme : .dark
     }
 
     @ViewBuilder

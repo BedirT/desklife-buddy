@@ -20,7 +20,7 @@ struct HeadsUpPermissionPanelCoordinatorTests {
         center.onEvent = { panelHarness.events.append($0) }
         let permission = panelHarness.makeCoordinator()
         let selection = Task {
-            await authorization.selectChannel { await permission.present() }
+            await authorization.requestNotificationChannel { await permission.present() }
         }
         await panelHarness.waitForPanel()
 

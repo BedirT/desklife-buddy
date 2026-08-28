@@ -24,14 +24,14 @@ enum HeadsUpRuntimeEffect: Equatable, Sendable {
     case updateCountdown(
         HeadsUpDeliveryID,
         HeadsUpCountdownMark,
-        targetAt: Date
+        targetAt: Date,
     )
     case updateTiming(HeadsUpDeliveryID, targetAt: Date)
     case land(HeadsUpDeliveryID)
     case openBreak(
         HeadsUpDeliveryID,
         opportunity: HeadsUpOpportunityID,
-        source: OpportunityEventSource
+        source: OpportunityEventSource,
     )
     case holdThenRetract(HeadsUpDeliveryID, SuppressionReason)
     case snooze(HeadsUpDeliveryID, clocks: [HeadsUpClock], until: Date)
@@ -198,18 +198,17 @@ extension ProtocolRuntime {
             maximumSnoozeReoffers: headsUpRuntimePolicy.maximumSnoozeReoffers,
         )
         let retiringDeliveryID = reducer.state.activeDelivery?.id
-        let output: HeadsUpDeliveryOutput
-        if let snapshot = candidate.actionableHeadsUpSnapshot(
+        let output: HeadsUpDeliveryOutput = if let snapshot = candidate.actionableHeadsUpSnapshot(
             observedAt: observedAt,
             isLowFrictionMoment: isLowFrictionMoment,
             suppressionReason: suppressionReason,
         ) {
-            output = reducer.observe(
+            reducer.observe(
                 snapshot,
                 proposedDeliveryID: HeadsUpDeliveryID(rawValue: makeID()),
             )
         } else {
-            output = reducer.synchronizeCycles(
+            reducer.synchronizeCycles(
                 visualCycleID: candidate.state.visualClock.cycleID,
                 movementCycleID: candidate.state.movementClock.cycleID,
             )
@@ -248,9 +247,15 @@ extension ProtocolRuntime {
         candidate: inout ProtocolEngine,
         drafts: [OpportunityEventDraft],
         recordedAt: Date? = nil,
+        estimatedActiveUseRun: EstimatedActiveUseRun? = nil,
     ) async throws -> [HeadsUpDeliveryEffect] {
         let synchronization = synchronizeHeadsUpCycles(in: &candidate)
-        try await persist(drafts, state: candidate.state, recordedAt: recordedAt)
+        try await persist(
+            drafts,
+            state: candidate.state,
+            recordedAt: recordedAt,
+            estimatedActiveUseRun: estimatedActiveUseRun,
+        )
         return synchronization
     }
 
@@ -392,5 +397,4 @@ extension ProtocolRuntime {
         if deliveryState.pendingAction != nil { return nil }
         return livePresentation(in: candidate) ?? schedulerPresentation
     }
-
 }

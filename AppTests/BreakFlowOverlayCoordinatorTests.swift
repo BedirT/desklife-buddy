@@ -219,7 +219,7 @@ struct BreakFlowPanelTests {
         )
         defer { panel.close() }
 
-        #expect(panel.accessibilityTitle() == "Not a good moment? Snooze or skip. Both are due — one break covers them")
+        #expect(panel.accessibilityTitle() == "Not a good moment? Snooze or skip. Both are due. One break covers them.")
     }
 }
 

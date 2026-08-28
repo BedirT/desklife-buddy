@@ -109,7 +109,7 @@ enum HeadsUpL10n {
     )
     static let mergedNotificationBody = string(
         "headsUp.notification.merged_body",
-        default: "Both are due — one break covers them.",
+        default: "Both are due. One break covers them.",
     )
 
     static let startNow = string("headsUp.action.start_now", default: "Start now")
@@ -120,7 +120,7 @@ enum HeadsUpL10n {
     static let afterMeeting = string("headsUp.action.after_meeting", default: "After this meeting")
     static let presentingOneHour = string("headsUp.action.presenting_one_hour", default: "Presenting for 1 hour")
 
-    static let landed = string("headsUp.phase.landed", default: "now — or whenever suits")
+    static let landed = string("headsUp.phase.landed", default: "now, or whenever suits")
     static let holdBusyFormat = string(
         "headsUp.phase.hold_busy_format",
         default: "On hold · busy until %@",
@@ -139,7 +139,7 @@ enum HeadsUpL10n {
     )
     static let presentationMode = string(
         "headsUp.phase.presentation_mode",
-        default: "Presenting — reminders off",
+        default: "Presenting, reminders off",
     )
     static let focusFilter = string(
         "headsUp.phase.focus_filter",

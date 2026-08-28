@@ -35,7 +35,11 @@ final class HeadsUpAuthorizationCoordinator {
         state = store.load()
     }
 
-    func selectChannel(
+    func automaticDeliveryChannel() -> HeadsUpPresentationChannel {
+        .capsule
+    }
+
+    func requestNotificationChannel(
         presentExplainer: @escaping () async -> HeadsUpNotificationExplainerChoice,
     ) async -> HeadsUpPresentationChannel {
         if let channelSelectionTask {

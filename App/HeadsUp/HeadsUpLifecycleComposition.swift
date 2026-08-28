@@ -47,6 +47,9 @@ enum HeadsUpLifecycleComposition {
             authorizationStore: authorizationStore ?? UserDefaultsHeadsUpAuthorizationStore(),
             permissionPanelCoordinator: HeadsUpPermissionPanelCoordinator(),
             capsule: capsule,
+            allowsNotificationFallback: {
+                runtime.preferences?.integrations.notificationsEnabled == true
+            },
             presentBreak: presentBreak,
             presentMoreOptions: presentMoreOptions,
             onStatusProjection: onStatusProjection,

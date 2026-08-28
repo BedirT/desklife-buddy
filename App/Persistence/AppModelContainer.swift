@@ -5,8 +5,10 @@ enum AppModelContainer {
     static let schema = Schema([
         StoredItem.self,
         StoredOpportunityEvent.self,
+        StoredEstimatedActiveUseRun.self,
         StoredProtocolState.self,
         StoredAppPreferences.self,
+        StoredOnboardingCompletion.self,
     ])
 
     static func make(inMemory: Bool = false, url: URL? = nil) throws -> ModelContainer {

@@ -69,7 +69,7 @@ enum DesignSystemL10n {
         static let loggedSeparately = string("break_field.logged_separately", default: "· logged separately")
         static let changePositionAccessibility = string(
             "break_field.change_position_accessibility",
-            default: "Change position instead, P — logged separately",
+            default: "Change position instead, P. Logged separately",
         )
     }
 
@@ -105,11 +105,11 @@ enum DesignSystemL10n {
         )
         static let accessibilityHold = string(
             "heads_up.accessibility_hold",
-            default: "On hold — busy until 3:00",
+            default: "On hold: busy until 3:00",
         )
         static let accessibilityPaused = string(
             "heads_up.accessibility_paused",
-            default: "On hold — paused until you resume",
+            default: "On hold: paused until you resume",
         )
         static let accessibilityStartNow = string(
             "heads_up.accessibility_start_now",

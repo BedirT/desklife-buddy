@@ -42,7 +42,7 @@ struct AppPreferencesMutationTests {
 
     @Test("Reset all removes history and restores the current Balanced defaults")
     func resetAllSemantics() throws {
-        let snapshot = LocalDataSnapshot(preferences: try configuredPreferences(), history: [.fixture])
+        let snapshot = try LocalDataSnapshot(preferences: configuredPreferences(), history: [.fixture])
 
         let result = snapshot.applying(.resetAll)
 
@@ -50,12 +50,12 @@ struct AppPreferencesMutationTests {
     }
 
     private func configuredPreferences() throws -> AppPreferences {
-        AppPreferences(
+        try AppPreferences(
             schedule: SchedulePreferences(profile: .frequentMovement, headsUpEnabled: false, workingHoursOnly: false),
             historyRetention: .ninetyDays,
             content: BreakContentPreferences(preferredMovement: .seatedActive, showsQuickMovementOption: false),
-            context: try ContextPreferences(excludedApplicationBundleIDs: ["com.example.call"]),
-            accessibility: try AccessibilityPreferences(presentation: .textOnly, staticOverlayBrightness: 0.2),
+            context: ContextPreferences(excludedApplicationBundleIDs: ["com.example.call"]),
+            accessibility: AccessibilityPreferences(presentation: .textOnly, staticOverlayBrightness: 0.2),
             integrations: IntegrationPreferences(calendarBusySuppressionEnabled: true, launchAtLoginEnabled: true),
         )
     }

@@ -11,7 +11,7 @@ protocol BreakFlowPanelPresenting: AnyObject {
     func makeKey()
 }
 
-final class BreakFlowPanel: NSPanel, BreakFlowPanelPresenting {
+final class BreakFlowPanel: BreakFieldAnimatedPanel, BreakFlowPanelPresenting {
     let displayID: OverlayDisplayID
     private let onCancel: () -> Void
 
@@ -40,6 +40,7 @@ final class BreakFlowPanel: NSPanel, BreakFlowPanelPresenting {
         hidesOnDeactivate = false
         isReleasedWhenClosed = false
         animationBehavior = .none
+        breakFieldMotionMode = .staticPresentation
         contentView = NSHostingView(rootView: BreakFlowView(model: model))
         title = BreakFlowCopy.snoozeTitle
         let accessibilityTitle = switch model.surface {
@@ -53,11 +54,7 @@ final class BreakFlowPanel: NSPanel, BreakFlowPanelPresenting {
     }
 
     func present(makeKey: Bool) {
-        if makeKey {
-            makeKeyAndOrderFront(nil)
-        } else {
-            orderFront(nil)
-        }
+        presentBreakField(makeKey: makeKey)
     }
 
     func update(frame: CGRect) {

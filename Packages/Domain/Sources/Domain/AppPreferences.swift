@@ -44,12 +44,11 @@ public struct AppPreferences: Codable, Equatable, Sendable {
 
     /// Applies preference overrides to App-owned generated timing without duplicating its constants.
     public func protocolConfiguration(applyingTo base: ProtocolConfiguration) -> ProtocolConfiguration {
-        let scheduled: ProtocolConfiguration
-        switch schedule.profile {
+        let scheduled: ProtocolConfiguration = switch schedule.profile {
         case let .custom(timing):
-            scheduled = timing.applying(to: base)
+            timing.applying(to: base)
         case .gentle, .balanced, .frequentMovement, .researchInformedHighFrequency:
-            scheduled = base
+            base
         }
         return ProtocolConfiguration(
             visual: scheduled.visual,

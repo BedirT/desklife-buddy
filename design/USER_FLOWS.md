@@ -14,9 +14,9 @@ Install → launch → ON-01 What this is
   → ON-02 What it can and cannot know          (the honesty screen; not skippable content,
                                                 but the whole flow is skippable)
   → ON-03 Choose a rhythm  [Gentle | Balanced✓ | Frequent]
-  → ON-04 How you move     [Walk/wheel | Seated active | Small space | Position change]
-  → ON-05 Comfort          [Reduce motion ✓auto | Static mode | Dimming level]
-  → ON-06 Ready            ("Working now." Integrations named, not requested.)
+  → ON-04 How you move     [Walk/wheel | Seated movement | Mix movement paths | Position change]
+  → ON-05 Comfort          [Standard | Static + brightness; macOS choices shown read-only]
+  → ON-06 Ready            (Choices summarized; integrations named, not requested.)
   ✕ Menu bar item appears (MB-01). Clocks start.
 ```
 
@@ -204,7 +204,9 @@ Default changed by an app update (ED-18): first launch after → say what change
 
 ```
 SE-09 → what is stored (plain list) · retention · export · delete
-  → SE-11 export: describes each field before writing the file
+  → SE-11 export: choose CSV or JSON in the native Format menu
+    → expand Columns and select any non-empty subset of the six disclosed typed fields
+    → Choose destination… opens one user-selected save location, then writes that exact request
   → SE-10 delete: states exactly what will be removed and what remains
 Nothing here is buried, and nothing requires an account to reach.
 ```

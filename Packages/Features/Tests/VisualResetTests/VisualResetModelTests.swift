@@ -4,6 +4,15 @@ import Testing
 
 @Suite("Visual reset session")
 struct VisualResetModelTests {
+    @Test("Standard layout keeps the alternative above the revealed Dock")
+    func standardLayoutClearsRevealedDock() {
+        let verticalPosition = VisualResetStandardLayoutMetrics.y(
+            VisualResetStandardLayoutMetrics.alternativeYFraction,
+            in: 982,
+        )
+        #expect(verticalPosition <= 840)
+    }
+
     @Test("Opening starts one self-running 20-second session")
     func opensOnce() {
         let clock = TestClock()
@@ -64,8 +73,8 @@ struct VisualResetModelTests {
         #expect(actions == [.opened, .timerFinished])
     }
 
-    @Test("Done early is inert until the declaration guard arms")
-    func declarationGuard() {
+    @Test("Keyboard Done early is immediate from the first active frame")
+    func immediateKeyboardDeclaration() {
         let clock = TestClock()
         var actions: [VisualResetAction] = []
         var announcements: [VisualResetAnnouncement] = []
@@ -78,11 +87,6 @@ struct VisualResetModelTests {
         )
         model.open()
 
-        clock.value = 0.79
-        model.doneEarlyFromKeyboard()
-        #expect(model.phase == .running)
-
-        clock.value = 0.8
         model.doneEarlyFromKeyboard()
         model.doneEarlyFromKeyboard()
 

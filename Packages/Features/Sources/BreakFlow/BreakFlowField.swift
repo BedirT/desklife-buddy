@@ -1,4 +1,4 @@
-import DesignSystem
+import BreakPresentation
 import SwiftUI
 
 struct BreakFlowField: View {
@@ -6,35 +6,9 @@ struct BreakFlowField: View {
 
     var body: some View {
         if staticPresentation {
-            Color.dsStaticDesktopScrim
+            BreakStaticField(brightness: 0.65)
         } else {
-            GeometryReader { proxy in
-                ZStack(alignment: .top) {
-                    LinearGradient(
-                        colors: [
-                            .dsMovementSkyTop,
-                            .dsMovementSkyMiddle,
-                            .dsMovementSkyHorizon,
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing,
-                    )
-                    RadialGradient(
-                        colors: [.dsMovementGlow.opacity(0.52), .clear],
-                        center: .bottom,
-                        startRadius: 0,
-                        endRadius: proxy.size.width * 0.34,
-                    )
-                    .frame(height: proxy.size.height * 0.72)
-                    LinearGradient(
-                        colors: [.dsMovementGroundTop, .dsMovementGroundBottom],
-                        startPoint: .top,
-                        endPoint: .bottom,
-                    )
-                    .frame(height: proxy.size.height * 0.289)
-                    .frame(maxHeight: .infinity, alignment: .bottom)
-                }
-            }
+            BreakFieldView(variant: .movementWalkOrWheel)
         }
     }
 }

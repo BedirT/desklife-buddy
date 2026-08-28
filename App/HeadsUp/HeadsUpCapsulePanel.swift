@@ -82,7 +82,10 @@ final class HeadsUpCapsulePanel: NSPanel, HeadsUpCapsulePanelPresenting {
     }
 
     static func fittingSize(model: HeadsUpModel) -> CGSize {
-        let sizingController = NSHostingController(rootView: capsuleContent(model: model))
+        let sizingController = NSHostingController(rootView: capsuleContent(
+            model: model,
+            entranceEndpoint: .after,
+        ))
         return sizingController.sizeThatFits(in: CGSize(
             width: HeadsUpCapsuleLayoutMetrics.standard.maximumContentWidth,
             height: .greatestFiniteMagnitude,
@@ -99,8 +102,14 @@ final class HeadsUpCapsulePanel: NSPanel, HeadsUpCapsulePanelPresenting {
         }
     #endif
 
-    private static func capsuleContent(model: HeadsUpModel) -> AnyView {
-        AnyView(HeadsUpView(model: model).id(ObjectIdentifier(model)))
+    private static func capsuleContent(
+        model: HeadsUpModel,
+        entranceEndpoint: HeadsUpEntranceEndpoint = .automatic,
+    ) -> AnyView {
+        AnyView(
+            HeadsUpView(model: model, entranceEndpoint: entranceEndpoint)
+                .id(ObjectIdentifier(model)),
+        )
     }
 
     private static func chromeContent(model: HeadsUpModel) -> AnyView {

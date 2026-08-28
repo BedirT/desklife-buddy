@@ -302,7 +302,7 @@ public enum HeadsUpDeliveryEffect: Equatable, Sendable {
     case updateCountdown(
         HeadsUpDeliveryID,
         HeadsUpCountdownMark,
-        targetAt: Date
+        targetAt: Date,
     )
     case updateTiming(HeadsUpDeliveryID, targetAt: Date)
     case land(HeadsUpDeliveryID)

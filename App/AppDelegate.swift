@@ -3,17 +3,30 @@ import BreakFlow
 import Domain
 import HeadsUp
 import Movement
+import Onboarding
 import StatusMenu
 import VisualReset
+import WeeklyRhythm
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var runtime: ProtocolRuntime?
-    private var activitySource: SystemActivitySource?
-    private var statusItemCoordinator: StatusItemCoordinator?
-    private var dockMenuController: DockMenuController?
+    var settingsStore: SwiftDataSettingsStore?
+    lazy var settingsIntegrationsRuntime = SettingsIntegrationsAppRuntime.live()
+    lazy var settingsSceneModel = buildSettingsSceneModel()
+    var settingsWindowController: NSWindowController?
+    var onboardingWindowController: OnboardingWindowController?
+    var weeklyRhythmWindowController: NSWindowController?
+    var weeklyRhythmPresentationOverride: (() -> Bool)?
+    var onboardingWindowPresenter: OnboardingWindowPresenter?
+    var onboardingModel: OnboardingModel?
+    var activitySource: SystemActivitySource?
+    var statusItemCoordinator: StatusItemCoordinator?
+    var hasInstalledStatusItem: Bool { statusItemCoordinator != nil }
+    var dockMenuController: DockMenuController?
     var overlayCoordinator: VisualResetOverlayCoordinator?
     var movementOverlayCoordinator: MovementOverlayCoordinator?
     var mergedOverlayCoordinator: MergedOverlayCoordinator?
+    var completionCapsuleCoordinator: CompletionCapsuleCoordinator?
     var breakFlowOverlayCoordinator: BreakFlowOverlayCoordinator?
     var headsUpLifecycleCoordinator: HeadsUpLifecycleCoordinator?
     var headsUpOpeningBinding: HeadsUpOpeningBinding?
@@ -24,15 +37,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         var headsUpVerificationSettings: HeadsUpNotificationSettings?
         var headsUpVerificationPermissionPanel: HeadsUpPermissionPanel?
         var headsUpVerificationCaptureCount = 0
+        var settingsVerificationRouteAccepted: Bool?
     #endif
-    private var activityTimer: Timer?
+    var activityTimer: Timer?
     let visualResetLifecycleQueue = VisualResetLifecycleQueue()
     let movementLifecycleQueue = MovementLifecycleQueue()
     let mergedLifecycleQueue = MergedLifecycleQueue()
     var configuration: ProtocolConfiguration?
-    private var verificationPreviewState: StatusMenuModel.PreviewState?
+    var verificationPreviewState: StatusMenuModel.PreviewState?
     private var latestSnapshot = StatusMenuModel.preview(.normal).snapshot
-    private var headsUpStatusProjection: HeadsUpStatusMenuProjection?
+    var headsUpStatusProjection: HeadsUpStatusMenuProjection?
     private var visualResetCaptureCount = 0
     private var movementCaptureCount = 0
     var mergedCaptureCount = 0
@@ -60,12 +74,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         overlayCoordinator?.tearDown()
         movementOverlayCoordinator?.tearDown()
         mergedOverlayCoordinator?.tearDown()
+        completionCapsuleCoordinator?.tearDown()
         breakFlowOverlayCoordinator?.tearDown()
         headsUpLifecycleCoordinator?.tearDown()
+        settingsWindowController?.close()
+        onboardingWindowController?.close()
+        weeklyRhythmWindowController?.close()
         #if DEBUG
             verificationOverlayCoordinator?.tearDown()
             headsUpVerificationPermissionPanel?.close()
         #endif
+    }
+
+    func applicationShouldHandleReopen(
+        _ sender: NSApplication,
+        hasVisibleWindows flag: Bool,
+    ) -> Bool {
+        guard runtime == nil, let onboardingModel, let onboardingWindowPresenter else {
+            return false
+        }
+        onboardingWindowPresenter.present(onboardingModel)
+        return true
     }
 }
 
@@ -79,6 +108,7 @@ extension AppDelegate {
         verificationPreviewState = Self.verificationState(from: arguments)
         self.configuration = configuration
         self.runtime = runtime
+        installCompletionCapsule()
         installPrimaryOverlays(configuration: configuration)
         installStepSixOverlays(configuration: configuration)
         installHeadsUpLifecycle(runtime: runtime, policy: headsUpPolicy)
@@ -91,27 +121,9 @@ extension AppDelegate {
         installSettingsPresentationBoundary(on: runtime)
         runtime.onRoute = { [weak self] action in self?.route(action) }
 
-        let initialModel = verificationPreviewState.map(StatusMenuModel.preview)
-            ?? StatusMenuModel(
-                state: runtime.state,
-                configuration: configuration,
-                context: runtime.statusContext,
-            )
-        statusItemCoordinator = StatusItemCoordinator(
-            model: initialModel,
-            headsUpProjection: headsUpStatusProjection,
-            onAction: { [weak self] action in self?.handle(action) },
-            onHeadsUpIntent: { [weak self] intent in
-                self?.headsUpLifecycleCoordinator?.send(intent)
-            },
-        )
-        dockMenuController = DockMenuController(
-            onAction: { [weak self] action in self?.handle(action) },
-        )
         activitySource = SystemActivitySource(
             onAvailabilityChange: { [weak self] sample in self?.observe(sample) },
         )
-        configureVerification(arguments: arguments)
     }
 
     func installSettingsPresentationBoundary(on runtime: ProtocolRuntime) {
@@ -122,9 +134,11 @@ extension AppDelegate {
     }
 
     func installStepSixOverlays(configuration: ProtocolConfiguration) {
+        let accessibilityPreferences = runtime?.preferences?.accessibility ?? .defaults
         mergedOverlayCoordinator = MergedOverlayCoordinator(
             visualDurationSeconds: configuration.visual.durationOptionsSeconds[0],
             movementSchedule: configuration.movement,
+            accessibilityPreferences: accessibilityPreferences,
             onLifecycle: { [weak self] event, completion in
                 guard let self else {
                     completion(.failure(AppDelegateLifecycleError.coordinatorUnavailable))
@@ -134,6 +148,7 @@ extension AppDelegate {
             },
             onVisualAnnouncement: VisualResetAccessibilityAnnouncer.post,
             onMovementAnnouncement: MovementAccessibilityAnnouncer.post,
+            onCompletion: { [weak self] in self?.presentCompletionAcknowledgement() },
         )
         breakFlowOverlayCoordinator = BreakFlowOverlayCoordinator(
             snoozeDurationsSeconds: configuration.delivery.snoozeOptionsSeconds,
@@ -148,37 +163,30 @@ extension AppDelegate {
         )
     }
 
-    func restore(_ runtime: ProtocolRuntime) {
-        Task { [weak self] in
-            guard let self else { return }
-            if let headsUpLifecycleCoordinator {
-                #if DEBUG
-                    let initialSample = headsUpVerificationMode?.enablesRuntime == true
-                        ? nil
-                        : activitySource?.sample()
-                #else
-                    let initialSample = activitySource?.sample()
-                #endif
-                await headsUpLifecycleCoordinator.start(
-                    initialSample: initialSample,
-                )
-                #if DEBUG
-                    await runHeadsUpVerificationAfterRestore()
-                    if headsUpVerificationMode?.enablesRuntime == true { return }
-                #endif
-                startActivityTimer()
-                return
-            }
-            do {
-                try await runtime.restore()
-                if let activitySource {
-                    try await runtime.observe(activitySource.sample())
-                }
-                startActivityTimer()
-            } catch {
-                lastRuntimeError = error
-            }
+    func restore(_ runtime: ProtocolRuntime) async throws {
+        if let headsUpLifecycleCoordinator {
+            #if DEBUG
+                let initialSample = headsUpVerificationMode?.enablesRuntime == true
+                    ? nil
+                    : activitySource?.sample()
+            #else
+                let initialSample = activitySource?.sample()
+            #endif
+            try await headsUpLifecycleCoordinator.start(
+                initialSample: initialSample,
+            )
+            #if DEBUG
+                await runHeadsUpVerificationAfterRestore()
+                if headsUpVerificationMode?.enablesRuntime == true { return }
+            #endif
+            startActivityTimer()
+            return
         }
+        try await runtime.restore()
+        if let activitySource {
+            try await runtime.observe(activitySource.sample())
+        }
+        startActivityTimer()
     }
 
     func startActivityTimer() {
@@ -222,7 +230,11 @@ extension AppDelegate {
                 "visual-reset-state-\(ProcessInfo.processInfo.processIdentifier).txt",
             )
             let monotonicSeconds = coordinator.monotonicSecondsForVerification
-            let value = "\(visualResetCaptureCount) \(remainingSeconds) \(monotonicSeconds)"
+            let dockStatus = NSApp.currentSystemPresentationOptions.contains(.hideDock)
+                ? "hidden"
+                : "visible"
+            let value = "\(visualResetCaptureCount) \(remainingSeconds) "
+                + "\(monotonicSeconds) \(dockStatus)"
             try? value.write(to: state, atomically: true, encoding: .utf8)
             _ = coordinator.captureForVerification()
         }
@@ -241,8 +253,11 @@ extension AppDelegate {
                 "movement-state-\(ProcessInfo.processInfo.processIdentifier).txt",
             )
             let runtimeStatus = lastRuntimeError == nil ? "ok" : "error"
+            let dockStatus = NSApp.currentSystemPresentationOptions.contains(.hideDock)
+                ? "hidden"
+                : "visible"
             let value = "\(movementCaptureCount) \(remainingSeconds) "
-                + "\(selectedDuration) \(runtimeSelectedDuration) \(runtimeStatus)"
+                + "\(selectedDuration) \(runtimeSelectedDuration) \(runtimeStatus) \(dockStatus)"
             try? value.write(to: state, atomically: true, encoding: .utf8)
             _ = coordinator.captureForVerification()
         }
@@ -294,6 +309,7 @@ extension AppDelegate {
         overlayCoordinator?.tearDown()
         movementOverlayCoordinator?.tearDown()
         mergedOverlayCoordinator?.tearDown()
+        completionCapsuleCoordinator?.dismiss()
         breakFlowOverlayCoordinator?.tearDown()
         installPrimaryOverlays(configuration: configuration)
         installStepSixOverlays(configuration: configuration)
@@ -327,17 +343,25 @@ extension AppDelegate {
 
         switch action {
         case .openSettings:
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-            NSApp.activate()
+            openSettingsWindow()
         case .quit:
             NSApp.terminate(nil)
         case .openWeeklyRhythm:
-            NSApp.activate()
-            NotificationCenter.default.post(name: .statusMenuRoute, object: action)
+            _ = openWeeklyRhythmWindow()
         case .startHeadsUpNow, .openSnoozeOptions, .startVisualReset, .startMovement:
             break
         case .snooze, .pause, .resume, .toggleWorkingHours:
             break
         }
+    }
+
+    @discardableResult
+    func openSettingsWindow() -> Bool {
+        if runtime == nil, let onboardingModel, let onboardingWindowPresenter {
+            onboardingWindowPresenter.present(onboardingModel)
+            return false
+        }
+        showSettingsWindow(nil)
+        return settingsWindowController?.window?.isVisible == true
     }
 }

@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import StatusMenu
 
 #if DEBUG
@@ -24,7 +24,11 @@ import StatusMenu
             }
             mergedCaptureCount += 1
             let runtimeStatus = lastRuntimeError == nil ? "ok" : "error"
-            let value = "\(mergedCaptureCount) \(phase) \(remainingSeconds) \(runtimeStatus)"
+            let dockStatus = NSApp.currentSystemPresentationOptions.contains(.hideDock)
+                ? "hidden"
+                : "visible"
+            let value = "\(mergedCaptureCount) \(phase) \(remainingSeconds) "
+                + "\(runtimeStatus) \(dockStatus)"
             let state = caches.appendingPathComponent(
                 "merged-state-\(ProcessInfo.processInfo.processIdentifier).txt",
             )
@@ -44,7 +48,10 @@ import StatusMenu
             }
             snoozeCaptureCount += 1
             let runtimeStatus = lastRuntimeError == nil ? "ok" : "error"
-            let value = "\(snoozeCaptureCount) \(scope) \(runtimeStatus)"
+            let dockStatus = NSApp.currentSystemPresentationOptions.contains(.hideDock)
+                ? "hidden"
+                : "visible"
+            let value = "\(snoozeCaptureCount) \(scope) \(runtimeStatus) \(dockStatus)"
             let state = caches.appendingPathComponent(
                 "snooze-state-\(ProcessInfo.processInfo.processIdentifier).txt",
             )

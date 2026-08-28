@@ -49,12 +49,12 @@ public extension ProtocolEngine {
         let visual = (
             configuration.visual.targetSeconds - visualClock.accumulatedActiveUseSeconds,
             configuration.visual.latestPreferredSeconds
-                - visualClock.accumulatedActiveUseSeconds
+                - visualClock.accumulatedActiveUseSeconds,
         )
         let movement = (
             configuration.movement.targetSeconds - movementClock.accumulatedActiveUseSeconds,
             configuration.movement.latestPreferredSeconds
-                - movementClock.accumulatedActiveUseSeconds
+                - movementClock.accumulatedActiveUseSeconds,
         )
         return switch opportunity {
         case .visual:

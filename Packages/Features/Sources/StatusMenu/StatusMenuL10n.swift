@@ -71,7 +71,7 @@ enum StatusMenuL10n {
         case .systemInactiveOrLocked:
             string("status_menu.suppression.system_inactive", default: "Quiet while the Mac is inactive")
         case .explicitPresentationMode:
-            string("status_menu.suppression.presentation", default: "Presenting — reminders off")
+            string("status_menu.suppression.presentation", default: "Presenting, reminders off")
         case .focusFilter:
             string("status_menu.suppression.focus", default: "Quiet in Focus")
         case .calendarBusy:

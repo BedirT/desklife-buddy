@@ -18,9 +18,11 @@ struct HeadsUpVerificationRouteTests {
         ]) == nil)
     }
 
-    @Test("Only one validated runtime route can enable the verification policy")
-    func policyRequiresOneValidatedRuntimeRoute() {
-        #expect(AppDelegate.verificationHeadsUpPolicy(arguments: ["App"]) == nil)
+    @Test("Ordinary startup and validated runtime verification routes use one re-offer")
+    func policySelectsProductionAndValidatedVerificationRuntime() {
+        let expected = HeadsUpRuntimePolicy(maximumSnoozeReoffers: 1)
+
+        #expect(AppDelegate.verificationHeadsUpPolicy(arguments: ["App"]) == expected)
         #expect(AppDelegate.verificationHeadsUpPolicy(arguments: [
             "App",
             "--verify-heads-up-permission",
@@ -49,11 +51,11 @@ struct HeadsUpVerificationRouteTests {
         #expect(AppDelegate.verificationHeadsUpPolicy(arguments: [
             "App",
             "--verify-heads-up-capsule",
-        ]) != nil)
+        ]) == expected)
         #expect(AppDelegate.verificationHeadsUpPolicy(arguments: [
             "App",
             "--verify-heads-up-notification",
-        ]) != nil)
+        ]) == expected)
     }
 
     @Test("Capsule verification uses an ephemeral in-app choice without a system request")

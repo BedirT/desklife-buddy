@@ -161,3 +161,37 @@ art package and the still-undesigned BR-04 static/migraine presentation.
   replacing the live engine, while the lifecycle queue blocks a failed session's later terminal
   write and permits the next opening to retry. Failing-first-commit tests prove both retained and
   published state stay unchanged when `breakStarted` persistence fails.
+- 2026-08-28: Largest-text baseline review exposed a real BR-16 defect rather than native noise.
+  The retained combined dark baseline and current 1.7x render were both 2880 x 1800, but hashes
+  `a624e265...` and `23c3c30e...` differed across 763,558 pixels (14.7291%) in inclusive box
+  `(0, 54)` through `(2879, 1750)`; the current instruction visibly ended in `comfortab...`.
+  History showed the baseline predated `37c9cf2`, which added the canonical 1.7x text environment
+  without replacing it, while the live large-text layout still constrained the instruction to a
+  500-point measure and three lines. The repair widens only the 1.7x instruction measure to 1000
+  points and removes its line limit; standard and +35% layout/control geometry remain unchanged.
+  Combined dark, ordinary dark, and ordinary light largest-text renders were inspected at original
+  resolution with the full instruction and unchanged controls, then recorded through three exact
+  single-test filters with no tolerance change. All three immediate comparisons and the retained
+  +35% comparison pass. `scripts/test.sh Features` passes 196 tests in 31 suites. The full
+  VisualReset snapshot run now passes every largest-text/+35% state but remains red on seven
+  unrelated non-largest states (`workingReference`, `finalSeconds`, `reducedTransparency`,
+  `reducedMotion`, `brightBackdrop`, and `injectedStaticPresentation`); those baselines were not
+  recorded or normalized in this repair.
+- 2026-08-28: The seven remaining non-largest mismatches were stale VisualReset baselines, not
+  product regressions. All were still from `033f1c9` (13:31), before shared DesignSystem commit
+  `6db59a2` (20:00) deliberately darkened light secondary ink from `#665C70` to `#594F63` for
+  evidence-backed D-028 contrast floors and added an opaque focused-pill fill for Reduce
+  Transparency. Exact diff heatmaps were limited to VisualReset guidance/meta/alternative text
+  and, in the two Reduce Transparency states, the focused Done early pill; all backdrops,
+  instruction geometry, countdowns, actions, and layout remained unchanged and unclipped. The
+  isolated `workingReference` actual was deterministic across two runs at SHA-256 `9114bbe8...`.
+  After original-resolution review, only the six affected light states and the Reduce
+  Transparency dark state were recorded through exact single-test filters, with no product or
+  tolerance change. `scripts/snapshot.sh Features VisualResetSnapshotTests` now passes all 15
+  tests and 22 renders.
+- 2026-08-28: Real-process review rejected the frost and sharpen entrance after it showed visible
+  discontinuities, delayed focus, persistent Dock chrome, and a globally darkened final field.
+  The owner accepted an immediate-presentation checkpoint with the selected image untinted, Dock
+  suppression reapplied after activation, and Escape and Return available from the first active
+  frame. The former transition implementation was removed. Any replacement animation is a new
+  review task and may not weaken those accepted input or system-chrome guarantees.

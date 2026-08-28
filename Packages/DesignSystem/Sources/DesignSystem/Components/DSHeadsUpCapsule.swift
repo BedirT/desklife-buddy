@@ -3,19 +3,17 @@ import SwiftUI
 /// Presentation-only anatomy for the non-activating heads-up capsule.
 public struct DSHeadsUpCapsule: View {
     public enum Indicator: Equatable, Sendable {
-        /// Normalized x and descent progress. Callers own clocks and pointer input.
-        case sun(horizontal: CGFloat, descent: CGFloat)
+        /// Normalized glint lean and descent progress. The sun body remains fixed.
+        case sun(glint: CGFloat, descent: CGFloat)
         /// Honest suppression state, carried by both a dashed mark and text.
         case hold
     }
 
     private let shape = Capsule(style: .continuous)
-
     @Environment(\.dsTextScale) private var textScale
     @State private var nowHovered = false
     @State private var laterHovered = false
     @GestureState private var laterPressed = false
-
     private let title: String
     private let detail: String
     private let indicator: Indicator?
@@ -32,7 +30,6 @@ public struct DSHeadsUpCapsule: View {
     private let increaseContrast: Bool
     private let nowAction: () -> Void
     private let laterAction: (Int) -> Void
-
     private var textSize: CGFloat {
         textScale.apply(to: DSTypography.headsUpTextSize)
     }
@@ -237,8 +234,8 @@ public struct DSHeadsUpCapsule: View {
     @ViewBuilder
     private func indicatorView(_ indicator: Indicator) -> some View {
         switch indicator {
-        case let .sun(horizontal, descent):
-            DSCapsuleSky(horizontal: horizontal, descent: descent)
+        case let .sun(glint, descent):
+            DSCapsuleSky(glint: glint, descent: descent)
         case .hold:
             Circle()
                 .stroke(
@@ -303,16 +300,11 @@ private struct DSCapsuleActionButtonStyle: ButtonStyle {
 }
 
 private struct DSCapsuleSky: View {
-    let horizontal: CGFloat
+    let glint: CGFloat
     let descent: CGFloat
 
     var body: some View {
-        GeometryReader { proxy in
-            let horizontalOffset = DSCapsuleSkyGeometry.inset
-                + DSCapsuleSkyGeometry.clamped(horizontal)
-                * (proxy.size.width - DSCapsuleSkyGeometry.sunSize
-                    - 2 * DSCapsuleSkyGeometry.inset)
-
+        GeometryReader { _ in
             ZStack(alignment: .topLeading) {
                 LinearGradient(
                     colors: [.dsCapsuleSkyTop, .dsCapsuleSkyMiddle, .dsCapsuleSkyHorizon],
@@ -323,29 +315,35 @@ private struct DSCapsuleSky: View {
                     .fill(Color.dsCapsuleHoldRing.opacity(0.72))
                     .frame(height: 1)
                     .offset(y: DSCapsuleSkyGeometry.horizonY)
-                DSCapsuleSun()
+                DSCapsuleSun(glint: glint)
                     .frame(
                         width: DSCapsuleSkyGeometry.sunSize,
                         height: DSCapsuleSkyGeometry.sunSize,
                     )
                     .offset(
-                        x: horizontalOffset,
+                        x: DSCapsuleSkyGeometry.sunHorizontalOffset,
                         y: DSCapsuleSkyGeometry.verticalOffset(for: descent),
                     )
             }
         }
-        .frame(width: 24, height: 24)
+        .frame(width: DSCapsuleSkyGeometry.skySize, height: DSCapsuleSkyGeometry.skySize)
         .clipShape(Circle())
     }
 }
 
 private struct DSCapsuleSun: View {
+    let glint: CGFloat
+
     var body: some View {
         Circle()
             .fill(
                 RadialGradient(
                     colors: [.dsSunCore, .dsSunMiddle, .dsSunEdge],
-                    center: UnitPoint(x: 0.38, y: 0.34),
+                    center: UnitPoint(
+                        x: 0.38 + DSCapsuleSkyGeometry.glintOffset(for: glint)
+                            / DSCapsuleSkyGeometry.sunSize,
+                        y: 0.34,
+                    ),
                     startRadius: 0,
                     endRadius: 6,
                 ),
@@ -366,7 +364,7 @@ private struct DSCapsuleSun: View {
         DSHeadsUpCapsule(
             title: DesignSystemL10n.HeadsUp.visualReset,
             detail: DesignSystemL10n.HeadsUp.time45,
-            indicator: .sun(horizontal: 0.2, descent: 0),
+            indicator: .sun(glint: -1, descent: 0),
             nowTitle: DesignSystemL10n.HeadsUp.now,
             laterTitle: DesignSystemL10n.HeadsUp.later,
             statusAccessibilityLabel: DesignSystemL10n.HeadsUp.accessibility45,
@@ -379,7 +377,7 @@ private struct DSCapsuleSun: View {
         DSHeadsUpCapsule(
             title: DesignSystemL10n.HeadsUp.visualReset,
             detail: DesignSystemL10n.HeadsUp.time15,
-            indicator: .sun(horizontal: 0.7, descent: 0.65),
+            indicator: .sun(glint: 1, descent: 0.65),
             showsActions: true,
             nowTitle: DesignSystemL10n.HeadsUp.now,
             laterTitle: DesignSystemL10n.HeadsUp.later,

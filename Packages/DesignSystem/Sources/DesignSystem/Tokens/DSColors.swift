@@ -74,6 +74,12 @@ public extension Color {
         dark: Color(hex: 0x2A121C).opacity(0.96),
     )
     static let dsStaticDesktopScrim = Color(hex: 0x000000).opacity(0.35)
+
+    static func dsStaticDesktopScrim(brightness: Double) -> Color {
+        let boundedBrightness = min(1, max(0, brightness))
+        return Color(hex: 0x000000).opacity(1 - boundedBrightness)
+    }
+
     static let dsStaticTextScrim = Color(hex: 0x000000).opacity(0.68)
     static let dsStaticText = Color(hex: 0xFFFFFF)
     static let dsMovementChoiceScrim = Color(

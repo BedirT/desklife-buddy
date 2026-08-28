@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>accessibility</key>
+	<string>Decorative. The image carries no retained fact and is hidden from accessibility.</string>
+	<key>createdAt</key>
+	<string>2026-08-28</string>
+	<key>crop</key>
+	<string>Aspect-fill from center; the screen composition keeps all copy on independent glass surfaces.</string>
+	<key>generator</key>
+	<string>OpenAI image generation tool (model identifier not exposed)</string>
+	<key>id</key>
+	<string>weekly-rhythm-field-v1</string>
+	<key>inputs</key>
+	<string>No third-party or owner-supplied imagery was used.</string>
+	<key>kind</key>
+	<string>opaque-raster-background</string>
+	<key>prompt</key>
+	<string>A quiet abstract ceramic-paper rhythm field for a private macOS weekly reflection screen: layered ivory, warm lilac, muted plum, and one tiny amber accent; broad open gaps; tactile paper and ceramic relief; no UI, text, people, charts, scores, wellness clichés, targets, or symbols.</string>
+	<key>rightsStatus</key>
+	<string>Generated specifically for this private product with owner-authorized image generation.</string>
+	<key>sourceArtifact</key>
+	<string>artifacts/weekly-rhythm-round-2/generated-rhythm-field.png</string>
+	<key>sourceDimensions</key>
+	<dict>
+		<key>height</key>
+		<integer>992</integer>
+		<key>width</key>
+		<integer>1586</integer>
+	</dict>
+	<key>sourceSHA256</key>
+	<string>1037e86525c8b8b59dfc8e2875fe7ad469105ab5b8056a87d441df529d505583</string>
+</dict>
+</plist>

@@ -15,28 +15,33 @@ public extension DSGallery {
                     capsule(
                         suffix: "approach",
                         detail: DesignSystemL10n.HeadsUp.time45,
-                        indicator: .sun(horizontal: 0.18, descent: 0),
+                        indicator: .sun(glint: 0, descent: 0),
                         statusAccessibilityLabel: DesignSystemL10n.HeadsUp.accessibility45,
                     )
                     capsule(
                         suffix: "countdown30",
                         detail: DesignSystemL10n.HeadsUp.time30,
-                        indicator: .sun(horizontal: 0.5, descent: 0.33),
+                        indicator: .sun(glint: 0, descent: 0.33),
                         statusAccessibilityLabel: DesignSystemL10n.HeadsUp.accessibility30,
                     )
                     capsule(
                         suffix: "hover",
                         detail: DesignSystemL10n.HeadsUp.time15,
-                        indicator: .sun(horizontal: 0.72, descent: 0.65),
+                        indicator: .sun(glint: 0, descent: 0.65),
                         showsActions: true,
                         statusAccessibilityLabel: DesignSystemL10n.HeadsUp.accessibility15,
                     )
                     capsule(
                         suffix: "landed",
                         detail: DesignSystemL10n.HeadsUp.time5,
-                        indicator: .sun(horizontal: 0.5, descent: 1),
+                        indicator: .sun(glint: 0, descent: 1),
                         statusAccessibilityLabel: DesignSystemL10n.HeadsUp.accessibility5,
                     )
+                }
+
+                capsuleRow {
+                    DSHeadsUpCompletionCapsule(crinkleProgress: 0)
+                    DSHeadsUpCompletionCapsule(crinkleProgress: 1)
                 }
 
                 capsuleRow {
@@ -59,7 +64,7 @@ public extension DSGallery {
                     capsule(
                         suffix: "reducedTransparency",
                         detail: DesignSystemL10n.HeadsUp.time15,
-                        indicator: .sun(horizontal: 0.5, descent: 0.5),
+                        indicator: .sun(glint: 0, descent: 0.5),
                         statusAccessibilityLabel: DesignSystemL10n.HeadsUp.accessibility15,
                         reduceTransparency: true,
                     )
@@ -74,19 +79,19 @@ public extension DSGallery {
                     capsule(
                         suffix: "reducedMotionHigh",
                         detail: DesignSystemL10n.HeadsUp.time45,
-                        indicator: .sun(horizontal: 0.5, descent: 0),
+                        indicator: .sun(glint: 0, descent: 0),
                         statusAccessibilityLabel: DesignSystemL10n.HeadsUp.accessibility45,
                     )
                     capsule(
                         suffix: "reducedMotionMiddle",
                         detail: DesignSystemL10n.HeadsUp.time15,
-                        indicator: .sun(horizontal: 0.5, descent: 0.5),
+                        indicator: .sun(glint: 0, descent: 0.5),
                         statusAccessibilityLabel: DesignSystemL10n.HeadsUp.accessibility15,
                     )
                     capsule(
                         suffix: "reducedMotionLanded",
                         detail: DesignSystemL10n.HeadsUp.time5,
-                        indicator: .sun(horizontal: 0.5, descent: 1),
+                        indicator: .sun(glint: 0, descent: 1),
                         statusAccessibilityLabel: DesignSystemL10n.HeadsUp.accessibility5,
                     )
                 }
@@ -94,7 +99,7 @@ public extension DSGallery {
                 capsule(
                     suffix: "largeText",
                     detail: DesignSystemL10n.HeadsUp.time15,
-                    indicator: .sun(horizontal: 0.5, descent: 0.5),
+                    indicator: .sun(glint: 0, descent: 0.5),
                     showsActions: true,
                     statusAccessibilityLabel: DesignSystemL10n.HeadsUp.accessibility15,
                 )

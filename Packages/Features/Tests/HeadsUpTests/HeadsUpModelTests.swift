@@ -64,6 +64,7 @@ struct HeadsUpModelTests {
     func accessibilityPresentation() {
         let accessibility = HeadsUpAccessibility(
             textOnly: true,
+            staticPresentation: true,
             reduceMotion: true,
             reduceTransparency: true,
             increaseContrast: true,
@@ -73,6 +74,7 @@ struct HeadsUpModelTests {
 
         #expect(model.presentation.accessibility == accessibility)
         #expect(model.presentation.showsDecorativeIndicator == false)
+        #expect(model.presentation.allowsReactiveGlint == false)
     }
 
     @Test("Hold state carries an honest typed source and deadline")

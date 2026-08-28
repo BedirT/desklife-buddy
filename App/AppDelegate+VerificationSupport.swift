@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import StatusMenu
 import VisualReset
@@ -7,6 +8,10 @@ extension AppDelegate {
         arguments: [String],
     ) -> HeadsUpRuntimePolicy? {
         #if DEBUG
+            let isVerification = arguments.contains { $0.hasPrefix("--verify-") }
+            guard isVerification else {
+                return HeadsUpRuntimePolicy(maximumSnoozeReoffers: 1)
+            }
             guard let mode = HeadsUpVerificationMode(arguments: arguments),
                   mode.enablesRuntime
             else {
@@ -14,7 +19,7 @@ extension AppDelegate {
             }
             return HeadsUpRuntimePolicy(maximumSnoozeReoffers: 1)
         #else
-            return nil
+            return HeadsUpRuntimePolicy(maximumSnoozeReoffers: 1)
         #endif
     }
 
@@ -70,6 +75,11 @@ extension AppDelegate {
                     addVerificationTimer(delay: delay, selector: #selector(captureVerificationSnooze))
                 }
             }
+            if arguments.contains("--verify-settings") {
+                addVerificationTimer(delay: 0.5, selector: #selector(openVerificationSettings))
+                addVerificationTimer(delay: 2.5, selector: #selector(captureVerificationSettings))
+            }
+            configureCompletionCapsuleVerification(arguments: arguments)
             configureHeadsUpPermissionVerification(arguments: arguments)
         #endif
     }
@@ -83,6 +93,41 @@ extension AppDelegate {
             repeats: false,
         )
         RunLoop.main.add(timer, forMode: .common)
+    }
+
+    @objc func openVerificationSettings() {
+        settingsVerificationRouteAccepted = openSettingsWindow()
+    }
+
+    @objc func captureVerificationSettings() {
+        let window = NSApp.windows.first(where: { window in
+            window.isVisible && window.level == .normal && window.styleMask.contains(.titled)
+        })
+        guard let caches = FileManager.default.urls(
+            for: .cachesDirectory,
+            in: .userDomainMask,
+        ).first else { return }
+
+        let captured = window.map { window in
+            OverlayVerificationCapture.write(view: window.contentView, prefix: "settings")
+        } ?? false
+        let model = settingsSceneModel.featureModel
+        let state: [String: Any] = [
+            "captured": captured,
+            "featureReady": model.phase == .ready,
+            "preferencesLoaded": model.preferences != nil,
+            "routeAccepted": settingsVerificationRouteAccepted ?? false,
+            "selectedSection": model.selectedSection.rawValue,
+            "windowVisible": window?.isVisible == true,
+        ]
+        guard let data = try? JSONSerialization.data(
+            withJSONObject: state,
+            options: [.prettyPrinted, .sortedKeys],
+        ) else {
+            return
+        }
+        let filename = "settings-state-\(ProcessInfo.processInfo.processIdentifier).json"
+        try? data.write(to: caches.appendingPathComponent(filename), options: .atomic)
     }
 
     static func verificationState(from arguments: [String]) -> StatusMenuModel.PreviewState? {

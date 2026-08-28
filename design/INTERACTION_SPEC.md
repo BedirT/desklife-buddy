@@ -19,12 +19,13 @@ macos-design §1). Template glyph, no badge, no countdown (D-004). Click opens t
 status menu (§1.5).
 
 ### 1.2 Heads-up capsule (Level 1)
-- **Appears** `delivery.heads_up_seconds_before_target: 45` s before a break's target,
-  sliding once from under the notch (Moment 1, §5). On displays without a notch it docks
-  under the menu-bar clock. If the user prefers notifications, a standard local
-  notification is the first-class equivalent — never Time Sensitive/Critical.
-- **Lives**: the tiny sun sinks linearly for the whole 45 s (height = time) and keeps
-  station over the pointer's x-position (place = you), input-driven only (D-023).
+- **Appears** `delivery.heads_up_seconds_before_target: 45` s before a break's target with
+  one restrained entrance at fixed top-center (Moment 1, §5). The app-owned capsule is the
+  primary route in every notch, no-notch, menu-bar, and full-screen configuration. A standard
+  local notification is an already-authorized fallback only, never Time Sensitive/Critical.
+- **Lives**: the tiny sun sinks linearly for the whole 45 s (height = time). Its specular
+  glint leans subtly toward pointer movement while the sun body and capsule stay fixed
+  (place = you), input-driven only (D-023).
 - **Hover** reveals `Now` and `Later ▾` (5 · 10 · 15 min via `delivery.snooze_options
   _seconds: [300, 600, 900]`; "After this meeting" only when Calendar is on; "Presenting
   for 1 hour" = manual hold). One click, zero hunting.
@@ -35,12 +36,12 @@ status menu (§1.5).
   app, so while a heads-up is live the **status menu grows two rows at its top — "Start
   now" and "Later ▸"** with the same options. The menu-bar item (reachable via the
   system's menu-bar keyboard navigation) and the notification path are the keyboard
-  routes; the capsule is additional, never the only surface. No default global hotkeys.
+  routes; the notification is a secondary fallback, never the only surface. No default global
+  hotkeys.
 - **Numerals step coarsely** — "in 45 s → 30 → 15 → 5" — nothing ticks; the sun's height
   is the continuous signal. VoiceOver announces at appearance and on hold-change only.
-- **Capsule display (D-029):** the capsule appears on the display containing the pointer,
-  docking under that display's notch or menu-bar clock — not pinned to the built-in
-  display.
+- **Capsule display (D-029):** the capsule appears fixed at top-center on the active
+  pointer/key display, not pinned to the built-in display and never clock-trailing.
 - **Low-friction wait:** if the sun lands during `low_friction_wait`, it rests on its
   tiny horizon and the break opens at the next low-friction moment or at `latest`,
   whichever comes first — the capsule never sits landed indefinitely.
@@ -97,8 +98,9 @@ Menu dismissal is platform-owned; Esc closes it.
 ### 1.6 Acknowledgement (Level 3) and weekly (Level 4)
 Level 3 is featherweight: the capsule's ~2 s re-present with its one-shot eye-crinkle
 **is** the acknowledgement (M9, D-029); no dialog, nothing to dismiss, skippable by
-simply not looking. This is a *provisional* answer to DQ-11 (logged there); CP-AK01
-stays registered in case the wordless form proves too subtle. Level 4 is the
+simply not looking. It is absent under Reduce Motion, in-app static presentation, and
+text-only. BR-10 remains the distinct textual partial-reset status after "Just the visual
+one." Level 4 is the
 user-initiated weekly window (patterns, never grades `[03 §10]`) — design pending
 (Phase 3 backlog).
 
@@ -164,15 +166,15 @@ in-app static mode). A motion not in this table does not exist.
 
 | # | Moment | What happens | Timing | RM |
 |---|---|---|---|---|
-| 1 | Capsule arrives | Slides once from under the notch | 320 ms ease-out | Fades in |
+| 1 | Capsule arrives | Restrained one-shot reveal at fixed top-center | 320 ms ease-out | Fades in |
 | 2 | The sun sinks | Tiny sun descends the capsule sky | 45 s linear | Three stepped positions |
-| 3 | Keeps station | Sun's x mirrors pointer x, damped | input-driven only | Off; sun centered |
+| 3 | Reactive glint | Sun glint leans toward pointer movement; body stays fixed | input-driven only | Off; glint centered |
 | 4 | Noticing you | Pointer reaches capsule → glow warms once | 180 ms | Instant |
 | 5 | Touchdown | Sun settles on the tiny horizon, no bounce | 260 ms | Instant rest |
-| 6 | The sky comes up | Break opens rising from the bottom — never a modal popping on; **brightness ramps over the rise (starts ≈60%)** so arrival is never a luminance jump | 280 ms ease | **400 ms crossfade** — never faster into a luminance change than the standard motion (D-029) |
+| 6 | The break appears | The final selected break field appears immediately. The current accepted baseline has no entrance animation, intermediate blur layer, global tint, or delayed controls. Escape and Return work from the first active frame. A replacement authored transition remains a separate review task. | instant | Same (D-031) |
 | 7 | Numerals | Deliberately **not** animated; tabular in place | — | Same |
 | 8 | Horizon fills | 1px line fills left→right | break-length, linear | Quiet stepped updates |
-| 9 | The day ends | Sky lowers 240 ms; capsule **re-presents ~2 s** for the eye-crinkle 400 ms, then retracts; focus restored | one-shot | Crossfade out only; no re-present, no crinkle (D-029) |
+| 9 | The day ends | Field closes immediately, restores the previous application, and may show the completion capsule when the completed action allows it. | instant | Same (D-031) |
 | 10 | Everything else | System-owned motion (menus, windows) | system | system |
 
 Never: loops · pulses · shimmer · parallax · animated backgrounds · anything that
@@ -210,17 +212,16 @@ excluded_application → outside_working_hours → snooze → low_friction_wait.
   Calendar busy/free, Focus filter, user-named excluded apps. Never inference from
   other apps' content (`[07 §3]`).
 
-## 8. Multi-display (DQ-03 — interim answer, logged)
+## 8. Multi-display (DQ-03, closed by owner review)
 
-- User chooses primary-only or all-displays; default all-displays for the field,
-  with the full control stack repeated on **every** panel — no display shows a field
-  without an exit (accessibility rule §1: multi-display).
-- The capsule lives on the **display containing the pointer** (D-029), docking under
-  that display's notch or menu-bar clock — the heads-up appears where the user is
-  working.
+- User chooses primary-only or all-displays; default all-displays for the atmosphere. The full
+  content and control stack appear exactly once, on the active pointer/key display. Other panels
+  carry atmosphere only and are not focusable or clickable.
+- The capsule lives fixed at **top-center on the active pointer/key display** (D-029). The
+  heads-up appears where the user is working without following the pointer.
 - Mirrored displays render one coordinated surface. Display disconnect while a break is
-  up: remaining displays re-check that a control stack is present; a break must never be
-  strandable (ED-05).
+  up: remaining displays re-check that exactly one reachable control stack is present; a break
+  must never be strandable (ED-05).
 - Full-screen apps hide the menu bar; the capsule and overlays do not depend on it.
 
 ## 9. System state changes
@@ -245,3 +246,16 @@ excluded_application → outside_working_hours → snooze → low_friction_wait.
 Refusing a permission never degrades unrelated functionality, and the UI says so
 (`[07]`, CLAUDE.md §7). Camera, microphone, Screen Recording, Accessibility permission:
 out of scope entirely — no design may imply them.
+
+## 11. Privacy history export
+
+- `Review export…` opens the centered SE-11 sheet without writing a file.
+- Format is a native macOS menu with exactly CSV and JSON.
+- Columns is collapsed initially. Expanding it exposes exactly the six typed history fields with
+  native checkbox semantics and field-by-field explanations. The destination action is disabled
+  when none are selected.
+- One `Choose destination…` action opens the native save panel. Cancellation is quiet. Failure
+  keeps the sheet open and retry replays the exact immutable format-and-columns request.
+- CSV headers and values follow canonical `HistoryExportField` order for the selected subset.
+  JSON schema v2 always includes `formatVersion` and ordered `fields` metadata, emits only selected
+  record keys, and represents selected nullable values as `null`.

@@ -34,10 +34,10 @@ import HeadsUp
                 lastRuntimeError = error
             }
 
-            if mode == .notification && (
-                headsUpVerificationSettings?.authorizationStatus != .authorized
-                    || headsUpVerificationSettings?.alertsEnabled != true
-            ) {
+            if mode == .notification,
+               headsUpVerificationSettings?.authorizationStatus != .authorized
+               || headsUpVerificationSettings?.alertsEnabled != true
+            {
                 writeHeadsUpVerificationEvidence(
                     route: mode.rawValue,
                     outcome: "blocked-authorization-unavailable",

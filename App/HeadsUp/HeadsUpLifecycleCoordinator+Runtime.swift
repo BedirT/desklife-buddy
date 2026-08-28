@@ -6,7 +6,9 @@ extension HeadsUpLifecycleCoordinator {
     func drain() async {
         await serialTaskTail?.value
         let tasks = deliveryTasks.values
-        for task in tasks { await task.value }
+        for task in tasks {
+            await task.value
+        }
         await serialTaskTail?.value
     }
 
@@ -18,6 +20,8 @@ extension HeadsUpLifecycleCoordinator {
     #endif
 
     func tearDown() {
+        suppressionRetractionCancellation?.cancel()
+        suppressionRetractionCancellation = nil
         deliveryTasks.values.forEach { $0.cancel() }
         deliveryTasks.removeAll()
         permissionPanelCoordinator.tearDown()
@@ -122,9 +126,7 @@ extension HeadsUpLifecycleCoordinator {
         let id = reservation.id
         let task = Task { [weak self] in
             guard let self else { return }
-            let preferred = await authorizationCoordinator.selectChannel {
-                await self.permissionPanelCoordinator.present()
-            }
+            let preferred = authorizationCoordinator.automaticDeliveryChannel()
             guard !Task.isCancelled else { return }
             let channel = await deliveryCoordinator.deliver(
                 deliveryID: id.rawValue,
@@ -176,7 +178,10 @@ extension HeadsUpLifecycleCoordinator {
             ?? TimeInterval(mark.rawValue)
         let lead = TimeInterval(max(mark.rawValue, 1))
         let progress = min(max(1 - remaining / lead, 0), 1)
-        let model = modelFactory(scope, phase, progress) { [weak self] intent in
+        let accessibility = Self.accessibility(
+            for: runtime.preferences?.accessibility.presentation,
+        )
+        let model = modelFactory(scope, phase, progress, accessibility) { [weak self] intent in
             self?.send(intent)
         }
         let driver = driverFactory(model, lead)
@@ -223,16 +228,29 @@ extension HeadsUpLifecycleCoordinator {
 
     func holdThenRetract(_ id: HeadsUpDeliveryID, reason: SuppressionReason) {
         guard let activePresentation, activePresentation.id == id else { return }
+        suppressionRetractionCancellation?.cancel()
         activePresentation.driver.stop()
         activePresentation.model.updatePhase(.hold(Self.hold(for: reason)))
         deliveryTasks[id]?.cancel()
-        deliveryCoordinator.withdraw(.retractPresented(id.rawValue))
-        responseBuffer.clearDelivery(deliveryID: id.rawValue)
-        retireActivePresentation()
+        deliveryTasks[id] = nil
+        publishStatusProjection()
+        suppressionRetractionCancellation = scheduleSuppressionRetraction(
+            suppressionHoldDurationSeconds,
+        ) { [weak self] in
+            guard let self, self.activePresentation?.id == id else { return }
+            suppressionRetractionCancellation = nil
+            deliveryCoordinator.withdraw(.retractPresented(id.rawValue))
+            responseBuffer.clearDelivery(deliveryID: id.rawValue)
+            retireActivePresentation()
+        }
     }
 
     func retire(_ id: HeadsUpDeliveryID) {
         guard activePresentation?.id == id || pendingBreakOpening?.id == id else { return }
+        if activePresentation?.id == id {
+            suppressionRetractionCancellation?.cancel()
+            suppressionRetractionCancellation = nil
+        }
         deliveryTasks[id]?.cancel()
         deliveryTasks[id] = nil
         deliveryCoordinator.withdraw(.retractPresented(id.rawValue))
@@ -243,6 +261,8 @@ extension HeadsUpLifecycleCoordinator {
     }
 
     func retireActivePresentation() {
+        suppressionRetractionCancellation?.cancel()
+        suppressionRetractionCancellation = nil
         activePresentation?.driver.stop()
         activePresentation = nil
         publishStatusProjection()
@@ -259,5 +279,29 @@ extension HeadsUpLifecycleCoordinator {
         case .outsideWorkingHours: .outsideWorkingHours
         case .snooze, .lowFrictionWait: .snooze
         }
+    }
+
+    static func accessibility(
+        for presentation: AccessibleBreakPresentation?,
+    ) -> HeadsUpAccessibility {
+        switch presentation {
+        case .staticPresentation:
+            HeadsUpAccessibility(staticPresentation: true)
+        case .textOnly:
+            HeadsUpAccessibility(textOnly: true, staticPresentation: true)
+        case .standard, nil:
+            HeadsUpAccessibility()
+        }
+    }
+
+    static func liveSuppressionRetractionScheduler(
+        duration: TimeInterval,
+        action: @escaping @MainActor @Sendable () -> Void,
+    ) -> OverlayCancellation {
+        let timer = Timer(timeInterval: duration, repeats: false) { _ in
+            MainActor.assumeIsolated { action() }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        return OverlayCancellation { timer.invalidate() }
     }
 }

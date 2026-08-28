@@ -6,8 +6,10 @@ import VisualReset
 
 extension AppDelegate {
     func installPrimaryOverlays(configuration: ProtocolConfiguration) {
+        let accessibilityPreferences = runtime?.preferences?.accessibility ?? .defaults
         overlayCoordinator = VisualResetOverlayCoordinator(
             durationSeconds: configuration.visual.durationOptionsSeconds[0],
+            accessibilityPreferences: accessibilityPreferences,
             onLifecycle: { [weak self] action, completion in
                 guard let self else {
                     completion(.failure(AppDelegateLifecycleError.coordinatorUnavailable))
@@ -16,9 +18,11 @@ extension AppDelegate {
                 enqueueVisualReset(action, completion: completion)
             },
             onAnnouncement: VisualResetAccessibilityAnnouncer.post,
+            onCompletion: { [weak self] in self?.presentCompletionAcknowledgement() },
         )
         movementOverlayCoordinator = MovementOverlayCoordinator(
             schedule: configuration.movement,
+            accessibilityPreferences: accessibilityPreferences,
             onLifecycle: { [weak self] action, completion in
                 guard let self else {
                     completion(.failure(AppDelegateLifecycleError.coordinatorUnavailable))
@@ -27,6 +31,7 @@ extension AppDelegate {
                 enqueueMovement(action, completion: completion)
             },
             onAnnouncement: MovementAccessibilityAnnouncer.post,
+            onCompletion: { [weak self] in self?.presentCompletionAcknowledgement() },
         )
     }
 

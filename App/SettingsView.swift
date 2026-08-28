@@ -1,20 +1,51 @@
-import DesignSystem
+import AppKit
+import SettingsFeature
 import SwiftUI
 
 struct SettingsView: View {
+    @State private var sceneModel: SettingsSceneModel
+
+    init(appDelegate: AppDelegate) {
+        _sceneModel = State(initialValue: appDelegate.settingsSceneModel)
+    }
+
+    init(sceneModel: SettingsSceneModel) {
+        _sceneModel = State(initialValue: sceneModel)
+    }
+
     var body: some View {
-        DSEmptyState(
-            systemImage: "gearshape",
-            title: AppL10n.settingsPlaceholderTitle,
-            message: AppL10n.settingsPlaceholderMessage,
+        SettingsFeatureView(
+            model: sceneModel.featureModel,
+            loadsAutomatically: false,
+            excludedApplicationPresentations: sceneModel.excludedApplicationPresentations,
+            excludedApplicationPicker: sceneModel.excludedApplicationPicker,
+            integrationsRuntime: sceneModel.integrationsRuntime,
+            integrationsActions: sceneModel.integrationsActions,
         )
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.dsBackground)
-        .accessibilityIdentifier("settings.placeholder")
-        .frame(width: 460, height: 240)
+        .task {
+            await sceneModel.load()
+        }
+        .onChange(of: sceneModel.featureModel.selectedSection) { _, section in
+            Task { await sceneModel.selectedSectionDidChange(section) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await sceneModel.refreshIntegrations() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
+            Task { await sceneModel.refreshIntegrations() }
+        }
     }
 }
 
 #Preview("Settings") {
-    SettingsView()
+    SettingsView(
+        sceneModel: SettingsSceneModel(
+            previewModel: .preview(.balanced),
+            integrationsRuntime: SettingsIntegrationsRuntime(
+                notifications: .available(authorization: .notDetermined),
+                launchAtLogin: .enabled,
+            ),
+        ),
+    )
+    .frame(width: 1000, height: 700)
 }

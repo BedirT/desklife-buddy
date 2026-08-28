@@ -1,31 +1,42 @@
 import AppKit
 import CoreGraphics
+import DesignSystem
+import Domain
 import SwiftUI
 import VisualReset
 
 protocol VisualResetPanelPresenting: AnyObject {
     var displayID: OverlayDisplayID { get }
     func present(makeKey: Bool)
-    func update(frame: CGRect)
+    func update(frame: CGRect, role: OverlayDisplayRole)
     func close()
     func makeKey()
 }
 
-final class VisualResetPanel: NSPanel, VisualResetPanelPresenting {
+final class VisualResetPanel: BreakFieldAnimatedPanel, VisualResetPanelPresenting {
     let displayID: OverlayDisplayID
+    private let model: VisualResetModel
+    private let accessibilityPreferences: AccessibilityPreferences
     private let onCancel: () -> Void
     private let focusPresentation = VisualResetFocusPresentation(showsDefaultAction: false)
+    private let hostingView = NSHostingView(rootView: AnyView(EmptyView()))
+    private(set) var role: OverlayDisplayRole
 
-    override var canBecomeKey: Bool { true }
+    override var canBecomeKey: Bool { role == .interactive }
     override var canBecomeMain: Bool { false }
 
     init(
         displayID: OverlayDisplayID,
         frame: CGRect,
         model: VisualResetModel,
+        role: OverlayDisplayRole,
+        accessibilityPreferences: AccessibilityPreferences = .defaults,
         onCancel: @escaping () -> Void,
     ) {
         self.displayID = displayID
+        self.model = model
+        self.role = role
+        self.accessibilityPreferences = accessibilityPreferences
         self.onCancel = onCancel
         super.init(
             contentRect: frame,
@@ -41,24 +52,25 @@ final class VisualResetPanel: NSPanel, VisualResetPanelPresenting {
         hidesOnDeactivate = false
         isReleasedWhenClosed = false
         animationBehavior = .none
-        contentView = NSHostingView(rootView: VisualResetView(
-            model: model,
-            focusPresentation: focusPresentation,
-            opensAutomatically: false,
-        ))
+        contentView = hostingView
+        breakFieldMotionMode = .resolve(
+            staticPresentation: model.accessibility.staticPresentation,
+            reduceMotion: model.accessibility.reduceMotion
+                || NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
+        )
         setAccessibilityIdentifier("visualReset.panel.\(displayID)")
+        updateRolePresentation()
     }
 
     func present(makeKey: Bool) {
-        if makeKey {
-            makeKeyAndOrderFront(nil)
-        } else {
-            orderFront(nil)
-        }
+        presentBreakField(makeKey: makeKey && role == .interactive)
     }
 
-    func update(frame: CGRect) {
+    func update(frame: CGRect, role: OverlayDisplayRole) {
         setFrame(frame, display: true)
+        guard self.role != role else { return }
+        self.role = role
+        updateRolePresentation()
     }
 
     override func becomeKey() {
@@ -76,33 +88,93 @@ final class VisualResetPanel: NSPanel, VisualResetPanelPresenting {
     }
 
     override func cancelOperation(_ sender: Any?) {
+        guard role == .interactive else { return }
         onCancel()
     }
 
     override func keyDown(with event: NSEvent) {
-        if event.keyCode == 53 || event.charactersIgnoringModifiers == "\u{1B}" {
+        guard role == .interactive else { return }
+        if isCancellationEvent(event) {
             onCancel()
             return
         }
+        if handleReturn(event) { return }
         super.keyDown(with: event)
     }
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        let isEscape = event.keyCode == 53 || event.charactersIgnoringModifiers == "\u{1B}"
-        if isEscape {
+        guard role == .interactive else { return false }
+        if isCancellationEvent(event) {
             onCancel()
+            return true
+        }
+        if handleReturn(event) { return true }
+        return super.performKeyEquivalent(with: event)
+    }
+
+    override func sendEvent(_ event: NSEvent) {
+        guard role == .interactive, event.type == .keyDown else {
+            super.sendEvent(event)
+            return
+        }
+        if isCancellationEvent(event) {
+            onCancel()
+            return
+        }
+        if handleReturn(event) { return }
+        super.sendEvent(event)
+    }
+
+    private func isCancellationEvent(_ event: NSEvent) -> Bool {
+        if event.keyCode == 53 || event.charactersIgnoringModifiers == "\u{1B}" {
             return true
         }
         let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let forbiddenModifiers: NSEvent.ModifierFlags = [.control, .option, .shift]
-        let isCommandPeriod = modifiers.contains(.command)
+        return modifiers.contains(.command)
             && modifiers.isDisjoint(with: forbiddenModifiers)
             && event.charactersIgnoringModifiers == "."
-        if isCommandPeriod {
-            onCancel()
-            return true
+    }
+
+    private func handleReturn(_ event: NSEvent) -> Bool {
+        let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        let characters = event.charactersIgnoringModifiers
+        guard modifiers.isEmpty, characters == "\r" || characters == "\n" else {
+            return false
         }
-        return super.performKeyEquivalent(with: event)
+        model.doneEarlyFromKeyboard()
+        return true
+    }
+
+    private func updateRolePresentation() {
+        focusPresentation.showsDefaultAction = role == .interactive && isKeyWindow
+        ignoresMouseEvents = role == .atmosphere
+        switch role {
+        case .interactive:
+            hostingView.rootView = AnyView(
+                VisualResetView(
+                    model: model,
+                    staticField: AnyView(staticDesktopField),
+                    focusPresentation: focusPresentation,
+                    opensAutomatically: false,
+                )
+                .environment(\.dsBreakEntrance, breakFieldEntranceState),
+            )
+            hostingView.setAccessibilityElement(false)
+            setAccessibilityChildren(nil)
+        case .atmosphere:
+            hostingView.rootView = accessibilityPreferences.presentation == .standard
+                ? AnyView(VisualResetAtmosphereView())
+                : AnyView(staticDesktopField)
+            hostingView.setAccessibilityElement(false)
+            setAccessibilityChildren([])
+        }
+    }
+
+    private var staticDesktopField: some View {
+        DSStaticDesktopField(brightness: accessibilityPreferences.staticOverlayBrightness)
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
     }
 
     #if DEBUG

@@ -217,7 +217,7 @@ struct HeadsUpCapsuleCoordinatorTests {
         #expect(harness.panels[0].updateCount == 1)
     }
 
-    @Test("Hovering the live model grows and reanchors the same panel for its actions")
+    @Test("Hovering the live model grows the same panel around its fixed center")
     func liveHoverResize() async {
         let harness = HeadsUpCapsuleHarness()
         let compactSize = CGSize(width: 280, height: 34)
@@ -238,8 +238,9 @@ struct HeadsUpCapsuleCoordinatorTests {
         #expect(harness.panels[0].model === model)
         #expect(harness.panels[0].updateCount == 1)
         #expect(harness.panels[0].frame.size == panelSize(for: actionsSize))
-        #expect(harness.panels[0].frame.maxX == compactFrame.maxX)
+        #expect(harness.panels[0].frame.midX == compactFrame.midX)
         #expect(harness.panels[0].frame.minX < compactFrame.minX)
+        #expect(harness.panels[0].frame.maxX > compactFrame.maxX)
 
         model.setHovered(false)
         await Task.yield()
@@ -310,6 +311,60 @@ struct HeadsUpCapsuleCoordinatorTests {
         #expect(harness.panels[0].updateCount == 0)
     }
 
+    @Test("Reactive glint updates only the highlight and resets when the panel closes")
+    func reactiveGlintDoesNotMoveCapsule() {
+        let harness = HeadsUpCapsuleHarness()
+        let sampler = FakeHeadsUpPointerGlintSampler()
+        harness.glintSampler = sampler
+        let coordinator = harness.makeCoordinator()
+        let model = HeadsUpModel.preview(scope: .visual)
+
+        #expect(coordinator.present(HeadsUpCapsulePresentation(
+            deliveryID: UUID(),
+            model: model,
+        )))
+        let fixedFrame = harness.panels[0].frame
+        sampler.emit(2)
+
+        #expect(sampler.startCount == 1)
+        #expect(model.presentation.normalizedGlint == 1)
+        #expect(harness.panels[0].frame == fixedFrame)
+        #expect(harness.panels[0].updateCount == 0)
+
+        coordinator.tearDown()
+
+        #expect(sampler.cancelCount == 1)
+        #expect(model.presentation.normalizedGlint == 0)
+    }
+
+    @Test("Static, text-only, and system Reduce Motion presentations never start sampling")
+    func inaccessibleModesDoNotSample() {
+        let modes = [
+            HeadsUpAccessibility(staticPresentation: true),
+            HeadsUpAccessibility(textOnly: true),
+            HeadsUpAccessibility(reduceMotion: true),
+        ]
+        for accessibility in modes {
+            let harness = HeadsUpCapsuleHarness()
+            let sampler = FakeHeadsUpPointerGlintSampler()
+            harness.glintSampler = sampler
+            let coordinator = harness.makeCoordinator()
+            #expect(coordinator.present(HeadsUpCapsulePresentation(
+                deliveryID: UUID(),
+                model: .preview(scope: .visual, accessibility: accessibility),
+            )))
+            #expect(sampler.startCount == 0)
+        }
+
+        let harness = HeadsUpCapsuleHarness()
+        let sampler = FakeHeadsUpPointerGlintSampler()
+        harness.glintSampler = sampler
+        harness.systemReduceMotion = true
+        let coordinator = harness.makeCoordinator()
+        #expect(coordinator.present(harness.presentation(UUID())))
+        #expect(sampler.startCount == 0)
+    }
+
     @Test("Notification fallback conformance uses an explicit request-to-model integration seam")
     func notificationFallbackConformance() async throws {
         let harness = HeadsUpCapsuleHarness()
@@ -328,6 +383,18 @@ struct HeadsUpCapsuleCoordinatorTests {
         #expect(try await presenter.present(deliveryID: deliveryID, content: request))
         #expect(harness.panels.count == 1)
         #expect(harness.panels[0].model.scope == .movement)
+    }
+}
+
+@Suite("Heads-up pointer glint sampler")
+struct HeadsUpPointerGlintSamplerTests {
+    @Test("Horizontal pointer displacement is finite and clamped")
+    func normalizedGlint() {
+        #expect(HeadsUpPointerGlintSampler.normalizedGlint(deltaX: -120) == -1)
+        #expect(HeadsUpPointerGlintSampler.normalizedGlint(deltaX: 15) == 0.25)
+        #expect(HeadsUpPointerGlintSampler.normalizedGlint(deltaX: 0) == 0)
+        #expect(HeadsUpPointerGlintSampler.normalizedGlint(deltaX: 120) == 1)
+        #expect(HeadsUpPointerGlintSampler.normalizedGlint(deltaX: .nan) == 0)
     }
 }
 
@@ -429,6 +496,8 @@ private final class HeadsUpCapsuleHarness {
     var escapeCompletions: [(Result<Void, any Error>) -> Void] = []
     var screenObservationCount = 0
     var screenCancellationCount = 0
+    var glintSampler: FakeHeadsUpPointerGlintSampler?
+    var systemReduceMotion = false
     private var screenChange: (() -> Void)?
 
     init() {
@@ -470,6 +539,8 @@ private final class HeadsUpCapsuleHarness {
                 self.escapeCompletions.append(completion)
             },
             notificationModel: notificationModel,
+            makeGlintSampler: { self.glintSampler },
+            systemReduceMotion: { self.systemReduceMotion },
         )
     }
 
@@ -507,6 +578,34 @@ private final class HeadsUpCapsuleHarness {
     ) {
         let completionIndex = index ?? escapeCompletions.index(before: escapeCompletions.endIndex)
         escapeCompletions[completionIndex](result)
+    }
+}
+
+private final class FakeHeadsUpPointerGlintSampler: HeadsUpPointerGlintSampling {
+    private var isEnabled: (() -> Bool)?
+    private var onGlint: ((Double) -> Void)?
+    private(set) var startCount = 0
+    private(set) var cancelCount = 0
+
+    func start(
+        isEnabled: @escaping () -> Bool,
+        onGlint: @escaping (Double) -> Void,
+    ) {
+        startCount += 1
+        self.isEnabled = isEnabled
+        self.onGlint = onGlint
+    }
+
+    func emit(_ normalizedGlint: Double) {
+        guard isEnabled?() == true else { return }
+        onGlint?(normalizedGlint)
+    }
+
+    func cancel() {
+        cancelCount += 1
+        onGlint?(0)
+        isEnabled = nil
+        onGlint = nil
     }
 }
 

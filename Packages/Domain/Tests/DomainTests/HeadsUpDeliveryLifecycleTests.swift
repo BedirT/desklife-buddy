@@ -79,12 +79,12 @@ extension HeadsUpDeliveryTests {
     @Test("Engine derives exact merged timing and ignores recovery for actionable delivery")
     func engineDerivesActionableSnapshot() throws {
         let base = try configuration()
-        let configuration = ProtocolConfiguration(
+        let configuration = try ProtocolConfiguration(
             visual: base.visual,
             movement: base.movement,
             activityEstimator: base.activityEstimator,
             delivery: base.delivery,
-            recovery: try RecoveryConfiguration(
+            recovery: RecoveryConfiguration(
                 eligibleAfterSeconds: 1,
                 requiredMovementDeferrals: 1,
             ),

@@ -24,6 +24,20 @@ struct HistoryExportTests {
         ])
     }
 
+    @Test("Export request retains format and canonicalizes a typed field selection")
+    func typedRequestCanonicalOrder() throws {
+        let request = try HistoryExportRequest(
+            format: .csv,
+            selectedFields: [.source, .id, .opportunity],
+        )
+
+        #expect(request.format == .csv)
+        #expect(request.fields == [.id, .source, .opportunity])
+        #expect(throws: HistoryExportRequestError.noSelectedFields) {
+            _ = try HistoryExportRequest(format: .json, selectedFields: [])
+        }
+    }
+
     @Test("Projection is chronological with identifier tie-breaking and no inferred fields")
     func stableProjection() {
         let sameTime = Date(timeIntervalSince1970: 1_767_225_600)
@@ -58,9 +72,13 @@ struct HistoryExportTests {
             recordedAt: sameTime,
         )
 
-        let export = HistoryExport.project(events: [later, tieSecond, tieFirst])
+        let export = HistoryExport.project(
+            events: [later, tieSecond, tieFirst],
+            fields: HistoryExportField.allCases,
+        )
 
-        #expect(export.formatVersion == 1)
+        #expect(export.formatVersion == 2)
+        #expect(export.fields == HistoryExportField.allCases)
         #expect(export.records.map(\.id) == [tieFirst.id, tieSecond.id, later.id])
         #expect(export.records[0] == HistoryExportRecord(
             id: tieFirst.id,

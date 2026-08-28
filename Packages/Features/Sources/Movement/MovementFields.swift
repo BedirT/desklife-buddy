@@ -1,45 +1,52 @@
-import DesignSystem
+import BreakPresentation
 import SwiftUI
 
 struct MovementWorkingField: View {
+    let choice: MovementChoice
+
     var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .top) {
-                LinearGradient(
-                    colors: [.dsMovementSkyTop, .dsMovementSkyMiddle, .dsMovementSkyHorizon],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing,
-                )
-                RadialGradient(
-                    colors: [.dsMovementGlow.opacity(0.62), .clear],
-                    center: .bottom,
-                    startRadius: 0,
-                    endRadius: proxy.size.width * 0.34,
-                )
-                .frame(height: proxy.size.height * 0.72)
-                LinearGradient(
-                    colors: [.dsMovementGroundTop, .dsMovementGroundBottom],
-                    startPoint: .top,
-                    endPoint: .bottom,
-                )
-                .frame(height: proxy.size.height * 0.289)
-                .frame(maxHeight: .infinity, alignment: .bottom)
-            }
-        }
-        .accessibilityHidden(true)
+        BreakFieldView(variant: choice.breakFieldVariant)
+            .accessibilityHidden(true)
     }
 }
 
 struct MovementStaticField: View {
     var body: some View {
-        Color.dsStaticDesktopScrim.accessibilityHidden(true)
+        BreakStaticField(brightness: 0.65)
+    }
+}
+
+public struct MovementAtmosphereView: View {
+    private let model: MovementModel?
+
+    public init(model: MovementModel? = nil) {
+        self.model = model
+    }
+
+    public var body: some View {
+        MovementWorkingField(choice: model?.selectedChoice ?? .walkOrWheel)
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
     }
 }
 
 #Preview("Movement fields") {
     HStack(spacing: 0) {
-        MovementWorkingField()
+        MovementWorkingField(choice: .walkOrWheel)
+        MovementWorkingField(choice: .smallSpace)
+        MovementWorkingField(choice: .seated)
         MovementStaticField()
     }
     .frame(width: 960, height: 600)
+}
+
+private extension MovementChoice {
+    var breakFieldVariant: BreakFieldVariant {
+        switch self {
+        case .walkOrWheel: .movementWalkOrWheel
+        case .smallSpace: .movementSmallSpace
+        case .seated: .movementSeated
+        }
+    }
 }

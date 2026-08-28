@@ -5,6 +5,15 @@ import Testing
 
 @Suite("Movement session")
 struct MovementModelTests {
+    @Test("Standard layout keeps the full control stack above the revealed Dock")
+    func standardLayoutClearsRevealedDock() {
+        let verticalPosition = MovementStandardLayoutMetrics.y(
+            MovementStandardLayoutMetrics.controlsYFraction,
+            in: 982,
+        )
+        #expect(verticalPosition <= 760)
+    }
+
     @Test("Open self-starts with the protocol's recommended duration")
     func opensWithConfiguredDuration() throws {
         let clock = TestClock()

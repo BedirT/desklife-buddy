@@ -11,6 +11,26 @@
         }
       }
     },
+    "app.onboarding.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set up breaks"
+          }
+        }
+      }
+    },
+    "app.weekly.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekly rhythm"
+          }
+        }
+      }
+    },
     "app.settings.title" : {
       "localizations" : {
         "en" : {
@@ -37,6 +57,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No settings yet"
+          }
+        }
+      }
+    },
+    "app.settings.privacy.export.suggested_filename" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Break History"
           }
         }
       }

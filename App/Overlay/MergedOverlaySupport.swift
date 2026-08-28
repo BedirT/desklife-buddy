@@ -4,15 +4,22 @@ import Foundation
 import Movement
 import VisualReset
 
+typealias MergedLifecycleCallback = (
+    MergedLifecycleEvent,
+    @escaping (Result<Void, any Error>) -> Void,
+) -> Void
+
 extension MergedOverlayCoordinator {
     convenience init(
         policy: OverlayDisplayPolicy = .allDisplays,
         visualDurationSeconds: TimeInterval = 20,
         movementSchedule: OpportunitySchedule,
         acknowledgementDurationSeconds: TimeInterval = 2,
-        onLifecycle: @escaping LifecycleCallback,
+        accessibilityPreferences: AccessibilityPreferences = .defaults,
+        onLifecycle: @escaping MergedLifecycleCallback,
         onVisualAnnouncement: @escaping (VisualResetAnnouncement) -> Void = { _ in },
         onMovementAnnouncement: @escaping (MovementAnnouncement) -> Void = { _ in },
+        onCompletion: @escaping () -> Void = {},
     ) {
         let clock = MergedOverlayMonotonicClock()
         self.init(
@@ -20,13 +27,16 @@ extension MergedOverlayCoordinator {
             visualDurationSeconds: visualDurationSeconds,
             movementSchedule: movementSchedule,
             acknowledgementDurationSeconds: acknowledgementDurationSeconds,
+            accessibilityPreferences: accessibilityPreferences,
             now: { clock.seconds },
             displays: AppKitOverlayDisplays.current,
-            makePanel: { display, content, onCancel in
+            makePanel: { display, role, content, accessibilityPreferences, onCancel in
                 MergedPanel(
                     displayID: display.id,
                     frame: display.frame,
                     content: content,
+                    role: role,
+                    accessibilityPreferences: accessibilityPreferences,
                     onCancel: onCancel,
                 )
             },
@@ -41,6 +51,7 @@ extension MergedOverlayCoordinator {
             onLifecycle: onLifecycle,
             onVisualAnnouncement: onVisualAnnouncement,
             onMovementAnnouncement: onMovementAnnouncement,
+            onCompletion: onCompletion,
         )
     }
 
@@ -77,6 +88,13 @@ extension MovementAction {
         case .visualOnly: .visualOnly
         case .skipped: .skipped
         case .opened, .selectedDuration: nil
+        }
+    }
+
+    var showsMergedCompletion: Bool {
+        switch self {
+        case .timerFinished, .doneEarly, .alreadyMoved: true
+        case .opened, .selectedDuration, .positionChanged, .visualOnly, .skipped: false
         }
     }
 }

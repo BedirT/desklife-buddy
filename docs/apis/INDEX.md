@@ -12,6 +12,7 @@ the project adopts a new post-cutoff surface.
 | [appkit-overlays.md](appkit-overlays.md) | building AppKit break panels, multi-display overlays, Spaces behavior, or focus restoration |
 | [swiftdata.md](swiftdata.md) | adding or changing app persistence, model containers, @Model types, fetches, or migrations |
 | [liquid-glass.md](liquid-glass.md) | building macOS chrome/overlay UI or anything labeled "glass" |
+| [service-management.md](service-management.md) | implementing or changing launch-at-login registration |
 
 Keep each brief under ~80 lines. Wrong-but-confident API usage costs more than
 any other failure mode here — when a brief and your prior knowledge disagree,

@@ -78,7 +78,7 @@ import Foundation
         }
     }
 
-    final class HeadsUpVerificationRuntimeStore: ProtocolRuntimeStore {
+    final class HeadsUpVerificationRuntimeStore: ProtocolRuntimeStore, ProtocolRuntimeSettingsStore {
         private let base: any ProtocolRuntimeStore
         private(set) var persistedPhases: [String] = []
         private(set) var promptPresentedEventCount = 0
@@ -93,11 +93,11 @@ import Foundation
 
         func commit(events: [OpportunityEvent], state: ProtocolState) async throws {
             try await base.commit(events: events, state: state)
-            promptPresentedEventCount += events.filter { $0.kind == .promptPresented }.count
+            promptPresentedEventCount += events.count(where: { $0.kind == .promptPresented })
             guard let active = state.headsUpDeliveryState.activeDelivery else { return }
-            let phase: String = switch (
+            let phase = switch (
                 active.phase,
-                active.promptFactStatus
+                active.promptFactStatus,
             ) {
             case (.reserved, _):
                 "reserved"
@@ -109,6 +109,35 @@ import Foundation
                 "presented"
             }
             if persistedPhases.last != phase { persistedPhases.append(phase) }
+        }
+
+        func resolve(_ preferences: AppPreferences) throws -> ResolvedAppPreferences {
+            try settingsStore.resolve(preferences)
+        }
+
+        @discardableResult
+        func commitPreferences(
+            _ preferences: ResolvedAppPreferences,
+            state: ProtocolState,
+        ) async throws -> Int {
+            try await settingsStore.commitPreferences(preferences, state: state)
+        }
+
+        func deleteHistory() async throws {
+            try await settingsStore.deleteHistory()
+        }
+
+        func resetAll(state: ProtocolState) async throws -> ResolvedAppPreferences {
+            try await settingsStore.resetAll(state: state)
+        }
+
+        private var settingsStore: any ProtocolRuntimeSettingsStore {
+            get throws {
+                guard let store = base as? any ProtocolRuntimeSettingsStore else {
+                    throw ProtocolRuntimeSettingsError.persistenceUnavailable
+                }
+                return store
+            }
         }
     }
 

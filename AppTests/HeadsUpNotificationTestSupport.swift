@@ -17,6 +17,7 @@ extension HeadsUpNotificationDeliveryCoordinator {
     convenience init(
         center: any HeadsUpNotificationCenterClient,
         capsule: any HeadsUpCapsulePresenting,
+        allowsNotificationFallback: @escaping () -> Bool = { true },
         reconciliationAttempts: Int = 5,
         wait: @escaping Wait = {
             try? await Task.sleep(for: .milliseconds(100))
@@ -26,6 +27,7 @@ extension HeadsUpNotificationDeliveryCoordinator {
             center: center,
             capsule: capsule,
             responseRegistry: .init(),
+            allowsNotificationFallback: allowsNotificationFallback,
             reconciliationAttempts: reconciliationAttempts,
             wait: wait,
         )

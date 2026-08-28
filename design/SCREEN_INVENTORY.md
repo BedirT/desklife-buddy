@@ -83,18 +83,30 @@ the invoking `/usr/bin/swift` process has not been granted Accessibility permiss
 
 | ID | Screen / state | Notes | Status |
 |---|---|---|---|
-| AK-01 | Post-break acknowledgement | Capsule eye-crinkle, one-shot, nothing to dismiss (D-025 M9); detail options deferred | explored |
-| AK-02 | Suppressed acknowledgement | The common case — nothing appears | todo |
+| AK-01 | Post-break acknowledgement | Wordless capsule eye-crinkle, one-shot, ~2 s, nothing to dismiss (D-029 M9) | explored |
+| AK-02 | Suppressed acknowledgement | Reduce Motion, static presentation, and text-only: nothing appears | explored |
 
 ## E. Weekly rhythm (Level 4)
 
 | ID | Screen / state | Notes | Status |
 |---|---|---|---|
-| WK-01 | Weekly rhythm — populated | Per `IA` §4 | todo |
-| WK-02 | Weekly rhythm — first week / sparse | Honest empty state, no encouragement theater | todo |
-| WK-03 | Weekly rhythm — history disabled | User chose to keep nothing | todo |
-| WK-04 | Adjust-schedule affordance | Never framed as fixing failure | todo |
-| WK-05 | Optional self-report trend | Only when enabled | todo |
+| WK-01 | Weekly rhythm - populated | Named daypart mosaic plus strictly separated retained facts; production review passed 2026-08-28 | done |
+| WK-02 | Weekly rhythm - first week / sparse | Literal sparse introduction, no fabricated insight; production review passed 2026-08-28 | done |
+| WK-03 | Weekly rhythm - history disabled | Neutral keep-nothing state with explicit Privacy and Data route; production review passed 2026-08-28 | done |
+| WK-04 | Adjust-schedule affordance | Framed as fit and context, routes explicitly to Schedule; production review passed 2026-08-28 | done |
+| WK-05 | Optional self-report trend | Check-ins remain unauthorized and disabled, so no reachable UI exists | not authorized |
+
+Weekly production review, 2026-08-28: the primary hierarchy is rhythm and gaps, followed by one
+exact longest-run fact and three separated fact families. The selected named mosaic is readable
+without color, stays literal about estimates and empty cells, and adds no score, target, trend, or
+outcome. The ordinary window uses native scrolling and buttons, supports light and dark, largest
+text, Increase Contrast, Reduce Transparency, and Reduce Motion. The one-shot arrival uses the
+shared transition token; Reduce Motion dissolves without travel. Design rubric scores:
+product clarity 5, interruption quality 5, Mac nativeness 4, distinctiveness 5, simplicity 4,
+scientific honesty 5, autonomy 5, accessibility 4, privacy 5, emotional tone 5, visual quality 5,
+and long-term tolerance 5. Verdict: ship. Real keyboard and VoiceOver route inspection remains
+host-blocked by missing Accessibility permission, while identifiers and focused visual states are
+covered by previews and snapshots.
 
 ## F. Onboarding
 
@@ -122,7 +134,7 @@ the invoking `/usr/bin/swift` process has not been granted Accessibility permiss
 | SE-08 | Accessibility | All access preferences in one place | todo |
 | SE-09 | Privacy & data | What is stored, retention, export, delete | todo |
 | SE-10 | Privacy — delete confirmation | States exactly what remains | todo |
-| SE-11 | Privacy — export | Field-by-field description | todo |
+| SE-11 | Privacy: export | Native format menu, selectable six-field columns, one user-selected destination | designed |
 | SE-12 | Integrations | Four optional integrations | todo |
 | SE-13 | Why these defaults? | Evidence transparency `[05 §9]` | todo |
 | SE-14 | Why these defaults? — a single topic | e.g. "Standing and moving are different" | todo |
@@ -173,8 +185,8 @@ additionally: **Increase Contrast** · **Reduce Transparency** · **largest text
 
 ## K. Accessibility annotations — round-2 core surfaces
 
-Format per `.claude/rules/accessibility.md` §1. These five cover the surfaces drawn in
-round 2; every further screen gets its block before it can be marked `designed`.
+Format per `.claude/rules/accessibility.md` §1. These blocks cover the implemented and drawn
+core surfaces; every further screen gets its block before it can be marked `designed`.
 Cross-cutting rule (D-029): declaration keys (↩, 1–3, Q, A, P) arm ~800 ms after a break
 surface opens; Esc and ⌘. are exempt and always immediate.
 
@@ -204,9 +216,10 @@ Meaning w/o color    — Break type is named by the eyebrow ("Visual reset"); pr
                        the horizon line's length (position, not hue); pills are labeled.
 Alternative movement — n/a for the eyes-only reset; footnote offers "closing your eyes
                        gently works too" for users who cannot look far away.
-Multi-display        — Field per chosen display; the full pill stack repeats on every
-                       panel; Esc works from any display; mirrored = one surface;
-                       disconnect re-checks that a control stack remains (ED-03).
+Multi-display        — Atmosphere per chosen display; the full pill stack appears once on
+                       the active pointer/key panel. Other panels are noninteractive and
+                       accessibility-hidden; mirrored = one surface; disconnect reassigns
+                       exactly one reachable control stack (ED-03).
 ```
 
 ### K.2 Movement break — running (BR-05/06/07, `Movement.dc.html`)
@@ -268,14 +281,14 @@ VoiceOver values     — One polite announcement at appearance; one at hold-stat
 Text scaling        — Capsule grows in height/width with text; on overflow it drops the
                        tiny sky disc before ever truncating the label.
 High contrast        — Border `rgba(255,255,255,0.40)`; solid fill (already near-solid).
-Reduced motion       — No slide (fade in); sun static at three stepped heights; station-
-                       keeping off, sun centered (D-023).
+Reduced motion       — No slide (fade in); sun static at three stepped heights; reactive
+                       glint off and centered (D-023).
 Meaning w/o color    — Time = sun height (position); hold = dashed ring + the word "On
                        hold"; break type is named in text.
 Alternative movement — n/a (no movement content on this surface).
-Multi-display        — Lives on the display containing the pointer (D-029), docking
-                       under that display's notch or clock; notification path covers
-                       full-screen and hidden-bar cases (ED-16).
+Multi-display        — Lives fixed at top-center on the active pointer/key display (D-029).
+                       The capsule itself covers full-screen and hidden-bar cases; an
+                       already-authorized notification is secondary fallback only (ED-16).
 ```
 
 ### K.4 Status menu (MB-06, `Menu.dc.html`)
@@ -412,6 +425,46 @@ Alternative movement — Scope is explicit in the model; snoozing movement never
                        visual reset or position change completed it.
 Multi-display        — Sheet is attached to the active opportunity's key panel; reconnect
                        and mirrored-display behavior reuse the parent overlay plan.
+```
+
+### K.9 Onboarding walkthrough (ON-01 through ON-07)
+
+```
+Keyboard path        — Tab/Shift-Tab reaches Skip, the current page's choices in reading
+                       order, Back, and Continue/Finish. Arrow keys move within rhythm,
+                       movement, and presentation choices; Return activates the default action.
+Initial focus        — Continue on ON-01/02/06; the current selected choice on ON-03/04/05;
+                       Try again after a persistence failure.
+Focus order          — Skip → current page choices/brightness → Back → Continue/Finish.
+                       The initial-focus exception starts at the current decision, never traps
+                       focus, and the remaining controls stay reachable in visual order.
+Escape               — The ordinary App-owned window closes without completing or applying
+                       Skip defaults. Relaunch resumes first-launch setup. Command-W follows
+                       the same path. This is verified during App scene Step 5, not emulated by
+                       the feature view.
+VoiceOver names      — Visible labels name every action. Rhythm cards combine the profile name
+                       with both qualified target intervals; movement and presentation cards
+                       announce their visible title/detail and selected state. Brightness has a
+                       percentage value. Read-only macOS facts announce their name and On/Off.
+VoiceOver values     — Selection and native slider changes use their control values; submission
+                       failure is a contained status followed by Try again. No timers or
+                       unsolicited repeating announcements exist in onboarding.
+Text scaling         — The centered shell contains a vertical ScrollView. Largest text stacks
+                       rhythm, movement, presentation, and system-fact choices vertically; text
+                       wraps without truncation or horizontal scrolling.
+High contrast        — Semantic colors remain in use; selected and keyboard-focused choices
+                       gain explicit 2–3 px outlines and retain their checkmark/state trait.
+Reduced motion       — No app-owned animation exists. Reduce Motion derives Static as the
+                       initial app presentation without preventing the user from choosing
+                       Standard and without changing macOS.
+Meaning w/o color    — Choice selection uses a checkmark plus selected state and outline;
+                       focus uses an additional outline; every system state includes On/Off.
+Alternative movement — Four same-size, same-trait choices share one unranked type and one tier:
+                       Walk or wheel, Seated movement, Mix movement paths, Change position.
+                       Position change remains explicitly separate from movement completion.
+Multi-display        — Feature content is one centered ordinary window. Centering on the active
+                       display, display changes, close/relaunch recovery, and focus restoration
+                       are App-owned Step 5 proof obligations.
 ```
 
 ## Coverage summary

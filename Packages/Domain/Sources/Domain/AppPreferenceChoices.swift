@@ -64,16 +64,16 @@ public struct ContextPreferences: Codable, Equatable, Sendable {
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         try self.init(
-            excludedApplicationBundleIDs: try container.decode(
+            excludedApplicationBundleIDs: container.decode(
                 [String].self,
                 forKey: .excludedApplicationBundleIDs,
             ),
-            waitsForLowFrictionMoment: try container.decode(Bool.self, forKey: .waitsForLowFrictionMoment),
-            presentationModeSuppressionEnabled: try container.decode(
+            waitsForLowFrictionMoment: container.decode(Bool.self, forKey: .waitsForLowFrictionMoment),
+            presentationModeSuppressionEnabled: container.decode(
                 Bool.self,
                 forKey: .presentationModeSuppressionEnabled,
             ),
-            idleBehavior: try container.decode(IdlePreference.self, forKey: .idleBehavior),
+            idleBehavior: container.decode(IdlePreference.self, forKey: .idleBehavior),
         )
     }
 

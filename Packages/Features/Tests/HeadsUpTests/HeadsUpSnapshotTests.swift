@@ -10,7 +10,7 @@
         private let capsuleLayout = SnapshotLayout.fixed(width: 760, height: 150)
         private let permissionLayout = SnapshotLayout.fixed(width: 560, height: 320)
         private let permissionLargeLayout = SnapshotLayout.fixed(width: 680, height: 520)
-        private let dockingLayout = SnapshotLayout.fixed(width: 1000, height: 220)
+        private let placementLayout = SnapshotLayout.fixed(width: 1000, height: 220)
 
         private func capsule(_ model: HeadsUpModel) -> some View {
             HeadsUpView(model: model)
@@ -168,13 +168,12 @@
             )
         }
 
-        @Test func menuBarClockPlacementContext() {
+        @Test func fixedTopCenterPlacementContext() {
             assertScreenSnapshot(
-                of: HeadsUpDockingPreview(
-                    placement: .menuBarClock,
+                of: HeadsUpPlacementPreview(
                     model: .preview(scope: .visual, phase: .approaching(.seconds15)),
                 ),
-                layout: dockingLayout,
+                layout: placementLayout,
             )
         }
 

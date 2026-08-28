@@ -7,6 +7,62 @@ import Testing
 
 @Suite("Movement overlay coordinator")
 struct MovementOverlayCoordinatorTests {
+    @Test("Presentation, brightness, and seated-first ordering reach every display role")
+    func accessibilityPreferencePropagation() throws {
+        let scenarios: [(AccessibleBreakPresentation, Bool)] = [
+            (.standard, false),
+            (.staticPresentation, true),
+            (.textOnly, true),
+        ]
+
+        for (presentation, expectsStaticModel) in scenarios {
+            let preferences = try AccessibilityPreferences(
+                presentation: presentation,
+                staticOverlayBrightness: 0.68,
+                seatedContentFirst: true,
+            )
+            let harness = try MovementOverlayHarness(
+                displays: [movementDisplay(1, isMain: true), movementDisplay(2)],
+                accessibilityPreferences: preferences,
+            )
+            let coordinator = harness.makeCoordinator()
+
+            coordinator.present()
+
+            #expect(harness.panels.map(\.role) == [.interactive, .atmosphere])
+            #expect(harness.panels.allSatisfy {
+                $0.accessibilityPreferences == preferences
+            })
+            #expect(harness.panels[0].model.accessibility.staticPresentation == expectsStaticModel)
+            #expect(harness.panels[0].model.choiceOrder == [
+                .seated,
+                .walkOrWheel,
+                .smallSpace,
+            ])
+            #expect(harness.panels[0].model.selectedChoice == .walkOrWheel)
+        }
+    }
+
+    @Test("Timer announcement Off suppresses progress but preserves movement state changes")
+    func timerAnnouncementsOff() throws {
+        let preferences = try AccessibilityPreferences(timerAnnouncements: .none)
+        let harness = try MovementOverlayHarness(
+            displays: [movementDisplay(1, isMain: true)],
+            accessibilityPreferences: preferences,
+        )
+        let coordinator = harness.makeCoordinator()
+
+        coordinator.present()
+        harness.monotonicNow = 241
+        harness.fireRefresh()
+
+        #expect(harness.announcements.isEmpty)
+
+        harness.panels[0].model.select(.seated)
+
+        #expect(harness.announcements == [.selectionChanged(.seated)])
+    }
+
     @Test("Automatic presentation shares one non-explicit session across all displays")
     func automaticPresentation() throws {
         let harness = try MovementOverlayHarness(
@@ -18,6 +74,7 @@ struct MovementOverlayCoordinatorTests {
 
         #expect(harness.operations.prefix(2) == ["capture", "activate"])
         #expect(harness.panels.map(\.displayID) == [.direct(1), .direct(2)])
+        #expect(harness.panels.map(\.role) == [.interactive, .atmosphere])
         #expect(harness.panels.filter(\.wasMadeKey).map(\.displayID) == [.direct(1)])
         #expect(harness.panels[0].model === harness.panels[1].model)
         #expect(harness.lifecycle == [.opened])
@@ -44,8 +101,8 @@ struct MovementOverlayCoordinatorTests {
         #expect(quick.panels[0].model.remainingSeconds == 120)
     }
 
-    @Test("Escape from any display closes every panel and restores once")
-    func escapeClosesAll() throws {
+    @Test("Only the interactive display routes Escape and restores once")
+    func onlyInteractiveEscapeClosesAll() throws {
         let harness = try MovementOverlayHarness(
             displays: [movementDisplay(1, isMain: true), movementDisplay(2)],
         )
@@ -53,6 +110,8 @@ struct MovementOverlayCoordinatorTests {
         coordinator.present()
 
         harness.panels[1].cancel()
+        #expect(harness.lifecycle == [.opened])
+        #expect(harness.panels.allSatisfy { !$0.wasClosed })
         harness.panels[0].cancel()
 
         #expect(harness.lifecycle == [.opened, .skipped])
@@ -77,6 +136,7 @@ struct MovementOverlayCoordinatorTests {
         #expect(harness.lifecycle == [.opened, .alreadyMoved])
         #expect(harness.panels[0].wasClosed)
         #expect(harness.restoredProcessIdentifiers == [41])
+        #expect(harness.completionCount == 1)
     }
 
     @Test("One refresh source drives deadline completion for the shared model")
@@ -91,6 +151,28 @@ struct MovementOverlayCoordinatorTests {
         #expect(harness.lifecycle == [.opened, .timerFinished])
         #expect(harness.panels[0].wasClosed)
         #expect(harness.restoredProcessIdentifiers == [41])
+        #expect(harness.completionCount == 1)
+    }
+
+    @Test("Only completed movement terminals request completion")
+    func completionEligibility() throws {
+        let done = try MovementOverlayHarness(displays: [movementDisplay(1, isMain: true)])
+        let doneCoordinator = done.makeCoordinator()
+        doneCoordinator.present()
+        done.panels[0].model.doneEarly()
+        #expect(done.completionCount == 1)
+
+        let position = try MovementOverlayHarness(displays: [movementDisplay(1, isMain: true)])
+        let positionCoordinator = position.makeCoordinator()
+        positionCoordinator.present()
+        position.panels[0].model.positionChanged()
+        #expect(position.completionCount == 0)
+
+        let skipped = try MovementOverlayHarness(displays: [movementDisplay(1, isMain: true)])
+        let skippedCoordinator = skipped.makeCoordinator()
+        skippedCoordinator.present()
+        skipped.panels[0].model.skip()
+        #expect(skipped.completionCount == 0)
     }
 
     @Test("Display changes preserve the shared session and one reachable key panel")
@@ -109,7 +191,28 @@ struct MovementOverlayCoordinatorTests {
         #expect(harness.panels.last?.model === session)
         let openPanels = harness.panels.filter { !$0.wasClosed }
         #expect(Set(openPanels.map(\.displayID)) == [.direct(2), .direct(3)])
-        #expect(openPanels.filter(\.wasMadeKey).map(\.displayID) == [.direct(2)])
+        #expect(openPanels.filter { $0.role == .interactive }.map(\.displayID) == [.direct(2)])
+        #expect(openPanels.filter { $0.role == .atmosphere }.map(\.displayID) == [.direct(3)])
+    }
+
+    @Test("Pointer movement alone does not move the interactive movement surface")
+    func noPointerChasing() throws {
+        let harness = try MovementOverlayHarness(displays: [
+            movementDisplay(1, isMain: true, containsPointer: true),
+            movementDisplay(2),
+        ])
+        let coordinator = harness.makeCoordinator()
+        coordinator.present()
+
+        harness.displays = [
+            movementDisplay(1, isMain: true),
+            movementDisplay(2, containsPointer: true),
+        ]
+        harness.fireScreenChange()
+
+        let openPanels = harness.panels.filter { !$0.wasClosed }
+        #expect(openPanels.filter { $0.role == .interactive }.map(\.displayID) == [.direct(1)])
+        #expect(openPanels.filter { $0.role == .atmosphere }.map(\.displayID) == [.direct(2)])
     }
 
     @Test("Lifecycle persistence operations stay ordered and allow explicit retries after failure")
@@ -143,43 +246,20 @@ struct MovementOverlayCoordinatorTests {
         ])
     }
 
-    @Test("Failed lifecycle commits keep the surface retryable and defer terminal claims")
+    @Test("A failed opening commit dismisses the movement surface instead of trapping input")
     func lifecycleFailureRecovery() throws {
         let harness = try MovementOverlayHarness(displays: [movementDisplay(1, isMain: true)])
-        harness.failNextActions = [.opened, .selectedDuration(300), .doneEarly]
+        harness.failNextActions = [.opened]
         let coordinator = harness.makeCoordinator()
 
         coordinator.present(selectedDurationSeconds: 300)
         #expect(harness.panels[0].model.phase == .ready)
         #expect(harness.announcements.isEmpty)
-        #expect(!harness.panels[0].wasClosed)
-
-        coordinator.present(selectedDurationSeconds: 300)
-        #expect(harness.panels[0].model.phase == .running)
-        #expect(harness.lifecycle == [
-            .opened,
-            .opened,
-            .selectedDuration(300),
-        ])
-        #expect(harness.announcements == [.opened(durationSeconds: 300)])
-
-        coordinator.present(selectedDurationSeconds: 300)
-        #expect(harness.lifecycle == [
-            .opened,
-            .opened,
-            .selectedDuration(300),
-            .selectedDuration(300),
-        ])
-
-        harness.panels[0].model.doneEarly()
-        #expect(harness.panels[0].model.phase == .running)
-        #expect(!harness.panels[0].wasClosed)
-        #expect(!harness.announcements.contains(.doneEarly))
-
-        harness.panels[0].model.doneEarly()
         #expect(harness.panels[0].wasClosed)
-        #expect(harness.announcements.last == .doneEarly)
         #expect(harness.restoredProcessIdentifiers == [41])
+        #expect(harness.refreshScheduleCount == 0)
+        #expect(harness.screenObservationCount == 0)
+        #expect(!coordinator.isPresenting)
     }
 
     @Test("An open failure invalidates a terminal queued before its acknowledgement")
@@ -197,12 +277,9 @@ struct MovementOverlayCoordinatorTests {
         #expect(harness.panels[0].model.phase == .ready)
         harness.completeNextLifecycle(.failure(MovementOverlayTestFailure.requested))
         #expect(harness.panels[0].model.phase == .ready)
-        #expect(!harness.panels[0].wasClosed)
-
-        coordinator.present()
-        harness.completeNextLifecycle(.success(()))
-        #expect(harness.panels[0].model.phase == .running)
-        #expect(harness.announcements == [.opened(durationSeconds: 300)])
+        #expect(harness.panels[0].wasClosed)
+        #expect(harness.restoredProcessIdentifiers == [41])
+        #expect(!coordinator.isPresenting)
     }
 
     @Test("A quick menu command applies its requested duration to an existing session")
@@ -228,12 +305,14 @@ struct MovementPanelTests {
             displayID: .direct(1),
             frame: CGRect(x: 0, y: 0, width: 800, height: 600),
             model: model,
+            role: .interactive,
             onCancel: {},
         )
         let second = MovementPanel(
             displayID: .direct(2),
             frame: CGRect(x: 800, y: 0, width: 800, height: 600),
             model: model,
+            role: .interactive,
             onCancel: {},
         )
         defer {
@@ -252,6 +331,27 @@ struct MovementPanelTests {
         #expect(!second.showsDefaultActionForTesting)
     }
 
+    @Test("An atmosphere movement panel ignores input and accessibility")
+    func atmospherePanelContract() throws {
+        let panel = try MovementPanel(
+            displayID: .direct(1),
+            frame: CGRect(x: 0, y: 0, width: 800, height: 600),
+            model: MovementModel(schedule: movementSchedule(), now: { 0 }),
+            role: .atmosphere,
+            onCancel: {},
+        )
+        defer { panel.close() }
+
+        #expect(!panel.canBecomeKey)
+        #expect(panel.ignoresMouseEvents)
+        #expect(panel.accessibilityChildren()?.isEmpty == true)
+
+        panel.update(frame: panel.frame, role: .interactive)
+        #expect(panel.canBecomeKey)
+        #expect(!panel.ignoresMouseEvents)
+        #expect(panel.accessibilityChildren() == nil)
+    }
+
     @Test("Escape and Command-period route through the immediate cancel seam")
     func immediateCancel() throws {
         var cancelCount = 0
@@ -259,6 +359,7 @@ struct MovementPanelTests {
             displayID: .direct(1),
             frame: CGRect(x: 0, y: 0, width: 800, height: 600),
             model: MovementModel(schedule: movementSchedule(), now: { 0 }),
+            role: .interactive,
             onCancel: { cancelCount += 1 },
         )
         defer { panel.close() }
@@ -287,6 +388,7 @@ struct MovementPanelTests {
             displayID: .direct(1),
             frame: CGRect(x: 0, y: 0, width: 800, height: 600),
             model: model,
+            role: .interactive,
             onCancel: {},
         )
         defer { panel.close() }
@@ -316,6 +418,7 @@ struct MovementPanelTests {
                 displayID: .direct(1),
                 frame: CGRect(x: 0, y: 0, width: 800, height: 600),
                 model: model,
+                role: .interactive,
                 onCancel: {},
             )
             defer { panel.close() }
@@ -335,13 +438,14 @@ struct MovementPanelTests {
 private func movementDisplay(
     _ id: CGDirectDisplayID,
     isMain: Bool = false,
+    containsPointer: Bool = false,
 ) -> OverlayDisplay {
     OverlayDisplay(
         id: .direct(id),
         mirrorRootID: .direct(id),
         frame: CGRect(x: Int(id) * 100, y: 0, width: 100, height: 100),
         isMain: isMain,
-        containsPointer: false,
+        containsPointer: containsPointer,
     )
 }
 
@@ -375,6 +479,7 @@ private func keyEvent(
 
 private final class MovementOverlayHarness {
     var displays: [OverlayDisplay]
+    var accessibilityPreferences: AccessibilityPreferences
     var monotonicNow: TimeInterval = 0
     var appIsFrontmost = true
     var operations: [String] = []
@@ -386,6 +491,7 @@ private final class MovementOverlayHarness {
     var refreshCancellationCount = 0
     var screenObservationCount = 0
     var screenCancellationCount = 0
+    var completionCount = 0
     var failNextActions: [MovementAction] = []
     var defersLifecycleCompletions = false
     var pendingLifecycleActions: [MovementAction] {
@@ -397,8 +503,12 @@ private final class MovementOverlayHarness {
     private var screenChangeAction: (() -> Void)?
     private var pendingLifecycleCompletions: [PendingMovementLifecycleCompletion] = []
 
-    init(displays: [OverlayDisplay]) throws {
+    init(
+        displays: [OverlayDisplay],
+        accessibilityPreferences: AccessibilityPreferences = .defaults,
+    ) throws {
         self.displays = displays
+        self.accessibilityPreferences = accessibilityPreferences
         schedule = try movementSchedule()
     }
 
@@ -406,13 +516,16 @@ private final class MovementOverlayHarness {
         MovementOverlayCoordinator(
             policy: .allDisplays,
             schedule: schedule,
+            accessibilityPreferences: accessibilityPreferences,
             now: { self.monotonicNow },
             displays: { self.displays },
-            makePanel: { display, model, onCancel in
+            makePanel: { display, role, model, accessibilityPreferences, onCancel in
                 let panel = TestMovementPanel(
                     displayID: display.id,
                     frame: display.frame,
                     model: model,
+                    role: role,
+                    accessibilityPreferences: accessibilityPreferences,
                     onCancel: onCancel,
                 )
                 self.panels.append(panel)
@@ -450,6 +563,7 @@ private final class MovementOverlayHarness {
                 }
             },
             onAnnouncement: { self.announcements.append($0) },
+            onCompletion: { self.completionCount += 1 },
         )
     }
 
@@ -483,7 +597,9 @@ private final class MovementPanelTestClock {
 private final class TestMovementPanel: MovementPanelPresenting {
     let displayID: OverlayDisplayID
     let model: MovementModel
+    let accessibilityPreferences: AccessibilityPreferences
     let onCancel: () -> Void
+    private(set) var role: OverlayDisplayRole
     private(set) var wasMadeKey = false
     private(set) var wasClosed = false
 
@@ -491,10 +607,14 @@ private final class TestMovementPanel: MovementPanelPresenting {
         displayID: OverlayDisplayID,
         frame: CGRect,
         model: MovementModel,
+        role: OverlayDisplayRole,
+        accessibilityPreferences: AccessibilityPreferences,
         onCancel: @escaping () -> Void,
     ) {
         self.displayID = displayID
         self.model = model
+        self.role = role
+        self.accessibilityPreferences = accessibilityPreferences
         self.onCancel = onCancel
     }
 
@@ -502,7 +622,9 @@ private final class TestMovementPanel: MovementPanelPresenting {
         wasMadeKey = wasMadeKey || makeKey
     }
 
-    func update(frame: CGRect) {}
+    func update(frame: CGRect, role: OverlayDisplayRole) {
+        self.role = role
+    }
 
     func close() {
         wasClosed = true
@@ -513,6 +635,7 @@ private final class TestMovementPanel: MovementPanelPresenting {
     }
 
     func cancel() {
+        guard role == .interactive else { return }
         onCancel()
     }
 }

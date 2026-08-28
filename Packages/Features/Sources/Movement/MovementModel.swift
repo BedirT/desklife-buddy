@@ -24,6 +24,7 @@ public final class MovementModel {
     public let recommendedDurationSeconds: TimeInterval
     public let quickDurationSeconds: TimeInterval
     public let context: MovementContext
+    public let choiceOrder: [MovementChoice]
 
     public var guidance: MovementGuidance {
         MovementGuidance(choice: selectedChoice)
@@ -47,6 +48,7 @@ public final class MovementModel {
         context: MovementContext = .standalone,
         declarationArmDelay: TimeInterval = 0.8,
         accessibility: MovementAccessibility = .init(),
+        seatedContentFirst: Bool = false,
         requiresLifecycleConfirmation: Bool = false,
         now: @escaping () -> TimeInterval,
         onAction: @escaping (MovementAction) -> Void = { _ in },
@@ -63,6 +65,9 @@ public final class MovementModel {
         recommendedDurationSeconds = recommendedDuration
         quickDurationSeconds = quickDuration
         self.context = context
+        choiceOrder = seatedContentFirst
+            ? [.seated, .walkOrWheel, .smallSpace]
+            : [.walkOrWheel, .smallSpace, .seated]
         selectedDurationSeconds = initialDuration
         remainingSeconds = Int(ceil(initialDuration))
         self.declarationArmDelay = declarationArmDelay
@@ -71,28 +76,6 @@ public final class MovementModel {
         self.now = now
         self.onAction = onAction
         self.onAnnouncement = onAnnouncement
-    }
-
-    public convenience init(
-        schedule: OpportunitySchedule,
-        initialDurationSeconds: TimeInterval? = nil,
-        context: MovementContext = .standalone,
-        accessibility: MovementAccessibility = .init(),
-        requiresLifecycleConfirmation: Bool = false,
-        onAction: @escaping (MovementAction) -> Void = { _ in },
-        onAnnouncement: @escaping (MovementAnnouncement) -> Void = { _ in },
-    ) {
-        let clock = MovementMonotonicClock()
-        self.init(
-            schedule: schedule,
-            initialDurationSeconds: initialDurationSeconds,
-            context: context,
-            accessibility: accessibility,
-            requiresLifecycleConfirmation: requiresLifecycleConfirmation,
-            now: { clock.seconds },
-            onAction: onAction,
-            onAnnouncement: onAnnouncement,
-        )
     }
 
     public func open() {
@@ -286,6 +269,30 @@ public final class MovementModel {
 }
 
 public extension MovementModel {
+    convenience init(
+        schedule: OpportunitySchedule,
+        initialDurationSeconds: TimeInterval? = nil,
+        context: MovementContext = .standalone,
+        accessibility: MovementAccessibility = .init(),
+        seatedContentFirst: Bool = false,
+        requiresLifecycleConfirmation: Bool = false,
+        onAction: @escaping (MovementAction) -> Void = { _ in },
+        onAnnouncement: @escaping (MovementAnnouncement) -> Void = { _ in },
+    ) {
+        let clock = MovementMonotonicClock()
+        self.init(
+            schedule: schedule,
+            initialDurationSeconds: initialDurationSeconds,
+            context: context,
+            accessibility: accessibility,
+            seatedContentFirst: seatedContentFirst,
+            requiresLifecycleConfirmation: requiresLifecycleConfirmation,
+            now: { clock.seconds },
+            onAction: onAction,
+            onAnnouncement: onAnnouncement,
+        )
+    }
+
     static func preview(
         _ phase: Phase = .running,
         selectedChoice: MovementChoice = .walkOrWheel,
@@ -293,6 +300,7 @@ public extension MovementModel {
         remainingSeconds: Int = 225,
         accessibility: MovementAccessibility = .init(),
         context: MovementContext = .standalone,
+        seatedContentFirst: Bool = false,
     ) -> MovementModel {
         let schedule = previewSchedule()
         let duration = schedule.durationOptionsSeconds.contains(selectedDurationSeconds)
@@ -303,6 +311,7 @@ public extension MovementModel {
             schedule: schedule,
             context: context,
             accessibility: accessibility,
+            seatedContentFirst: seatedContentFirst,
             now: { elapsed },
         )
         model.selectedChoice = selectedChoice

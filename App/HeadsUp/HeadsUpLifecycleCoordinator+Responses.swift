@@ -14,11 +14,13 @@ extension HeadsUpLifecycleCoordinator {
         enqueue { [weak self] in
             guard let self else { return }
             do {
-                _ = try await runtime.completeHeadsUpPendingAction(
+                let completed = try await runtime.completeHeadsUpPendingAction(
                     id,
                     kind: .openMoreOptions,
                     opportunity: opportunity,
                 )
+                guard completed != nil else { return }
+                retire(id)
             } catch {
                 onError(error)
             }
@@ -39,7 +41,12 @@ extension HeadsUpLifecycleCoordinator {
     }
 
     func handle(_ response: HeadsUpNotificationResponse) async {
-        guard let route = HeadsUpNotificationResponseMapper.route(response) else { return }
+        guard let route = HeadsUpNotificationResponseMapper.route(
+            response,
+            defaultBodyTapBehavior: .moreOptions,
+        ) else {
+            return
+        }
         switch route {
         case let .startNow(id):
             await respond(HeadsUpDeliveryID(rawValue: id), .startNow)
@@ -86,9 +93,9 @@ extension HeadsUpLifecycleCoordinator {
     }
 
     func settle(_ id: HeadsUpDeliveryID, response: HeadsUpDeliveryResponse) {
-        if let intent = pendingModelIntents.removeValue(forKey: id),
-           let model = activePresentation?.id == id ? activePresentation?.model : nil {
-            model.confirmPersistence(intent)
+        let activeModel = activePresentation?.id == id ? activePresentation?.model : nil
+        if let intent = pendingModelIntents.removeValue(forKey: id), let activeModel {
+            activeModel.confirmPersistence(intent)
         }
         if response != .dismissedWithoutAction {
             readyDeliveryIDs.remove(id)
@@ -114,6 +121,7 @@ extension HeadsUpLifecycleCoordinator {
         scope: HeadsUpScope,
         phase: HeadsUpPhase,
         progress: Double,
+        accessibility: HeadsUpAccessibility,
         onIntent: @escaping (HeadsUpIntent) -> Void,
     ) -> HeadsUpModel {
         HeadsUpModel(
@@ -121,6 +129,7 @@ extension HeadsUpLifecycleCoordinator {
             phase: phase,
             approachProgress: progress,
             snoozeDurationsSeconds: [300, 600, 900],
+            accessibility: accessibility,
             onIntent: onIntent,
             onAnnouncement: HeadsUpAccessibilityAnnouncer.post,
         )

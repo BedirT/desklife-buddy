@@ -16,6 +16,7 @@
             accessibility: MovementAccessibility = .init(),
             focusedControl: MovementControl? = nil,
             context: MovementContext = .standalone,
+            seatedContentFirst: Bool = false,
         ) -> some View {
             MovementView(
                 model: .preview(
@@ -24,6 +25,7 @@
                     remainingSeconds: remainingSeconds,
                     accessibility: accessibility,
                     context: context,
+                    seatedContentFirst: seatedContentFirst,
                 ),
                 accessibilityOverride: accessibility,
                 focusedControlOverride: focusedControl,
@@ -54,10 +56,36 @@
             )
         }
 
+        @Test func seatedContentFirst() {
+            assertScreenSnapshot(
+                of: screen(seatedContentFirst: true),
+                layout: referenceLayout,
+                appearances: [.dark],
+            )
+        }
+
         @Test func mergedMovementSegment() {
             assertScreenSnapshot(
                 of: screen(context: .merged),
                 layout: referenceLayout,
+            )
+        }
+
+        @Test func atmosphereOnly() {
+            assertScreenSnapshot(
+                of: MovementAtmosphereView()
+                    .frame(width: 1440, height: 900),
+                layout: referenceLayout,
+            )
+        }
+
+        @Test func mergedMovementAtmosphereOnly() {
+            assertScreenSnapshot(
+                of: MovementAtmosphereView()
+                    .frame(width: 1440, height: 900),
+                named: "merged-movement-atmosphere",
+                layout: referenceLayout,
+                appearances: [.dark],
             )
         }
 

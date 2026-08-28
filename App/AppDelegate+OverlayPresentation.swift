@@ -15,12 +15,15 @@ extension AppDelegate {
         ) {
             switch overlayRoute {
             case .visualReset:
+                completionCapsuleCoordinator?.dismiss()
                 overlayCoordinator?.present()
             case .movement:
+                completionCapsuleCoordinator?.dismiss()
                 movementOverlayCoordinator?.present(
                     selectedDurationSeconds: selectedDuration(for: action),
                 )
             case .merged:
+                completionCapsuleCoordinator?.dismiss()
                 mergedOverlayCoordinator?.present()
             case let .snooze(scope):
                 breakFlowOverlayCoordinator?.presentSnooze(scope: scope)
@@ -37,6 +40,7 @@ extension AppDelegate {
         let decision = AppOverlayArbitration.performExclusivePresentation(
             active: activeOverlayFamilies,
         ) { [self] in
+            completionCapsuleCoordinator?.dismiss()
             headsUpOpeningBinding = binding
             switch opportunity {
             case .visual:

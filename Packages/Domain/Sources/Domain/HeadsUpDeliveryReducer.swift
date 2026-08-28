@@ -309,7 +309,8 @@ extension HeadsUpDeliveryReducer {
                pendingAction.opportunity,
                visualCycleID: visualCycleID,
                movementCycleID: movementCycleID,
-           ) {
+           )
+        {
             state.pendingAction = nil
             return pendingAction
         }

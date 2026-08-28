@@ -1,0 +1,79 @@
+#if os(macOS) && SNAPSHOT_TESTS
+    import DesignSystem
+    import Domain
+    import SnapshotSupport
+    import SwiftUI
+    import Testing
+    @testable import WeeklyRhythm
+
+    @Suite("Weekly rhythm screen", .serialized)
+    struct WeeklyRhythmSnapshotTests {
+        @Test(arguments: [
+            WeeklySnapshotState.populated,
+            .sparse,
+            .historyDisabled,
+        ])
+        func primaryStates(_ state: WeeklySnapshotState) {
+            assertScreenSnapshot(
+                of: screen(state),
+                named: state.rawValue,
+            )
+        }
+
+        @Test func largestText() {
+            assertScreenSnapshot(
+                of: screen(.populated, textScale: .largest),
+                named: "populated-largest-text",
+                appearances: [.light],
+            )
+        }
+
+        @Test func increasedContrast() {
+            assertScreenSnapshot(
+                of: screen(.populated, increaseContrast: true),
+                named: "populated-increased-contrast",
+                appearances: [.light],
+            )
+        }
+
+        @Test func reducedMotionEndpoint() {
+            assertScreenSnapshot(
+                of: screen(.populated, reduceMotion: true),
+                named: "populated-reduced-motion",
+                appearances: [.light],
+            )
+        }
+
+        private func screen(
+            _ state: WeeklySnapshotState,
+            textScale: DSTextScale = .standard,
+            increaseContrast: Bool = false,
+            reduceMotion: Bool = false,
+        ) -> some View {
+            WeeklyRhythmView(
+                model: .preview(state.input),
+                calendar: state.input.calendar,
+                increaseContrastOverride: increaseContrast,
+                reduceMotionOverride: reduceMotion,
+                arrivalPresentation: .settled,
+            )
+            .environment(\.dsTextScale, textScale)
+            .environment(\._colorSchemeContrast, increaseContrast ? .increased : .standard)
+            .frame(width: 1000, height: 700)
+        }
+    }
+
+    enum WeeklySnapshotState: String {
+        case populated
+        case sparse
+        case historyDisabled = "history-disabled"
+
+        var input: WeeklyRhythmProjectionInput {
+            switch self {
+            case .populated: WeeklyRhythmFixtures.populated
+            case .sparse: WeeklyRhythmFixtures.sparse
+            case .historyDisabled: WeeklyRhythmFixtures.historyDisabled
+            }
+        }
+    }
+#endif

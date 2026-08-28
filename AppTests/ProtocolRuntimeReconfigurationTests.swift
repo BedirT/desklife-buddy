@@ -29,7 +29,8 @@ struct ProtocolRuntimeReconfigurationTests {
 
         let result = try await runtime.reconfigure(preferences)
 
-        #expect(result == .applied)
+        #expect(result.appliedAcknowledgement?.retainedHistoryCount == 0)
+        #expect(result.appliedAcknowledgement?.resolvedPreferences.preferences == preferences)
         #expect(runtime.state.profileID == .gentle)
         #expect(runtime.state.visualClock == retained.visualClock)
         #expect(runtime.state.movementClock == retained.movementClock)
@@ -63,6 +64,57 @@ struct ProtocolRuntimeReconfigurationTests {
         try await runtime.observe(sample(uptime: 210))
 
         #expect(runtime.state.visualClock.accumulatedActiveUseSeconds == 100)
+    }
+
+    @Test("App rebuilds every break overlay with the newly persisted accessibility choices")
+    func appRebuildsBreakOverlaysWithAccessibilityPreferences() async throws {
+        let store = SettingsRuntimeStore()
+        let runtime = try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
+            store: store,
+            initialPreferences: .defaults,
+        )
+        let appDelegate = AppDelegate()
+        appDelegate.runtime = runtime
+        appDelegate.installPrimaryOverlays(configuration: runtime.configuration)
+        appDelegate.installStepSixOverlays(configuration: runtime.configuration)
+        runtime.onConfigurationChange = { configuration in
+            appDelegate.applyRuntimeConfiguration(configuration)
+        }
+
+        #expect(appDelegate.overlayCoordinator?.accessibilityPreferencesForTesting == .defaults)
+        #expect(
+            appDelegate.movementOverlayCoordinator?.accessibilityPreferencesForTesting == .defaults,
+        )
+        #expect(
+            appDelegate.mergedOverlayCoordinator?.accessibilityPreferencesForTesting == .defaults,
+        )
+
+        let accessibility = try AccessibilityPreferences(
+            presentation: .textOnly,
+            staticOverlayBrightness: 0.73,
+            timerAnnouncements: .none,
+            seatedContentFirst: true,
+        )
+        let updated = AppPreferences(accessibility: accessibility)
+
+        let result = try await runtime.reconfigure(updated)
+        #expect(result.appliedAcknowledgement?.resolvedPreferences.preferences == updated)
+        #expect(
+            appDelegate.overlayCoordinator?.accessibilityPreferencesForTesting == accessibility,
+        )
+        #expect(
+            appDelegate.movementOverlayCoordinator?.accessibilityPreferencesForTesting
+                == accessibility,
+        )
+        #expect(
+            appDelegate.mergedOverlayCoordinator?.accessibilityPreferencesForTesting
+                == accessibility,
+        )
+
+        appDelegate.overlayCoordinator?.tearDown()
+        appDelegate.movementOverlayCoordinator?.tearDown()
+        appDelegate.mergedOverlayCoordinator?.tearDown()
     }
 
     @Test("An active break returns a typed busy result without persistence")
@@ -177,7 +229,7 @@ struct ProtocolRuntimeReconfigurationTests {
         let visualReset = VisualResetOverlayCoordinator(
             now: { 0 },
             displays: { [settingsPresentationDisplay] },
-            makePanel: { _, _, _ in visualPanel },
+            makePanel: { _, _, _, _, _ in visualPanel },
             captureFrontmostProcessIdentifier: { nil },
             activate: {},
             isAppFrontmost: { false },
@@ -232,14 +284,18 @@ struct ProtocolRuntimeReconfigurationTests {
             routeAttempted = true
             return try await runtime.handle(.startVisualReset)
         }
-        while !routeAttempted { await Task.yield() }
-        for _ in 0 ..< 100 { await Task.yield() }
+        while !routeAttempted {
+            await Task.yield()
+        }
+        for _ in 0 ..< 100 {
+            await Task.yield()
+        }
 
         #expect(!overlayPresented)
         #expect(overlayTeardownCount == 0)
 
         store.acknowledgePreferenceCommit()
-        #expect(try await reconfiguration.value == .applied)
+        #expect(try await reconfiguration.value.appliedAcknowledgement?.retainedHistoryCount == 0)
         _ = try await route.value
 
         #expect(overlayPresented)
@@ -302,7 +358,8 @@ struct ProtocolRuntimeReconfigurationTests {
 
         let result = try await runtime.resetAllLocalData()
 
-        #expect(result == .applied)
+        #expect(result.appliedAcknowledgement?.retainedHistoryCount == 0)
+        #expect(result.appliedAcknowledgement?.resolvedPreferences.preferences == .defaults)
         #expect(runtime.state == ProtocolState())
         #expect(runtime.statusContext.workingHoursOnly)
         #expect(store.didResetAll)
@@ -376,6 +433,7 @@ private final class SettingsPresentationPanel: BreakFlowPanelPresenting, VisualR
 
     func present(makeKey: Bool) {}
     func update(frame: CGRect) {}
+    func update(frame: CGRect, role: OverlayDisplayRole) {}
     func close() { wasClosed = true }
     func makeKey() {}
 }
@@ -463,10 +521,11 @@ private final class SettingsRuntimeStore: ProtocolRuntimeStore, ProtocolRuntimeS
         try SettingsPreferenceResolver.resolve(preferences)
     }
 
+    @discardableResult
     func commitPreferences(
         _ preferences: ResolvedAppPreferences,
         state: ProtocolState,
-    ) async throws {
+    ) async throws -> Int {
         if failPreferenceCommit { throw Failure.write }
         preferenceCommitAttempted = true
         if gateNextPreferenceCommit {
@@ -482,10 +541,11 @@ private final class SettingsRuntimeStore: ProtocolRuntimeStore, ProtocolRuntimeS
             events: [],
             state: state,
         ))
+        return 0
     }
 
     func waitForPreferenceCommitAttempt() async -> Bool {
-        for _ in 0 ..< 10_000 {
+        for _ in 0 ..< 10000 {
             if preferenceCommitAttempted { return true }
             await Task.yield()
         }
@@ -510,5 +570,12 @@ private final class SettingsRuntimeStore: ProtocolRuntimeStore, ProtocolRuntimeS
 private extension UUID {
     init(_ value: UInt8) {
         self.init(uuid: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, value))
+    }
+}
+
+private extension SettingsRuntimeMutationResult {
+    var appliedAcknowledgement: SettingsRuntimeMutationAcknowledgement? {
+        guard case let .applied(acknowledgement) = self else { return nil }
+        return acknowledgement
     }
 }

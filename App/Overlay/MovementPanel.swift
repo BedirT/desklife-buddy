@@ -1,33 +1,42 @@
 import AppKit
 import CoreGraphics
+import DesignSystem
+import Domain
 import Movement
 import SwiftUI
 
 protocol MovementPanelPresenting: AnyObject {
     var displayID: OverlayDisplayID { get }
     func present(makeKey: Bool)
-    func update(frame: CGRect)
+    func update(frame: CGRect, role: OverlayDisplayRole)
     func close()
     func makeKey()
 }
 
-final class MovementPanel: NSPanel, MovementPanelPresenting {
+final class MovementPanel: BreakFieldAnimatedPanel, MovementPanelPresenting {
     let displayID: OverlayDisplayID
     private let model: MovementModel
+    private let accessibilityPreferences: AccessibilityPreferences
     private let onCancel: () -> Void
     private let focusPresentation = MovementFocusPresentation(showsDefaultAction: false)
+    private let hostingView = NSHostingView(rootView: AnyView(EmptyView()))
+    private(set) var role: OverlayDisplayRole
 
-    override var canBecomeKey: Bool { true }
+    override var canBecomeKey: Bool { role == .interactive }
     override var canBecomeMain: Bool { false }
 
     init(
         displayID: OverlayDisplayID,
         frame: CGRect,
         model: MovementModel,
+        role: OverlayDisplayRole,
+        accessibilityPreferences: AccessibilityPreferences = .defaults,
         onCancel: @escaping () -> Void,
     ) {
         self.displayID = displayID
         self.model = model
+        self.role = role
+        self.accessibilityPreferences = accessibilityPreferences
         self.onCancel = onCancel
         super.init(
             contentRect: frame,
@@ -43,24 +52,25 @@ final class MovementPanel: NSPanel, MovementPanelPresenting {
         hidesOnDeactivate = false
         isReleasedWhenClosed = false
         animationBehavior = .none
-        contentView = NSHostingView(rootView: MovementView(
-            model: model,
-            focusPresentation: focusPresentation,
-            opensAutomatically: false,
-        ))
+        contentView = hostingView
+        breakFieldMotionMode = .resolve(
+            staticPresentation: model.accessibility.staticPresentation,
+            reduceMotion: model.accessibility.reduceMotion
+                || NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
+        )
         setAccessibilityIdentifier("movement.panel.\(displayID)")
+        updateRolePresentation()
     }
 
     func present(makeKey: Bool) {
-        if makeKey {
-            makeKeyAndOrderFront(nil)
-        } else {
-            orderFront(nil)
-        }
+        presentBreakField(makeKey: makeKey && role == .interactive)
     }
 
-    func update(frame: CGRect) {
+    func update(frame: CGRect, role: OverlayDisplayRole) {
         setFrame(frame, display: true)
+        guard self.role != role else { return }
+        self.role = role
+        updateRolePresentation()
     }
 
     override func becomeKey() {
@@ -78,10 +88,12 @@ final class MovementPanel: NSPanel, MovementPanelPresenting {
     }
 
     override func cancelOperation(_ sender: Any?) {
+        guard role == .interactive else { return }
         onCancel()
     }
 
     override func keyDown(with event: NSEvent) {
+        guard role == .interactive else { return }
         if event.keyCode == 53 || event.charactersIgnoringModifiers == "\u{1B}" {
             onCancel()
             return
@@ -90,6 +102,7 @@ final class MovementPanel: NSPanel, MovementPanelPresenting {
     }
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        guard role == .interactive else { return false }
         let isEscape = event.keyCode == 53 || event.charactersIgnoringModifiers == "\u{1B}"
         if isEscape {
             onCancel()
@@ -111,6 +124,37 @@ final class MovementPanel: NSPanel, MovementPanelPresenting {
             return true
         }
         return super.performKeyEquivalent(with: event)
+    }
+
+    private func updateRolePresentation() {
+        focusPresentation.showsDefaultAction = role == .interactive && isKeyWindow
+        ignoresMouseEvents = role == .atmosphere
+        switch role {
+        case .interactive:
+            hostingView.rootView = AnyView(
+                MovementView(
+                    model: model,
+                    staticField: AnyView(staticDesktopField),
+                    focusPresentation: focusPresentation,
+                    opensAutomatically: false,
+                )
+                .environment(\.dsBreakEntrance, breakFieldEntranceState),
+            )
+            hostingView.setAccessibilityElement(false)
+            setAccessibilityChildren(nil)
+        case .atmosphere:
+            hostingView.rootView = accessibilityPreferences.presentation == .standard
+                ? AnyView(MovementAtmosphereView(model: model))
+                : AnyView(staticDesktopField)
+            hostingView.setAccessibilityElement(false)
+            setAccessibilityChildren([])
+        }
+    }
+
+    private var staticDesktopField: some View {
+        DSStaticDesktopField(brightness: accessibilityPreferences.staticOverlayBrightness)
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
     }
 
     private func handleDeclarationShortcut(_ characters: String?) -> Bool {

@@ -77,6 +77,13 @@ for relative in required_catalogs:
 
     catalog = json.loads(catalog_text)
     for key, entry in catalog.get("strings", {}).items():
+        for locale, localization in entry.get("localizations", {}).items():
+            value = localization.get("stringUnit", {}).get("value")
+            if value is not None and "\u2014" in value:
+                failures.append(
+                    f"{relative}: {key}: {locale}: runtime copy contains an em dash"
+                )
+
         if entry.get("extractionState") != "manual":
             continue
         localizations = entry.get("localizations", {})
@@ -121,6 +128,14 @@ source_roots = [
     root / "Packages" / "DesignSystem" / "Sources",
 ]
 excluded_parts = {"FeatureLocalization", "Resources"}
+
+for source_root in source_roots:
+    for file in sorted(source_root.rglob("*L10n.swift")):
+        if "\u2014" not in file.read_text():
+            continue
+        failures.append(
+            f"{file.relative_to(root)}: runtime localization source contains an em dash"
+        )
 
 for source_root in source_roots:
     for file in sorted(source_root.rglob("*.swift")):

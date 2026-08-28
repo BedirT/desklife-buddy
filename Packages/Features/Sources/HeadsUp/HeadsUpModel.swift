@@ -44,16 +44,19 @@ public enum HeadsUpPhase: Equatable, Sendable {
 }
 
 public struct HeadsUpAccessibility: Equatable, Sendable {
-    public var textOnly, reduceMotion, reduceTransparency, increaseContrast, largeText: Bool
+    public var textOnly, staticPresentation, reduceMotion: Bool
+    public var reduceTransparency, increaseContrast, largeText: Bool
 
     public init(
         textOnly: Bool = false,
+        staticPresentation: Bool = false,
         reduceMotion: Bool = false,
         reduceTransparency: Bool = false,
         increaseContrast: Bool = false,
         largeText: Bool = false,
     ) {
         self.textOnly = textOnly
+        self.staticPresentation = staticPresentation
         self.reduceMotion = reduceMotion
         self.reduceTransparency = reduceTransparency
         self.increaseContrast = increaseContrast
@@ -129,8 +132,9 @@ public struct HeadsUpPresentation: Equatable, Sendable {
     public let accessibility: HeadsUpAccessibility
     public let title, detail, statusAccessibilityLabel: String
     public let approachProgress: Double
+    public let normalizedGlint: Double
     public let hold: HeadsUpHold?
-    public let showsActions, showsDecorativeIndicator: Bool
+    public let showsActions, showsDecorativeIndicator, allowsReactiveGlint: Bool
 }
 
 public struct HeadsUpStatusMenuProjection: Equatable, Sendable {
@@ -149,6 +153,7 @@ public final class HeadsUpModel {
     public let accessibility: HeadsUpAccessibility
     public private(set) var presentationPhase: HeadsUpPhase
     public private(set) var approachProgress: Double
+    public private(set) var normalizedGlint = 0.0
     public private(set) var isHovered = false
     public private(set) var pendingPersistenceIntent: HeadsUpIntent?
     public private(set) var isFinished = false
@@ -233,10 +238,28 @@ public final class HeadsUpModel {
             detail: copy.detail,
             statusAccessibilityLabel: copy.statusAccessibilityLabel,
             approachProgress: approachProgress,
+            normalizedGlint: normalizedGlint,
             hold: hold,
             showsActions: isHovered && hold == nil,
             showsDecorativeIndicator: !accessibility.textOnly,
+            allowsReactiveGlint: allowsReactiveGlint,
         )
+    }
+
+    public func updateNormalizedGlint(_ value: Double) {
+        guard allowsReactiveGlint else {
+            normalizedGlint = 0
+            return
+        }
+        guard value.isFinite else {
+            normalizedGlint = 0
+            return
+        }
+        normalizedGlint = min(1, max(-1, value))
+    }
+
+    public func resetGlint() {
+        normalizedGlint = 0
     }
 
     public func setHovered(_ isHovered: Bool) {
@@ -265,6 +288,7 @@ public final class HeadsUpModel {
         if phase == .landedWaiting { approachProgress = 1 }
         guard case let .hold(hold) = phase else { return }
         isHovered = false
+        resetGlint()
         guard !didAnnounceHoldChange else { return }
         didAnnounceHoldChange = true
         onAnnouncement(HeadsUpL10n.holdAnnouncement(
@@ -315,36 +339,6 @@ public final class HeadsUpModel {
     }
 }
 
-public extension HeadsUpModel {
-    static func preview(
-        scope: HeadsUpScope,
-        phase: HeadsUpPhase = .approaching(.seconds45),
-        approachProgress: Double? = nil,
-        isHovered: Bool = false,
-        accessibility: HeadsUpAccessibility = HeadsUpAccessibility(),
-        formatDeadline: @escaping (Date) -> String = {
-            DateFormatter.localizedString(from: $0, dateStyle: .none, timeStyle: .short)
-        },
-        calendarBusyEnd: Date? = nil,
-        manualHoldDurationSeconds: TimeInterval? = nil,
-        onIntent: @escaping (HeadsUpIntent) -> Void = { _ in },
-    ) -> HeadsUpModel {
-        let model = HeadsUpModel(
-            scope: scope,
-            phase: phase,
-            approachProgress: approachProgress ?? previewProgress(for: phase),
-            snoozeDurationsSeconds: [300, 600, 900],
-            calendarBusyEnd: calendarBusyEnd,
-            manualHoldDurationSeconds: manualHoldDurationSeconds,
-            accessibility: accessibility,
-            formatDeadline: formatDeadline,
-            onIntent: onIntent,
-        )
-        model.setHovered(isHovered)
-        return model
-    }
-}
-
 private extension HeadsUpModel {
     var laterOptions: [HeadsUpLaterOption] {
         var options = snoozeDurationsSeconds.map(HeadsUpLaterOption.snooze(durationSeconds:))
@@ -377,19 +371,21 @@ private extension HeadsUpModel {
         return min(max(progress, 0), 1)
     }
 
-    static func previewProgress(for phase: HeadsUpPhase) -> Double {
-        switch phase {
-        case let .approaching(mark):
-            min(max(Double(45 - min(mark.seconds, 45)) / 40, 0), 0.9)
-        case .landedWaiting: 1
-        case .hold: 0
-        }
-    }
-
     func requestPersistence(_ intent: HeadsUpIntent) {
         guard !isFinished, pendingPersistenceIntent == nil else { return }
         isHovered = false
+        resetGlint()
         pendingPersistenceIntent = intent
         onIntent(intent)
+    }
+
+    var allowsReactiveGlint: Bool {
+        let isHeld = if case .hold = presentationPhase { true } else { false }
+        return !accessibility.textOnly
+            && !accessibility.staticPresentation
+            && !accessibility.reduceMotion
+            && !isFinished
+            && pendingPersistenceIntent == nil
+            && !isHeld
     }
 }

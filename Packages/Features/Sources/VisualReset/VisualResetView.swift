@@ -1,12 +1,24 @@
 import DesignSystem
 import SwiftUI
 
+enum VisualResetStandardLayoutMetrics {
+    static let instructionYFraction: CGFloat = 0.41
+    static let controlsYFraction: CGFloat = 0.80
+    static let alternativeYFraction: CGFloat = 0.943
+
+    static func y(_ fraction: CGFloat, in height: CGFloat) -> CGFloat {
+        DSBreakForegroundLayout.y(fraction, in: height)
+    }
+}
+
 public struct VisualResetView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.dsTextScale) private var textScale
+    @Environment(\.dsBreakEntrance) private var breakEntrance
     @State private var model: VisualResetModel
     @State private var focusPresentation: VisualResetFocusPresentation
     @State private var showsInitialFocusFallback = true
@@ -43,19 +55,26 @@ public struct VisualResetView: View {
             ZStack {
                 field
                     .accessibilityHidden(true)
-                if !usesLargeTextLayout {
-                    DSHorizonProgress(
-                        progress: model.progress,
-                        increaseContrast: effectiveAccessibility.increaseContrast,
-                    )
-                    .position(x: proxy.size.width / 2, y: proxy.size.height * 0.622)
-                }
+                Group {
+                    if !usesLargeTextLayout {
+                        DSHorizonProgress(
+                            progress: model.progress,
+                            increaseContrast: effectiveAccessibility.increaseContrast,
+                        )
+                        .dsBreakEntrance(phase: breakEntrance.phase, element: .control)
+                        .position(
+                            x: proxy.size.width / 2,
+                            y: VisualResetStandardLayoutMetrics.y(0.622, in: proxy.size.height),
+                        )
+                    }
 
-                if usesLargeTextLayout {
-                    accessibilityLayout
-                } else {
-                    standardLayout(in: proxy.size)
+                    if usesLargeTextLayout {
+                        accessibilityLayout
+                    } else {
+                        standardLayout(in: proxy.size)
+                    }
                 }
+                .environment(\.colorScheme, overlayColorScheme)
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
@@ -102,21 +121,39 @@ public struct VisualResetView: View {
         ZStack {
             instructionStack
                 .frame(maxWidth: min(1000, size.width - 80))
-                .position(x: size.width / 2, y: size.height * 0.41)
+                .position(
+                    x: size.width / 2,
+                    y: VisualResetStandardLayoutMetrics.y(
+                        VisualResetStandardLayoutMetrics.instructionYFraction,
+                        in: size.height,
+                    ),
+                )
 
             controlStack
-                .position(x: size.width / 2, y: size.height * 0.80)
+                .position(
+                    x: size.width / 2,
+                    y: VisualResetStandardLayoutMetrics.y(
+                        VisualResetStandardLayoutMetrics.controlsYFraction,
+                        in: size.height,
+                    ),
+                )
 
             alternative
                 .frame(maxWidth: size.width - 80)
-                .position(x: size.width / 2, y: size.height * 0.943)
+                .position(
+                    x: size.width / 2,
+                    y: VisualResetStandardLayoutMetrics.y(
+                        VisualResetStandardLayoutMetrics.alternativeYFraction,
+                        in: size.height,
+                    ),
+                )
         }
     }
 
     private var accessibilityLayout: some View {
         VStack(spacing: DSSpacing.lg) {
             instructionStack
-                .frame(maxWidth: 500)
+                .frame(maxWidth: textScale == .largest ? 1000 : 500)
             Spacer(minLength: DSSpacing.md)
             DSHorizonProgress(
                 progress: model.progress,
@@ -142,7 +179,7 @@ public struct VisualResetView: View {
                 .tracking(-1.4)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(primaryInk)
-                .lineLimit(3)
+                .lineLimit(textScale == .largest ? nil : 3)
 
             guidanceContent
                 .font(DSTypography.breakSupporting(pointSize: supportingSize))
@@ -153,6 +190,7 @@ public struct VisualResetView: View {
                 .shadow(color: .dsBreakTextShadow, radius: 18, y: 1)
         }
         .accessibilityElement(children: .combine)
+        .dsBreakEntrance(phase: breakEntrance.phase, element: .instruction)
     }
 
     private var controlStack: some View {
@@ -202,6 +240,7 @@ public struct VisualResetView: View {
             }
             .padding(.top, DSSpacing.xs)
         }
+        .dsBreakEntrance(phase: breakEntrance.phase, element: .control)
     }
 
     private var alternative: some View {
@@ -209,6 +248,7 @@ public struct VisualResetView: View {
             .font(DSTypography.breakMeta(pointSize: metaSize))
             .multilineTextAlignment(.center)
             .foregroundStyle(secondaryInk)
+            .dsBreakEntrance(phase: breakEntrance.phase, element: .control)
     }
 
     private var attributedInstruction: AttributedString {
@@ -242,6 +282,10 @@ public struct VisualResetView: View {
         )
         accessibility.staticPresentation = accessibility.staticPresentation && staticField != nil
         return accessibility
+    }
+
+    private var overlayColorScheme: ColorScheme {
+        effectiveAccessibility.staticPresentation ? colorScheme : .dark
     }
 
     private func updateFocusPresentation(_ visible: Bool) {
@@ -295,37 +339,6 @@ private extension VisualResetView {
 
     var metaSize: CGFloat {
         textScale.apply(to: DSTypography.breakMetaSize)
-    }
-}
-
-private struct VisualResetWorkingField: View {
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .top) {
-                LinearGradient(
-                    colors: [.dsBreakSkyTop, .dsBreakSkyMiddle, .dsBreakSkyHorizon],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing,
-                )
-
-                RadialGradient(
-                    colors: [.dsBreakGlow.opacity(0.48), .clear],
-                    center: .bottom,
-                    startRadius: 0,
-                    endRadius: proxy.size.width * 0.32,
-                )
-                .frame(height: proxy.size.height * 0.65)
-
-                LinearGradient(
-                    colors: [.dsBreakGroundTop, .dsBreakGroundBottom],
-                    startPoint: .top,
-                    endPoint: .bottom,
-                )
-                .frame(height: proxy.size.height * 0.378)
-                .frame(maxHeight: .infinity, alignment: .bottom)
-            }
-        }
-        .accessibilityHidden(true)
     }
 }
 

@@ -1,10 +1,29 @@
+import Domain
 import Foundation
 import HeadsUp
+import SettingsFeature
 import Testing
 @testable import App
 
 @Suite("Heads-up notification authorization")
 struct HeadsUpAuthorizationCoordinatorTests {
+    @Test("Automatic delivery always selects the capsule without reading or prompting")
+    func automaticDeliveryIsCapsuleFirst() async {
+        let center = FakeHeadsUpNotificationCenter(settings: [
+            .init(authorizationStatus: .authorized, alertsEnabled: true),
+        ])
+        let coordinator = HeadsUpAuthorizationCoordinator(
+            center: center,
+            store: FakeHeadsUpAuthorizationStore(),
+        )
+
+        let channel = coordinator.automaticDeliveryChannel()
+
+        #expect(channel == .capsule)
+        #expect(center.settingsReadCount == 0)
+        #expect(center.authorizationRequestCount == 0)
+    }
+
     @Test("User defaults store round-trips authorization history")
     func userDefaultsRoundTrip() throws {
         let suiteName = "AppTests.HeadsUpAuthorization.\(UUID().uuidString)"
@@ -23,6 +42,78 @@ struct HeadsUpAuthorizationCoordinatorTests {
         #expect(restored == expected)
     }
 
+    @Test("Reset clears only app-owned authorization metadata")
+    func userDefaultsResetClearsOnlyAppOwnedMetadata() throws {
+        let suiteName = "AppTests.HeadsUpAuthorization.Reset.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let store = UserDefaultsHeadsUpAuthorizationStore(defaults: defaults)
+        store.save(HeadsUpNotificationAuthorizationState(
+            hasPresentedExplainer: true,
+            hasRequestedAuthorization: true,
+            usesInAppHeadsUp: true,
+            hasBeenAuthorized: true,
+        ))
+        defaults.set("kept", forKey: "unrelated")
+
+        store.resetAppOwnedMetadata()
+
+        #expect(store.load() == HeadsUpNotificationAuthorizationState())
+        #expect(defaults.string(forKey: "unrelated") == "kept")
+    }
+
+    @Test("Authorization metadata reset commits only when the broader reset commits")
+    func authorizationMetadataResetBoundaryIsTransactional() async throws {
+        let previous = HeadsUpNotificationAuthorizationState(
+            hasPresentedExplainer: true,
+            hasRequestedAuthorization: true,
+            usesInAppHeadsUp: true,
+            hasBeenAuthorized: true,
+        )
+        let store = RecordingAuthorizationStore(state: previous)
+        let boundary = HeadsUpAuthorizationResetBoundary(store: store)
+
+        let busy = try await boundary.reset { .temporarilyBusy }
+
+        #expect(busy == .temporarilyBusy)
+        #expect(store.state == previous)
+        #expect(store.resetCallCount == 0)
+
+        let appliedState = try SettingsFeatureState(
+            preferences: .defaults,
+            configuration: ProtocolProfiles.configuration(for: .balanced),
+        )
+        let applied = try await boundary.reset { .acknowledged(appliedState) }
+
+        #expect(applied == .acknowledged(appliedState))
+        #expect(store.state == HeadsUpNotificationAuthorizationState())
+        #expect(store.resetCallCount == 1)
+    }
+
+    @Test("Authorization metadata stays untouched when the broader reset throws")
+    func authorizationMetadataResetBoundaryLeavesThrownFailureUntouched() async {
+        let previous = HeadsUpNotificationAuthorizationState(
+            hasPresentedExplainer: true,
+            hasRequestedAuthorization: true,
+            usesInAppHeadsUp: false,
+            hasBeenAuthorized: true,
+        )
+        let store = RecordingAuthorizationStore(state: previous)
+        let boundary = HeadsUpAuthorizationResetBoundary(store: store)
+
+        do {
+            _ = try await boundary.reset {
+                throw AuthorizationResetTestError.persistence
+            }
+            Issue.record("Expected reset failure")
+        } catch {
+            #expect(error as? AuthorizationResetTestError == .persistence)
+        }
+
+        #expect(store.state == previous)
+        #expect(store.resetCallCount == 0)
+    }
+
     @Test("PM-01 Continue precedes one system request and settings are reread")
     func continueRequestsOnce() async {
         let center = FakeHeadsUpNotificationCenter(settings: [
@@ -36,11 +127,11 @@ struct HeadsUpAuthorizationCoordinatorTests {
             store: FakeHeadsUpAuthorizationStore(),
         )
 
-        let first = await coordinator.selectChannel {
+        let first = await coordinator.requestNotificationChannel {
             events.append("explainer")
             return .continueWithNotifications
         }
-        let second = await coordinator.selectChannel {
+        let second = await coordinator.requestNotificationChannel {
             events.append("unexpected-explainer")
             return .continueWithNotifications
         }
@@ -63,11 +154,11 @@ struct HeadsUpAuthorizationCoordinatorTests {
         var explainerCount = 0
         let coordinator = HeadsUpAuthorizationCoordinator(center: center, store: store)
 
-        let first = await coordinator.selectChannel {
+        let first = await coordinator.requestNotificationChannel {
             explainerCount += 1
             return .useInAppHeadsUp
         }
-        let second = await coordinator.selectChannel {
+        let second = await coordinator.requestNotificationChannel {
             explainerCount += 1
             return .continueWithNotifications
         }
@@ -82,7 +173,7 @@ struct HeadsUpAuthorizationCoordinatorTests {
             .init(authorizationStatus: .notDetermined, alertsEnabled: false),
         ])
         let relaunched = HeadsUpAuthorizationCoordinator(center: relaunchedCenter, store: store)
-        let relaunchedChannel = await relaunched.selectChannel {
+        let relaunchedChannel = await relaunched.requestNotificationChannel {
             explainerCount += 1
             return .continueWithNotifications
         }
@@ -103,7 +194,7 @@ struct HeadsUpAuthorizationCoordinatorTests {
         let initial = HeadsUpAuthorizationCoordinator(center: initialCenter, store: store)
         var explainerCount = 0
 
-        #expect(await initial.selectChannel {
+        #expect(await initial.requestNotificationChannel {
             explainerCount += 1
             return .continueWithNotifications
         } == .notification)
@@ -113,7 +204,7 @@ struct HeadsUpAuthorizationCoordinatorTests {
             .init(authorizationStatus: .denied, alertsEnabled: false),
         ])
         let relaunched = HeadsUpAuthorizationCoordinator(center: relaunchedCenter, store: store)
-        let channel = await relaunched.selectChannel {
+        let channel = await relaunched.requestNotificationChannel {
             explainerCount += 1
             return .continueWithNotifications
         }
@@ -139,7 +230,7 @@ struct HeadsUpAuthorizationCoordinatorTests {
             store: FakeHeadsUpAuthorizationStore(),
         )
 
-        let channel = await coordinator.selectChannel {
+        let channel = await coordinator.requestNotificationChannel {
             explainerCount += 1
             return .continueWithNotifications
         }
@@ -159,7 +250,7 @@ struct HeadsUpAuthorizationCoordinatorTests {
         )
         var explainerCount = 0
 
-        #expect(await settingsCoordinator.selectChannel {
+        #expect(await settingsCoordinator.requestNotificationChannel {
             explainerCount += 1
             return .continueWithNotifications
         } == .capsule)
@@ -174,16 +265,42 @@ struct HeadsUpAuthorizationCoordinatorTests {
             store: FakeHeadsUpAuthorizationStore(),
         )
 
-        #expect(await requestCoordinator.selectChannel {
+        #expect(await requestCoordinator.requestNotificationChannel {
             explainerCount += 1
             return .continueWithNotifications
         } == .capsule)
-        #expect(await requestCoordinator.selectChannel {
+        #expect(await requestCoordinator.requestNotificationChannel {
             explainerCount += 1
             return .continueWithNotifications
         } == .capsule)
         #expect(requestFailure.authorizationRequestCount == 1)
         #expect(explainerCount == 1)
+    }
+}
+
+private enum AuthorizationResetTestError: Error {
+    case persistence
+}
+
+private final class RecordingAuthorizationStore: HeadsUpAuthorizationStore {
+    var state: HeadsUpNotificationAuthorizationState
+    private(set) var resetCallCount = 0
+
+    init(state: HeadsUpNotificationAuthorizationState) {
+        self.state = state
+    }
+
+    func load() -> HeadsUpNotificationAuthorizationState {
+        state
+    }
+
+    func save(_ state: HeadsUpNotificationAuthorizationState) {
+        self.state = state
+    }
+
+    func resetAppOwnedMetadata() {
+        resetCallCount += 1
+        state = HeadsUpNotificationAuthorizationState()
     }
 }
 
@@ -200,7 +317,7 @@ struct HeadsUpAuthorizationExplainerTests {
         let panelHarness = HeadsUpPermissionPanelHarness()
         let permission = panelHarness.makeCoordinator()
         let first = Task {
-            await authorization.selectChannel { await permission.present() }
+            await authorization.requestNotificationChannel { await permission.present() }
         }
         await panelHarness.waitForPanel(count: 1)
 
@@ -218,7 +335,7 @@ struct HeadsUpAuthorizationExplainerTests {
         #expect(store.state == HeadsUpNotificationAuthorizationState())
 
         let retry = Task {
-            await authorization.selectChannel { await permission.present() }
+            await authorization.requestNotificationChannel { await permission.present() }
         }
         await panelHarness.waitForPanel(count: 2)
         panelHarness.panels[1].send(.useInAppHeadsUp)
@@ -239,10 +356,10 @@ struct HeadsUpAuthorizationExplainerTests {
         let panelHarness = HeadsUpPermissionPanelHarness()
         let permission = panelHarness.makeCoordinator()
         let first = Task {
-            await authorization.selectChannel { await permission.present() }
+            await authorization.requestNotificationChannel { await permission.present() }
         }
         let second = Task {
-            await authorization.selectChannel { await permission.present() }
+            await authorization.requestNotificationChannel { await permission.present() }
         }
         await panelHarness.waitForPanel(count: 1)
 
@@ -276,8 +393,8 @@ struct HeadsUpAuthorizationExplainerTests {
         )
         let panelHarness = HeadsUpPermissionPanelHarness()
         let permission = panelHarness.makeCoordinator()
-        let first = Task { await authorization.selectChannel { await permission.present() } }
-        let second = Task { await authorization.selectChannel { await permission.present() } }
+        let first = Task { await authorization.requestNotificationChannel { await permission.present() } }
+        let second = Task { await authorization.requestNotificationChannel { await permission.present() } }
         await center.waitForSettingsCalls(count: 1)
         await settleConcurrentTasks()
         let settingsWereCoalesced = center.settingsCallCount == 1
@@ -310,14 +427,14 @@ struct HeadsUpAuthorizationExplainerTests {
         let coordinator = HeadsUpAuthorizationCoordinator(center: center, store: store)
         var explainerCount = 0
 
-        #expect(await coordinator.selectChannel {
+        #expect(await coordinator.requestNotificationChannel {
             explainerCount += 1
             return .cancelled
         } == .capsule)
         #expect(store.state == HeadsUpNotificationAuthorizationState())
         #expect(center.authorizationRequestCount == 0)
 
-        #expect(await coordinator.selectChannel {
+        #expect(await coordinator.requestNotificationChannel {
             explainerCount += 1
             return .useInAppHeadsUp
         } == .capsule)
@@ -337,7 +454,7 @@ struct HeadsUpAuthorizationExplainerTests {
         let explainer = HeadsUpNotificationTestCounter()
         let coordinator = HeadsUpAuthorizationCoordinator(center: center, store: store)
 
-        async let first = coordinator.selectChannel {
+        async let first = coordinator.requestNotificationChannel {
             await explainer.increment()
             await gate.wait()
             return .useInAppHeadsUp
@@ -345,7 +462,7 @@ struct HeadsUpAuthorizationExplainerTests {
         while await explainer.value() == 0 {
             await Task.yield()
         }
-        async let second = coordinator.selectChannel {
+        async let second = coordinator.requestNotificationChannel {
             await explainer.increment()
             return .continueWithNotifications
         }
@@ -370,7 +487,7 @@ struct HeadsUpAuthorizationExplainerTests {
         let explainer = HeadsUpNotificationTestCounter()
         let original = HeadsUpAuthorizationCoordinator(center: originalCenter, store: store)
 
-        async let unresolved = original.selectChannel {
+        async let unresolved = original.requestNotificationChannel {
             await explainer.increment()
             await gate.wait()
             return .useInAppHeadsUp
@@ -384,7 +501,7 @@ struct HeadsUpAuthorizationExplainerTests {
             .init(authorizationStatus: .notDetermined, alertsEnabled: false),
         ])
         let relaunched = HeadsUpAuthorizationCoordinator(center: relaunchedCenter, store: store)
-        #expect(await relaunched.selectChannel {
+        #expect(await relaunched.requestNotificationChannel {
             await explainer.increment()
             return .useInAppHeadsUp
         } == .capsule)

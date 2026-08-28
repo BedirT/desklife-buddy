@@ -10,6 +10,123 @@ name="${1:-app}"
 }
 
 output="$ARTIFACTS/$name.png"
+if [[ "$name" == "onboarding-complete" || "$name" == "onboarding-skip" ]]; then
+  for running_pid in $(app_pids); do
+    /bin/kill "$running_pid"
+  done
+  pid=""
+  trap 'if [[ -n "${pid:-}" ]]; then /bin/kill "$pid" 2>/dev/null || true; fi' EXIT
+  /usr/bin/open -na "$APP_PATH" --args "--verify-$name"
+  /bin/sleep 4
+  pid="$(app_pid)"
+  cache="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/onboarding-$pid.png"
+  initial="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/onboarding-state-$pid.json"
+  terminal="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/onboarding-terminal-state-$pid.json"
+  if [[ -s "$cache" && -s "$initial" && -s "$terminal" ]]; then
+    initial_runtime="$(/usr/bin/plutil -extract runtimeInstalled raw "$initial")"
+    initial_status="$(/usr/bin/plutil -extract statusItemInstalled raw "$initial")"
+    terminal_verified="$(/usr/bin/plutil -extract terminalVerified raw "$terminal")"
+    [[ "$initial_runtime" == "false" \
+      && "$initial_status" == "false" \
+      && "$terminal_verified" == "true" ]] || {
+      echo "The onboarding terminal route did not prove an isolated-to-operating transition." >&2
+      /bin/cat "$initial" >&2
+      /bin/cat "$terminal" >&2
+      exit 1
+    }
+    /bin/cp "$cache" "$output"
+    /bin/cp "$initial" "$ARTIFACTS/$name-initial-state.json"
+    /bin/cp "$terminal" "$ARTIFACTS/$name-terminal-state.json"
+    /bin/kill "$pid"
+    pid=""
+    trap - EXIT
+    echo "SHOT OK: $output (terminal: $ARTIFACTS/$name-terminal-state.json)"
+    exit 0
+  fi
+  echo "The onboarding terminal route did not produce complete Debug verification evidence." >&2
+  [[ ! -s "$terminal" ]] || /bin/cat "$terminal" >&2
+  exit 1
+fi
+
+if [[ "$name" == "onboarding" ]]; then
+  for running_pid in $(app_pids); do
+    /bin/kill "$running_pid"
+  done
+  pid=""
+  trap 'if [[ -n "${pid:-}" ]]; then /bin/kill "$pid" 2>/dev/null || true; fi' EXIT
+  /usr/bin/open -na "$APP_PATH" --args --verify-onboarding
+  /bin/sleep 3
+  pid="$(app_pid)"
+  cache="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/onboarding-$pid.png"
+  state="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/onboarding-state-$pid.json"
+  if [[ -s "$cache" && -s "$state" && "$(/usr/bin/stat -f %z "$cache")" -ge 100000 ]]; then
+    captured="$(/usr/bin/plutil -extract captured raw "$state")"
+    centered="$(/usr/bin/plutil -extract centeredOnDisplay raw "$state")"
+    completion_count="$(/usr/bin/plutil -extract completionCount raw "$state")"
+    event_count="$(/usr/bin/plutil -extract eventCount raw "$state")"
+    heads_up_installed="$(/usr/bin/plutil -extract headsUpLifecycleInstalled raw "$state")"
+    protocol_state_count="$(/usr/bin/plutil -extract protocolStateCount raw "$state")"
+    runtime_installed="$(/usr/bin/plutil -extract runtimeInstalled raw "$state")"
+    status_installed="$(/usr/bin/plutil -extract statusItemInstalled raw "$state")"
+    window_visible="$(/usr/bin/plutil -extract windowVisible raw "$state")"
+    [[ "$captured" == "true" \
+      && "$centered" == "true" \
+      && "$completion_count" == "0" \
+      && "$event_count" == "0" \
+      && "$heads_up_installed" == "false" \
+      && "$protocol_state_count" == "0" \
+      && "$runtime_installed" == "false" \
+      && "$status_installed" == "false" \
+      && "$window_visible" == "true" ]] || {
+      echo "The onboarding route did not prove a fresh launch isolated from runtime." >&2
+      /bin/cat "$state" >&2
+      exit 1
+    }
+    /bin/cp "$cache" "$output"
+    /bin/cp "$state" "$ARTIFACTS/onboarding-state.json"
+    /bin/kill "$pid"
+    pid=""
+    trap - EXIT
+    echo "SHOT OK: $output (state: $ARTIFACTS/onboarding-state.json)"
+    exit 0
+  fi
+  echo "The real onboarding window did not produce complete Debug verification evidence." >&2
+  [[ ! -s "$state" ]] || /bin/cat "$state" >&2
+  exit 1
+fi
+
+if [[ "$name" == "visual-reset-entry-video" ]]; then
+  for running_pid in $(app_pids); do
+    /bin/kill "$running_pid"
+  done
+  pid=""
+  capture_pid=""
+  trap '
+    if [[ -n "${pid:-}" ]]; then /bin/kill "$pid" 2>/dev/null || true; fi
+    if [[ -n "${capture_pid:-}" ]]; then /bin/kill "$capture_pid" 2>/dev/null || true; fi
+  ' EXIT
+  /bin/rm -f "$ARTIFACTS/break-entry-live.mov"
+  /usr/sbin/screencapture \
+    -D 1 \
+    -V 4 \
+    "$ARTIFACTS/break-entry-live.mov" &
+  capture_pid="$!"
+  /bin/sleep 0.75
+  /usr/bin/open -na "$APP_PATH" --args --verify-visual-reset
+  pid="$(app_pid)"
+  wait "$capture_pid"
+  capture_pid=""
+  [[ -s "$ARTIFACTS/break-entry-live.mov" ]] || {
+    echo "The live break-entry recording was not created." >&2
+    exit 1
+  }
+  /bin/kill "$pid"
+  pid=""
+  trap - EXIT
+  echo "SHOT OK: $ARTIFACTS/break-entry-live.mov"
+  exit 0
+fi
+
 if [[ "$name" == "visual-reset" ]]; then
   for running_pid in $(app_pids); do
     /bin/kill "$running_pid"
@@ -23,6 +140,14 @@ if [[ "$name" == "visual-reset" ]]; then
     state="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/visual-reset-state-$pid.txt"
     [[ -s "$state" ]] || {
       echo "The real visual-reset panel did not report its live timer state." >&2
+      exit 1
+    }
+    /usr/bin/awk '
+      NF == 4 && $1 >= 3 && $2 < 20 && $2 > 0 && $4 == "hidden" { verified = 1 }
+      END { exit verified ? 0 : 1 }
+    ' "$state" || {
+      echo "The visual-reset capture did not prove a ticking surface with the Dock hidden." >&2
+      /bin/cat "$state" >&2
       exit 1
     }
     context="$ARTIFACTS/visual-reset-context.png"
@@ -54,7 +179,8 @@ if [[ "$name" == "movement" ]]; then
       exit 1
     }
     /usr/bin/awk '
-      NF == 5 && $1 >= 3 && $2 < 300 && $2 > 0 && $3 == 300 && $4 == 300 && $5 == "ok" {
+      NF == 6 && $1 >= 3 && $2 < 300 && $2 > 0 && $3 == 300 && $4 == 300 \
+        && $5 == "ok" && $6 == "hidden" {
         verified = 1
       }
       END { exit verified ? 0 : 1 }
@@ -87,7 +213,8 @@ if [[ "$name" == "merged" ]]; then
   state="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/merged-state-$pid.txt"
   if [[ -s "$cache" && -s "$state" && "$(/usr/bin/stat -f %z "$cache")" -ge 100000 ]]; then
     /usr/bin/awk '
-      NF == 4 && $1 >= 3 && $2 == "visual" && $3 < 20 && $3 > 0 && $4 == "ok" {
+      NF == 5 && $1 >= 3 && $2 == "visual" && $3 < 20 && $3 > 0 \
+        && $4 == "ok" && $5 == "hidden" {
         verified = 1
       }
       END { exit verified ? 0 : 1 }
@@ -116,7 +243,9 @@ if [[ "$name" == "snooze" ]]; then
   state="$HOME/Library/Containers/$BUNDLE_ID/Data/Library/Caches/snooze-state-$pid.txt"
   if [[ -s "$cache" && -s "$state" && "$(/usr/bin/stat -f %z "$cache")" -ge 32000 ]]; then
     /usr/bin/awk '
-      NF == 3 && $1 >= 3 && $2 == "merged" && $3 == "ok" { verified = 1 }
+      NF == 4 && $1 >= 3 && $2 == "merged" && $3 == "ok" && $4 == "hidden" {
+        verified = 1
+      }
       END { exit verified ? 0 : 1 }
     ' "$state" || {
       echo "The snooze capture did not prove the production-routed merged scope." >&2

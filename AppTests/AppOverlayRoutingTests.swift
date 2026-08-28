@@ -1,5 +1,5 @@
-import Domain
 import BreakFlow
+import Domain
 import Foundation
 import StatusMenu
 import Testing
@@ -219,7 +219,9 @@ struct AppOverlayRoutingTests {
                 completionReceived()
             }
             delegate = nil
-            for _ in 0 ..< 10 { await Task.yield() }
+            for _ in 0 ..< 10 {
+                await Task.yield()
+            }
         }
     }
 }

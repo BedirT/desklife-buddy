@@ -33,23 +33,23 @@ struct AppPreferencesTests {
     @Test("Custom timing replaces only visual and movement on a caller-supplied base")
     func customTimingTransformsBase() throws {
         let base = try baseConfiguration()
-        let custom = CustomProtocolTiming(
-            visual: try OpportunityTiming(
+        let custom = try CustomProtocolTiming(
+            visual: OpportunityTiming(
                 softDueSeconds: 10,
                 targetSeconds: 20,
                 latestPreferredSeconds: 30,
                 durationOptionsSeconds: [5],
             ),
-            movement: try OpportunityTiming(
+            movement: OpportunityTiming(
                 softDueSeconds: 40,
                 targetSeconds: 50,
                 latestPreferredSeconds: 60,
                 durationOptionsSeconds: [12, 6],
             ),
         )
-        let preferences = AppPreferences(
+        let preferences = try AppPreferences(
             schedule: SchedulePreferences(profile: .custom(custom), headsUpEnabled: false),
-            context: try ContextPreferences(waitsForLowFrictionMoment: false),
+            context: ContextPreferences(waitsForLowFrictionMoment: false),
         )
 
         let projected = preferences.protocolConfiguration(applyingTo: base)
@@ -70,9 +70,9 @@ struct AppPreferencesTests {
     @Test("Built-in selection preserves caller-resolved timing while applying delivery choices")
     func builtInTransformsBase() throws {
         let base = try baseConfiguration()
-        let preferences = AppPreferences(
+        let preferences = try AppPreferences(
             schedule: SchedulePreferences(profile: .frequentMovement, headsUpEnabled: false),
-            context: try ContextPreferences(waitsForLowFrictionMoment: false),
+            context: ContextPreferences(waitsForLowFrictionMoment: false),
         )
 
         let projected = preferences.protocolConfiguration(applyingTo: base)
@@ -85,21 +85,21 @@ struct AppPreferencesTests {
 
     @Test("Custom timing accepts neutral extremes and rejects structurally invalid values")
     func validatesCustomTiming() throws {
-        let veryFrequent = CustomProtocolTiming(
-            visual: try OpportunityTiming(
+        let veryFrequent = try CustomProtocolTiming(
+            visual: OpportunityTiming(
                 softDueSeconds: 30,
                 targetSeconds: 45,
                 latestPreferredSeconds: 60,
                 durationOptionsSeconds: [10],
             ),
-            movement: try OpportunityTiming(
+            movement: OpportunityTiming(
                 softDueSeconds: 60,
                 targetSeconds: 90,
                 latestPreferredSeconds: 120,
                 durationOptionsSeconds: [30],
             ),
         )
-        let projected = veryFrequent.applying(to: try baseConfiguration())
+        let projected = try veryFrequent.applying(to: baseConfiguration())
 
         #expect(projected.visual.targetSeconds == 45)
         #expect(projected.movement.targetSeconds == 90)
@@ -131,15 +131,15 @@ struct AppPreferencesTests {
                 == #"{"kind":"research_informed_high_frequency"}"#,
         )
 
-        let custom = ScheduleProfile.custom(
+        let custom = try ScheduleProfile.custom(
             CustomProtocolTiming(
-                visual: try OpportunityTiming(
+                visual: OpportunityTiming(
                     softDueSeconds: 10,
                     targetSeconds: 20,
                     latestPreferredSeconds: 30,
                     durationOptionsSeconds: [5],
                 ),
-                movement: try OpportunityTiming(
+                movement: OpportunityTiming(
                     softDueSeconds: 40,
                     targetSeconds: 50,
                     latestPreferredSeconds: 60,
@@ -188,7 +188,7 @@ struct AppPreferencesTests {
 
     @Test("Content context accessibility and integration choices remain explicit values")
     func localChoices() throws {
-        let preferences = AppPreferences(
+        let preferences = try AppPreferences(
             schedule: SchedulePreferences(
                 profile: .balanced,
                 headsUpEnabled: false,
@@ -201,13 +201,13 @@ struct AppPreferencesTests {
                 includesBreathingContent: true,
                 standingDeskModeEnabled: true,
             ),
-            context: try ContextPreferences(
+            context: ContextPreferences(
                 excludedApplicationBundleIDs: ["com.example.slides", "com.example.call"],
                 waitsForLowFrictionMoment: false,
                 presentationModeSuppressionEnabled: false,
                 idleBehavior: .resetPresentationTimingOnly,
             ),
-            accessibility: try AccessibilityPreferences(
+            accessibility: AccessibilityPreferences(
                 presentation: .textOnly,
                 staticOverlayBrightness: 0.2,
                 timerAnnouncements: .none,
@@ -238,7 +238,6 @@ struct AppPreferencesTests {
         #expect(!IntegrationCapabilityState.available(authorization: .revoked).canEnable)
         #expect(IntegrationAuthorizationState.authorized.canEnable)
     }
-
 }
 
 private func encodedString(_ profile: ScheduleProfile) throws -> String {
@@ -248,25 +247,25 @@ private func encodedString(_ profile: ScheduleProfile) throws -> String {
 }
 
 private func baseConfiguration() throws -> ProtocolConfiguration {
-    ProtocolConfiguration(
-        visual: try OpportunitySchedule(
+    try ProtocolConfiguration(
+        visual: OpportunitySchedule(
             softDueSeconds: 11,
             targetSeconds: 22,
             latestPreferredSeconds: 33,
             durationOptionsSeconds: [4],
         ),
-        movement: try OpportunitySchedule(
+        movement: OpportunitySchedule(
             softDueSeconds: 44,
             targetSeconds: 55,
             latestPreferredSeconds: 66,
             durationOptionsSeconds: [7],
         ),
-        activityEstimator: try ActivityEstimatorConfiguration(
+        activityEstimator: ActivityEstimatorConfiguration(
             recentInputWindowSeconds: 3,
             longIdleResetSeconds: 8,
             wakeUnlockGraceSeconds: 2,
         ),
-        delivery: try OpportunityDeliveryConfiguration(
+        delivery: OpportunityDeliveryConfiguration(
             waitForLowFrictionMoment: true,
             mergeWindowSeconds: 9,
             headsUpDefault: true,
@@ -275,7 +274,7 @@ private func baseConfiguration() throws -> ProtocolConfiguration {
             maximumRepeatedEscalations: 0,
             lockoutAllowed: false,
         ),
-        recovery: try RecoveryConfiguration(
+        recovery: RecoveryConfiguration(
             eligibleAfterSeconds: 70,
             latestTypicalSeconds: 80,
             suggestedDurationMinSeconds: 5,

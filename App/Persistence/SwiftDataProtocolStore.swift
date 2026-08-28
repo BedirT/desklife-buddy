@@ -94,6 +94,34 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
         }
     }
 
+    func appendEstimatedActiveUseRun(_ run: EstimatedActiveUseRun) async throws {
+        do {
+            if try storedRetentionPolicy() == .keepNothing { return }
+            try insertOrMerge(run)
+            try pruneStoredHistoryIfConfigured()
+            try saveContext()
+        } catch {
+            context.rollback()
+            throw error
+        }
+    }
+
+    func loadEstimatedActiveUseRuns() async throws -> [EstimatedActiveUseRun] {
+        do {
+            try pruneStoredHistoryIfConfigured()
+            try saveContext()
+            let descriptor = FetchDescriptor<StoredEstimatedActiveUseRun>(
+                sortBy: [SortDescriptor(\.startedAt)],
+            )
+            return try context.fetch(descriptor).map {
+                try EstimatedActiveUseRun(startedAt: $0.startedAt, endedAt: $0.endedAt)
+            }
+        } catch {
+            context.rollback()
+            throw error
+        }
+    }
+
     func loadState() async throws -> ProtocolState? {
         guard let stored = try fetchState() else { return nil }
         guard stored.schemaVersion == Self.schemaVersion else {
@@ -147,10 +175,21 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
     }
 
     func commit(events: [OpportunityEvent], state: ProtocolState) async throws {
+        try await commit(events: events, state: state, estimatedActiveUseRun: nil)
+    }
+
+    func commit(
+        events: [OpportunityEvent],
+        state: ProtocolState,
+        estimatedActiveUseRun: EstimatedActiveUseRun?,
+    ) async throws {
         do {
             if try storedRetentionPolicy() != .keepNothing {
                 for event in events {
                     try insert(event)
+                }
+                if let estimatedActiveUseRun {
+                    try insertOrMerge(estimatedActiveUseRun)
                 }
             }
             try upsert(state)
@@ -181,6 +220,23 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
             opportunity: event.opportunity?.rawValue,
             selectedDurationSeconds: event.selectedDurationSeconds,
         ))
+    }
+
+    private func insertOrMerge(_ run: EstimatedActiveUseRun) throws {
+        let descriptor = FetchDescriptor<StoredEstimatedActiveUseRun>(
+            sortBy: [SortDescriptor(\.endedAt, order: .reverse)],
+        )
+        if let latest = try context.fetch(descriptor).first,
+           run.startedAt <= latest.endedAt.addingTimeInterval(0.001)
+        {
+            latest.startedAt = min(latest.startedAt, run.startedAt)
+            latest.endedAt = max(latest.endedAt, run.endedAt)
+        } else {
+            context.insert(StoredEstimatedActiveUseRun(
+                startedAt: run.startedAt,
+                endedAt: run.endedAt,
+            ))
+        }
     }
 
     func upsert(_ state: ProtocolState) throws {

@@ -225,7 +225,7 @@ extension HeadsUpDeliveryStateCodec {
         for opportunity in [
             state.activeDelivery?.opportunity,
             state.pendingAction?.opportunity,
-        ].compactMap({ $0 }) {
+        ].compactMap(\.self) {
             switch opportunity {
             case let .visual(cycleID):
                 guard cycleID == visualCycleID else {

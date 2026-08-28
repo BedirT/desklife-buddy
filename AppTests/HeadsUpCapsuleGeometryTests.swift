@@ -28,8 +28,8 @@ struct HeadsUpCapsuleGeometryTests {
         #expect(HeadsUpScreenResolver.canonicalScreens(screens).map(\.id) == [.direct(1), .direct(3)])
     }
 
-    @Test("A visible notched menu bar docks the capsule centered below the safe area")
-    func notchPlacement() {
+    @Test("A visible notched menu bar keeps the capsule at fixed top center")
+    func visibleNotchedMenuBarPlacement() {
         let target = screen(
             10,
             frame: CGRect(x: 0, y: 0, width: 1512, height: 982),
@@ -44,13 +44,13 @@ struct HeadsUpCapsuleGeometryTests {
             contentSize: CGSize(width: 280, height: 34),
         )
 
-        #expect(placement.anchor == .notch)
-        #expect(placement.capsuleFrame == CGRect(x: 616, y: 910, width: 280, height: 34))
-        #expect(placement.frame == CGRect(x: 602, y: 888, width: 308, height: 62))
+        #expect(placement.anchor == .topCenter)
+        #expect(placement.capsuleFrame == CGRect(x: 616, y: 932, width: 280, height: 34))
+        #expect(placement.frame == CGRect(x: 602, y: 910, width: 308, height: 62))
     }
 
-    @Test("A visible notchless menu bar uses the modeled clock-area trailing anchor")
-    func clockAreaPlacement() {
+    @Test("A visible notchless menu bar keeps the capsule at fixed top center")
+    func visibleNotchlessMenuBarPlacement() {
         let target = screen(
             11,
             frame: CGRect(x: 0, y: 0, width: 1920, height: 1080),
@@ -62,9 +62,9 @@ struct HeadsUpCapsuleGeometryTests {
             contentSize: CGSize(width: 280, height: 34),
         )
 
-        #expect(placement.anchor == .menuBarClockTrailing)
-        #expect(placement.capsuleFrame == CGRect(x: 1624, y: 1022, width: 280, height: 34))
-        #expect(placement.frame == CGRect(x: 1610, y: 1000, width: 308, height: 62))
+        #expect(placement.anchor == .topCenter)
+        #expect(placement.capsuleFrame == CGRect(x: 820, y: 1030, width: 280, height: 34))
+        #expect(placement.frame == CGRect(x: 806, y: 1008, width: 308, height: 62))
     }
 
     @Test("A hidden menu bar or full-screen space uses top center")

@@ -5,6 +5,21 @@ import StatusMenu
 protocol ProtocolRuntimeStore {
     func loadState() async throws -> ProtocolState?
     func commit(events: [OpportunityEvent], state: ProtocolState) async throws
+    func commit(
+        events: [OpportunityEvent],
+        state: ProtocolState,
+        estimatedActiveUseRun: EstimatedActiveUseRun?,
+    ) async throws
+}
+
+extension ProtocolRuntimeStore {
+    func commit(
+        events: [OpportunityEvent],
+        state: ProtocolState,
+        estimatedActiveUseRun: EstimatedActiveUseRun?,
+    ) async throws {
+        try await commit(events: events, state: state)
+    }
 }
 
 extension SwiftDataProtocolStore: ProtocolRuntimeStore {}
@@ -157,6 +172,11 @@ final class ProtocolRuntime {
                 activeSuppressions: suppressions,
                 isLowFrictionMoment: isLowFrictionMoment,
             )
+            let estimatedActiveUseRun = estimatedActiveUseRun(
+                from: engine.state,
+                to: candidate.state,
+                endedAt: observationDate,
+            )
             let headsUpOutput = reduceHeadsUpObservation(
                 in: &candidate,
                 observedAt: observationDate,
@@ -169,6 +189,7 @@ final class ProtocolRuntime {
                 candidate: &candidate,
                 drafts: output.events,
                 recordedAt: observationDate,
+                estimatedActiveUseRun: estimatedActiveUseRun,
             )
             engine = candidate
             publish(liveHeadsUp: publishedHeadsUpPresentation(
@@ -354,6 +375,7 @@ extension ProtocolRuntime {
         _ drafts: [OpportunityEventDraft],
         state: ProtocolState,
         recordedAt: Date? = nil,
+        estimatedActiveUseRun: EstimatedActiveUseRun? = nil,
     ) async throws {
         let recordedAt = recordedAt ?? now()
         let events = drafts.map { draft in
@@ -366,7 +388,28 @@ extension ProtocolRuntime {
                 selectedDurationSeconds: draft.selectedDurationSeconds,
             )
         }
-        try await store.commit(events: events, state: state)
+        try await store.commit(
+            events: events,
+            state: state,
+            estimatedActiveUseRun: estimatedActiveUseRun,
+        )
+    }
+
+    private func estimatedActiveUseRun(
+        from previous: ProtocolState,
+        to current: ProtocolState,
+        endedAt: Date,
+    ) -> EstimatedActiveUseRun? {
+        let visualDelta = current.visualClock.accumulatedActiveUseSeconds
+            - previous.visualClock.accumulatedActiveUseSeconds
+        let movementDelta = current.movementClock.accumulatedActiveUseSeconds
+            - previous.movementClock.accumulatedActiveUseSeconds
+        let seconds = max(visualDelta, movementDelta)
+        guard seconds.isFinite, seconds > 0 else { return nil }
+        return try? EstimatedActiveUseRun(
+            startedAt: endedAt.addingTimeInterval(-seconds),
+            endedAt: endedAt,
+        )
     }
 
     func publish(liveHeadsUp: OpportunityPresentation?) {

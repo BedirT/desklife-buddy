@@ -1,7 +1,17 @@
 import DesignSystem
 import SwiftUI
 
+enum RecoveryStandardLayoutMetrics {
+    static let instructionYFraction: CGFloat = 0.325
+    static let controlsYFraction: CGFloat = 0.855
+
+    static func y(_ fraction: CGFloat, in height: CGFloat) -> CGFloat {
+        DSBreakForegroundLayout.y(fraction, in: height)
+    }
+}
+
 struct RecoveryOfferView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
@@ -30,11 +40,14 @@ struct RecoveryOfferView: View {
             ZStack {
                 BreakFlowField(staticPresentation: accessibility.staticPresentation)
                     .accessibilityHidden(true)
-                if usesLargeTextLayout {
-                    accessibilityLayout
-                } else {
-                    standardLayout(in: proxy.size)
+                Group {
+                    if usesLargeTextLayout {
+                        accessibilityLayout
+                    } else {
+                        standardLayout(in: proxy.size)
+                    }
                 }
+                .environment(\.colorScheme, overlayColorScheme)
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
@@ -48,9 +61,21 @@ struct RecoveryOfferView: View {
         ZStack {
             instructionStack
                 .frame(maxWidth: min(1100, size.width - 80))
-                .position(x: size.width / 2, y: size.height * 0.325)
+                .position(
+                    x: size.width / 2,
+                    y: RecoveryStandardLayoutMetrics.y(
+                        RecoveryStandardLayoutMetrics.instructionYFraction,
+                        in: size.height,
+                    ),
+                )
             controls
-                .position(x: size.width / 2, y: size.height * 0.855)
+                .position(
+                    x: size.width / 2,
+                    y: RecoveryStandardLayoutMetrics.y(
+                        RecoveryStandardLayoutMetrics.controlsYFraction,
+                        in: size.height,
+                    ),
+                )
         }
     }
 
@@ -167,6 +192,10 @@ struct RecoveryOfferView: View {
     private var eyebrowInk: Color {
         if accessibility.staticPresentation { return .dsStaticText }
         return accessibility.increaseContrast ? .dsBreakEyebrowIncreased : .dsBreakEyebrow
+    }
+
+    private var overlayColorScheme: ColorScheme {
+        accessibility.staticPresentation ? colorScheme : .dark
     }
 
     @ViewBuilder

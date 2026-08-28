@@ -31,6 +31,7 @@ final class HeadsUpNotificationDeliveryCoordinator {
     private let center: any HeadsUpNotificationCenterClient
     private let capsule: any HeadsUpCapsulePresenting
     private let responseRegistry: HeadsUpNotificationResponseRegistry
+    private let allowsNotificationFallback: () -> Bool
     private let reconciliationAttempts: Int
     private let wait: Wait
     // Completed outcomes stay cached until their prompt fact or terminal state is durably persisted.
@@ -43,6 +44,7 @@ final class HeadsUpNotificationDeliveryCoordinator {
         center: any HeadsUpNotificationCenterClient,
         capsule: any HeadsUpCapsulePresenting,
         responseRegistry: HeadsUpNotificationResponseRegistry,
+        allowsNotificationFallback: @escaping () -> Bool = { true },
         reconciliationAttempts: Int = 5,
         wait: @escaping Wait = {
             try? await Task.sleep(for: .milliseconds(100))
@@ -51,6 +53,7 @@ final class HeadsUpNotificationDeliveryCoordinator {
         self.center = center
         self.capsule = capsule
         self.responseRegistry = responseRegistry
+        self.allowsNotificationFallback = allowsNotificationFallback
         self.reconciliationAttempts = max(1, reconciliationAttempts)
         self.wait = wait
     }
@@ -195,9 +198,18 @@ final class HeadsUpNotificationDeliveryCoordinator {
             }
             return didPresentCapsule ? .capsule : nil
         case .capsule:
-            return await deliverCapsule(deliveryID: deliveryID, content: request)
-                ? .capsule
-                : nil
+            if await deliverCapsule(deliveryID: deliveryID, content: request) {
+                return .capsule
+            }
+            guard !Task.isCancelled,
+                  await notificationFallbackIsAuthorized()
+            else {
+                return nil
+            }
+            if responseRegistry.hasObserved(deliveryID: deliveryID) {
+                return .notification
+            }
+            return await deliverNotification(request) ? .notification : nil
         }
     }
 
@@ -266,5 +278,18 @@ final class HeadsUpNotificationDeliveryCoordinator {
 
     private func removeCachedDelivery(deliveryID: UUID) {
         cachedDeliveries[deliveryID] = nil
+    }
+}
+
+private extension HeadsUpNotificationDeliveryCoordinator {
+    func notificationFallbackIsAuthorized() async -> Bool {
+        guard allowsNotificationFallback(), !Task.isCancelled else { return false }
+        do {
+            let settings = try await center.notificationSettings()
+            guard allowsNotificationFallback(), !Task.isCancelled else { return false }
+            return settings.authorizationStatus == .authorized && settings.alertsEnabled
+        } catch {
+            return false
+        }
     }
 }

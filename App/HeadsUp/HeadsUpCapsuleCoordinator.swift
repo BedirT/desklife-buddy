@@ -28,6 +28,7 @@ final class HeadsUpCapsuleCoordinator: HeadsUpCapsulePresenting {
         UUID,
         @escaping (Result<Void, any Error>) -> Void,
     ) -> Void
+    typealias GlintSamplerFactory = HeadsUpReactiveGlintController.SamplerFactory
 
     private let screens: () -> [HeadsUpScreen]
     private let pointerLocation: () -> CGPoint
@@ -36,6 +37,7 @@ final class HeadsUpCapsuleCoordinator: HeadsUpCapsulePresenting {
     private let observeScreenChanges: ScreenObserver
     private let onEscape: EscapeHandler
     private let notificationModel: NotificationModel?
+    private let glintController: HeadsUpReactiveGlintController
 
     private var activePresentation: HeadsUpCapsulePresentation?
     private var panel: (any HeadsUpCapsulePanelPresenting)?
@@ -55,6 +57,8 @@ final class HeadsUpCapsuleCoordinator: HeadsUpCapsulePresenting {
         observeScreenChanges: @escaping ScreenObserver,
         onEscape: @escaping EscapeHandler,
         notificationModel: NotificationModel? = nil,
+        makeGlintSampler: @escaping GlintSamplerFactory = { nil },
+        systemReduceMotion: @escaping () -> Bool = { false },
     ) {
         self.screens = screens
         self.pointerLocation = pointerLocation
@@ -63,6 +67,10 @@ final class HeadsUpCapsuleCoordinator: HeadsUpCapsulePresenting {
         self.observeScreenChanges = observeScreenChanges
         self.onEscape = onEscape
         self.notificationModel = notificationModel
+        glintController = HeadsUpReactiveGlintController(
+            makeSampler: makeGlintSampler,
+            systemReduceMotion: systemReduceMotion,
+        )
     }
 
     convenience init(
@@ -84,6 +92,12 @@ final class HeadsUpCapsuleCoordinator: HeadsUpCapsulePresenting {
             observeScreenChanges: Self.observeLiveScreenChanges,
             onEscape: onEscape,
             notificationModel: notificationModel,
+            makeGlintSampler: {
+                HeadsUpPointerGlintSampler(pointerLocation: { NSEvent.mouseLocation })
+            },
+            systemReduceMotion: {
+                NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+            },
         )
     }
 
@@ -212,6 +226,7 @@ final class HeadsUpCapsuleCoordinator: HeadsUpCapsulePresenting {
 
         if let panel, panel.displayID == screen.id {
             panel.update(frame: placement.frame, model: presentation.model)
+            ensureGlintSampling(for: presentation)
             return true
         }
 
@@ -225,6 +240,7 @@ final class HeadsUpCapsuleCoordinator: HeadsUpCapsulePresenting {
         )
         panel = newPanel
         newPanel.presentWithoutActivation()
+        ensureGlintSampling(for: presentation)
         return true
     }
 
@@ -249,8 +265,19 @@ final class HeadsUpCapsuleCoordinator: HeadsUpCapsulePresenting {
     }
 
     private func closePanel() {
+        glintController.stop()
         panel?.close()
         panel = nil
+    }
+
+    private func ensureGlintSampling(for presentation: HeadsUpCapsulePresentation) {
+        let deliveryID = presentation.deliveryID
+        glintController.ensure(
+            model: presentation.model,
+            isVisible: { [weak self] in
+                self?.activePresentation?.deliveryID == deliveryID && self?.panel != nil
+            },
+        )
     }
 
     deinit {

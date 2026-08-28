@@ -3,6 +3,13 @@ import Foundation
 protocol HeadsUpAuthorizationStore: AnyObject {
     func load() -> HeadsUpNotificationAuthorizationState
     func save(_ state: HeadsUpNotificationAuthorizationState)
+    func resetAppOwnedMetadata()
+}
+
+extension HeadsUpAuthorizationStore {
+    func resetAppOwnedMetadata() {
+        save(HeadsUpNotificationAuthorizationState())
+    }
 }
 
 final class UserDefaultsHeadsUpAuthorizationStore: HeadsUpAuthorizationStore {
@@ -33,5 +40,12 @@ final class UserDefaultsHeadsUpAuthorizationStore: HeadsUpAuthorizationStore {
         defaults.set(state.hasRequestedAuthorization, forKey: Key.hasRequestedAuthorization)
         defaults.set(state.usesInAppHeadsUp, forKey: Key.usesInAppHeadsUp)
         defaults.set(state.hasBeenAuthorized, forKey: Key.hasBeenAuthorized)
+    }
+
+    func resetAppOwnedMetadata() {
+        defaults.removeObject(forKey: Key.hasPresentedExplainer)
+        defaults.removeObject(forKey: Key.hasRequestedAuthorization)
+        defaults.removeObject(forKey: Key.usesInAppHeadsUp)
+        defaults.removeObject(forKey: Key.hasBeenAuthorized)
     }
 }

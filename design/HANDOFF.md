@@ -27,8 +27,9 @@ it.
    Reduce Motion, and multi-display — the hard platform work — on the simplest content.
 4. **Movement surface** — adds choice chips, the 2-minute option, position change
    (`Movement.dc.html`, K.2).
-5. **Heads-up: notification path first, then the notch capsule** (`HeadsUp.dc.html`,
-   K.3). The capsule's station-keeping (M3) is polish; the product functions without it.
+5. **Heads-up: fixed top-center capsule first, notification fallback second**
+   (`HeadsUp.dc.html`, K.3). Its restrained one-shot entrance and ephemeral pointer-reactive
+   glint are polish; the product functions without either.
 6. **Settings, onboarding, weekly** — in that order. Weekly is deliberately last
    (`[03 §14]` patterns-not-grades needs real logged data to design against).
 
@@ -86,8 +87,6 @@ any verification language (`[C034]`) · no account, no network, no analytics by 
 
 ## Open questions carried into build — do not hard-code
 
-- **DQ-03 multi-display defaults**: `INTERACTION_SPEC.md` §8 is an interim answer; keep
-  display targeting configurable.
 - **DQ-12 brand color**: the sun ramp is interim; keep accent tokens centralized.
 - **D-001 name**: "Cadence" is a placeholder — no user-visible string or bundle
   identifier may make renaming expensive.

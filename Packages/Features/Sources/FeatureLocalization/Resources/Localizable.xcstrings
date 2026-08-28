@@ -96,7 +96,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Both are due \u2014 one break covers them"
+            "value": "Both are due. One break covers them."
           }
         }
       }
@@ -356,7 +356,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Both are due — one break covers them."
+            "value": "Both are due. One break covers them."
           }
         }
       }
@@ -446,7 +446,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open Notification Settings…"
+            "value": "Open Notification Settings\u2026"
           }
         }
       }
@@ -467,16 +467,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "busy until %@"
-          }
-        }
-      }
-    },
-    "headsUp.phase.hold_busy_format": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On hold · busy until %@"
           }
         }
       }
@@ -521,6 +511,16 @@
         }
       }
     },
+    "headsUp.phase.focus_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "in Focus"
+          }
+        }
+      }
+    },
     "headsUp.phase.focus_filter": {
       "localizations": {
         "en": {
@@ -531,12 +531,12 @@
         }
       }
     },
-    "headsUp.phase.focus_detail": {
+    "headsUp.phase.hold_busy_format": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "in Focus"
+            "value": "On hold \u00b7 busy until %@"
           }
         }
       }
@@ -556,7 +556,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "now — or whenever suits"
+            "value": "now, or whenever suits"
           }
         }
       }
@@ -581,22 +581,22 @@
         }
       }
     },
-    "headsUp.phase.outside_working_hours": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Outside working hours"
-          }
-        }
-      }
-    },
     "headsUp.phase.on_hold_title": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "On hold"
+          }
+        }
+      }
+    },
+    "headsUp.phase.outside_working_hours": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Outside working hours"
           }
         }
       }
@@ -616,7 +616,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Presenting — reminders off"
+            "value": "Presenting, reminders off"
           }
         }
       }
@@ -926,7 +926,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Change position instead, P \u2014 logged separately"
+            "value": "Change position instead, P. Logged separately."
           }
         }
       }
@@ -1166,7 +1166,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seated \u2014 alternate lifting each foot, move the ankles, reach the arms easily."
+            "value": "Seated: alternate lifting each foot, move the ankles, reach the arms easily."
           }
         }
       }
@@ -1176,7 +1176,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Small space \u2014 march or step gently in place, or use a seated equivalent."
+            "value": "Small space: march or step gently in place, or use a seated equivalent."
           }
         }
       }
@@ -1186,7 +1186,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Walk or wheel \u2014 away from the desk, at an easy, comfortable pace."
+            "value": "Walk or wheel: away from the desk, at an easy, comfortable pace."
           }
         }
       }
@@ -1387,6 +1387,4546 @@
           "stringUnit": {
             "state": "translated",
             "value": "2 minutes instead"
+          }
+        }
+      }
+    },
+    "onboarding.action.back": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        }
+      }
+    },
+    "onboarding.action.continue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue"
+          }
+        }
+      }
+    },
+    "onboarding.action.finish": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish"
+          }
+        }
+      }
+    },
+    "onboarding.action.retry": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        }
+      }
+    },
+    "onboarding.action.retry_activation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try starting again"
+          }
+        }
+      }
+    },
+    "onboarding.action.skip": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip setup"
+          }
+        }
+      }
+    },
+    "onboarding.comfort.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These choices change the app only. They do not change macOS settings."
+          }
+        }
+      }
+    },
+    "onboarding.comfort.increase_contrast": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Increase Contrast"
+          }
+        }
+      }
+    },
+    "onboarding.comfort.reduce_motion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reduce Motion"
+          }
+        }
+      }
+    },
+    "onboarding.comfort.reduce_motion_start": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Static is the starting presentation because Reduce Motion is on. You can still choose Standard here without changing macOS."
+          }
+        }
+      }
+    },
+    "onboarding.comfort.reduce_transparency": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reduce Transparency"
+          }
+        }
+      }
+    },
+    "onboarding.comfort.system_choices": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current macOS display choices"
+          }
+        }
+      }
+    },
+    "onboarding.comfort.system_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reduce Motion, Reduce Transparency, and Increase Contrast are read here only and remain controlled by macOS."
+          }
+        }
+      }
+    },
+    "onboarding.comfort.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make breaks comfortable"
+          }
+        }
+      }
+    },
+    "onboarding.completed.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your choices are saved. You can change them later in Settings."
+          }
+        }
+      }
+    },
+    "onboarding.completed.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Working now"
+          }
+        }
+      }
+    },
+    "onboarding.failure.activation.completion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your choices are saved, but the app didn't finish starting."
+          }
+        }
+      }
+    },
+    "onboarding.failure.activation.skip": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Balanced defaults are saved, but the app didn't finish starting."
+          }
+        }
+      }
+    },
+    "onboarding.failure.completion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your choices weren't saved. Nothing changed."
+          }
+        }
+      }
+    },
+    "onboarding.failure.skip": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The default setup wasn't saved. Nothing changed."
+          }
+        }
+      }
+    },
+    "onboarding.honesty.cannot_know": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It cannot tell whether you are sitting, standing, or looking at the screen."
+          }
+        }
+      }
+    },
+    "onboarding.honesty.estimated_use": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It estimates active computer use from keyboard and pointer activity."
+          }
+        }
+      }
+    },
+    "onboarding.honesty.idle_is_not_movement": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time away from the keyboard is not proof that you moved."
+          }
+        }
+      }
+    },
+    "onboarding.honesty.passive_reading": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passive reading or watching may not register as active computer use."
+          }
+        }
+      }
+    },
+    "onboarding.honesty.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What this can and cannot know"
+          }
+        }
+      }
+    },
+    "onboarding.movement.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How you move"
+          }
+        }
+      }
+    },
+    "onboarding.progress": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %d of %d"
+          }
+        }
+      }
+    },
+    "onboarding.promise.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A private, research-informed way to remember visual and movement breaks without fighting your workflow."
+          }
+        }
+      }
+    },
+    "onboarding.promise.invitations": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Breaks are invitations. Nothing is blocked, and you can leave at any time."
+          }
+        }
+      }
+    },
+    "onboarding.promise.no_account": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Works without an account"
+          }
+        }
+      }
+    },
+    "onboarding.promise.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A private way to remember breaks"
+          }
+        }
+      }
+    },
+    "onboarding.promise.wellness": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supports general wellness and healthier work-break routines."
+          }
+        }
+      }
+    },
+    "onboarding.ready.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your choices are ready to save. Nothing has requested a permission."
+          }
+        }
+      }
+    },
+    "onboarding.ready.integrations": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications and launch at login are available later in Settings. Nothing is requested here."
+          }
+        }
+      }
+    },
+    "onboarding.ready.movement": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement"
+          }
+        }
+      }
+    },
+    "onboarding.ready.presentation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presentation"
+          }
+        }
+      }
+    },
+    "onboarding.ready.rhythm": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rhythm"
+          }
+        }
+      }
+    },
+    "onboarding.ready.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ready when you are"
+          }
+        }
+      }
+    },
+    "onboarding.rhythm.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a starting schedule. You can change it any time in Settings."
+          }
+        }
+      }
+    },
+    "onboarding.rhythm.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a rhythm"
+          }
+        }
+      }
+    },
+    "onboarding.skipped.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Balanced is selected. Every setup choice remains available later in Settings."
+          }
+        }
+      }
+    },
+    "onboarding.skipped.permissions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No permissions were requested, and there is no reminder to finish setup."
+          }
+        }
+      }
+    },
+    "onboarding.skipped.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ready with Balanced defaults"
+          }
+        }
+      }
+    },
+    "onboarding.activating.completion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choices saved. Starting\u2026"
+          }
+        }
+      }
+    },
+    "onboarding.activating.skip": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Defaults saved. Starting\u2026"
+          }
+        }
+      }
+    },
+    "onboarding.submitting.completion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saving choices\u2026"
+          }
+        }
+      }
+    },
+    "onboarding.submitting.skip": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Applying defaults\u2026"
+          }
+        }
+      }
+    },
+    "onboarding.system.off": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        }
+      }
+    },
+    "onboarding.system.on": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On"
+          }
+        }
+      }
+    },
+    "settings.accessibility.background_brightness": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Background brightness"
+          }
+        }
+      }
+    },
+    "settings.accessibility.background_brightness_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adjust the softened desktop behind Static breaks."
+          }
+        }
+      }
+    },
+    "settings.accessibility.break_presentation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Break presentation"
+          }
+        }
+      }
+    },
+    "settings.accessibility.break_presentation_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose how every break appears. Each option keeps the full instructions and controls."
+          }
+        }
+      }
+    },
+    "settings.accessibility.brightness.brighter": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brighter"
+          }
+        }
+      }
+    },
+    "settings.accessibility.brightness.darker": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Darker"
+          }
+        }
+      }
+    },
+    "settings.accessibility.brightness.value_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% brightness"
+          }
+        }
+      }
+    },
+    "settings.accessibility.keyboard": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keyboard access"
+          }
+        }
+      }
+    },
+    "settings.accessibility.keyboard_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Breaks show their available keys. Escape always dismisses. No global shortcuts are assigned by default."
+          }
+        }
+      }
+    },
+    "settings.accessibility.movement_order": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement order"
+          }
+        }
+      }
+    },
+    "settings.accessibility.presentation.standard": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standard"
+          }
+        }
+      }
+    },
+    "settings.accessibility.presentation.standard_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uses the full visual field and its one-time transitions."
+          }
+        }
+      }
+    },
+    "settings.accessibility.presentation.static": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Static"
+          }
+        }
+      }
+    },
+    "settings.accessibility.presentation.static_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uses no image field or app motion. Break text and controls appear over a softened desktop."
+          }
+        }
+      }
+    },
+    "settings.accessibility.presentation.text_only": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text only"
+          }
+        }
+      }
+    },
+    "settings.accessibility.presentation.text_only_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shows the complete break as text and controls, without illustration or app motion."
+          }
+        }
+      }
+    },
+    "settings.accessibility.seated_first": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show seated movement first"
+          }
+        }
+      }
+    },
+    "settings.accessibility.seated_first_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moves seated movement to the first content position. Every movement path keeps equal status."
+          }
+        }
+      }
+    },
+    "settings.accessibility.system_display": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System display settings"
+          }
+        }
+      }
+    },
+    "settings.accessibility.system_display_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reduce Motion and Increase Contrast are followed automatically. Your break-presentation choice stays separate."
+          }
+        }
+      }
+    },
+    "settings.accessibility.system_keyboard": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System & keyboard"
+          }
+        }
+      }
+    },
+    "settings.accessibility.timer.coarse": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coarse milestones"
+          }
+        }
+      }
+    },
+    "settings.accessibility.timer.coarse_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Announces a few useful timer milestones, never every second."
+          }
+        }
+      }
+    },
+    "settings.accessibility.timer.none": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        }
+      }
+    },
+    "settings.accessibility.timer.none_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Does not announce timer progress. Other VoiceOver labels and state changes remain available."
+          }
+        }
+      }
+    },
+    "settings.accessibility.timer_announcements": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timer announcements"
+          }
+        }
+      }
+    },
+    "settings.accessibility.timer_announcements_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose whether VoiceOver announces timer progress."
+          }
+        }
+      }
+    },
+    "settings.break_content.breathing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Include optional breathing content"
+          }
+        }
+      }
+    },
+    "settings.break_content.breathing_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comfortable slower breathing and sensory-reset cards may appear."
+          }
+        }
+      }
+    },
+    "settings.break_content.choices": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Content choices"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.all_cards": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All cards"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.alternative": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alternative"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.back": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Break content"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.browse": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Browse library"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.b01.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "60\u201390 seconds"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.b01.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Breathe normally. If it feels comfortable, let the exhale become a little slower or longer than the inhale. No holding is needed."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.b01.internal_boundary.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claim boundary: relaxation/reset only; no treatment claim [S039, S040]."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.b01.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comfortable slower breathing"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.b01.visible_note.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop if: dizzy, air-hungry, anxious, or uncomfortable."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.b02.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notice three neutral things you can see, two sounds, and one physical point of support. Then return when ready."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.b02.internal_boundary.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is a generic attention reset, not therapy."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.b02.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sensory reset"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l01.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 minutes"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l01.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move away from the desk."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l01.instruction.2": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Walk, wheel, or perform equivalent active movement at an easy pace."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l01.instruction.3": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep breathing comfortable."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l01.instruction.4": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Return when the timer ends or sooner if needed."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l01.internal_boundary.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preferred default"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l01.internal_boundary.2": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is the most evidence-aligned general movement card [S003\u2013S006]. It should appear more often than decorative stretch routines."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l01.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Easy walk"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l02.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 minutes"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l02.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2 minutes easy walking/wheeling;"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l02.instruction.2": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 minute comfortable upper-body movement;"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l02.instruction.3": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 minute supported lower-leg or seated movement;"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l02.instruction.4": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 minute easy walking or breathing."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l02.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mixed movement"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l03.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 minutes"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l03.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "march or step gently in place, or use a seated equivalent;"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l03.instruction.2": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "change direction slowly;"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l03.instruction.3": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "use a stable surface if needed;"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l03.instruction.4": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "avoid fast turning or balance challenges."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l03.instruction_intro": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For users who cannot leave the room:"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l03.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Small-space movement"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l04.alternative": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "seated leg movement and forward weight shifts."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l04.alternative_label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Equal alternative"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l04.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 minutes"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l04.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From a stable chair, stand and sit slowly a few times at a comfortable pace. Use the chair or desk for support if safe."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l04.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sit-to-stand option"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l04.visible_note.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Do not use if balance, pain, dizziness, recent injury/surgery, or the environment makes it unsuitable."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l05.alternative": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "seated forward press without resistance or gentle arm movement."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l05.alternative_label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alternative"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l05.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 minutes"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l05.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Place the hands on a stable wall, step back to a comfortable angle, bend the elbows slightly, and press away. Keep the movement easy."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l05.internal_boundary.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No strength-treatment claim."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l05.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wall push-up option"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l06.alternative": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "seated heel raises."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l06.alternative_label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alternative"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l06.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 minutes"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l06.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "With a stable support, rise onto the balls of the feet and lower slowly a few times."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l06.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supported calf raise"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.l06.visible_note.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caution: skip if balance or foot/ankle symptoms make it unsuitable."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m01.alternative": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "actively wheel/propel if appropriate, or combine seated marching with arm movement."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m01.alternative_label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seated/wheelchair alternative"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m01.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2 minutes"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m01.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step away from the desk and move at an easy, comfortable pace. A short route around the room is enough."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m01.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Walk or wheel"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m02.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2 minutes"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m02.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alternate lifting or sliding each foot for 30\u201345 seconds."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m02.instruction.2": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move the ankles through a comfortable range."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m02.instruction.3": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reach or move the arms in a way that feels easy."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m02.instruction.4": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish with relaxed breathing."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m02.internal_boundary.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No \u201ccalorie burn\u201d or circulation-treatment claim."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m02.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seated active reset"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m03.alternative": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If standing is not appropriate, change seated support or orientation and perform active seated movement."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m03.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2 minutes"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m03.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change to a different comfortable position, then move around for the rest of the timer."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m03.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Position plus movement"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m04.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "60\u201390 seconds"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m04.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Let the arms hang or rest. Slowly move the shoulders forward, up, back, and down through a comfortable range. Then gently bring the shoulder blades toward each other and release."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m04.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shoulder and upper-back variation"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m04.visible_note.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avoid forceful retraction or holding a \u201ccorrect posture.\u201d"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m05.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "60 seconds"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m05.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Let the hands relax. Open and close them gently, then move the wrists through a small comfortable range."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m05.internal_boundary.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No aggressive stretch or nerve-glide claims."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.m05.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hand and forearm reset"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.p01.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try a different comfortable chair or backrest position. You do not need to hold one position all day."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.p01.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change support"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.p02.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stand if it feels comfortable and your setup is ready. Change back whenever you want."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.p02.internal_boundary.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Do not prescribe a universal standing duration."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.p02.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stand for a while"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.p03.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bring the primary task and input devices within comfortable reach. Increase text size before leaning in."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.p03.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screen and reach check"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.p04.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For longer sessions, consider raising the laptop screen and using an external keyboard and pointer if available."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.p04.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laptop setup"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v01.alternative": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "close the eyes gently for part of the timer if looking far away is not practical."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v01.alternative_label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alternative"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v01.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "20 seconds"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v01.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Look at something comfortably far away. Let the small details come into view without forcing focus. Blink slowly two or three times."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v01.internal_boundary.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Do not say: \u201crepair your eyes,\u201d \u201cprevent damage,\u201d or \u201cexactly 20 feet is required.\u201d"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v01.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comfortable distance"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v02.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "20\u201330 seconds"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v02.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notice one object nearby, then shift to something farther away. Repeat slowly once or twice without straining."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v02.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Near-to-far switch"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v02.visible_note.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Purpose: vary visual distance."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v02.visible_note.2": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caution: stop if the activity increases dizziness, double vision, or discomfort."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v03.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15\u201320 seconds"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v03.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relax the face. Let the eyelids close completely two or three times, without squeezing."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v03.internal_boundary.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use only as part of a normal visual break or optional blink mode."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v03.internal_boundary.2": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Do not show every few minutes by default [S017]."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v03.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gentle blink reset"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v04.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15\u201320 seconds"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v04.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If it is safe, close your eyes gently and let them rest. Keep breathing normally."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v04.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eyes closed"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v04.visible_note.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Do not use while walking, operating equipment, or when visual awareness is necessary."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v05.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "untimed setup tip"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v05.instruction.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If you are leaning in to read, try increasing text size or moving the content rather than holding that position."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v05.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Readability check"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.card.v05.visible_note.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is a workstation experiment, not posture correction."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.category.calming": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional calming"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.category.five_minute": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Five-minute movement"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.category.position": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Position change"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.category.two_minute": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Two-minute movement"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.category.visual": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual reset"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.instructions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instructions"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.movement_safety": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move comfortably and use support if needed. Stop or choose another option if you feel pain, dizziness, unusual shortness of breath, weakness, or instability."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.safety": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Safety"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.safety_notes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Safety and notes"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.select_card": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select a card to read its instructions."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.source": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Source"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.source_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Research content library \u00b7 Card %@"
+          }
+        }
+      }
+    },
+    "settings.break_content.library.summary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Browse the 22 current break cards. The library is read-only."
+          }
+        }
+      }
+    },
+    "settings.break_content.library.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Content library"
+          }
+        }
+      }
+    },
+    "settings.break_content.movement.mixed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mix movement paths"
+          }
+        }
+      }
+    },
+    "settings.break_content.movement.mixed_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Walk or wheel, small-space, and seated cards can appear."
+          }
+        }
+      }
+    },
+    "settings.break_content.movement.position": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change position"
+          }
+        }
+      }
+    },
+    "settings.break_content.movement.position_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logged on its own. It doesn't complete this movement opportunity."
+          }
+        }
+      }
+    },
+    "settings.break_content.movement.seated": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seated movement"
+          }
+        }
+      }
+    },
+    "settings.break_content.movement.seated_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active seated movement appears first."
+          }
+        }
+      }
+    },
+    "settings.break_content.movement.walk_or_wheel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Walk or wheel"
+          }
+        }
+      }
+    },
+    "settings.break_content.movement.walk_or_wheel_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Easy movement away from the desk, including an equivalent active movement."
+          }
+        }
+      }
+    },
+    "settings.break_content.preferred_movement": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preferred movement"
+          }
+        }
+      }
+    },
+    "settings.break_content.preferred_movement_explanation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Each path has equal status. You can choose a different one during any movement opportunity."
+          }
+        }
+      }
+    },
+    "settings.break_content.quick_option": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show the 2-minute movement option"
+          }
+        }
+      }
+    },
+    "settings.break_content.quick_option_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Two minutes is a useful quick option alongside the suggested 5 minutes."
+          }
+        }
+      }
+    },
+    "settings.break_content.standing_desk": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standing-desk mode"
+          }
+        }
+      }
+    },
+    "settings.break_content.standing_desk_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standing is one position, not a movement completion. Movement opportunities still appear."
+          }
+        }
+      }
+    },
+    "settings.coming_later.message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schedule is ready now. The remaining local settings are being built in order."
+          }
+        }
+      }
+    },
+    "settings.coming_later.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This section is coming next"
+          }
+        }
+      }
+    },
+    "settings.context.automatic_quieting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatic quieting"
+          }
+        }
+      }
+    },
+    "settings.context.automatic_quieting_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose when reminders should stay out of the way. These controls use choices you make and recent key or pointer activity, never app content."
+          }
+        }
+      }
+    },
+    "settings.context.choose_app": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose app\u2026"
+          }
+        }
+      }
+    },
+    "settings.context.excluded_apps": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Excluded apps"
+          }
+        }
+      }
+    },
+    "settings.context.excluded_apps_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reminders stay quiet while a chosen app is frontmost. Only its bundle identifier is stored, not window titles or content."
+          }
+        }
+      }
+    },
+    "settings.context.idle_behavior": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Long idle"
+          }
+        }
+      }
+    },
+    "settings.context.idle_behavior_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After a long idle, the app may reset when the next break is presented. It never records movement."
+          }
+        }
+      }
+    },
+    "settings.context.low_friction_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When a break is due, wait within its timing window for a pause in recent key or pointer activity."
+          }
+        }
+      }
+    },
+    "settings.context.manual_pause": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manual pause"
+          }
+        }
+      }
+    },
+    "settings.context.manual_pause_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause for a time or until you resume from the status menu. Break clocks do not accumulate during a manual pause."
+          }
+        }
+      }
+    },
+    "settings.context.no_excluded_apps": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No excluded apps"
+          }
+        }
+      }
+    },
+    "settings.context.no_excluded_apps_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reminders can appear in any app unless another quieting choice applies."
+          }
+        }
+      }
+    },
+    "settings.context.presentation_mode": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quiet reminders while presenting"
+          }
+        }
+      }
+    },
+    "settings.context.presentation_mode_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When you choose Presenting from the status menu, reminders stay quiet until you turn it off."
+          }
+        }
+      }
+    },
+    "settings.context.remove_app_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove %@ from excluded apps"
+          }
+        }
+      }
+    },
+    "settings.context.return_behavior": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After quiet time ends, reminders return after a short grace period. If visual and movement are both due, the app offers at most one combined break. Never a stack of prompts."
+          }
+        }
+      }
+    },
+    "settings.context.unavailable_app": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unavailable app"
+          }
+        }
+      }
+    },
+    "settings.custom.apply": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save custom timing"
+          }
+        }
+      }
+    },
+    "settings.custom.field.invalid_number": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ must be a number."
+          }
+        }
+      }
+    },
+    "settings.custom.field.ordered_window": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ must keep start, target, and prefer-by in order."
+          }
+        }
+      }
+    },
+    "settings.custom.field.positive_finite": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ must be a positive number."
+          }
+        }
+      }
+    },
+    "settings.custom.field.required": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is required."
+          }
+        }
+      }
+    },
+    "settings.custom.field.value_too_large": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is too large to use."
+          }
+        }
+      }
+    },
+    "settings.custom.invalid": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter positive intervals and durations to use this schedule."
+          }
+        }
+      }
+    },
+    "settings.custom.movement.effectively_disabled_note": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At this interval, a movement opportunity may rarely appear during a workday. You can keep this timing."
+          }
+        }
+      }
+    },
+    "settings.custom.movement.latest_preferred": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement prefer by (min)"
+          }
+        }
+      }
+    },
+    "settings.custom.movement.quick_duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick option (min)"
+          }
+        }
+      }
+    },
+    "settings.custom.movement.soft_due": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement start offering after (min)"
+          }
+        }
+      }
+    },
+    "settings.custom.movement.suggested_duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggested duration (min)"
+          }
+        }
+      }
+    },
+    "settings.custom.movement.target": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement target (min)"
+          }
+        }
+      }
+    },
+    "settings.custom.movement.very_frequent_note": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement is set more often than the research-informed high-frequency schedule. You can keep this timing."
+          }
+        }
+      }
+    },
+    "settings.custom.visual.duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual duration (sec)"
+          }
+        }
+      }
+    },
+    "settings.custom.visual.effectively_disabled_note": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At this interval, a visual reset may rarely appear during a workday. You can keep this timing."
+          }
+        }
+      }
+    },
+    "settings.custom.visual.latest_preferred": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual prefer by (min)"
+          }
+        }
+      }
+    },
+    "settings.custom.visual.soft_due": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual start offering after (min)"
+          }
+        }
+      }
+    },
+    "settings.custom.visual.target": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual target (min)"
+          }
+        }
+      }
+    },
+    "settings.custom.visual.very_frequent_note": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual resets are set more often than the research-informed high-frequency schedule. You can keep this timing."
+          }
+        }
+      }
+    },
+    "settings.evidence.back": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All topics"
+          }
+        }
+      }
+    },
+    "settings.evidence.blue_light.conclusion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app focuses on breaks, readability, glare, and comfort. It does not claim that ordinary consumer-screen blue light damages your eyes."
+          }
+        }
+      }
+    },
+    "settings.evidence.blue_light.sources": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blue-light evidence \u00b7 S018\u2013S022"
+          }
+        }
+      }
+    },
+    "settings.evidence.blue_light.summary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Display comfort without damage or protection claims."
+          }
+        }
+      }
+    },
+    "settings.evidence.blue_light.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Why there is no blue-light framing"
+          }
+        }
+      }
+    },
+    "settings.evidence.blue_light.uncertainty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Display color and evening light can affect comfort or timing, but that is different from a retinal-damage claim."
+          }
+        }
+      }
+    },
+    "settings.evidence.conclusion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What we use"
+          }
+        }
+      }
+    },
+    "settings.evidence.estimation.conclusion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timing is based on estimated active computer use: key and pointer input only."
+          }
+        }
+      }
+    },
+    "settings.evidence.estimation.sources": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activity-estimation limits \u00b7 C013, C033, C034"
+          }
+        }
+      }
+    },
+    "settings.evidence.estimation.summary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent computer interaction, not the body."
+          }
+        }
+      }
+    },
+    "settings.evidence.estimation.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What activity estimation can know"
+          }
+        }
+      }
+    },
+    "settings.evidence.estimation.uncertainty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It cannot tell whether you are sitting, standing, moving, or looking at the screen. Time away from the keyboard is not proof that you moved."
+          }
+        }
+      }
+    },
+    "settings.evidence.library.conclusion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The source library keeps evidence references, allowed claims, and product decisions traceable by identifier."
+          }
+        }
+      }
+    },
+    "settings.evidence.library.sources": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Evidence review \u00b7 S001\u2013S080\nClaims register \u00b7 C001\u2013C050\nProduct health protocol \u00b7 sections 4\u201312"
+          }
+        }
+      }
+    },
+    "settings.evidence.library.summary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How evidence, claims, and product decisions are separated."
+          }
+        }
+      }
+    },
+    "settings.evidence.library.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Source library"
+          }
+        }
+      }
+    },
+    "settings.evidence.library.uncertainty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A source library makes decisions inspectable. It does not remove uncertainty or establish a universal schedule."
+          }
+        }
+      }
+    },
+    "settings.evidence.movement.conclusion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Balanced schedule offers about five minutes of easy movement around each hour, with a useful two-minute quick option."
+          }
+        }
+      }
+    },
+    "settings.evidence.movement.sources": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement-break evidence \u00b7 S001\u2013S010"
+          }
+        }
+      }
+    },
+    "settings.evidence.movement.summary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Easy movement, with more than one valid duration."
+          }
+        }
+      }
+    },
+    "settings.evidence.movement.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement"
+          }
+        }
+      }
+    },
+    "settings.evidence.movement.uncertainty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No single movement schedule is universally best. The more frequent schedule is an explicit higher-burden choice, not a superior outcome claim."
+          }
+        }
+      }
+    },
+    "settings.evidence.overview": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What shaped the defaults"
+          }
+        }
+      }
+    },
+    "settings.evidence.overview_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app supports general wellness and healthier work-break routines. The evidence supports useful ranges and honest uncertainty, not one universal schedule."
+          }
+        }
+      }
+    },
+    "settings.evidence.posture.conclusion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app favors comfortable setup and position variation. It does not rate posture or enforce one ideal position."
+          }
+        }
+      }
+    },
+    "settings.evidence.posture.sources": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Posture and workstation evidence \u00b7 S023\u2013S032"
+          }
+        }
+      }
+    },
+    "settings.evidence.posture.summary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comfort, fit, and variation instead of policing."
+          }
+        }
+      }
+    },
+    "settings.evidence.posture.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Why there is no posture score"
+          }
+        }
+      }
+    },
+    "settings.evidence.posture.uncertainty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There is no universal correct posture, and intervention evidence is mixed."
+          }
+        }
+      }
+    },
+    "settings.evidence.sources": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sources"
+          }
+        }
+      }
+    },
+    "settings.evidence.standing.conclusion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changing position can add variety. It is logged separately and never completes a movement opportunity."
+          }
+        }
+      }
+    },
+    "settings.evidence.standing.sources": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standing and movement evidence \u00b7 S011, S034"
+          }
+        }
+      }
+    },
+    "settings.evidence.standing.summary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Position change is useful context, not movement completion."
+          }
+        }
+      }
+    },
+    "settings.evidence.standing.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standing and moving are different"
+          }
+        }
+      }
+    },
+    "settings.evidence.standing.uncertainty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standing reduces sitting time, but evidence for broader outcomes from standing alone remains uncertain."
+          }
+        }
+      }
+    },
+    "settings.evidence.uncertainty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What remains uncertain"
+          }
+        }
+      }
+    },
+    "settings.evidence.visual.conclusion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The default offers short visual resets within a 20\u201330 minute window of estimated active computer use."
+          }
+        }
+      }
+    },
+    "settings.evidence.visual.sources": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual-break evidence \u00b7 S012\u2013S017"
+          }
+        }
+      }
+    },
+    "settings.evidence.visual.summary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A useful range, not a magic timer."
+          }
+        }
+      }
+    },
+    "settings.evidence.visual.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual resets"
+          }
+        }
+      }
+    },
+    "settings.evidence.visual.uncertainty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The evidence supports a window, not an exact number. The 20-20-20 rule is memorable, but it is not a uniquely proven optimum."
+          }
+        }
+      }
+    },
+    "settings.integrations.available_now": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Available now"
+          }
+        }
+      }
+    },
+    "settings.integrations.available_now_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional system features stay separate. The app still works when they are unavailable or turned off."
+          }
+        }
+      }
+    },
+    "settings.integrations.calendar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calendar busy times"
+          }
+        }
+      }
+    },
+    "settings.integrations.calendar_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Calendar data is requested or read in this build."
+          }
+        }
+      }
+    },
+    "settings.integrations.focus": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focus Filter"
+          }
+        }
+      }
+    },
+    "settings.integrations.focus_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Focus information is requested or read in this build."
+          }
+        }
+      }
+    },
+    "settings.integrations.launch_at_login": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open at login"
+          }
+        }
+      }
+    },
+    "settings.integrations.launch_at_login.open_login_items": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Login Items…"
+          }
+        }
+      }
+    },
+    "settings.integrations.launch_at_login.requires_approval": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Approval required in System Settings. Open at login is currently off."
+          }
+        }
+      }
+    },
+    "settings.integrations.launch_at_login_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the app after you sign in to this Mac."
+          }
+        }
+      }
+    },
+    "settings.integrations.launch_at_login_unavailable": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open at login is unavailable in this build."
+          }
+        }
+      }
+    },
+    "settings.integrations.notifications": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications"
+          }
+        }
+      }
+    },
+    "settings.integrations.notifications.authorized": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allowed in System Settings"
+          }
+        }
+      }
+    },
+    "settings.integrations.notifications.denied": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off in System Settings. The in-app heads-up remains available."
+          }
+        }
+      }
+    },
+    "settings.integrations.notifications.not_determined": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not set up. Opening Settings never requests permission."
+          }
+        }
+      }
+    },
+    "settings.integrations.notifications.open_settings": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Notification Settings\u2026"
+          }
+        }
+      }
+    },
+    "settings.integrations.notifications.revoked": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No longer allowed in System Settings. The in-app heads-up remains available."
+          }
+        }
+      }
+    },
+    "settings.integrations.notifications.setup": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set up notifications\u2026"
+          }
+        }
+      }
+    },
+    "settings.integrations.notifications.unavailable": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications are unavailable. The in-app heads-up remains available."
+          }
+        }
+      }
+    },
+    "settings.integrations.notifications_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use macOS notifications for a quiet heads-up before a break. The in-app heads-up remains available when notifications are off."
+          }
+        }
+      }
+    },
+    "settings.integrations.unavailable_this_build": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not available in this build"
+          }
+        }
+      }
+    },
+    "settings.integrations.unavailable_this_build_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These integrations are shown for transparency. They do not request access or run in the background."
+          }
+        }
+      }
+    },
+    "settings.load_failed.message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your existing settings have not been changed."
+          }
+        }
+      }
+    },
+    "settings.load_failed.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings couldn't be loaded"
+          }
+        }
+      }
+    },
+    "settings.loading": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading settings\u2026"
+          }
+        }
+      }
+    },
+    "settings.navigation_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        }
+      }
+    },
+    "settings.operation.applying": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Applying\u2026"
+          }
+        }
+      }
+    },
+    "settings.operation.busy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A break or heads-up action is in progress. Try this change again shortly."
+          }
+        }
+      }
+    },
+    "settings.operation.failed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That change wasn't applied. Your previous settings are still active."
+          }
+        }
+      }
+    },
+    "settings.privacy.cancel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "settings.privacy.controls.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review exactly what each action removes before continuing."
+          }
+        }
+      }
+    },
+    "settings.privacy.controls.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data controls"
+          }
+        }
+      }
+    },
+    "settings.privacy.delete.acknowledgement": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History deleted. Your settings and current timers were kept."
+          }
+        }
+      }
+    },
+    "settings.privacy.delete.action": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete history"
+          }
+        }
+      }
+    },
+    "settings.privacy.delete.busy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A break is in progress. Finish or dismiss it, then try deleting history again."
+          }
+        }
+      }
+    },
+    "settings.privacy.delete.confirmation_body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This deletes retained opportunity events and Weekly history. Your schedule, content choices, exclusions, accessibility, integrations, and current timers remain."
+          }
+        }
+      }
+    },
+    "settings.privacy.delete.confirmation_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete all break history?"
+          }
+        }
+      }
+    },
+    "settings.privacy.delete.deleting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deleting retained history\u2026"
+          }
+        }
+      }
+    },
+    "settings.privacy.delete.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Removes retained Weekly active-use runs and opportunity history. Preferences and current timing state remain."
+          }
+        }
+      }
+    },
+    "settings.privacy.delete.failed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History wasn't deleted. Your existing data remains."
+          }
+        }
+      }
+    },
+    "settings.privacy.delete.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete history\u2026"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.acknowledgement": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History exported as %@."
+          }
+        }
+      }
+    },
+    "settings.privacy.export.busy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A break is in progress. Finish or dismiss it, then try the export again."
+          }
+        }
+      }
+    },
+    "settings.privacy.export.choose_csv": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose CSV\u2026"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.choose_json": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose JSON\u2026"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.choose_destination": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose destination…"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.columns": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Columns"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.columns.collapse_hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide the available history columns."
+          }
+        }
+      }
+    },
+    "settings.privacy.export.columns.expand_hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show the available history columns."
+          }
+        }
+      }
+    },
+    "settings.privacy.export.columns.required": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select at least one column."
+          }
+        }
+      }
+    },
+    "settings.privacy.export.columns.selected_count": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld of %lld selected"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.contains": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contains"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.contains_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retained opportunity history"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.csv": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CSV"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exports retained opportunity history only. Weekly active-use runs, preferences, and current timing state are not included."
+          }
+        }
+      }
+    },
+    "settings.privacy.export.excludes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Excludes"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.excludes_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly active-use runs, preferences, exclusions, integration choices, current timing state, and other settings"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.event_count.one": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld event"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.event_count.other": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld events"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.exporting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporting history\u2026"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.failed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History wasn't exported. No file was saved."
+          }
+        }
+      }
+    },
+    "settings.privacy.export.field.format_version": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The version of the exported JSON structure."
+          }
+        }
+      }
+    },
+    "settings.privacy.export.field.id": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A random identifier for this local record."
+          }
+        }
+      }
+    },
+    "settings.privacy.export.field.id.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Identifier"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.field.kind": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The event type, such as presented, started, skipped, or completed."
+          }
+        }
+      }
+    },
+    "settings.privacy.export.field.kind.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Event kind"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.field.opportunity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whether the event belongs to a visual reset, movement, position change, or recovery, when applicable."
+          }
+        }
+      }
+    },
+    "settings.privacy.export.field.opportunity.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opportunity"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.field.recorded_at": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The date and time when the event was recorded."
+          }
+        }
+      }
+    },
+    "settings.privacy.export.field.recorded_at.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recorded time"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.field.selected_duration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The break duration you selected, in seconds, when applicable."
+          }
+        }
+      }
+    },
+    "settings.privacy.export.field.selected_duration.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selected duration"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.field.source": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What created the event: the local timer, an action you took, or available system context."
+          }
+        }
+      }
+    },
+    "settings.privacy.export.field.source.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Source"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Format"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.fields_included": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fields"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.json": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "JSON"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.json_additional_fields": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "JSON also includes %@."
+          }
+        }
+      }
+    },
+    "settings.privacy.export.json_only": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "JSON only"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.review": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review export\u2026"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.review_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review what the file will contain before choosing a destination."
+          }
+        }
+      }
+    },
+    "settings.privacy.export.review_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your history export"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.needs_columns_status": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select columns"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.ready_status": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ready to export"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.summary_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local history"
+          }
+        }
+      }
+    },
+    "settings.privacy.export.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export history"
+          }
+        }
+      }
+    },
+    "settings.privacy.history.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose how long Weekly active-use runs and opportunity history stay on this Mac."
+          }
+        }
+      }
+    },
+    "settings.privacy.history.empty.cleared": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opportunity history is empty right now. New active-use runs and opportunity events follow the selected retention period."
+          }
+        }
+      }
+    },
+    "settings.privacy.history.empty.keep_nothing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep nothing is selected. New Weekly active-use runs and opportunity events are not stored."
+          }
+        }
+      }
+    },
+    "settings.privacy.history.empty.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No retained opportunity history"
+          }
+        }
+      }
+    },
+    "settings.privacy.history.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History retention & export"
+          }
+        }
+      }
+    },
+    "settings.privacy.reset.acknowledgement": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History, app preferences, and the app's notification prompt and authorization history were reset. Balanced is now selected. The setup-completion marker and macOS permissions were not changed."
+          }
+        }
+      }
+    },
+    "settings.privacy.reset.action": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset app data"
+          }
+        }
+      }
+    },
+    "settings.privacy.reset.busy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A break is in progress. Finish or dismiss it, then try the reset again."
+          }
+        }
+      }
+    },
+    "settings.privacy.reset.confirmation_body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This deletes history and every app preference, including exclusions, integration choices, and the app's notification prompt and authorization history. The Balanced schedule is restored. The setup-completion marker is kept so setup does not reopen. macOS permissions are not changed."
+          }
+        }
+      }
+    },
+    "settings.privacy.reset.confirmation_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset history and app preferences?"
+          }
+        }
+      }
+    },
+    "settings.privacy.reset.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Removes history, app preferences, current timing state, and the app's notification prompt and authorization history, then restores Balanced defaults. The setup-completion marker and macOS permissions remain."
+          }
+        }
+      }
+    },
+    "settings.privacy.reset.failed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local data wasn't reset. Your existing data and settings remain."
+          }
+        }
+      }
+    },
+    "settings.privacy.reset.resetting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resetting history and app preferences\u2026"
+          }
+        }
+      }
+    },
+    "settings.privacy.reset.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset app data\u2026"
+          }
+        }
+      }
+    },
+    "settings.privacy.retention.applying": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Applying the new history-retention choice\u2026"
+          }
+        }
+      }
+    },
+    "settings.privacy.retention.ninety.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep the most recent 90 days."
+          }
+        }
+      }
+    },
+    "settings.privacy.retention.ninety.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "90 days"
+          }
+        }
+      }
+    },
+    "settings.privacy.retention.none.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Do not retain Weekly active-use runs or opportunity history."
+          }
+        }
+      }
+    },
+    "settings.privacy.retention.none.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep nothing"
+          }
+        }
+      }
+    },
+    "settings.privacy.retention.thirty.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep the most recent 30 days."
+          }
+        }
+      }
+    },
+    "settings.privacy.retention.thirty.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 days"
+          }
+        }
+      }
+    },
+    "settings.privacy.stored.boundary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset app data clears the app's notification prompt and authorization history, but keeps the setup-completion marker and does not change macOS permissions."
+          }
+        }
+      }
+    },
+    "settings.privacy.stored.active_use.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retained records contain the start and end time of each estimated active-use run used by Weekly."
+          }
+        }
+      }
+    },
+    "settings.privacy.stored.active_use.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated active-use history"
+          }
+        }
+      }
+    },
+    "settings.privacy.stored.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A complete view of the local records this build keeps."
+          }
+        }
+      }
+    },
+    "settings.privacy.stored.history.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retained records contain six fields: identifier, recorded time, kind, source, opportunity, and selected duration."
+          }
+        }
+      }
+    },
+    "settings.privacy.stored.history.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opportunity history"
+          }
+        }
+      }
+    },
+    "settings.privacy.stored.preferences.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schedule, break content, exclusions, accessibility, integration choices, the exact clock configuration, a setup-completion marker with its outcome and time, and the app's notification prompt and authorization history."
+          }
+        }
+      }
+    },
+    "settings.privacy.stored.preferences.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preferences & configuration"
+          }
+        }
+      }
+    },
+    "settings.privacy.stored.timing.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual and movement timing, snoozes, recovery, and limited session state needed to continue after relaunch."
+          }
+        }
+      }
+    },
+    "settings.privacy.stored.timing.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current timing & recovery state"
+          }
+        }
+      }
+    },
+    "settings.privacy.stored.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stored on this Mac"
+          }
+        }
+      }
+    },
+    "settings.profile.accessibility_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, about %@ minutes visual, about %@ minutes movement"
+          }
+        }
+      }
+    },
+    "settings.profile.balanced": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Balanced"
+          }
+        }
+      }
+    },
+    "settings.profile.custom": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom"
+          }
+        }
+      }
+    },
+    "settings.profile.frequent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frequent movement"
+          }
+        }
+      }
+    },
+    "settings.profile.gentle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gentle"
+          }
+        }
+      }
+    },
+    "settings.profile.high_frequency": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Research-informed high frequency"
+          }
+        }
+      }
+    },
+    "settings.profile.subtitle_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "about %@ min \u00b7 about %@ min"
+          }
+        }
+      }
+    },
+    "settings.retry": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        }
+      }
+    },
+    "settings.safety.introduction": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Break activities are optional and general. This app cannot assess symptoms or replace professional care."
+          }
+        }
+      }
+    },
+    "settings.safety.persistent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Persistent or worsening symptoms"
+          }
+        }
+      }
+    },
+    "settings.safety.persistent_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Persistent or worsening eye, neck, back, wrist, or headache symptoms may have causes a reminder app cannot assess. Consider an appropriate health professional."
+          }
+        }
+      }
+    },
+    "settings.safety.routine": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Routine guidance"
+          }
+        }
+      }
+    },
+    "settings.safety.routine_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a comfortable option, use support if needed, and stop if you feel pain, dizziness, unusual shortness of breath, weakness, or instability."
+          }
+        }
+      }
+    },
+    "settings.safety.urgent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seek urgent help"
+          }
+        }
+      }
+    },
+    "settings.safety.urgent_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This app cannot assess symptoms. Stop the activity and seek urgent help for chest pain or pressure, fainting, severe unusual shortness of breath, sudden weakness, sudden vision loss, a dark curtain/shadow, sudden flashes or many new floaters, severe eye pain, or new bladder/bowel changes with numbness or leg weakness."
+          }
+        }
+      }
+    },
+    "settings.schedule.advanced": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advanced schedules"
+          }
+        }
+      }
+    },
+    "settings.schedule.delivery": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delivery"
+          }
+        }
+      }
+    },
+    "settings.schedule.estimator_explanation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timing is based on estimated active computer use: key and pointer input only. It can't tell whether you are sitting, standing, or looking at the screen."
+          }
+        }
+      }
+    },
+    "settings.schedule.heads_up": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heads-up before a break"
+          }
+        }
+      }
+    },
+    "settings.schedule.independent_clocks": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Two clocks run independently. A visual reset never completes movement."
+          }
+        }
+      }
+    },
+    "settings.schedule.low_friction": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wait for a low-friction moment"
+          }
+        }
+      }
+    },
+    "settings.schedule.movement": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement"
+          }
+        }
+      }
+    },
+    "settings.schedule.rhythm": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rhythm"
+          }
+        }
+      }
+    },
+    "settings.schedule.timing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timing"
+          }
+        }
+      }
+    },
+    "settings.schedule.visual_reset": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual reset"
+          }
+        }
+      }
+    },
+    "settings.schedule.why_numbers": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Why these numbers?"
+          }
+        }
+      }
+    },
+    "settings.schedule.working_hours_only": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only during working hours"
+          }
+        }
+      }
+    },
+    "settings.section.accessibility": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accessibility"
+          }
+        }
+      }
+    },
+    "settings.section.break_content": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Break content"
+          }
+        }
+      }
+    },
+    "settings.section.context_and_exclusions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Context & exclusions"
+          }
+        }
+      }
+    },
+    "settings.section.integrations": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrations"
+          }
+        }
+      }
+    },
+    "settings.section.privacy_and_data": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy & data"
+          }
+        }
+      }
+    },
+    "settings.section.safety_support": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Safety & support"
+          }
+        }
+      }
+    },
+    "settings.section.schedule": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schedule"
+          }
+        }
+      }
+    },
+    "settings.section.why_defaults": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Why these defaults?"
+          }
+        }
+      }
+    },
+    "settings.sidebar.learn_support": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Learn & support"
+          }
+        }
+      }
+    },
+    "settings.sidebar.personalize": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personalize"
+          }
+        }
+      }
+    },
+    "settings.sidebar.schedule_breaks": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schedule & breaks"
+          }
+        }
+      }
+    },
+    "settings.timing.heads_up_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About %@ seconds"
+          }
+        }
+      }
+    },
+    "settings.timing.movement_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "about every %@ min, suggested %@ min"
+          }
+        }
+      }
+    },
+    "settings.timing.visual_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "about every %@ min, for %@ s"
           }
         }
       }
@@ -1776,7 +6316,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Presenting \u2014 reminders off"
+            "value": "Presenting, reminders off"
           }
         }
       }

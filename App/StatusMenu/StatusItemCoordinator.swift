@@ -9,9 +9,11 @@ final class StatusItemCoordinator: NSObject, NSMenuDelegate {
     private let statusItem: NSStatusItem?
     private let onAction: (StatusMenuAction) -> Void
     private let onHeadsUpIntent: (HeadsUpIntent) -> Void
+    private let scheduleAfterMenuClose: (@escaping @MainActor @Sendable () -> Void) -> Void
     private var model: StatusMenuModel
     private var headsUpProjection: HeadsUpStatusMenuProjection?
     private var isMenuOpen = false
+    private var pendingSelections: [PendingStatusMenuSelection] = []
     private let menuPointSize: CGFloat
     private var lastAccessibilityValue: String?
     private(set) var menu = NSMenu()
@@ -23,11 +25,15 @@ final class StatusItemCoordinator: NSObject, NSMenuDelegate {
         menuPointSize: CGFloat = NSFont.menuFont(ofSize: 0).pointSize,
         onAction: @escaping (StatusMenuAction) -> Void = { _ in },
         onHeadsUpIntent: @escaping (HeadsUpIntent) -> Void = { _ in },
+        scheduleAfterMenuClose: @escaping (
+            @escaping @MainActor @Sendable () -> Void,
+        ) -> Void = { action in action() },
     ) {
         self.model = model
         self.headsUpProjection = headsUpProjection
         self.onAction = onAction
         self.onHeadsUpIntent = onHeadsUpIntent
+        self.scheduleAfterMenuClose = scheduleAfterMenuClose
         self.menuPointSize = menuPointSize
         statusItem = installsStatusItem ? NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength) : nil
         super.init()
@@ -59,6 +65,7 @@ final class StatusItemCoordinator: NSObject, NSMenuDelegate {
 
     func menuDidClose(_ menu: NSMenu) {
         isMenuOpen = false
+        schedulePendingSelectionsAfterMenuClose()
         rebuildMenu()
         statusItem?.menu = self.menu
     }
@@ -129,14 +136,75 @@ final class StatusItemCoordinator: NSObject, NSMenuDelegate {
 
     @objc private func activateMenuItem(_ item: NSMenuItem) {
         if let intent = (item.representedObject as? HeadsUpIntentBox)?.intent {
-            onHeadsUpIntent(intent)
+            dispatchOrDefer(.headsUpIntent(intent), untilMenuCloses: intent.opensOverlay)
         } else if let action = (item.representedObject as? StatusMenuActionBox)?.action {
+            dispatchOrDefer(.action(action), untilMenuCloses: action.opensOverlay)
+        }
+    }
+
+    private func dispatchOrDefer(
+        _ selection: PendingStatusMenuSelection,
+        untilMenuCloses: Bool,
+    ) {
+        guard isMenuOpen, untilMenuCloses else {
+            dispatch(selection)
+            return
+        }
+        pendingSelections.append(selection)
+        menu.cancelTrackingWithoutAnimation()
+    }
+
+    private func schedulePendingSelectionsAfterMenuClose() {
+        let selections = pendingSelections
+        pendingSelections.removeAll()
+        guard !selections.isEmpty else { return }
+        scheduleAfterMenuClose { [weak self] in
+            guard let self else { return }
+            for selection in selections {
+                dispatch(selection)
+            }
+        }
+    }
+
+    private func dispatch(_ selection: PendingStatusMenuSelection) {
+        switch selection {
+        case let .action(action):
             onAction(action)
+        case let .headsUpIntent(intent):
+            onHeadsUpIntent(intent)
         }
     }
 
     var statusRegionWidth: CGFloat {
         312 * max(1, menuPointSize / NSFont.systemFontSize)
+    }
+}
+
+private enum PendingStatusMenuSelection {
+    case action(StatusMenuAction)
+    case headsUpIntent(HeadsUpIntent)
+}
+
+private extension StatusMenuAction {
+    var opensOverlay: Bool {
+        switch self {
+        case .startHeadsUpNow, .openSnoozeOptions, .startVisualReset, .startMovement:
+            true
+        case .snooze, .pause, .resume, .toggleWorkingHours, .openWeeklyRhythm,
+             .openSettings, .quit:
+            false
+        }
+    }
+}
+
+private extension HeadsUpIntent {
+    var opensOverlay: Bool {
+        switch self {
+        case .start, .moreOptions:
+            true
+        case .snooze, .snoozeUntil, .manualHold, .skip:
+            false
+        }
     }
 }
 

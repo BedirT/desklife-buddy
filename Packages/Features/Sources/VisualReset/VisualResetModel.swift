@@ -154,9 +154,7 @@ public final class VisualResetModel {
     }
 
     public func doneEarlyFromKeyboard() {
-        refresh()
-        guard isActive, isDeclarationArmed else { return }
-        finish(.doneEarly, announcement: .doneEarly)
+        doneEarly()
     }
 
     public func skip() {

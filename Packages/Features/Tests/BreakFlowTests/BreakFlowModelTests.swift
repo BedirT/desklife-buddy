@@ -4,6 +4,15 @@ import Testing
 
 @Suite("Break flow presentation model")
 struct BreakFlowModelTests {
+    @Test("Recovery controls stay above the revealed Dock")
+    func recoveryControlsClearRevealedDock() {
+        let verticalPosition = RecoveryStandardLayoutMetrics.y(
+            RecoveryStandardLayoutMetrics.controlsYFraction,
+            in: 982,
+        )
+        #expect(verticalPosition <= 760)
+    }
+
     @Test("Visual-only acknowledgement exposes a passive lifetime and finishes once")
     func acknowledgementLifetime() {
         var actions: [BreakFlowAction] = []

@@ -34,6 +34,48 @@ struct StatusItemCoordinatorTests {
         #expect(menu.item(withTitle: "Settings…")?.keyEquivalent == ",")
     }
 
+    @Test("Settings status item keeps Command-comma and routes the typed Settings action")
+    func settingsRoute() throws {
+        var actions: [StatusMenuAction] = []
+        let coordinator = StatusItemCoordinator(
+            model: .preview(.normal),
+            installsStatusItem: false,
+            onAction: { actions.append($0) },
+        )
+        let settings = try #require(coordinator.menu.item(withTitle: "Settings…"))
+
+        #expect(settings.keyEquivalent == ",")
+        #expect(settings.keyEquivalentModifierMask == .command)
+        coordinator.perform(settings)
+        #expect(actions == [.openSettings])
+    }
+
+    @Test("Overlay actions wait for native menu tracking to close")
+    func overlayActionsWaitForMenuClose() throws {
+        var actions: [StatusMenuAction] = []
+        var scheduledAction: (@MainActor @Sendable () -> Void)?
+        let coordinator = StatusItemCoordinator(
+            model: .preview(.normal),
+            installsStatusItem: false,
+            onAction: { actions.append($0) },
+            scheduleAfterMenuClose: { scheduledAction = $0 },
+        )
+        let visualReset = try #require(
+            coordinator.menu.item(withTitle: "Start a visual reset"),
+        )
+
+        coordinator.menuWillOpen(coordinator.menu)
+        coordinator.perform(visualReset)
+        #expect(actions.isEmpty)
+
+        coordinator.menuDidClose(coordinator.menu)
+        #expect(actions.isEmpty)
+        #expect(scheduledAction != nil)
+
+        scheduledAction?()
+        #expect(actions == [.startVisualReset])
+    }
+
     @Test("Live heads-up rows preserve projection order and route every paired intent", arguments: [
         HeadsUpScope.visual,
         .movement,

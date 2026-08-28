@@ -15,7 +15,11 @@ struct SettingsHistoryTests {
         clock.value = now.addingTimeInterval(31 * 24 * 60 * 60)
 
         #expect(try await store.loadEvents().isEmpty)
-        #expect(try await !String(decoding: store.exportHistory(format: .json), as: UTF8.self)
+        let request = try HistoryExportRequest(
+            format: .json,
+            selectedFields: Set(HistoryExportField.allCases),
+        )
+        #expect(try await !String(decoding: store.exportHistory(request: request), as: UTF8.self)
             .contains("00000000-0000-4000-8000-000000000009"))
     }
 
@@ -77,23 +81,37 @@ struct SettingsHistoryTests {
         #expect(restored.visualClock.accumulatedActiveUseSeconds == 700)
     }
 
-    @Test("JSON and CSV exports are stable human-readable projections")
+    @Test("JSON schema v2 and CSV export only the request's canonically ordered selected fields")
     func humanReadableExport() async throws {
         let store = try SwiftDataSettingsStore(inMemory: true, now: { now })
         _ = try await store.loadResolvedPreferences()
         try await store.append(event(daysOld: 1, id: 2, kind: .breakStarted, duration: 120))
         try await store.append(event(daysOld: 2, id: 1, kind: .promptPresented))
 
-        let json = try await store.exportHistory(format: .json)
-        let csv = try await store.exportHistory(format: .csv)
+        let jsonRequest = try HistoryExportRequest(
+            format: .json,
+            selectedFields: [.selectedDurationSeconds, .id, .opportunity],
+        )
+        let csvRequest = try HistoryExportRequest(
+            format: .csv,
+            selectedFields: [.selectedDurationSeconds, .id, .kind],
+        )
+        let json = try await store.exportHistory(request: jsonRequest)
+        let csv = try await store.exportHistory(request: csvRequest)
+        let object = try #require(JSONSerialization.jsonObject(with: json) as? [String: Any])
+        let records = try #require(object["records"] as? [[String: Any]])
 
-        #expect(String(decoding: json, as: UTF8.self).contains(#""formatVersion" : 1"#))
-        #expect(String(decoding: json, as: UTF8.self).contains("00000000-0000-4000-8000-000000000001"))
-        #expect(String(decoding: json, as: UTF8.self).contains("promptPresented"))
+        #expect(object["formatVersion"] as? Int == 2)
+        #expect(object["fields"] as? [String] == ["id", "opportunity", "selectedDurationSeconds"])
+        #expect(records.count == 2)
+        #expect(Set(records[0].keys) == ["id", "opportunity", "selectedDurationSeconds"])
+        #expect(records[0]["opportunity"] as? String == "visual")
+        #expect(records[0]["selectedDurationSeconds"] is NSNull)
+        #expect(records[0]["kind"] == nil)
         #expect(String(decoding: csv, as: UTF8.self) == """
-        id,recordedAt,kind,source,opportunity,selectedDurationSeconds
-        00000000-0000-4000-8000-000000000001,2027-01-13T08:00:00.000Z,promptPresented,localTimer,visual,
-        00000000-0000-4000-8000-000000000002,2027-01-14T08:00:00.000Z,breakStarted,localTimer,visual,120
+        id,kind,selectedDurationSeconds
+        00000000-0000-4000-8000-000000000001,promptPresented,
+        00000000-0000-4000-8000-000000000002,breakStarted,120
 
         """)
     }
@@ -109,8 +127,12 @@ struct SettingsHistoryTests {
             duration: 1e300,
         ))
 
-        let csv = try await String(decoding: store.exportHistory(format: .csv), as: UTF8.self)
-        #expect(csv.contains(",1e+300\n"))
+        let request = try HistoryExportRequest(
+            format: .csv,
+            selectedFields: [.selectedDurationSeconds],
+        )
+        let csv = try await String(decoding: store.exportHistory(request: request), as: UTF8.self)
+        #expect(csv == "selectedDurationSeconds\n1e+300\n")
     }
 
     @Test("CSV export does not narrow a rounded Double representation of Int.max")
@@ -125,11 +147,15 @@ struct SettingsHistoryTests {
             duration: duration,
         ))
 
-        let csv = String(decoding: try await store.exportHistory(format: .csv), as: UTF8.self)
-        #expect(csv.contains(",\(String(duration))\n"))
+        let request = try HistoryExportRequest(
+            format: .csv,
+            selectedFields: [.selectedDurationSeconds],
+        )
+        let csv = try await String(decoding: store.exportHistory(request: request), as: UTF8.self)
+        #expect(csv == "selectedDurationSeconds\n\(String(duration))\n")
     }
 
-    @Test("Delete history preserves preferences and crash-recovery state")
+    @Test("Delete history removes opportunity and active-use history while preserving preferences and state")
     func historyOnlyDeletion() async throws {
         let store = try SwiftDataSettingsStore(inMemory: true, now: { now })
         let preferences = AppPreferences(
@@ -142,10 +168,15 @@ struct SettingsHistoryTests {
             visualClock: OpportunityClockState(accumulatedActiveUseSeconds: 321),
         )
         try await store.commit(events: [event(daysOld: 0, id: 1)], state: state)
+        try await store.appendEstimatedActiveUseRun(EstimatedActiveUseRun(
+            startedAt: now.addingTimeInterval(-300),
+            endedAt: now,
+        ))
 
         try await store.deleteHistory()
 
         #expect(try await store.loadEvents().isEmpty)
+        #expect(try await store.loadEstimatedActiveUseRuns().isEmpty)
         #expect(try await store.loadPreferences() == preferences)
         let restored = try #require(try await store.loadState())
         #expect(restored.profileID == .gentle)
@@ -162,6 +193,12 @@ struct SettingsHistoryTests {
             isDone: false,
             createdAt: now,
         ))
+        itemContext.insert(StoredOnboardingCompletion(
+            key: "completion",
+            schemaVersion: 1,
+            outcome: "started",
+            completedAt: now,
+        ))
         try itemContext.save()
         let store = try SwiftDataSettingsStore(container: container, now: { now })
         let preferences = AppPreferences(
@@ -176,16 +213,71 @@ struct SettingsHistoryTests {
                 visualClock: OpportunityClockState(accumulatedActiveUseSeconds: 999),
             ),
         )
+        try await store.appendEstimatedActiveUseRun(EstimatedActiveUseRun(
+            startedAt: now.addingTimeInterval(-300),
+            endedAt: now,
+        ))
 
         _ = try await store.resetAll(state: ProtocolState())
 
         #expect(try await store.loadEvents().isEmpty)
+        #expect(try await store.loadEstimatedActiveUseRuns().isEmpty)
         #expect(try await store.loadPreferences() == .defaults)
         let restored = try #require(try await store.loadState())
         #expect(restored.profileID == .balanced)
         #expect(restored.visualClock.accumulatedActiveUseSeconds == 0)
         #expect(restored.movementClock.accumulatedActiveUseSeconds == 0)
-        #expect(try ModelContext(container).fetch(FetchDescriptor<StoredItem>()).isEmpty)
+        let inspection = ModelContext(container)
+        #expect(try inspection.fetch(FetchDescriptor<StoredItem>()).isEmpty)
+        let onboarding = try #require(
+            try inspection.fetch(FetchDescriptor<StoredOnboardingCompletion>()).first,
+        )
+        #expect(onboarding.outcome == "started")
+        #expect(onboarding.completedAt == now)
+    }
+
+    @Test("Loading settings removes legacy harness rows while preserving onboarding completion")
+    func legacyHarnessCleanupPreservesOnboardingCompletion() async throws {
+        let container = try AppModelContainer.make(inMemory: true)
+        let context = ModelContext(container)
+        context.insert(StoredItem(
+            id: UUID(),
+            title: "Legacy harness row",
+            isDone: false,
+            createdAt: now,
+        ))
+        context.insert(StoredOnboardingCompletion(
+            key: "completion",
+            schemaVersion: 1,
+            outcome: "started",
+            completedAt: now,
+        ))
+        try context.save()
+        let store = try SwiftDataSettingsStore(container: container, now: { now })
+
+        _ = try await store.loadResolvedPreferences()
+
+        let inspection = ModelContext(container)
+        #expect(try inspection.fetch(FetchDescriptor<StoredItem>()).isEmpty)
+        let onboarding = try #require(
+            try inspection.fetch(FetchDescriptor<StoredOnboardingCompletion>()).first,
+        )
+        #expect(onboarding.outcome == "started")
+        #expect(onboarding.completedAt == now)
+    }
+
+    @Test("App schema has only disclosed durable models plus the cleanup-only harness model")
+    func privacySchemaInventory() {
+        let entityNames = Set(AppModelContainer.schema.entities.map(\.name))
+
+        #expect(entityNames == [
+            "StoredItem",
+            "StoredOpportunityEvent",
+            "StoredEstimatedActiveUseRun",
+            "StoredProtocolState",
+            "StoredAppPreferences",
+            "StoredOnboardingCompletion",
+        ])
     }
 
     @Test("Failed event deletion rolls back every retained history row")

@@ -52,10 +52,10 @@ glyph legibility; not distinguishing them costs a decision the user can only mak
 the menu.
 
 ### DQ-03 · Does the break surface cover all displays or only the active one?
-**Working answer:** all displays receive the dimming; the content appears once, on the display
-with the pointer/key window (BR-14).
-**Settled by:** multi-display testing. Risk both ways: content on every display is shouty and
-duplicative; content on one display can be missed entirely on a three-monitor setup.
+**Closed 2026-08-28 by owner review:** all displays receive the break atmosphere, while the
+complete content and control stack appear exactly once on the active pointer/key display
+(BR-14). Mirrored displays remain one coordinated surface. Display reconciliation must always
+leave one reachable interactive panel; atmosphere-only panels are not alternate controls.
 
 ### DQ-04 · How is time shown during a break?
 **Working answer:** a coarse, non-numeric progress representation for the 20 s visual reset;
@@ -100,23 +100,17 @@ problem in the product and should get its own exploration round.
 and the first onboarding screen only. (`D-001` — the name is a placeholder anyway.)
 
 ### DQ-10 · Should the heads-up be a system notification or an app-owned surface by default?
-**Working answer:** system notification when permitted (`protocol: heads_up_default: true`),
-app-owned only as the denied-permission fallback (HU-04).
-**Tension:** a system notification is calmer and dismissible by habit, but it is styled by the
-system and cannot carry the product's voice or the three actions at equal weight.
-**Settled by:** checking whether the three actions survive as notification actions on current
-macOS, and what the notification looks like when the user has notifications grouped.
+**Closed 2026-08-28 by owner review:** the app-owned capsule is always the primary automatic
+heads-up. A standard notification is secondary fallback only when the capsule cannot present
+and alert authorization already exists. Automatic fallback never opens the permission
+explainer or requests authorization; notification setup remains an explicit user action.
 
 ### DQ-11 · Does the product ever acknowledge a completed break?
-**Working answer:** no (AK-02 — nothing appears) except after the first few, and after a
-declared-completion where the user might reasonably wonder whether it registered.
-**Tension:** silence is calm but can read as broken. Any acknowledgement is one step from
-reward mechanics, which are prohibited.
-**2026-08-25 note:** `INTERACTION_SPEC.md` §1.6 gives a provisional answer — Level 3 is the
-capsule's one-shot eye-crinkle (M9, ~2 s re-present per D-029), wordless and identical for
-every completion path. This *implies* an answer to this DQ without settling it: the text
-acknowledgement (CP-AK01) is currently orphaned, kept registered in case the wordless form
-proves too subtle in first-run testing. Still open.
+**Closed 2026-08-28 by owner review:** a completed break gets one wordless capsule return for
+about two seconds, then nothing. It is acknowledgement, not reward: no text, score, sound,
+loop, or interaction. It is not presented under Reduce Motion, in-app static presentation, or
+text-only mode. BR-10 remains a separate partial-reset explanation after "Just the visual
+one"; it is not this completion beat.
 
 ### DQ-12 · Branding placeholder scope
 **Working answer:** no logo, no wordmark, no brand color. The menu bar glyph is functional, not
@@ -219,9 +213,8 @@ Both readings, per the do-not-silently-resolve rule:
   permission-free path avoids pressuring the user toward the Notifications permission
   (CLAUDE.md §7 — the UI must not create pressure toward permissions).
 
-**Interim choice:** unchanged — system notification remains the default when permitted; the
-chip is the denied/fallback surface and the place the character lives. Revisit at convergence
-with both built at real size. Do not describe either as the "real" heads-up in copy.
+**Superseded 2026-08-28:** owner review closed DQ-10 in favor of the capsule-primary policy
+recorded above. The standard notification remains an already-authorized secondary fallback.
 
 ## DQ-15 — new: the glint's ephemeral pointer read vs the spirit of 07 §3
 
@@ -238,24 +231,21 @@ reduces input to coarse "recent activity" booleans.
   surface and invites drift ("while we have it, we could…"). The conservative product ships
   no such feature.
 
-**Interim choice (conservative-compatible):** the glint lean ships only with these guarantees,
-stated in D-019 and verifiable in code review — ephemeral, in-memory, never stored/logged/
-transmitted/displayed, active only during the visible heads-up chip, off under Reduce Motion,
-and absent in the text-only heads-up. If engineering review finds the guarantee cannot be made
-legible in `07`-style privacy copy, drop the lean and keep the descent — the descent carries
-the personality's core and needs no pointer input at all.
-
-**Settled by:** privacy review of the implementation against `07 §3`, and whether the privacy
-description in Settings can state the behaviour in one honest sentence.
+**Closed 2026-08-28 by owner review:** ship the reactive glint with the conservative guarantees
+above. Only the glint leans; the capsule and sun body stay fixed. The App may retain at most the
+immediately previous in-memory sample needed to derive the bounded lean, and must discard it on
+retraction. Privacy review verifies those constraints; it no longer chooses whether the glint
+exists.
 
 ### DQ-16 — Fixed notch capsule vs cursor-following heads-up
 
 LookAway's pre-break notice follows the cursor, which guarantees noticing at the cost of
 motion in the periphery. Our capsule is fixed at top-center (D-022) on predictability and
 photosensitivity grounds (`accessibility.md` §3 bans continuous pointer-tracking motion in
-spirit; design-quality §3 demands same-position controls). Open: is a fixed capsule
-noticeable *enough* on large/multi-display setups, or does it need an optional
-"appear near my pointer once" placement? **Interim:** fixed capsule; revisit after use.
+spirit; design-quality §3 demands same-position controls).
+**Closed 2026-08-28 by owner review:** the capsule is fixed at top-center on the active display
+in every menu-bar, notch, and full-screen configuration. It never follows the cursor and has no
+clock-trailing placement. Only the contained glint responds to pointer movement.
 
 ### DQ-17 — Opt-in strict mode ("hold me to it")
 

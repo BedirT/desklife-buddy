@@ -18,10 +18,15 @@ let package = Package(
                 "FeatureLocalization",
                 "ItemList",
                 "StatusMenu",
+                "BreakPresentation",
                 "VisualReset",
                 "Movement",
                 "BreakFlow",
                 "HeadsUp",
+                "SettingsFeature",
+                "Onboarding",
+                "PreferencePresentation",
+                "WeeklyRhythm",
                 // agent:app-feature-targets
             ],
         ),
@@ -74,8 +79,26 @@ let package = Package(
             swiftSettings: featureSettings,
         ),
         .target(
+            name: "BreakPresentation",
+            dependencies: [
+                .product(name: "DesignSystem", package: "DesignSystem"),
+            ],
+            resources: [.process("Resources")],
+            swiftSettings: featureSettings,
+        ),
+        .testTarget(
+            name: "BreakPresentationTests",
+            dependencies: [
+                "BreakPresentation",
+                .product(name: "SnapshotSupport", package: "TestSupport"),
+            ],
+            exclude: ["__Snapshots__"],
+            swiftSettings: featureSettings,
+        ),
+        .target(
             name: "VisualReset",
             dependencies: [
+                "BreakPresentation",
                 "FeatureLocalization",
                 .product(name: "Domain", package: "Domain"),
                 .product(name: "DesignSystem", package: "DesignSystem"),
@@ -94,6 +117,7 @@ let package = Package(
         .target(
             name: "Movement",
             dependencies: [
+                "BreakPresentation",
                 "FeatureLocalization",
                 .product(name: "Domain", package: "Domain"),
                 .product(name: "DesignSystem", package: "DesignSystem"),
@@ -112,6 +136,7 @@ let package = Package(
         .target(
             name: "BreakFlow",
             dependencies: [
+                "BreakPresentation",
                 "FeatureLocalization",
                 .product(name: "Domain", package: "Domain"),
                 .product(name: "DesignSystem", package: "DesignSystem"),
@@ -140,6 +165,82 @@ let package = Package(
             name: "HeadsUpTests",
             dependencies: [
                 "HeadsUp",
+                .product(name: "SnapshotSupport", package: "TestSupport"),
+            ],
+            exclude: ["__Snapshots__"],
+            swiftSettings: featureSettings,
+        ),
+        .target(
+            name: "SettingsFeature",
+            dependencies: [
+                "FeatureLocalization",
+                "PreferencePresentation",
+                .product(name: "Domain", package: "Domain"),
+                .product(name: "DesignSystem", package: "DesignSystem"),
+            ],
+            resources: [.process("Resources")],
+            swiftSettings: featureSettings,
+        ),
+        .testTarget(
+            name: "SettingsFeatureTests",
+            dependencies: [
+                "SettingsFeature",
+                .product(name: "SnapshotSupport", package: "TestSupport"),
+            ],
+            exclude: ["__Snapshots__"],
+            swiftSettings: featureSettings,
+        ),
+        .target(
+            name: "Onboarding",
+            dependencies: [
+                "FeatureLocalization",
+                "PreferencePresentation",
+                .product(name: "Domain", package: "Domain"),
+                .product(name: "DesignSystem", package: "DesignSystem"),
+            ],
+            swiftSettings: featureSettings,
+        ),
+        .testTarget(
+            name: "OnboardingTests",
+            dependencies: [
+                "Onboarding",
+                .product(name: "SnapshotSupport", package: "TestSupport"),
+            ],
+            exclude: ["__Snapshots__"],
+            swiftSettings: featureSettings,
+        ),
+        .target(
+            name: "PreferencePresentation",
+            dependencies: [
+                "FeatureLocalization",
+                .product(name: "Domain", package: "Domain"),
+                .product(name: "DesignSystem", package: "DesignSystem"),
+            ],
+            resources: [.process("Resources")],
+            swiftSettings: featureSettings,
+        ),
+        .testTarget(
+            name: "PreferencePresentationTests",
+            dependencies: [
+                "PreferencePresentation",
+                .product(name: "SnapshotSupport", package: "TestSupport"),
+            ],
+            exclude: ["__Snapshots__"],
+            swiftSettings: featureSettings,
+        ),
+        .target(
+            name: "WeeklyRhythm",
+            dependencies: [
+                .product(name: "Domain", package: "Domain"),
+                .product(name: "DesignSystem", package: "DesignSystem"),
+            ],
+            resources: [.process("Resources")],
+            swiftSettings: featureSettings,
+        ),
+        .testTarget(
+            name: "WeeklyRhythmTests",
+            dependencies: [
+                "WeeklyRhythm",
                 .product(name: "SnapshotSupport", package: "TestSupport"),
             ],
             exclude: ["__Snapshots__"],

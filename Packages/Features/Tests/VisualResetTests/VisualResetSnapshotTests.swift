@@ -41,6 +41,24 @@
             )
         }
 
+        @Test func atmosphereOnly() {
+            assertScreenSnapshot(
+                of: VisualResetAtmosphereView()
+                    .frame(width: 1440, height: 900),
+                layout: referenceLayout,
+            )
+        }
+
+        @Test func mergedVisualAtmosphereOnly() {
+            assertScreenSnapshot(
+                of: VisualResetAtmosphereView()
+                    .frame(width: 1440, height: 900),
+                named: "merged-visual-atmosphere",
+                layout: referenceLayout,
+                appearances: [.dark],
+            )
+        }
+
         @Test func increasedContrast() {
             assertScreenSnapshot(
                 of: screen(accessibility: .init(increaseContrast: true)),

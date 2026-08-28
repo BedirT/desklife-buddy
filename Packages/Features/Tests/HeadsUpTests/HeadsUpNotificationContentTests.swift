@@ -7,7 +7,7 @@ struct HeadsUpNotificationContentTests {
     @Test("Each scope has the exact approved notification title and body", arguments: [
         (HeadsUpScope.visual, "Visual reset", "A short break from near focus."),
         (.movement, "Movement opportunity", "Move in a way that works for you."),
-        (.merged, "Visual reset and movement", "Both are due — one break covers them."),
+        (.merged, "Visual reset and movement", "Both are due. One break covers them."),
     ])
     func exactContent(scope: HeadsUpScope, title: String, body: String) {
         let content = HeadsUpNotificationContent(scope: scope)
@@ -65,7 +65,7 @@ struct HeadsUpHoldContentTests {
 
         #expect(model.presentationPhase == .landedWaiting)
         #expect(model.presentation.hold == nil)
-        #expect(model.presentation.detail == "now — or whenever suits")
+        #expect(model.presentation.detail == "now, or whenever suits")
     }
 }
 
@@ -122,7 +122,7 @@ private let holdPresentationCases = [
         hold: .explicitPresentationMode,
         title: "Presenting",
         detail: "reminders off",
-        statusLabel: "Presenting — reminders off",
+        statusLabel: "Presenting, reminders off",
     ),
     HoldPresentationCase(
         hold: .focusFilter,
@@ -171,7 +171,7 @@ private let statusLabelCases = [
     StatusLabelCase(
         scope: .movement,
         phase: .landedWaiting,
-        expectedLabel: "Movement opportunity, now — or whenever suits",
+        expectedLabel: "Movement opportunity, now, or whenever suits",
     ),
     StatusLabelCase(
         scope: .merged,

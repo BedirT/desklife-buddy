@@ -34,15 +34,15 @@ enum MovementL10n {
 
     static let walkOrWheelGuidance = FeatureL10n.string(
         "movement.guidance.walk_or_wheel",
-        default: "Walk or wheel — away from the desk, at an easy, comfortable pace.",
+        default: "Walk or wheel: away from the desk, at an easy, comfortable pace.",
     )
     static let smallSpaceGuidance = FeatureL10n.string(
         "movement.guidance.small_space",
-        default: "Small space — march or step gently in place, or use a seated equivalent.",
+        default: "Small space: march or step gently in place, or use a seated equivalent.",
     )
     static let seatedGuidance = FeatureL10n.string(
         "movement.guidance.seated",
-        default: "Seated — alternate lifting each foot, move the ankles, reach the arms easily.",
+        default: "Seated: alternate lifting each foot, move the ankles, reach the arms easily.",
     )
 
     static let twoMinutesInstead = FeatureL10n.string(
@@ -129,7 +129,7 @@ enum MovementL10n {
     )
     static let positionChangeAccessibility = FeatureL10n.string(
         "movement.accessibility.position_change",
-        default: "Change position instead, P — logged separately",
+        default: "Change position instead, P. Logged separately.",
     )
 
     static let previewError = FeatureL10n.string(

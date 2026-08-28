@@ -120,7 +120,7 @@ extension ScheduleProfile: Codable {
         case .balanced: self = .balanced
         case .frequentMovement: self = .frequentMovement
         case .researchInformedHighFrequency: self = .researchInformedHighFrequency
-        case .custom: self = .custom(try container.decode(CustomProtocolTiming.self, forKey: .customTiming))
+        case .custom: self = try .custom(container.decode(CustomProtocolTiming.self, forKey: .customTiming))
         }
     }
 

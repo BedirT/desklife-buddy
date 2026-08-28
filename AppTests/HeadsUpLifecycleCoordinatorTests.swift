@@ -17,7 +17,7 @@ struct HeadsUpLifecycleCoordinatorTests {
                 == .reserved
         }
         let harness = makeHarness(runtime: runtime, capsule: capsule)
-        await harness.coordinator.start()
+        try await harness.coordinator.start()
 
         harness.coordinator.observeHeadsUp(snapshot(.visual(cycleID: 0)))
         await harness.coordinator.drain()
@@ -39,7 +39,7 @@ struct HeadsUpLifecycleCoordinatorTests {
         ])
         let capsule = FakeHeadsUpCapsulePresenter()
         let harness = makeHarness(runtime: runtime, center: center, capsule: capsule)
-        await harness.coordinator.start()
+        try await harness.coordinator.start()
 
         harness.coordinator.observeHeadsUp(snapshot(.movement(cycleID: 0)))
         await harness.coordinator.drain()
@@ -50,31 +50,29 @@ struct HeadsUpLifecycleCoordinatorTests {
         #expect(active.channel == .capsule)
     }
 
-    @Test("Authorized Notification Center presents the exact request without a capsule duplicate")
-    func authorizedNotification() async throws {
+    @Test("Authorized Notification Center is untouched when the primary capsule succeeds")
+    func authorizedCenterStillUsesCapsuleFirst() async throws {
         let id = deliveryID(1)
-        let requestID = HeadsUpNotificationIdentifiers.requestIdentifier(for: id.rawValue)
         let store = HeadsUpRuntimeStore()
         let runtime = try makeRuntime(store: store)
-        let center = FakeHeadsUpNotificationCenter(
-            settings: [.init(authorizationStatus: .authorized, alertsEnabled: true)],
-            deliveredIdentifiers: [[requestID]],
-        )
+        let center = FakeHeadsUpNotificationCenter(settings: [
+            .init(authorizationStatus: .authorized, alertsEnabled: true),
+        ])
         let capsule = FakeHeadsUpCapsulePresenter()
         let harness = makeHarness(
             runtime: runtime,
             center: center,
             capsule: capsule,
-            usesInAppHeadsUp: false,
         )
-        await harness.coordinator.start()
+        try await harness.coordinator.start()
 
         harness.coordinator.observeHeadsUp(snapshot(.visual(cycleID: 0)))
         await harness.coordinator.drain()
 
-        #expect(center.addedRequests.map(\.deliveryID) == [id.rawValue])
-        #expect(capsule.presented.isEmpty)
-        #expect(runtime.state.headsUpDeliveryState.activeDelivery?.channel == .notification)
+        #expect(center.settingsReadCount == 0)
+        #expect(center.addedRequests.isEmpty)
+        #expect(capsule.presented.map(\.deliveryID) == [id.rawValue])
+        #expect(runtime.state.headsUpDeliveryState.activeDelivery?.channel == .capsule)
     }
 
     @Test("Suppression cancels the exact notification reconciliation in flight")
@@ -89,15 +87,17 @@ struct HeadsUpLifecycleCoordinatorTests {
         )
         center.onDeliveredRead = { await gate.wait() }
         let capsule = FakeHeadsUpCapsulePresenter()
+        capsule.shouldConfirm = false
         let harness = makeHarness(
             runtime: runtime,
             center: center,
             capsule: capsule,
-            usesInAppHeadsUp: false,
         )
-        await harness.coordinator.start()
+        try await harness.coordinator.start()
         harness.coordinator.observeHeadsUp(snapshot(.visual(cycleID: 0)))
-        while center.addedRequests.isEmpty { await Task.yield() }
+        while center.addedRequests.isEmpty {
+            await Task.yield()
+        }
 
         try await runtime.handle(.pause(.untilResume))
         gate.open()
@@ -106,8 +106,34 @@ struct HeadsUpLifecycleCoordinatorTests {
         let requestID = HeadsUpNotificationIdentifiers.requestIdentifier(for: id.rawValue)
         #expect(center.removedPendingIdentifiers.contains([requestID]))
         #expect(center.removedDeliveredIdentifiers.contains([requestID]))
-        #expect(capsule.presented.isEmpty)
+        #expect(capsule.presented.map(\.deliveryID) == [id.rawValue])
         #expect(runtime.state.headsUpDeliveryState.activeDelivery == nil)
+    }
+
+    @Test("Disabled notification integration prevents fallback after capsule failure")
+    func disabledNotificationIntegration() async throws {
+        let store = HeadsUpRuntimeStore()
+        let runtime = try makeRuntime(store: store)
+        let center = FakeHeadsUpNotificationCenter(settings: [
+            .init(authorizationStatus: .authorized, alertsEnabled: true),
+        ])
+        let capsule = FakeHeadsUpCapsulePresenter()
+        capsule.shouldConfirm = false
+        let harness = makeHarness(
+            runtime: runtime,
+            center: center,
+            capsule: capsule,
+            allowsNotificationFallback: { false },
+        )
+        try await harness.coordinator.start()
+
+        harness.coordinator.observeHeadsUp(snapshot(.visual(cycleID: 0)))
+        await harness.coordinator.drain()
+
+        #expect(center.settingsReadCount == 0)
+        #expect(center.addedRequests.isEmpty)
+        #expect(capsule.presented.count == 1)
+        #expect(runtime.state.headsUpDeliveryState.activeDelivery?.phase == .reserved)
     }
 
     @Test("A launch response waits for restore and prompt acknowledgement before opening")
@@ -136,7 +162,7 @@ struct HeadsUpLifecycleCoordinatorTests {
 
         harness.coordinator.receive(.startNow(id.rawValue))
         #expect(openings.isEmpty)
-        await harness.coordinator.start()
+        try await harness.coordinator.start()
         await harness.coordinator.drain()
 
         #expect(openings.map(\.0) == [id])
@@ -177,7 +203,7 @@ struct HeadsUpLifecycleCoordinatorTests {
                 return .presented
             },
         )
-        await harness.coordinator.start()
+        try await harness.coordinator.start()
         let opportunity = HeadsUpOpportunityID.merged(
             visualCycleID: 0,
             movementCycleID: 0,
@@ -187,7 +213,7 @@ struct HeadsUpLifecycleCoordinatorTests {
         let id = try #require(harness.coordinator.activeDeliveryID)
 
         #expect(capsule.presented.map(\.deliveryID) == [id.rawValue])
-        #expect(store.commits.flatMap(\.events).filter { $0.kind == .promptPresented }.count == 1)
+        #expect(store.commits.flatMap(\.events).count(where: { $0.kind == .promptPresented }) == 1)
 
         harness.coordinator.receive(.startNow(id.rawValue))
         await harness.coordinator.drain()
@@ -202,7 +228,7 @@ struct HeadsUpLifecycleCoordinatorTests {
         ))
         await harness.coordinator.drain()
         #expect(completion?.isSuccess == true)
-        #expect(store.commits.flatMap(\.events).filter { $0.kind == .breakStarted }.count == 1)
+        #expect(store.commits.flatMap(\.events).count(where: { $0.kind == .breakStarted }) == 1)
     }
 
     @Test("Explicit Start records user only after the exact overlay confirms opening")
@@ -217,7 +243,7 @@ struct HeadsUpLifecycleCoordinatorTests {
                 return .presented
             },
         )
-        await harness.coordinator.start()
+        try await harness.coordinator.start()
         harness.coordinator.observeHeadsUp(snapshot(.visual(cycleID: 0)))
         await harness.coordinator.drain()
         let id = try #require(harness.coordinator.activeDeliveryID)
@@ -251,7 +277,7 @@ struct HeadsUpLifecycleCoordinatorTests {
         let reservedRuntime = try makeRuntime(store: reservedStore)
         let reservedCapsule = FakeHeadsUpCapsulePresenter()
         let reserved = makeHarness(runtime: reservedRuntime, capsule: reservedCapsule)
-        await reserved.coordinator.start()
+        try await reserved.coordinator.start()
         await reserved.coordinator.drain()
         #expect(reservedCapsule.presented.map(\.deliveryID) == [reservedID.rawValue])
 
@@ -272,7 +298,7 @@ struct HeadsUpLifecycleCoordinatorTests {
             runtime: acknowledgedRuntime,
             capsule: acknowledgedCapsule,
         )
-        await acknowledged.coordinator.start()
+        try await acknowledged.coordinator.start()
         await acknowledged.coordinator.drain()
         #expect(acknowledgedCapsule.presented.isEmpty)
         #expect(acknowledged.coordinator.statusProjection?.scope == .movement)
@@ -296,7 +322,7 @@ struct HeadsUpLifecycleCoordinatorTests {
                 return .blocked
             },
         )
-        await pending.coordinator.start()
+        try await pending.coordinator.start()
         await pending.coordinator.drain()
         #expect(pendingPresentations == [pendingID])
         #expect(pendingRuntime.state.headsUpDeliveryState.pendingAction == pendingAction)
@@ -306,24 +332,31 @@ struct HeadsUpLifecycleCoordinatorTests {
     func exactMoreOptionsPresentation() async throws {
         let store = HeadsUpRuntimeStore()
         let runtime = try makeRuntime(store: store)
+        let capsule = FakeHeadsUpCapsulePresenter()
         var result = BreakFlowOverlayCoordinator.PresentationResult.blocked
         var presentations: [(HeadsUpDeliveryID, HeadsUpOpportunityID)] = []
         let harness = makeHarness(
             runtime: runtime,
+            capsule: capsule,
             presentMoreOptions: { id, opportunity in
                 presentations.append((id, opportunity))
                 return result
             },
         )
-        await harness.coordinator.start()
+        try await harness.coordinator.start()
         harness.coordinator.observeHeadsUp(snapshot(.merged(
             visualCycleID: 0,
             movementCycleID: 0,
         )))
         await harness.coordinator.drain()
         let id = try #require(harness.coordinator.activeDeliveryID)
+        let deliveredCapsule = try #require(capsule.presented.first)
+        let model = try #require(harness.coordinator.modelForCapsule(
+            deliveryID: id.rawValue,
+            content: deliveredCapsule.content,
+        ))
 
-        harness.coordinator.receive(.moreOptions(id.rawValue))
+        model.moreOptions()
         await harness.coordinator.drain()
         #expect(runtime.state.headsUpDeliveryState.pendingAction?.id == id)
         #expect(presentations.count == 1)
@@ -337,6 +370,87 @@ struct HeadsUpLifecycleCoordinatorTests {
             .merged(visualCycleID: 0, movementCycleID: 0),
             .merged(visualCycleID: 0, movementCycleID: 0),
         ])
+        #expect(capsule.dismissedDeliveryIDs == [id.rawValue])
+        #expect(harness.coordinator.activeDeliveryID == nil)
+        #expect(harness.coordinator.responseRegistry.registeredDeliveryCount == 0)
+        #expect(harness.coordinator.statusProjection == nil)
+    }
+
+    @Test("More Options retirement waits for its completion commit")
+    func moreOptionsRetirementWaitsForCompletionCommit() async throws {
+        let store = HeadsUpRuntimeStore()
+        let runtime = try makeRuntime(store: store)
+        let capsule = FakeHeadsUpCapsulePresenter()
+        var result = BreakFlowOverlayCoordinator.PresentationResult.blocked
+        let harness = makeHarness(
+            runtime: runtime,
+            capsule: capsule,
+            presentMoreOptions: { _, _ in result },
+        )
+        try await harness.coordinator.start()
+        harness.coordinator.observeHeadsUp(snapshot(.visual(cycleID: 0)))
+        await harness.coordinator.drain()
+        let id = try #require(harness.coordinator.activeDeliveryID)
+
+        harness.coordinator.receive(.moreOptions(id.rawValue))
+        await harness.coordinator.drain()
+        #expect(runtime.state.headsUpDeliveryState.pendingAction?.id == id)
+
+        result = .presented
+        store.failOnAttempt = store.commitAttempts + 1
+        harness.coordinator.retryPendingPresentation()
+        await harness.coordinator.drain()
+
+        #expect(runtime.state.headsUpDeliveryState.pendingAction?.id == id)
+        #expect(harness.coordinator.activeDeliveryID == id)
+        #expect(harness.coordinator.responseRegistry.registeredDeliveryCount == 1)
+        #expect(capsule.dismissedDeliveryIDs.isEmpty)
+
+        store.failOnAttempt = nil
+        harness.coordinator.retryPendingPresentation()
+        await harness.coordinator.drain()
+
+        #expect(runtime.state.headsUpDeliveryState.pendingAction == nil)
+        #expect(harness.coordinator.activeDeliveryID == nil)
+        #expect(harness.coordinator.responseRegistry.registeredDeliveryCount == 0)
+        #expect(capsule.dismissedDeliveryIDs == [id.rawValue])
+    }
+
+    @Test("Repeated More Options presentations retire every exact delivery identity")
+    func repeatedMoreOptionsRetiresEveryIdentity() async throws {
+        let store = HeadsUpRuntimeStore()
+        var nextProposedID: UInt8 = 1
+        let runtime = try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
+            store: store,
+            headsUpRuntimePolicy: HeadsUpRuntimePolicy(maximumSnoozeReoffers: 1),
+            now: { Date(timeIntervalSince1970: 100) },
+            makeID: {
+                defer { nextProposedID &+= 1 }
+                return deliveryID(nextProposedID).rawValue
+            },
+        )
+        let capsule = FakeHeadsUpCapsulePresenter()
+        let harness = makeHarness(runtime: runtime, capsule: capsule)
+        try await harness.coordinator.start()
+
+        harness.coordinator.observeHeadsUp(snapshot(.visual(cycleID: 0)))
+        await harness.coordinator.drain()
+        let firstID = try #require(harness.coordinator.activeDeliveryID)
+        harness.coordinator.receive(.moreOptions(firstID.rawValue))
+        await harness.coordinator.drain()
+
+        harness.coordinator.observeHeadsUp(snapshot(.movement(cycleID: 0)))
+        await harness.coordinator.drain()
+        let secondID = try #require(harness.coordinator.activeDeliveryID)
+        harness.coordinator.receive(.moreOptions(secondID.rawValue))
+        await harness.coordinator.drain()
+
+        #expect(firstID != secondID)
+        #expect(capsule.dismissedDeliveryIDs == [firstID.rawValue, secondID.rawValue])
+        #expect(harness.coordinator.activeDeliveryID == nil)
+        #expect(harness.coordinator.responseRegistry.registeredDeliveryCount == 0)
+        #expect(harness.coordinator.responseRegistry.retiredDeliveryCount == 2)
     }
 
     @Test("A restored More Options action reuses its exact UUID and scope")
@@ -362,7 +476,7 @@ struct HeadsUpLifecycleCoordinatorTests {
             },
         )
 
-        await harness.coordinator.start()
+        try await harness.coordinator.start()
         await harness.coordinator.drain()
 
         #expect(presentations.map(\.0) == [id])
@@ -382,7 +496,7 @@ struct HeadsUpLifecycleCoordinatorTests {
                 return .presented
             },
         )
-        await harness.coordinator.start()
+        try await harness.coordinator.start()
 
         harness.coordinator.observeHeadsUp(snapshot(.movement(cycleID: 0), target: 0))
         await harness.coordinator.drain()
@@ -418,13 +532,40 @@ struct HeadsUpLifecycleCoordinatorTests {
         #expect(factoryCalls == 0)
     }
 
+    @Test("A failed initial restore is rethrown and remains retryable")
+    func failedInitialRestoreIsRetryable() async throws {
+        let store = RetryableRestoreStore(failuresRemaining: 1)
+        let runtime = try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
+            store: store,
+            headsUpRuntimePolicy: HeadsUpRuntimePolicy(maximumSnoozeReoffers: 1),
+        )
+        var errors: [RetryableRestoreStore.Failure] = []
+        let harness = makeHarness(
+            runtime: runtime,
+            onError: { error in
+                if let failure = error as? RetryableRestoreStore.Failure {
+                    errors.append(failure)
+                }
+            },
+        )
+
+        await #expect(throws: RetryableRestoreStore.Failure.requested) {
+            try await harness.coordinator.start()
+        }
+        try await harness.coordinator.start()
+
+        #expect(store.loadAttempts == 2)
+        #expect(errors == [.requested])
+    }
+
     @Test("A response write failure rejects the model intent and stays retryable")
     func responsePersistenceRetry() async throws {
         let store = HeadsUpRuntimeStore()
         let runtime = try makeRuntime(store: store)
         var errors = 0
         let harness = makeHarness(runtime: runtime, onError: { _ in errors += 1 })
-        await harness.coordinator.start()
+        try await harness.coordinator.start()
         harness.coordinator.observeHeadsUp(snapshot(.visual(cycleID: 0)))
         await harness.coordinator.drain()
         store.failuresRemaining = 1
@@ -451,7 +592,7 @@ struct HeadsUpLifecycleCoordinatorTests {
             capsule: capsule,
             onError: { _ in errors += 1 },
         )
-        await harness.coordinator.start()
+        try await harness.coordinator.start()
         store.failOnAttempt = store.commitAttempts + 2
         harness.coordinator.observeHeadsUp(snapshot(.visual(cycleID: 0)))
         await harness.coordinator.drain()
@@ -469,19 +610,18 @@ struct HeadsUpLifecycleCoordinatorTests {
         #expect(capsule.presented.map(\.deliveryID) == [id.rawValue])
     }
 
-    @Test("Dismissal and unresolved body tap remain fact-free")
-    func factFreeResponses() async throws {
+    @Test("Notification dismissal remains fact-free")
+    func dismissalRemainsFactFree() async throws {
         let store = HeadsUpRuntimeStore()
         let runtime = try makeRuntime(store: store)
         let harness = makeHarness(runtime: runtime)
-        await harness.coordinator.start()
+        try await harness.coordinator.start()
         harness.coordinator.observeHeadsUp(snapshot(.visual(cycleID: 0)))
         await harness.coordinator.drain()
         let id = try #require(harness.coordinator.activeDeliveryID)
         let commitCount = store.commits.count
 
         harness.coordinator.receive(.dismiss(id.rawValue))
-        harness.coordinator.receive(.defaultBodyTapAwaitingOwnerDecision(id.rawValue))
         await harness.coordinator.drain()
 
         #expect(store.commits.count == commitCount)
@@ -489,12 +629,98 @@ struct HeadsUpLifecycleCoordinatorTests {
         #expect(runtime.state.headsUpDeliveryState.pendingAction == nil)
     }
 
+    @Test("Default notification body tap persists More Options until its surface presents")
+    func defaultBodyTapPersistsMoreOptionsUntilPresentation() async throws {
+        let store = HeadsUpRuntimeStore()
+        let runtime = try makeRuntime(store: store)
+        var result = BreakFlowOverlayCoordinator.PresentationResult.blocked
+        var presentations: [(HeadsUpDeliveryID, HeadsUpOpportunityID)] = []
+        let harness = makeHarness(
+            runtime: runtime,
+            presentMoreOptions: { id, opportunity in
+                presentations.append((id, opportunity))
+                return result
+            },
+        )
+        try await harness.coordinator.start()
+        let opportunity = HeadsUpOpportunityID.merged(
+            visualCycleID: 0,
+            movementCycleID: 0,
+        )
+        harness.coordinator.observeHeadsUp(snapshot(opportunity))
+        await harness.coordinator.drain()
+        let id = try #require(harness.coordinator.activeDeliveryID)
+        let commitCountBeforeBodyTap = store.commits.count
+
+        harness.coordinator.receive(.defaultBodyTapAwaitingOwnerDecision(id.rawValue))
+        await harness.coordinator.drain()
+
+        let pendingAction = try #require(runtime.state.headsUpDeliveryState.pendingAction)
+        #expect(pendingAction.id == id)
+        #expect(pendingAction.kind == .openMoreOptions)
+        #expect(pendingAction.opportunity == opportunity)
+        #expect(presentations.map(\.0) == [id])
+        #expect(presentations.map(\.1) == [opportunity])
+        #expect(store.commits.count > commitCountBeforeBodyTap)
+        let commitCountWithPersistedOutbox = store.commits.count
+
+        result = .presented
+        harness.coordinator.retryPendingPresentation()
+        await harness.coordinator.drain()
+
+        #expect(runtime.state.headsUpDeliveryState.pendingAction == nil)
+        #expect(presentations.map(\.0) == [id, id])
+        #expect(presentations.map(\.1) == [opportunity, opportunity])
+        #expect(store.commits.count > commitCountWithPersistedOutbox)
+        #expect(store.commits.last?.state.headsUpDeliveryState.pendingAction == nil)
+    }
+
+    @Test("Notification body More Options retires its system and App delivery surfaces")
+    func notificationBodyMoreOptionsRetiresDelivery() async throws {
+        let id = deliveryID(1)
+        let store = HeadsUpRuntimeStore()
+        let runtime = try makeRuntime(store: store)
+        let requestID = HeadsUpNotificationIdentifiers.requestIdentifier(for: id.rawValue)
+        let center = FakeHeadsUpNotificationCenter(
+            settings: [.init(authorizationStatus: .authorized, alertsEnabled: true)],
+            deliveredIdentifiers: [[requestID]],
+        )
+        let capsule = FakeHeadsUpCapsulePresenter()
+        capsule.shouldConfirm = false
+        var presentations: [(HeadsUpDeliveryID, HeadsUpOpportunityID)] = []
+        let harness = makeHarness(
+            runtime: runtime,
+            center: center,
+            capsule: capsule,
+            presentMoreOptions: { presentedID, opportunity in
+                presentations.append((presentedID, opportunity))
+                return .presented
+            },
+        )
+        try await harness.coordinator.start()
+        harness.coordinator.observeHeadsUp(snapshot(.visual(cycleID: 0)))
+        await harness.coordinator.drain()
+        #expect(runtime.state.headsUpDeliveryState.activeDelivery?.channel == .notification)
+
+        harness.coordinator.receive(.defaultBodyTapAwaitingOwnerDecision(id.rawValue))
+        await harness.coordinator.drain()
+
+        #expect(presentations.map(\.0) == [id])
+        #expect(store.commits.flatMap(\.events).map(\.kind) == [.promptPresented])
+        #expect(runtime.state.headsUpDeliveryState.pendingAction == nil)
+        #expect(harness.coordinator.activeDeliveryID == nil)
+        #expect(harness.coordinator.responseRegistry.registeredDeliveryCount == 0)
+        #expect(center.removedPendingIdentifiers.contains([requestID]))
+        #expect(center.removedDeliveredIdentifiers.contains([requestID]))
+        #expect(capsule.dismissedDeliveryIDs.last == id.rawValue)
+    }
+
     @Test("Concurrent exact responses settle only once")
     func concurrentResponsesSettleOnce() async throws {
         let store = HeadsUpRuntimeStore()
         let runtime = try makeRuntime(store: store)
         let harness = makeHarness(runtime: runtime)
-        await harness.coordinator.start()
+        try await harness.coordinator.start()
         harness.coordinator.observeHeadsUp(snapshot(.movement(cycleID: 0)))
         await harness.coordinator.drain()
         let id = try #require(harness.coordinator.activeDeliveryID)
@@ -516,7 +742,7 @@ struct HeadsUpLifecycleCoordinatorTests {
             runtime: runtime,
             onStatusProjection: { projections.append($0) },
         )
-        await harness.coordinator.start()
+        try await harness.coordinator.start()
         harness.coordinator.observeHeadsUp(snapshot(.merged(
             visualCycleID: 0,
             movementCycleID: 0,
@@ -528,6 +754,22 @@ struct HeadsUpLifecycleCoordinatorTests {
         #expect(projection.intents.first == .start(scope: .merged))
         #expect(projection.intents.last == .moreOptions(scope: .merged))
         #expect(projections.last! == projection)
+    }
+
+    @Test("Accessibility preferences explicitly gate authored capsule motion")
+    func accessibilityPresentationMapping() {
+        #expect(
+            HeadsUpLifecycleCoordinator.accessibility(for: .standard)
+                == HeadsUpAccessibility(),
+        )
+        #expect(
+            HeadsUpLifecycleCoordinator.accessibility(for: .staticPresentation)
+                == HeadsUpAccessibility(staticPresentation: true),
+        )
+        #expect(
+            HeadsUpLifecycleCoordinator.accessibility(for: .textOnly)
+                == HeadsUpAccessibility(textOnly: true, staticPresentation: true),
+        )
     }
 }
 
@@ -544,24 +786,23 @@ private extension HeadsUpLifecycleCoordinatorTests {
         presentMoreOptions: @escaping HeadsUpLifecycleCoordinator.MoreOptionsPresenter = {
             _, _ in .presented
         },
+        allowsNotificationFallback: @escaping () -> Bool = { true },
         onStatusProjection: @escaping (HeadsUpStatusMenuProjection?) -> Void = { _ in },
         onError: @escaping (any Error) -> Void = { _ in },
-        usesInAppHeadsUp: Bool = true,
     ) -> Harness {
         let center = center ?? FakeHeadsUpNotificationCenter(settings: [
             .init(authorizationStatus: .denied, alertsEnabled: false),
         ])
-        let authorizationStore = FakeHeadsUpAuthorizationStore()
-        authorizationStore.state.usesInAppHeadsUp = usesInAppHeadsUp
         let permission = HeadsUpPermissionPanelCoordinator { _, onAction, _ in
             AutoChoicePermissionPanel(onPresent: { onAction(.useInAppHeadsUp) })
         }
         return Harness(coordinator: HeadsUpLifecycleCoordinator(
             runtime: runtime,
             center: center,
-            authorizationStore: authorizationStore,
+            authorizationStore: FakeHeadsUpAuthorizationStore(),
             permissionPanelCoordinator: permission,
             capsule: capsule,
+            allowsNotificationFallback: allowsNotificationFallback,
             reconciliationAttempts: 1,
             reconciliationWait: {},
             wallNow: { Date(timeIntervalSince1970: 100) },
@@ -581,8 +822,8 @@ private extension HeadsUpLifecycleCoordinatorTests {
     }
 
     func makeRuntime(store: HeadsUpRuntimeStore) throws -> ProtocolRuntime {
-        ProtocolRuntime(
-            configuration: try ProtocolProfiles.configuration(for: .balanced),
+        try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
             store: store,
             headsUpRuntimePolicy: HeadsUpRuntimePolicy(maximumSnoozeReoffers: 1),
             now: { Date(timeIntervalSince1970: 100) },
@@ -624,6 +865,30 @@ private final class AutoChoicePermissionPanel: HeadsUpPermissionPanelPresenting 
 
     func present() { onPresent() }
     func close() {}
+}
+
+private final class RetryableRestoreStore: ProtocolRuntimeStore {
+    enum Failure: Error, Equatable {
+        case requested
+    }
+
+    private var failuresRemaining: Int
+    private(set) var loadAttempts = 0
+
+    init(failuresRemaining: Int) {
+        self.failuresRemaining = failuresRemaining
+    }
+
+    func loadState() async throws -> ProtocolState? {
+        loadAttempts += 1
+        if failuresRemaining > 0 {
+            failuresRemaining -= 1
+            throw Failure.requested
+        }
+        return nil
+    }
+
+    func commit(events: [OpportunityEvent], state: ProtocolState) async throws {}
 }
 
 private extension Result where Success == Void {

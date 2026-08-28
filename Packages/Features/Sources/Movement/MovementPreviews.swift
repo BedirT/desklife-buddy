@@ -23,6 +23,14 @@ import SwiftUI
     .frame(width: 1440, height: 900)
 }
 
+#Preview("Seated content first") {
+    MovementView(
+        model: .preview(seatedContentFirst: true),
+        opensAutomatically: false,
+    )
+    .frame(width: 1440, height: 900)
+}
+
 #Preview("Increase Contrast") {
     MovementView(
         model: .preview(),
@@ -81,4 +89,15 @@ import SwiftUI
         opensAutomatically: false,
     )
     .frame(width: 1440, height: 900)
+}
+
+#Preview("Atmosphere only - secondary display") {
+    MovementAtmosphereView()
+        .frame(width: 1440, height: 900)
+}
+
+#Preview("BR-09 - Merged movement atmosphere") {
+    MovementAtmosphereView()
+        .environment(\.colorScheme, .dark)
+        .frame(width: 1440, height: 900)
 }

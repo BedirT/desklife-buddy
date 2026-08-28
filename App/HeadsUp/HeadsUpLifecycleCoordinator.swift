@@ -7,16 +7,21 @@ final class HeadsUpLifecycleCoordinator {
         HeadsUpScope,
         HeadsUpPhase,
         Double,
-        @escaping (HeadsUpIntent) -> Void
+        HeadsUpAccessibility,
+        @escaping (HeadsUpIntent) -> Void,
     ) -> HeadsUpModel
     typealias DriverFactory = (HeadsUpModel, TimeInterval) -> HeadsUpApproachDriver
+    typealias SuppressionRetractionScheduler = (
+        TimeInterval,
+        @escaping @MainActor @Sendable () -> Void,
+    ) -> OverlayCancellation
     typealias BreakPresenter = (
         HeadsUpDeliveryID,
-        HeadsUpOpportunityID
+        HeadsUpOpportunityID,
     ) -> AppOverlayPresentationDecision
     typealias MoreOptionsPresenter = (
         HeadsUpDeliveryID,
-        HeadsUpOpportunityID
+        HeadsUpOpportunityID,
     ) -> BreakFlowOverlayCoordinator.PresentationResult
 
     struct ActivePresentation {
@@ -44,6 +49,8 @@ final class HeadsUpLifecycleCoordinator {
     let deliveryCoordinator: HeadsUpNotificationDeliveryCoordinator
     let modelFactory: ModelFactory
     let driverFactory: DriverFactory
+    let suppressionHoldDurationSeconds: TimeInterval
+    let scheduleSuppressionRetraction: SuppressionRetractionScheduler
     let presentBreak: BreakPresenter
     let presentMoreOptions: MoreOptionsPresenter
     let wallNow: () -> Date
@@ -56,6 +63,7 @@ final class HeadsUpLifecycleCoordinator {
     var readyDeliveryIDs: Set<HeadsUpDeliveryID> = []
     var deliveryTasks: [HeadsUpDeliveryID: Task<Void, Never>] = [:]
     var serialTaskTail: Task<Void, Never>?
+    var suppressionRetractionCancellation: OverlayCancellation?
     var didStart = false
     #if DEBUG
         var verificationCapture: (() -> Bool)?
@@ -78,6 +86,7 @@ final class HeadsUpLifecycleCoordinator {
         permissionPanelCoordinator: HeadsUpPermissionPanelCoordinator,
         capsule: any HeadsUpCapsulePresenting,
         responseRegistry: HeadsUpNotificationResponseRegistry = .init(),
+        allowsNotificationFallback: @escaping () -> Bool = { true },
         reconciliationAttempts: Int = 5,
         reconciliationWait: @escaping HeadsUpNotificationDeliveryCoordinator.Wait = {
             try? await Task.sleep(for: .milliseconds(100))
@@ -85,6 +94,8 @@ final class HeadsUpLifecycleCoordinator {
         wallNow: @escaping () -> Date = Date.init,
         modelFactory: ModelFactory? = nil,
         driverFactory: DriverFactory? = nil,
+        suppressionHoldDurationSeconds: TimeInterval = 2,
+        scheduleSuppressionRetraction: SuppressionRetractionScheduler? = nil,
         presentBreak: @escaping BreakPresenter,
         presentMoreOptions: @escaping MoreOptionsPresenter,
         onStatusProjection: @escaping (HeadsUpStatusMenuProjection?) -> Void = { _ in },
@@ -102,20 +113,26 @@ final class HeadsUpLifecycleCoordinator {
             center: center,
             capsule: capsule,
             responseRegistry: responseRegistry,
+            allowsNotificationFallback: allowsNotificationFallback,
             reconciliationAttempts: reconciliationAttempts,
             wait: reconciliationWait,
         )
         self.wallNow = wallNow
         self.modelFactory = modelFactory ?? Self.makeModel
         self.driverFactory = driverFactory ?? { HeadsUpApproachDriver(model: $0, leadSeconds: $1) }
+        precondition(
+            suppressionHoldDurationSeconds.isFinite && suppressionHoldDurationSeconds > 0,
+        )
+        self.suppressionHoldDurationSeconds = suppressionHoldDurationSeconds
+        self.scheduleSuppressionRetraction = scheduleSuppressionRetraction
+            ?? Self.liveSuppressionRetractionScheduler
         self.presentBreak = presentBreak
         self.presentMoreOptions = presentMoreOptions
         self.onStatusProjection = onStatusProjection
         self.onError = onError
-
     }
 
-    func start(initialSample: ActivitySample? = nil) async {
+    func start(initialSample: ActivitySample? = nil) async throws {
         guard !didStart else { return }
         didStart = true
         center.registerCategories([.breakOpportunity])
@@ -128,7 +145,9 @@ final class HeadsUpLifecycleCoordinator {
                 try await runtime.observe(initialSample)
             }
         } catch {
+            didStart = false
             onError(error)
+            throw error
         }
         await drain()
     }
@@ -230,7 +249,9 @@ final class HeadsUpLifecycleCoordinator {
             targetAt: active.targetAt,
         ))
     }
+}
 
+extension HeadsUpLifecycleCoordinator {
     func modelForCapsule(
         deliveryID: UUID,
         content: HeadsUpNotificationRequest,
@@ -267,7 +288,6 @@ final class HeadsUpLifecycleCoordinator {
             }
         }
     }
-
 }
 
 enum HeadsUpLifecycleError: Error, Equatable {

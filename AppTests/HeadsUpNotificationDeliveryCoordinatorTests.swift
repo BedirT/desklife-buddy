@@ -258,10 +258,60 @@ struct HeadsUpNotificationDeliveryTests {
         #expect(capsule.presented.map(\.deliveryID) == [deliveryID])
     }
 
-    @Test("Capsule preference does not submit a notification and reports only confirmed presentation")
-    func capsuleOnly() async {
+    @Test("Confirmed capsule delivery never touches Notification Center")
+    func capsuleSuccessNeverTouchesNotificationCenter() async {
         let deliveryID = UUID(uuidString: "00000000-0000-0000-0000-000000000054")!
-        let center = FakeHeadsUpNotificationCenter(settings: [])
+        let center = FakeHeadsUpNotificationCenter(settings: [
+            .init(authorizationStatus: .authorized, alertsEnabled: true),
+        ])
+        let capsule = FakeHeadsUpCapsulePresenter()
+        let coordinator = HeadsUpNotificationDeliveryCoordinator(center: center, capsule: capsule)
+
+        let channel = await coordinator.deliver(
+            deliveryID: deliveryID,
+            content: HeadsUpNotificationContent(scope: .visual),
+            preferredChannel: .capsule,
+        )
+
+        #expect(channel == .capsule)
+        #expect(center.settingsReadCount == 0)
+        #expect(center.authorizationRequestCount == 0)
+        #expect(center.addedRequests.isEmpty)
+        #expect(capsule.presented.map(\.deliveryID) == [deliveryID])
+    }
+
+    @Test("Failed capsule uses an already-authorized notification with the same delivery ID")
+    func capsuleFailureUsesAuthorizedFallback() async {
+        let deliveryID = UUID(uuidString: "00000000-0000-0000-0000-000000000072")!
+        let requestID = HeadsUpNotificationIdentifiers.requestIdentifier(for: deliveryID)
+        let center = FakeHeadsUpNotificationCenter(
+            settings: [.init(authorizationStatus: .authorized, alertsEnabled: true)],
+            deliveredIdentifiers: [[requestID]],
+        )
+        let capsule = FakeHeadsUpCapsulePresenter()
+        capsule.shouldConfirm = false
+        let coordinator = HeadsUpNotificationDeliveryCoordinator(center: center, capsule: capsule)
+
+        let channel = await coordinator.deliver(
+            deliveryID: deliveryID,
+            content: HeadsUpNotificationContent(scope: .movement),
+            preferredChannel: .capsule,
+        )
+
+        #expect(channel == .notification)
+        #expect(center.settingsReadCount == 1)
+        #expect(center.authorizationRequestCount == 0)
+        #expect(center.addedRequests.map(\.deliveryID) == [deliveryID])
+        #expect(center.addedRequests.map(\.identifier) == [requestID])
+        #expect(capsule.presented.map(\.deliveryID) == [deliveryID])
+    }
+
+    @Test("Failed capsule never requests permission for automatic fallback")
+    func capsuleFailureDoesNotPrompt() async {
+        let deliveryID = UUID(uuidString: "00000000-0000-0000-0000-000000000073")!
+        let center = FakeHeadsUpNotificationCenter(settings: [
+            .init(authorizationStatus: .notDetermined, alertsEnabled: false),
+        ])
         let capsule = FakeHeadsUpCapsulePresenter()
         capsule.shouldConfirm = false
         let coordinator = HeadsUpNotificationDeliveryCoordinator(center: center, capsule: capsule)
@@ -273,6 +323,35 @@ struct HeadsUpNotificationDeliveryTests {
         )
 
         #expect(channel == nil)
+        #expect(center.settingsReadCount == 1)
+        #expect(center.authorizationRequestCount == 0)
+        #expect(center.addedRequests.isEmpty)
+        #expect(capsule.presented.map(\.deliveryID) == [deliveryID])
+    }
+
+    @Test("Disabled notification integration prevents fallback before reading system settings")
+    func disabledNotificationFallback() async {
+        let deliveryID = UUID(uuidString: "00000000-0000-0000-0000-000000000074")!
+        let center = FakeHeadsUpNotificationCenter(settings: [
+            .init(authorizationStatus: .authorized, alertsEnabled: true),
+        ])
+        let capsule = FakeHeadsUpCapsulePresenter()
+        capsule.shouldConfirm = false
+        let coordinator = HeadsUpNotificationDeliveryCoordinator(
+            center: center,
+            capsule: capsule,
+            allowsNotificationFallback: { false },
+        )
+
+        let channel = await coordinator.deliver(
+            deliveryID: deliveryID,
+            content: HeadsUpNotificationContent(scope: .visual),
+            preferredChannel: .capsule,
+        )
+
+        #expect(channel == nil)
+        #expect(center.settingsReadCount == 0)
+        #expect(center.authorizationRequestCount == 0)
         #expect(center.addedRequests.isEmpty)
         #expect(capsule.presented.map(\.deliveryID) == [deliveryID])
     }

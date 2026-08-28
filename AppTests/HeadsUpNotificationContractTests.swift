@@ -49,7 +49,7 @@ struct HeadsUpNotificationContractTests {
         #expect(request.scope == .merged)
         #expect(frameworkRequest.identifier == request.identifier)
         #expect(content.title == "Visual reset and movement")
-        #expect(content.body == "Both are due — one break covers them.")
+        #expect(content.body == "Both are due. One break covers them.")
         #expect(content.categoryIdentifier == HeadsUpNotificationIdentifiers.category)
         #expect(content.interruptionLevel == .active)
         #expect(content.sound == nil)

@@ -15,10 +15,10 @@ enum BreakFieldPanelMotionMode: Equatable {
         switch self {
         case .standard:
             BreakFieldPanelMotionProfile(
-                enterDuration: 0,
-                exitDuration: 0,
+                enterDuration: DSMotion.breakFieldEnterDuration,
+                exitDuration: DSMotion.breakFieldExitDuration,
                 initialAlpha: 1,
-                transitionStyle: .instant,
+                transitionStyle: .frostDissolve,
             )
         case .reduced:
             BreakFieldPanelMotionProfile(
@@ -40,7 +40,6 @@ enum BreakFieldPanelMotionMode: Equatable {
 
 enum BreakFieldPanelTransitionStyle: Equatable {
     case frostDissolve
-    case crossDissolve
     case instant
 }
 
@@ -50,7 +49,9 @@ struct BreakFieldPanelMotionProfile: Equatable {
     let initialAlpha: CGFloat
     let transitionStyle: BreakFieldPanelTransitionStyle
 
-    var isAnimated: Bool { enterDuration > 0 || exitDuration > 0 }
+    var hasAnimatedEntrance: Bool { enterDuration > 0 }
+    var hasAnimatedExit: Bool { exitDuration > 0 }
+    var isAnimated: Bool { hasAnimatedEntrance || hasAnimatedExit }
 }
 
 class BreakFieldAnimatedPanel: NSPanel {
@@ -60,12 +61,19 @@ class BreakFieldAnimatedPanel: NSPanel {
     var breakFieldReduceTransparency =
         NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency
     let breakFieldEntranceState = DSBreakEntranceState()
+    let breakFieldTransitionState = DSBreakFieldTransitionState()
+    var breakFieldEntranceDidSettle: () -> Void = {}
 
-    private var isAnimatingClose = false
     private var isSuppressingDock = false
-    private var ignoredMouseEventsBeforeClose = false
     private var activationObserver: NSObjectProtocol?
+    private var frostTransition: BreakFieldFrostTransition?
+    private var requestsEntranceWhenActive = false
     private var requestsKeyPresentation = false
+    private var didNotifyEntranceSettlement = false
+    private var isDismissing = false
+    private var ignoredMouseEventsBeforeDismissal = false
+    private var exitRetainer: BreakFieldAnimatedPanel?
+    private var dismissalCompletions: [() -> Void] = []
 
     func presentBreakField(makeKey: Bool) {
         guard !isVisible else {
@@ -73,49 +81,88 @@ class BreakFieldAnimatedPanel: NSPanel {
             return
         }
         beginDockSuppressionIfNeeded()
+        didNotifyEntranceSettlement = false
         requestsKeyPresentation = makeKey
         let profile = breakFieldMotionMode.profile
-        switch profile.transitionStyle {
+        let transitionStyle = breakFieldReduceTransparency
+            ? BreakFieldPanelTransitionStyle.instant
+            : profile.transitionStyle
+        switch transitionStyle {
         case .instant:
             breakFieldEntranceState.phase = .settled
+            breakFieldTransitionState.phase = .sharp
             orderBreakFieldFront(makeKey: makeKey)
-        case .crossDissolve:
-            breakFieldEntranceState.phase = .settled
-            alphaValue = profile.initialAlpha
-            orderBreakFieldFront(makeKey: makeKey)
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = profile.enterDuration
-                animator().alphaValue = 1
-            }
+            notifyEntranceSettlement()
         case .frostDissolve:
-            assertionFailure("The rejected frost transition must not be used")
-            breakFieldEntranceState.phase = .settled
+            breakFieldEntranceState.phase = .hidden
+            breakFieldTransitionState.phase = .hidden
+            frostTransition = BreakFieldFrostTransition.install(
+                on: self,
+                entranceState: breakFieldEntranceState,
+                fieldTransitionState: breakFieldTransitionState,
+                onSettled: { [weak self] in self?.notifyEntranceSettlement() },
+            )
+            guard frostTransition != nil else {
+                breakFieldEntranceState.phase = .settled
+                breakFieldTransitionState.phase = .sharp
+                orderBreakFieldFront(makeKey: makeKey)
+                notifyEntranceSettlement()
+                if makeKey { requestInteractiveActivation() }
+                return
+            }
+            requestsEntranceWhenActive = true
             orderBreakFieldFront(makeKey: makeKey)
         }
-        if makeKey { requestInteractiveActivation() }
+        prepareForApplicationActivation(makeKey: makeKey)
     }
 
     override func close() {
+        let wasDismissing = isDismissing
+        frostTransition?.cancel()
+        frostTransition = nil
+        breakFieldEntranceState.phase = .settled
+        breakFieldTransitionState.phase = .sharp
+        requestsEntranceWhenActive = false
+        requestsKeyPresentation = false
+        isDismissing = false
+        removeActivationObserver()
+        super.close()
+        endDockSuppressionIfNeeded()
+        if wasDismissing {
+            ignoresMouseEvents = ignoredMouseEventsBeforeDismissal
+        }
+        exitRetainer = nil
+        completeDismissalCallbacks()
+    }
+
+    func dismissBreakField(onClosed: @escaping () -> Void = {}) {
+        dismissalCompletions.append(onClosed)
+        guard isVisible else {
+            completeDismissalCallbacks()
+            return
+        }
+        guard !isDismissing else { return }
         let profile = breakFieldMotionMode.profile
-        guard isVisible, profile.isAnimated, !isAnimatingClose else {
-            if !isAnimatingClose {
-                super.close()
-                endDockSuppressionIfNeeded()
-            }
+        guard profile.hasAnimatedExit,
+              !breakFieldReduceTransparency,
+              !NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency,
+              !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
+              didNotifyEntranceSettlement,
+              let frostTransition
+        else {
+            close()
             return
         }
 
-        isAnimatingClose = true
-        ignoredMouseEventsBeforeClose = ignoresMouseEvents
+        isDismissing = true
+        ignoredMouseEventsBeforeDismissal = ignoresMouseEvents
         ignoresMouseEvents = true
-
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = profile.exitDuration
-            animator().alphaValue = 0
-        } completionHandler: { [weak self] in
-            Task { @MainActor [weak self] in
-                self?.finishAnimatedClose()
-            }
+        exitRetainer = self
+        guard frostTransition.startExit(onComplete: { [weak self] in
+            self?.finishAnimatedDismissal()
+        }) else {
+            close()
+            return
         }
     }
 
@@ -128,12 +175,15 @@ class BreakFieldAnimatedPanel: NSPanel {
     }
 
     private func requestInteractiveActivation() {
-        requestsKeyPresentation = true
+        prepareForApplicationActivation(makeKey: true)
+    }
+
+    private func prepareForApplicationActivation(makeKey: Bool) {
+        requestsKeyPresentation = requestsKeyPresentation || makeKey
+        guard requestsKeyPresentation || requestsEntranceWhenActive else { return }
         installActivationObserverIfNeeded()
-        NSApp.activate(ignoringOtherApps: true)
-        if NSApp.isActive {
-            completeInteractiveActivation()
-        }
+        if makeKey { NSApp.activate(ignoringOtherApps: true) }
+        if NSApp.isActive { completeApplicationActivation() }
     }
 
     private func installActivationObserverIfNeeded() {
@@ -144,15 +194,18 @@ class BreakFieldAnimatedPanel: NSPanel {
             queue: .main,
         ) { [weak self] _ in
             MainActor.assumeIsolated {
-                self?.completeInteractiveActivation()
+                self?.completeApplicationActivation()
             }
         }
     }
 
-    private func completeInteractiveActivation() {
-        guard requestsKeyPresentation else { return }
+    private func completeApplicationActivation() {
         dockVisibilityController.refreshSuppression()
-        makeKeyAndOrderFront(nil)
+        if requestsKeyPresentation { makeKeyAndOrderFront(nil) }
+        if requestsEntranceWhenActive {
+            requestsEntranceWhenActive = false
+            frostTransition?.start()
+        }
         removeActivationObserver()
     }
 
@@ -160,17 +213,6 @@ class BreakFieldAnimatedPanel: NSPanel {
         guard let activationObserver else { return }
         NotificationCenter.default.removeObserver(activationObserver)
         self.activationObserver = nil
-    }
-
-    private func finishAnimatedClose() {
-        super.close()
-        requestsKeyPresentation = false
-        removeActivationObserver()
-        alphaValue = 1
-        ignoresMouseEvents = ignoredMouseEventsBeforeClose
-        breakFieldEntranceState.phase = .settled
-        isAnimatingClose = false
-        endDockSuppressionIfNeeded()
     }
 
     private func beginDockSuppressionIfNeeded() {
@@ -185,12 +227,45 @@ class BreakFieldAnimatedPanel: NSPanel {
         dockVisibilityController.endSuppression()
     }
 
+    private func notifyEntranceSettlement() {
+        guard !didNotifyEntranceSettlement else { return }
+        didNotifyEntranceSettlement = true
+        breakFieldEntranceDidSettle()
+    }
+
+    private func finishAnimatedDismissal() {
+        frostTransition = nil
+        super.close()
+        endDockSuppressionIfNeeded()
+        ignoresMouseEvents = ignoredMouseEventsBeforeDismissal
+        isDismissing = false
+        exitRetainer = nil
+        completeDismissalCallbacks()
+    }
+
+    private func completeDismissalCallbacks() {
+        let completions = dismissalCompletions
+        dismissalCompletions.removeAll()
+        completions.forEach { $0() }
+    }
+
     deinit {
         MainActor.assumeIsolated {
+            frostTransition?.cancel()
             removeActivationObserver()
             if isSuppressingDock {
                 dockVisibilityController.endSuppression()
             }
         }
     }
+
+    #if DEBUG
+        func settleBreakFieldEntranceForTesting() {
+            frostTransition?.settle()
+        }
+
+        func settleBreakFieldExitForTesting() {
+            frostTransition?.settleExit()
+        }
+    #endif
 }

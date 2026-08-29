@@ -129,6 +129,7 @@ struct MergedOverlayCoordinatorTests {
         visualHarness.panels[0].cancel()
 
         #expect(visualHarness.lifecycle == [.opened, .skipped])
+        #expect(visualHarness.panels.allSatisfy { $0.wasDismissed })
         #expect(visualHarness.restoredProcessIdentifiers == [41])
 
         let movementHarness = try MergedOverlayHarness(
@@ -141,6 +142,28 @@ struct MergedOverlayCoordinatorTests {
 
         #expect(movementHarness.lifecycle == [.opened, .doneEarly, .skipped])
         #expect(movementHarness.restoredProcessIdentifiers == [41])
+    }
+
+    @Test("Restoration waits until every merged display finishes its exit")
+    func restorationWaitsForAllPanels() throws {
+        let harness = try MergedOverlayHarness(
+            displays: [mergedDisplay(1, isMain: true), mergedDisplay(2)],
+        )
+        let coordinator = harness.makeCoordinator()
+        coordinator.present()
+        harness.panels.forEach { $0.completesDismissalAutomatically = false }
+
+        harness.panels[0].cancel()
+
+        #expect(harness.panels.allSatisfy { $0.wasDismissed })
+        #expect(harness.panels.allSatisfy { !$0.wasClosed })
+        #expect(harness.restoredProcessIdentifiers.isEmpty)
+
+        harness.panels[0].finishDismissal()
+        #expect(harness.restoredProcessIdentifiers.isEmpty)
+
+        harness.panels[1].finishDismissal()
+        #expect(harness.restoredProcessIdentifiers == [41])
     }
 
     @Test("Movement duration selection remains live and a terminal action restores once")
@@ -489,13 +512,20 @@ private final class MergedOverlayHarness {
             accessibilityPreferences: accessibilityPreferences,
             now: { self.monotonicNow },
             displays: { self.displays },
-            makePanel: { display, role, content, accessibilityPreferences, onCancel in
+            makePanel: {
+                display,
+                role,
+                content,
+                accessibilityPreferences,
+                onEntranceSettled,
+                onCancel in
                 let panel = TestMergedPanel(
                     displayID: display.id,
                     frame: display.frame,
                     content: content,
                     role: role,
                     accessibilityPreferences: accessibilityPreferences,
+                    onEntranceSettled: onEntranceSettled,
                     onCancel: onCancel,
                 )
                 self.panels.append(panel)
@@ -550,9 +580,13 @@ private final class TestMergedPanel: MergedPanelPresenting {
     let displayID: OverlayDisplayID
     let accessibilityPreferences: AccessibilityPreferences
     private let onCancel: () -> Void
+    private let onEntranceSettled: () -> Void
     private(set) var frame: CGRect
     private(set) var wasMadeKey = false
     private(set) var wasClosed = false
+    private(set) var wasDismissed = false
+    var completesDismissalAutomatically = true
+    private var pendingDismissalCompletion: (() -> Void)?
     private(set) var contentHistory: [MergedPanelContent] = []
     private(set) var role: OverlayDisplayRole
 
@@ -577,18 +611,23 @@ private final class TestMergedPanel: MergedPanelPresenting {
         content: MergedPanelContent,
         role: OverlayDisplayRole,
         accessibilityPreferences: AccessibilityPreferences,
+        onEntranceSettled: @escaping () -> Void,
         onCancel: @escaping () -> Void,
     ) {
         self.displayID = displayID
         self.frame = frame
         self.role = role
         self.accessibilityPreferences = accessibilityPreferences
+        self.onEntranceSettled = onEntranceSettled
         self.onCancel = onCancel
         contentHistory = [content]
     }
 
     func present(makeKey: Bool) {
         wasMadeKey = wasMadeKey || makeKey
+        if makeKey {
+            onEntranceSettled()
+        }
     }
 
     func update(frame: CGRect, role: OverlayDisplayRole) {
@@ -602,6 +641,23 @@ private final class TestMergedPanel: MergedPanelPresenting {
 
     func close() {
         wasClosed = true
+    }
+
+    func dismiss(onClosed: @escaping () -> Void) {
+        wasDismissed = true
+        guard completesDismissalAutomatically else {
+            pendingDismissalCompletion = onClosed
+            return
+        }
+        close()
+        onClosed()
+    }
+
+    func finishDismissal() {
+        let completion = pendingDismissalCompletion
+        pendingDismissalCompletion = nil
+        close()
+        completion?()
     }
 
     func makeKey() {

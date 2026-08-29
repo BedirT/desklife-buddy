@@ -221,32 +221,45 @@ final class MovementOverlayCoordinator {
             case .success:
                 actionModel.confirmLifecycle(action)
                 guard action.isTerminal else { return }
-                dismissPanels()
-                restorePriorApplication()
-                if action.showsCompletion {
-                    onCompletion()
+                dismissPanels { [weak self] in
+                    guard let self else { return }
+                    restorePriorApplication()
+                    if action.showsCompletion {
+                        onCompletion()
+                    }
                 }
             case .failure:
                 actionModel.rejectLifecycle(action)
                 guard action == .opened else { return }
-                dismissPanels()
-                restorePriorApplication()
+                dismissPanels { [weak self] in
+                    self?.restorePriorApplication()
+                }
             }
         }
     }
 
-    private func dismissPanels() {
-        guard !isDismissing, model != nil else { return }
+    private func dismissPanels(onClosed: @escaping () -> Void) {
+        guard !isDismissing, model != nil else {
+            onClosed()
+            return
+        }
         isDismissing = true
         refreshCancellation?.cancel()
         refreshCancellation = nil
         screenCancellation?.cancel()
         screenCancellation = nil
-        panels.values.forEach { $0.close() }
+        let outgoingPanels = Array(panels.values)
         panels.removeAll()
         model = nil
         restorationPending = true
         isDismissing = false
+        let barrier = OverlayDismissalBarrier(
+            count: outgoingPanels.count,
+            onComplete: onClosed,
+        )
+        outgoingPanels.forEach { panel in
+            panel.dismiss(onClosed: barrier.panelDidClose)
+        }
     }
 
     private func restorePriorApplication() {

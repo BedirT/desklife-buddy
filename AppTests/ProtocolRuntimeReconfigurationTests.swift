@@ -229,7 +229,7 @@ struct ProtocolRuntimeReconfigurationTests {
         let visualReset = VisualResetOverlayCoordinator(
             now: { 0 },
             displays: { [settingsPresentationDisplay] },
-            makePanel: { _, _, _, _, _ in visualPanel },
+            makePanel: { _, _, _, _, _, _ in visualPanel },
             captureFrontmostProcessIdentifier: { nil },
             activate: {},
             isAppFrontmost: { false },
@@ -435,6 +435,10 @@ private final class SettingsPresentationPanel: BreakFlowPanelPresenting, VisualR
     func update(frame: CGRect) {}
     func update(frame: CGRect, role: OverlayDisplayRole) {}
     func close() { wasClosed = true }
+    func dismiss(onClosed: @escaping () -> Void) {
+        close()
+        onClosed()
+    }
     func makeKey() {}
 }
 

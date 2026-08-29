@@ -10,6 +10,7 @@ final class VisualResetOverlayCoordinator {
         VisualResetModel,
         AccessibilityPreferences,
         @escaping () -> Void,
+        @escaping () -> Void,
     ) -> any VisualResetPanelPresenting
     typealias Scheduler = (@escaping @MainActor @Sendable () -> Void) -> OverlayCancellation
 
@@ -97,13 +98,20 @@ final class VisualResetOverlayCoordinator {
             accessibilityPreferences: accessibilityPreferences,
             now: { clock.seconds },
             displays: AppKitOverlayDisplays.current,
-            makePanel: { display, role, model, accessibilityPreferences, onCancel in
+            makePanel: {
+                display,
+                role,
+                model,
+                accessibilityPreferences,
+                onEntranceSettled,
+                onCancel in
                 VisualResetPanel(
                     displayID: display.id,
                     frame: display.frame,
                     model: model,
                     role: role,
                     accessibilityPreferences: accessibilityPreferences,
+                    onEntranceSettled: onEntranceSettled,
                     onCancel: onCancel,
                 )
             },
@@ -136,6 +144,7 @@ final class VisualResetOverlayCoordinator {
         priorProcessIdentifier = captureFrontmostProcessIdentifier()
         let model = VisualResetModel(
             durationSeconds: durationSeconds,
+            countdownStartsOnOpen: false,
             accessibility: accessibilityPreferences.visualResetAccessibility,
             requiresLifecycleConfirmation: true,
             now: now,
@@ -210,16 +219,19 @@ final class VisualResetOverlayCoordinator {
             case .success:
                 actionModel.confirmLifecycle(action)
                 guard action != .opened else { return }
-                dismissPanels()
-                restorePriorApplication()
-                if action.showsCompletion {
-                    onCompletion()
+                dismissPanels { [weak self] in
+                    guard let self else { return }
+                    restorePriorApplication()
+                    if action.showsCompletion {
+                        onCompletion()
+                    }
                 }
             case .failure:
                 actionModel.rejectLifecycle(action)
                 guard action == .opened else { return }
-                dismissPanels()
-                restorePriorApplication()
+                dismissPanels { [weak self] in
+                    self?.restorePriorApplication()
+                }
             }
         }
     }
@@ -229,18 +241,28 @@ final class VisualResetOverlayCoordinator {
         onAnnouncement(announcement)
     }
 
-    private func dismissPanels() {
-        guard !isDismissing, model != nil else { return }
+    private func dismissPanels(onClosed: @escaping () -> Void) {
+        guard !isDismissing, model != nil else {
+            onClosed()
+            return
+        }
         isDismissing = true
         refreshCancellation?.cancel()
         refreshCancellation = nil
         screenCancellation?.cancel()
         screenCancellation = nil
-        panels.values.forEach { $0.close() }
+        let outgoingPanels = Array(panels.values)
         panels.removeAll()
         model = nil
         restorationPending = true
         isDismissing = false
+        let barrier = OverlayDismissalBarrier(
+            count: outgoingPanels.count,
+            onComplete: onClosed,
+        )
+        outgoingPanels.forEach { panel in
+            panel.dismiss(onClosed: barrier.panelDidClose)
+        }
     }
 
     private func restorePriorApplication() {
@@ -306,6 +328,7 @@ private extension VisualResetOverlayCoordinator {
                     assignment.role,
                     model,
                     accessibilityPreferences,
+                    { [weak model] in model?.startCountdown() },
                 ) { [weak model] in
                     model?.skip()
                 }

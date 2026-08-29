@@ -55,11 +55,13 @@ public final class VisualResetModel {
     @ObservationIgnored private let durationSeconds: TimeInterval
     @ObservationIgnored private let finalSecondsThreshold: TimeInterval
     @ObservationIgnored private let declarationArmDelay: TimeInterval
+    @ObservationIgnored private let countdownStartsOnOpen: Bool
     @ObservationIgnored private let requiresLifecycleConfirmation: Bool
     @ObservationIgnored private let now: () -> TimeInterval
     @ObservationIgnored private let onAction: (VisualResetAction) -> Void
     @ObservationIgnored private let onAnnouncement: (VisualResetAnnouncement) -> Void
     @ObservationIgnored private var openedAt: TimeInterval?
+    @ObservationIgnored private var countdownStartRequested = false
     @ObservationIgnored private var announcedTenSeconds = false
     @ObservationIgnored private var pendingOpenAnnouncement: VisualResetAnnouncement?
     @ObservationIgnored private var pendingTerminalAnnouncement: VisualResetAnnouncement?
@@ -70,6 +72,7 @@ public final class VisualResetModel {
         durationSeconds: TimeInterval,
         finalSecondsThreshold: TimeInterval = 3,
         declarationArmDelay: TimeInterval = 0.8,
+        countdownStartsOnOpen: Bool = true,
         accessibility: VisualResetAccessibility = .init(),
         requiresLifecycleConfirmation: Bool = false,
         now: @escaping () -> TimeInterval,
@@ -82,6 +85,7 @@ public final class VisualResetModel {
         self.durationSeconds = durationSeconds
         self.finalSecondsThreshold = min(finalSecondsThreshold, durationSeconds)
         self.declarationArmDelay = declarationArmDelay
+        self.countdownStartsOnOpen = countdownStartsOnOpen
         self.requiresLifecycleConfirmation = requiresLifecycleConfirmation
         self.accessibility = accessibility
         self.now = now
@@ -111,13 +115,19 @@ public final class VisualResetModel {
     public func open() {
         guard phase == .ready else { return }
         nextAutomaticTimerRetryAt = nil
-        openedAt = now()
+        openedAt = countdownStartsOnOpen || countdownStartRequested ? now() : nil
         phase = .running
         pendingOpenAnnouncement = .opened(durationSeconds: Int(ceil(durationSeconds)))
         onAction(.opened)
         if !requiresLifecycleConfirmation {
             confirmLifecycle(.opened)
         }
+    }
+
+    public func startCountdown() {
+        countdownStartRequested = true
+        guard isActive, openedAt == nil else { return }
+        openedAt = now()
     }
 
     public func refresh() {

@@ -30,13 +30,20 @@ extension MergedOverlayCoordinator {
             accessibilityPreferences: accessibilityPreferences,
             now: { clock.seconds },
             displays: AppKitOverlayDisplays.current,
-            makePanel: { display, role, content, accessibilityPreferences, onCancel in
+            makePanel: {
+                display,
+                role,
+                content,
+                accessibilityPreferences,
+                onEntranceSettled,
+                onCancel in
                 MergedPanel(
                     displayID: display.id,
                     frame: display.frame,
                     content: content,
                     role: role,
                     accessibilityPreferences: accessibilityPreferences,
+                    onEntranceSettled: onEntranceSettled,
                     onCancel: onCancel,
                 )
             },

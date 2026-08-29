@@ -6,6 +6,7 @@ public struct BreakFieldView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.dsBreakFieldTransition) private var fieldTransition
 
     public let variant: BreakFieldVariant
     private let appearanceOverride: BreakFieldAppearance?
@@ -37,6 +38,7 @@ public struct BreakFieldView: View {
             .clipped()
             .overlay { contrastScrim }
         }
+        .dsBreakFieldTransition(phase: fieldTransition.phase)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }

@@ -116,9 +116,32 @@ struct MovementOverlayCoordinatorTests {
 
         #expect(harness.lifecycle == [.opened, .skipped])
         #expect(!harness.panels.contains { !$0.wasClosed })
+        #expect(harness.panels.allSatisfy { $0.wasDismissed })
         #expect(harness.restoredProcessIdentifiers == [41])
         #expect(harness.refreshCancellationCount == 1)
         #expect(harness.screenCancellationCount == 1)
+    }
+
+    @Test("Restoration waits until every movement display finishes its exit")
+    func restorationWaitsForAllPanels() throws {
+        let harness = try MovementOverlayHarness(
+            displays: [movementDisplay(1, isMain: true), movementDisplay(2)],
+        )
+        let coordinator = harness.makeCoordinator()
+        coordinator.present()
+        harness.panels.forEach { $0.completesDismissalAutomatically = false }
+
+        harness.panels[0].cancel()
+
+        #expect(harness.panels.allSatisfy { $0.wasDismissed })
+        #expect(harness.panels.allSatisfy { !$0.wasClosed })
+        #expect(harness.restoredProcessIdentifiers.isEmpty)
+
+        harness.panels[0].finishDismissal()
+        #expect(harness.restoredProcessIdentifiers.isEmpty)
+
+        harness.panels[1].finishDismissal()
+        #expect(harness.restoredProcessIdentifiers == [41])
     }
 
     @Test("Selection stays live while terminal declarations dismiss the shared surface")
@@ -602,6 +625,9 @@ private final class TestMovementPanel: MovementPanelPresenting {
     private(set) var role: OverlayDisplayRole
     private(set) var wasMadeKey = false
     private(set) var wasClosed = false
+    private(set) var wasDismissed = false
+    var completesDismissalAutomatically = true
+    private var pendingDismissalCompletion: (() -> Void)?
 
     init(
         displayID: OverlayDisplayID,
@@ -628,6 +654,23 @@ private final class TestMovementPanel: MovementPanelPresenting {
 
     func close() {
         wasClosed = true
+    }
+
+    func dismiss(onClosed: @escaping () -> Void) {
+        wasDismissed = true
+        guard completesDismissalAutomatically else {
+            pendingDismissalCompletion = onClosed
+            return
+        }
+        close()
+        onClosed()
+    }
+
+    func finishDismissal() {
+        let completion = pendingDismissalCompletion
+        pendingDismissalCompletion = nil
+        close()
+        completion?()
     }
 
     func makeKey() {

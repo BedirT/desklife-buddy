@@ -5,15 +5,100 @@ import Testing
 
 @Suite("Break field panel motion")
 struct BreakFieldPanelMotionTests {
-    @Test("Standard presentation shows the final field without a compositor transition")
+    @Test("Standard presentation uses a slow whole-screen frost and field sharpen")
     func standardProfile() {
         let profile = BreakFieldPanelMotionMode.standard.profile
 
-        #expect(profile.enterDuration == 0)
-        #expect(profile.exitDuration == 0)
+        #expect(profile.enterDuration == DSMotion.breakFieldEnterDuration)
+        #expect(profile.exitDuration == DSMotion.breakFieldExitDuration)
         #expect(profile.initialAlpha == 1)
-        #expect(profile.transitionStyle == .instant)
-        #expect(!profile.isAnimated)
+        #expect(profile.transitionStyle == .frostDissolve)
+        #expect(profile.isAnimated)
+        #expect(profile.hasAnimatedExit)
+        #expect(
+            profile.enterDuration
+                == DSMotion.breakFieldDesktopFrostDuration
+                + DSMotion.breakFieldFrostHoldDuration
+                + DSMotion.breakFieldBlurredFieldCrossfadeDuration
+                + DSMotion.breakFieldFieldSharpenDuration,
+        )
+    }
+
+    @Test("A settled standard field reverses through frost before restoring the Dock")
+    func standardExitLifecycle() throws {
+        let dockVisibility = TestBreakPresentationDockController()
+        let panel = BreakFieldAnimatedPanel(
+            contentRect: CGRect(x: 0, y: 0, width: 320, height: 240),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false,
+        )
+        panel.contentView = NSView(frame: CGRect(x: 0, y: 0, width: 320, height: 240))
+        panel.breakFieldMotionMode = .standard
+        panel.breakFieldReduceTransparency = false
+        panel.dockVisibilityController = dockVisibility
+        panel.presentBreakField(makeKey: false)
+        panel.settleBreakFieldEntranceForTesting()
+
+        panel.dismissBreakField()
+        #expect(panel.isVisible)
+        #expect(dockVisibility.endCount == 0)
+
+        panel.settleBreakFieldExitForTesting()
+        #expect(!panel.isVisible)
+        #expect(dockVisibility.endCount == 1)
+    }
+
+    @Test("An exit requested before entrance settlement closes immediately")
+    func earlyExitIsImmediate() {
+        let dockVisibility = TestBreakPresentationDockController()
+        let panel = BreakFieldAnimatedPanel(
+            contentRect: CGRect(x: 0, y: 0, width: 320, height: 240),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false,
+        )
+        panel.contentView = NSView(frame: CGRect(x: 0, y: 0, width: 320, height: 240))
+        panel.breakFieldMotionMode = .standard
+        panel.breakFieldReduceTransparency = false
+        panel.dockVisibilityController = dockVisibility
+        panel.presentBreakField(makeKey: false)
+
+        panel.dismissBreakField()
+
+        #expect(!panel.isVisible)
+        #expect(dockVisibility.endCount == 1)
+    }
+
+    @Test("Reduce Transparency bypasses the animated exit")
+    func reduceTransparencyExitIsImmediate() {
+        let dockVisibility = TestBreakPresentationDockController()
+        let panel = BreakFieldAnimatedPanel(
+            contentRect: CGRect(x: 0, y: 0, width: 320, height: 240),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false,
+        )
+        panel.contentView = NSView(frame: CGRect(x: 0, y: 0, width: 320, height: 240))
+        panel.breakFieldMotionMode = .standard
+        panel.breakFieldReduceTransparency = true
+        panel.dockVisibilityController = dockVisibility
+        panel.presentBreakField(makeKey: false)
+
+        panel.dismissBreakField()
+
+        #expect(!panel.isVisible)
+        #expect(dockVisibility.endCount == 1)
+    }
+
+    @Test("Timer controls begin arriving by the eighteen-second mark")
+    func controlArrivalTiming() {
+        let controlArrival = DSMotion.breakFieldDesktopFrostDuration
+            + DSMotion.breakFieldFrostHoldDuration
+            + DSMotion.breakFieldBlurredFieldCrossfadeDuration
+            + DSMotion.breakFieldControlDelay
+
+        #expect(controlArrival <= 2)
     }
 
     @Test("Reduce Motion uses the same immediate presentation")
@@ -62,6 +147,28 @@ struct BreakFieldPanelMotionTests {
         #expect(dockVisibility.endCount == 1)
     }
 
+    @Test("Synchronous cleanup bypasses the standard exit")
+    func cleanupCloseIsImmediate() {
+        let dockVisibility = TestBreakPresentationDockController()
+        let panel = BreakFieldAnimatedPanel(
+            contentRect: CGRect(x: 0, y: 0, width: 320, height: 240),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false,
+        )
+        panel.contentView = NSView(frame: CGRect(x: 0, y: 0, width: 320, height: 240))
+        panel.breakFieldMotionMode = .standard
+        panel.breakFieldReduceTransparency = false
+        panel.dockVisibilityController = dockVisibility
+        panel.presentBreakField(makeKey: false)
+        panel.settleBreakFieldEntranceForTesting()
+
+        panel.close()
+
+        #expect(!panel.isVisible)
+        #expect(dockVisibility.endCount == 1)
+    }
+
     @Test("Standard entrance never disables pointer input on the panel")
     func standardEntrancePreservesPointerInput() {
         let panel = BreakFieldAnimatedPanel(
@@ -81,6 +188,35 @@ struct BreakFieldPanelMotionTests {
         panel.presentBreakField(makeKey: false)
 
         #expect(!panel.ignoresMouseEvents)
+    }
+
+    @Test("The frost entrance keeps one stable content root through settlement")
+    func stableContentRoot() throws {
+        let panel = BreakFieldAnimatedPanel(
+            contentRect: CGRect(x: 0, y: 0, width: 320, height: 240),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false,
+        )
+        let field = NSView(frame: CGRect(x: 0, y: 0, width: 320, height: 240))
+        panel.contentView = field
+        panel.breakFieldMotionMode = .standard
+        panel.breakFieldReduceTransparency = false
+        defer {
+            panel.breakFieldMotionMode = .staticPresentation
+            panel.close()
+        }
+
+        panel.presentBreakField(makeKey: false)
+        let stableRoot = try #require(panel.contentView)
+        #expect(stableRoot !== field)
+        #expect(field.superview === stableRoot)
+
+        panel.settleBreakFieldEntranceForTesting()
+
+        #expect(panel.contentView === stableRoot)
+        #expect(field.superview === stableRoot)
+        #expect(panel.breakFieldEntranceState.phase == .settled)
     }
 
     @Test("Dock suppression preserves unrelated presentation options")

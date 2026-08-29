@@ -46,6 +46,48 @@ struct VisualResetModelTests {
         #expect(model.phase == .running)
     }
 
+    @Test("A deferred countdown stays at twenty until the field settles")
+    func countdownStartsAfterEntrance() {
+        let clock = TestClock()
+        let model = VisualResetModel(
+            durationSeconds: 20,
+            countdownStartsOnOpen: false,
+            now: { clock.value },
+        )
+        model.open()
+
+        clock.value = 3
+        model.refresh()
+        #expect(model.remainingSeconds == 20)
+        #expect(model.progress == 0)
+
+        model.startCountdown()
+        model.startCountdown()
+        clock.value = 4.1
+        model.refresh()
+
+        #expect(model.remainingSeconds == 19)
+        #expect(abs(model.progress - 1.1 / 20) < 0.000_001)
+    }
+
+    @Test("An instant settled field can request the countdown before open")
+    func settledFieldBeforeOpen() {
+        let clock = TestClock()
+        let model = VisualResetModel(
+            durationSeconds: 20,
+            countdownStartsOnOpen: false,
+            now: { clock.value },
+        )
+
+        model.startCountdown()
+        clock.value = 2
+        model.open()
+        clock.value = 3.1
+        model.refresh()
+
+        #expect(model.remainingSeconds == 19)
+    }
+
     @Test("The centralized final-seconds threshold precedes one timer fact")
     func finishesOnce() {
         let clock = TestClock()

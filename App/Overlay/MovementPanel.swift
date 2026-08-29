@@ -9,6 +9,7 @@ protocol MovementPanelPresenting: AnyObject {
     var displayID: OverlayDisplayID { get }
     func present(makeKey: Bool)
     func update(frame: CGRect, role: OverlayDisplayRole)
+    func dismiss(onClosed: @escaping () -> Void)
     func close()
     func makeKey()
 }
@@ -64,6 +65,10 @@ final class MovementPanel: BreakFieldAnimatedPanel, MovementPanelPresenting {
 
     func present(makeKey: Bool) {
         presentBreakField(makeKey: makeKey && role == .interactive)
+    }
+
+    func dismiss(onClosed: @escaping () -> Void) {
+        dismissBreakField(onClosed: onClosed)
     }
 
     func update(frame: CGRect, role: OverlayDisplayRole) {
@@ -138,13 +143,17 @@ final class MovementPanel: BreakFieldAnimatedPanel, MovementPanelPresenting {
                     focusPresentation: focusPresentation,
                     opensAutomatically: false,
                 )
-                .environment(\.dsBreakEntrance, breakFieldEntranceState),
+                .environment(\.dsBreakEntrance, breakFieldEntranceState)
+                .environment(\.dsBreakFieldTransition, breakFieldTransitionState),
             )
             hostingView.setAccessibilityElement(false)
             setAccessibilityChildren(nil)
         case .atmosphere:
             hostingView.rootView = accessibilityPreferences.presentation == .standard
-                ? AnyView(MovementAtmosphereView(model: model))
+                ? AnyView(
+                    MovementAtmosphereView(model: model)
+                        .environment(\.dsBreakFieldTransition, breakFieldTransitionState),
+                )
                 : AnyView(staticDesktopField)
             hostingView.setAccessibilityElement(false)
             setAccessibilityChildren([])

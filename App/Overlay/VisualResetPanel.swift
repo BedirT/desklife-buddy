@@ -9,6 +9,7 @@ protocol VisualResetPanelPresenting: AnyObject {
     var displayID: OverlayDisplayID { get }
     func present(makeKey: Bool)
     func update(frame: CGRect, role: OverlayDisplayRole)
+    func dismiss(onClosed: @escaping () -> Void)
     func close()
     func makeKey()
 }
@@ -31,6 +32,7 @@ final class VisualResetPanel: BreakFieldAnimatedPanel, VisualResetPanelPresentin
         model: VisualResetModel,
         role: OverlayDisplayRole,
         accessibilityPreferences: AccessibilityPreferences = .defaults,
+        onEntranceSettled: @escaping () -> Void = {},
         onCancel: @escaping () -> Void,
     ) {
         self.displayID = displayID
@@ -58,12 +60,17 @@ final class VisualResetPanel: BreakFieldAnimatedPanel, VisualResetPanelPresentin
             reduceMotion: model.accessibility.reduceMotion
                 || NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
         )
+        breakFieldEntranceDidSettle = onEntranceSettled
         setAccessibilityIdentifier("visualReset.panel.\(displayID)")
         updateRolePresentation()
     }
 
     func present(makeKey: Bool) {
         presentBreakField(makeKey: makeKey && role == .interactive)
+    }
+
+    func dismiss(onClosed: @escaping () -> Void) {
+        dismissBreakField(onClosed: onClosed)
     }
 
     func update(frame: CGRect, role: OverlayDisplayRole) {
@@ -158,13 +165,17 @@ final class VisualResetPanel: BreakFieldAnimatedPanel, VisualResetPanelPresentin
                     focusPresentation: focusPresentation,
                     opensAutomatically: false,
                 )
-                .environment(\.dsBreakEntrance, breakFieldEntranceState),
+                .environment(\.dsBreakEntrance, breakFieldEntranceState)
+                .environment(\.dsBreakFieldTransition, breakFieldTransitionState),
             )
             hostingView.setAccessibilityElement(false)
             setAccessibilityChildren(nil)
         case .atmosphere:
             hostingView.rootView = accessibilityPreferences.presentation == .standard
-                ? AnyView(VisualResetAtmosphereView())
+                ? AnyView(
+                    VisualResetAtmosphereView()
+                        .environment(\.dsBreakFieldTransition, breakFieldTransitionState),
+                )
                 : AnyView(staticDesktopField)
             hostingView.setAccessibilityElement(false)
             setAccessibilityChildren([])

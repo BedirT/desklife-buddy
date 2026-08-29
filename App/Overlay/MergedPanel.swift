@@ -18,6 +18,7 @@ protocol MergedPanelPresenting: AnyObject {
     func present(makeKey: Bool)
     func update(frame: CGRect, role: OverlayDisplayRole)
     func update(content: MergedPanelContent)
+    func dismiss(onClosed: @escaping () -> Void)
     func close()
     func makeKey()
 }
@@ -43,6 +44,7 @@ final class MergedPanel: BreakFieldAnimatedPanel, MergedPanelPresenting {
         content: MergedPanelContent,
         role: OverlayDisplayRole,
         accessibilityPreferences: AccessibilityPreferences = .defaults,
+        onEntranceSettled: @escaping () -> Void = {},
         onCancel: @escaping () -> Void,
     ) {
         self.displayID = displayID
@@ -67,6 +69,7 @@ final class MergedPanel: BreakFieldAnimatedPanel, MergedPanelPresenting {
         animationBehavior = .none
         contentView = hostingView
         breakFieldMotionMode = motionMode(for: content)
+        breakFieldEntranceDidSettle = onEntranceSettled
         setAccessibilityIdentifier("merged.panel.\(displayID)")
         updateRoleBehavior()
         updateHostedContent()
@@ -74,6 +77,10 @@ final class MergedPanel: BreakFieldAnimatedPanel, MergedPanelPresenting {
 
     func present(makeKey: Bool) {
         presentBreakField(makeKey: makeKey && role == .interactive)
+    }
+
+    func dismiss(onClosed: @escaping () -> Void) {
+        dismissBreakField(onClosed: onClosed)
     }
 
     func update(frame: CGRect, role: OverlayDisplayRole) {
@@ -197,7 +204,8 @@ final class MergedPanel: BreakFieldAnimatedPanel, MergedPanelPresenting {
                         opensAutomatically: false,
                         context: .merged,
                     )
-                    .environment(\.dsBreakEntrance, breakFieldEntranceState),
+                    .environment(\.dsBreakEntrance, breakFieldEntranceState)
+                    .environment(\.dsBreakFieldTransition, breakFieldTransitionState),
                 )
             case let .movement(model):
                 AnyView(
@@ -207,10 +215,17 @@ final class MergedPanel: BreakFieldAnimatedPanel, MergedPanelPresenting {
                         focusPresentation: movementFocus,
                         opensAutomatically: false,
                     )
-                    .environment(\.dsBreakEntrance, breakFieldEntranceState),
+                    .environment(\.dsBreakEntrance, breakFieldEntranceState)
+                    .environment(\.dsBreakFieldTransition, breakFieldTransitionState),
                 )
             case let .acknowledgement(model):
-                AnyView(BreakFlowView(model: model))
+                AnyView(
+                    BreakFlowView(model: model)
+                        .dsBreakEntrance(
+                            phase: breakFieldEntranceState.phase,
+                            element: .control,
+                        ),
+                )
             }
         case .atmosphere:
             if accessibilityPreferences.presentation != .standard {
@@ -218,11 +233,20 @@ final class MergedPanel: BreakFieldAnimatedPanel, MergedPanelPresenting {
             } else {
                 switch content {
                 case .visual:
-                    AnyView(VisualResetAtmosphereView())
+                    AnyView(
+                        VisualResetAtmosphereView()
+                            .environment(\.dsBreakFieldTransition, breakFieldTransitionState),
+                    )
                 case let .movement(model):
-                    AnyView(MovementAtmosphereView(model: model))
+                    AnyView(
+                        MovementAtmosphereView(model: model)
+                            .environment(\.dsBreakFieldTransition, breakFieldTransitionState),
+                    )
                 case .acknowledgement:
-                    AnyView(MovementAtmosphereView())
+                    AnyView(
+                        MovementAtmosphereView()
+                            .environment(\.dsBreakFieldTransition, breakFieldTransitionState),
+                    )
                 }
             }
         }

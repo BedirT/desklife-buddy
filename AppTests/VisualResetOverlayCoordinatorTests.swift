@@ -207,6 +207,23 @@ struct VisualResetOverlayCoordinatorTests {
         #expect(harness.screenObservationCount == 1)
     }
 
+    @Test("The visual countdown waits for the interactive entrance to settle")
+    func countdownWaitsForEntrance() {
+        let harness = OverlayHarness(displays: [display(1, isMain: true)])
+        harness.automaticallySettlesEntrance = false
+        let coordinator = harness.makeCoordinator()
+        coordinator.present()
+
+        harness.monotonicNow = 3
+        harness.fireRefresh()
+        #expect(harness.panels[0].model.remainingSeconds == 20)
+
+        harness.panels[0].settleEntrance()
+        harness.monotonicNow = 4.1
+        harness.fireRefresh()
+        #expect(harness.panels[0].model.remainingSeconds == 19)
+    }
+
     @Test("Only the interactive display routes Escape and restores once")
     func onlyInteractiveEscapeClosesAll() {
         let harness = OverlayHarness(displays: [display(1, isMain: true), display(2)])
@@ -220,10 +237,31 @@ struct VisualResetOverlayCoordinatorTests {
 
         #expect(harness.lifecycle == [.opened, .skipped])
         #expect(!harness.panels.contains { !$0.wasClosed })
+        #expect(harness.panels.allSatisfy { $0.wasDismissed })
         #expect(harness.restoredProcessIdentifiers == [41])
         #expect(harness.refreshCancellationCount == 1)
         #expect(harness.screenCancellationCount == 1)
         #expect(harness.operations.suffix(2) == ["announce.skipped", "restore"])
+    }
+
+    @Test("Restoration waits until every display finishes its exit")
+    func restorationWaitsForAllPanels() {
+        let harness = OverlayHarness(displays: [display(1, isMain: true), display(2)])
+        let coordinator = harness.makeCoordinator()
+        coordinator.present()
+        harness.panels.forEach { $0.completesDismissalAutomatically = false }
+
+        harness.panels[0].cancel()
+
+        #expect(harness.panels.allSatisfy { $0.wasDismissed })
+        #expect(harness.panels.allSatisfy { !$0.wasClosed })
+        #expect(harness.restoredProcessIdentifiers.isEmpty)
+
+        harness.panels[0].finishDismissal()
+        #expect(harness.restoredProcessIdentifiers.isEmpty)
+
+        harness.panels[1].finishDismissal()
+        #expect(harness.restoredProcessIdentifiers == [41])
     }
 
     @Test("Duplicate presentation is idempotent")
@@ -701,6 +739,7 @@ private final class OverlayHarness {
     var screenObservationCount = 0
     var screenCancellationCount = 0
     var completionCount = 0
+    var automaticallySettlesEntrance = true
     private var refreshAction: (() -> Void)?
     private var screenChangeAction: (() -> Void)?
 
@@ -719,13 +758,21 @@ private final class OverlayHarness {
             accessibilityPreferences: accessibilityPreferences,
             now: { self.monotonicNow },
             displays: { self.displays },
-            makePanel: { display, role, model, accessibilityPreferences, onCancel in
+            makePanel: {
+                display,
+                role,
+                model,
+                accessibilityPreferences,
+                onEntranceSettled,
+                onCancel in
                 let panel = TestVisualResetPanel(
                     displayID: display.id,
                     frame: display.frame,
                     model: model,
                     role: role,
                     accessibilityPreferences: accessibilityPreferences,
+                    onEntranceSettled: onEntranceSettled,
+                    automaticallySettlesEntrance: self.automaticallySettlesEntrance,
                     onCancel: onCancel,
                 )
                 self.panels.append(panel)
@@ -805,10 +852,15 @@ private final class TestVisualResetPanel: VisualResetPanelPresenting {
     let model: VisualResetModel
     let accessibilityPreferences: AccessibilityPreferences
     private let onCancel: () -> Void
+    private let onEntranceSettled: () -> Void
+    private let automaticallySettlesEntrance: Bool
     private(set) var frame: CGRect
     private(set) var role: OverlayDisplayRole
     private(set) var wasMadeKey = false
     private(set) var wasClosed = false
+    private(set) var wasDismissed = false
+    var completesDismissalAutomatically = true
+    private var pendingDismissalCompletion: (() -> Void)?
 
     init(
         displayID: OverlayDisplayID,
@@ -816,6 +868,8 @@ private final class TestVisualResetPanel: VisualResetPanelPresenting {
         model: VisualResetModel,
         role: OverlayDisplayRole,
         accessibilityPreferences: AccessibilityPreferences,
+        onEntranceSettled: @escaping () -> Void,
+        automaticallySettlesEntrance: Bool,
         onCancel: @escaping () -> Void,
     ) {
         self.displayID = displayID
@@ -823,11 +877,16 @@ private final class TestVisualResetPanel: VisualResetPanelPresenting {
         self.model = model
         self.role = role
         self.accessibilityPreferences = accessibilityPreferences
+        self.onEntranceSettled = onEntranceSettled
+        self.automaticallySettlesEntrance = automaticallySettlesEntrance
         self.onCancel = onCancel
     }
 
     func present(makeKey: Bool) {
         wasMadeKey = makeKey
+        if makeKey, automaticallySettlesEntrance {
+            onEntranceSettled()
+        }
     }
 
     func update(frame: CGRect, role: OverlayDisplayRole) {
@@ -839,6 +898,23 @@ private final class TestVisualResetPanel: VisualResetPanelPresenting {
         wasClosed = true
     }
 
+    func dismiss(onClosed: @escaping () -> Void) {
+        wasDismissed = true
+        guard completesDismissalAutomatically else {
+            pendingDismissalCompletion = onClosed
+            return
+        }
+        close()
+        onClosed()
+    }
+
+    func finishDismissal() {
+        let completion = pendingDismissalCompletion
+        pendingDismissalCompletion = nil
+        close()
+        completion?()
+    }
+
     func makeKey() {
         wasMadeKey = true
     }
@@ -846,5 +922,10 @@ private final class TestVisualResetPanel: VisualResetPanelPresenting {
     func cancel() {
         guard role == .interactive else { return }
         onCancel()
+    }
+
+
+    func settleEntrance() {
+        onEntranceSettled()
     }
 }

@@ -23,6 +23,7 @@ extension MergedOverlayCoordinator {
                     assignment.role,
                     content,
                     accessibilityPreferences,
+                    { [weak self] in self?.startVisualCountdownIfNeeded() },
                 ) { [weak self] in
                     self?.cancelActiveSegment()
                 }

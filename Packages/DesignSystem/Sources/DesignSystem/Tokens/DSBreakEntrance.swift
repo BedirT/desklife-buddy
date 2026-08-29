@@ -52,7 +52,12 @@ public extension View {
                 .scaleEffect(isVisible ? 1 : 0.985)
                 .offset(y: isVisible ? 0 : 12)
                 .allowsHitTesting(isVisible)
-                .animation(DSMotion.breakFieldForegroundEnter, value: isVisible)
+                .animation(
+                    isVisible
+                        ? DSMotion.breakFieldForegroundEnter
+                        : DSMotion.breakFieldForegroundExit,
+                    value: isVisible,
+                )
         }
     }
 }

@@ -12,6 +12,7 @@ final class MergedOverlayCoordinator {
         MergedPanelContent,
         AccessibilityPreferences,
         @escaping () -> Void,
+        @escaping () -> Void,
     ) -> any MergedPanelPresenting
     typealias Scheduler = (@escaping @MainActor @Sendable () -> Void) -> OverlayCancellation
     private enum Phase {
@@ -101,6 +102,7 @@ final class MergedOverlayCoordinator {
         priorProcessIdentifier = captureFrontmostProcessIdentifier()
         let model = VisualResetModel(
             durationSeconds: visualDurationSeconds,
+            countdownStartsOnOpen: false,
             accessibility: accessibilityPreferences.visualResetAccessibility,
             requiresLifecycleConfirmation: true,
             now: now,
@@ -253,8 +255,10 @@ extension MergedOverlayCoordinator {
         case .visualOnly:
             presentAcknowledgement()
         case .timerFinished, .doneEarly, .alreadyMoved, .positionChanged, .skipped:
-            dismissAndRestore()
-            if action.showsMergedCompletion { onCompletion() }
+            dismissAndRestore { [weak self] in
+                guard action.showsMergedCompletion else { return }
+                self?.onCompletion()
+            }
         }
     }
 
@@ -328,24 +332,36 @@ extension MergedOverlayCoordinator {
         panels.values.forEach { $0.update(content: content) }
     }
 
-    private func dismissAndRestore() {
-        dismissPanels()
-        restorePriorApplication()
+    private func dismissAndRestore(onClosed: @escaping () -> Void = {}) {
+        dismissPanels { [weak self] in
+            self?.restorePriorApplication()
+            onClosed()
+        }
     }
 
-    private func dismissPanels() {
-        guard !isDismissing, phase != nil else { return }
+    private func dismissPanels(onClosed: @escaping () -> Void) {
+        guard !isDismissing, phase != nil else {
+            onClosed()
+            return
+        }
         isDismissing = true
         refreshCancellation?.cancel()
         refreshCancellation = nil
         screenCancellation?.cancel()
         screenCancellation = nil
-        panels.values.forEach { $0.close() }
+        let outgoingPanels = Array(panels.values)
         panels.removeAll()
         phase = nil
         acknowledgementDeadline = nil
         restorationPending = true
         isDismissing = false
+        let barrier = OverlayDismissalBarrier(
+            count: outgoingPanels.count,
+            onComplete: onClosed,
+        )
+        outgoingPanels.forEach { panel in
+            panel.dismiss(onClosed: barrier.panelDidClose)
+        }
     }
 
     private func restorePriorApplication() {
@@ -379,5 +395,10 @@ extension MergedOverlayCoordinator {
         case let .acknowledgement(model): .acknowledgement(model)
         case nil: nil
         }
+    }
+
+    func startVisualCountdownIfNeeded() {
+        guard case let .visual(model) = phase else { return }
+        model.startCountdown()
     }
 }

@@ -195,3 +195,28 @@ art package and the still-undesigned BR-04 static/migraine presentation.
   suppression reapplied after activation, and Escape and Return available from the first active
   frame. The former transition implementation was removed. Any replacement animation is a new
   review task and may not weaken those accepted input or system-chrome guarantees.
+- 2026-08-28: The owner accepted the replacement whole-screen frost, blurred-field reveal, and
+  background-only sharpen direction, and selected the calmer timing that reveals controls near
+  the 18-second mark. The next refinement decouples presentation from elapsed break time: the
+  model opens immediately so Escape and Return remain available, the countdown stays at 20 while
+  the entrance is active, and only the fully settled interactive field starts the 20-second
+  clock. Reduce Motion, Reduce Transparency, and static presentation settle immediately and
+  therefore start immediately.
+  - [x] Observe a failing Feature test for a deferred countdown start.
+  - [x] Add the idempotent countdown-start seam without delaying open or keyboard input.
+  - [x] Wire standalone and merged visual fields to start only after entrance settlement.
+  - [x] Restore the accepted 18-second animation timing and verify the real route.
+- 2026-08-28: The owner accepted the calmer entrance with the countdown held at 20 until the
+  field settles. Exit should now reverse the same visual metaphor without reversing the accepted
+  action: foreground recedes, the image softens into frost, and frost eases back to the prior
+  desktop. An exit requested before entrance settlement remains immediate, and Reduce Motion,
+  Reduce Transparency, static presentation, topology cleanup, and teardown remain immediate.
+  - [x] Observe a failing panel-motion test for the reviewed exit contract.
+  - [x] Add a condensed reverse transition without animating panel opacity or replacing content.
+  - [x] Route terminal dismissals through animated exit while cleanup stays synchronous.
+  - [x] Verify dismissal, Dock restoration, reduced modes, and the real exit recording.
+- 2026-08-28: The owner accepted the condensed reverse exit after live review. Terminal input
+  is accepted immediately, foreground content recedes, the field softens under frost, and the
+  frost clears only after every display reaches its close barrier. Dock restoration, prior-app
+  restoration, and completion presentation wait for the final panel. Cleanup and accessible
+  reduced modes remain immediate.

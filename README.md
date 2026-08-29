@@ -17,7 +17,7 @@ this repository keeps only direct feedback loops for this app:
 2. SwiftLint, SwiftFormat, Preview coverage, localization, and motion checks.
 3. Deterministic SwiftUI snapshots with exported PNGs for inspection.
 4. Direct Xcode build, real-app launch, accessibility-tree, and window capture.
-5. One local `scripts/verify.sh` command mirrored by CI.
+5. One local `scripts/verify.sh` command for retained verification.
 
 ## Bootstrap this checkout
 
@@ -103,12 +103,12 @@ evidence when permission is unavailable.
   visible intent is materially incomplete or contradictory, then add it to
   DesignSystem and DSGallery and inspect the gallery snapshot.
 
-## CI
+## Local-only verification
 
-`.github/workflows/ci.yml` runs `scripts/verify.sh` on pushes and pull requests,
-then renders both snapshot packages in non-baseline mode. Local app development
-still uses the cheapest focused command; CI is clean-machine confirmation, not
-a reason to run unrelated checks after every edit.
+This repository intentionally has no GitHub-hosted CI. Run the cheapest focused
+local command while developing and `scripts/verify.sh` before a repository-wide
+checkpoint. Snapshot rendering and real-app evidence also remain local so their
+host provenance and visual review are explicit.
 
 ## Extending the bed
 

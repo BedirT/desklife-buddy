@@ -27,7 +27,8 @@ control plane.
   infrastructure.
 - [x] 4. Reduce the command surface to direct app build, test, lint, format, snapshot,
   launch, accessibility, and screenshot commands.
-- [x] 5. Make CI run the same repository verification command used locally.
+- [x] 5. Keep the repository verification contract in one local command,
+      `scripts/verify.sh`; do not add hosted CI.
 - [x] 6. Rewrite repository guidance to describe the resulting harness, not
   `swiftmac-base`.
 - [x] 7. Verify every retained command and record measured timings.
@@ -45,6 +46,8 @@ control plane.
   build paths.
 - 2026-08-25: Product implementation still starts at `design/HANDOFF.md` after this
   plan is complete.
+- 2026-08-28: The owner selected local-only verification. The GitHub Actions workflow
+  was removed; focused scripts and `scripts/verify.sh` remain the verification path.
 
 ## Verification record
 

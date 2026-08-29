@@ -36,10 +36,11 @@ are not the primary layout-discovery loop.
 - SnapshotSupport coverage is required for public preview-owning feature modules.
 - SnapshotSupport baselines remain useful regression gates, but they are not
   the owner review surface.
-- Default `scripts/snapshot.sh` runs are the strict pixel gate. GitHub's rolling
-  macOS host cannot be pinned to the baseline OS, so hosted CI uses an explicit
-  `--render-only` exact-inventory contract whose evidence says baselines were
-  not verified; that lane never satisfies verification rung 2.
+- Default `scripts/snapshot.sh` runs are the strict pixel gate. Verification is
+  intentionally local rather than GitHub-hosted so the baseline host and visual
+  review provenance remain explicit. `--render-only` can still prove the exact
+  declared-state inventory on a non-baseline local host, but never satisfies
+  verification rung 2.
 - Strict and render-only behavior are mutually exclusive compile modes.
 - Renderer provenance is observed, not asserted: each sidecar records point and
   pixel geometry plus the window backing scale, and review accepts only measured

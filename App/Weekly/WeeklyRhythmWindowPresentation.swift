@@ -33,8 +33,7 @@ extension AppDelegate {
         guard runtime != nil, let settingsStore else { return false }
 
         if let window = weeklyRhythmWindowController?.window, window.isVisible {
-            window.makeKeyAndOrderFront(nil)
-            NSApp.activate()
+            appWindowActivationController.present(window: window, sender: nil) {}
             return true
         }
 
@@ -55,9 +54,9 @@ extension AppDelegate {
         let window = makeWeeklyRhythmWindow(model: model, calendar: calendar)
         let controller = NSWindowController(window: window)
         weeklyRhythmWindowController = controller
-        controller.showWindow(nil)
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate()
+        appWindowActivationController.present(window: window, sender: nil) {
+            controller.showWindow(nil)
+        }
         return window.isVisible
     }
 

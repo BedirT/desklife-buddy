@@ -217,7 +217,8 @@ extension AppDelegate {
     }
 
     private func makeOnboardingWindowPresenter() -> OnboardingWindowPresenter {
-        let controller = onboardingWindowController ?? OnboardingWindowController()
+        let controller = onboardingWindowController
+            ?? OnboardingWindowController(activationController: appWindowActivationController)
         onboardingWindowController = controller
         return OnboardingWindowPresenter(
             present: { [weak controller] model in controller?.present(model: model) },

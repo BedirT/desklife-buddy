@@ -72,6 +72,18 @@ enum OnboardingWindowPlacement {
 }
 
 final class OnboardingWindowController: NSWindowController {
+    private let activationController: AppWindowActivationController
+
+    init(activationController: AppWindowActivationController = .live()) {
+        self.activationController = activationController
+        super.init(window: nil)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is unavailable")
+    }
+
     func present(model: OnboardingModel) {
         let visibleFrame = Self.activeDisplayVisibleFrame()
         let window: NSWindow
@@ -106,10 +118,10 @@ final class OnboardingWindowController: NSWindowController {
             in: visibleFrame,
         )
         window.contentMinSize = layout.minimumContentSize
-        showWindow(nil)
         window.setFrame(layout.frame, display: true)
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate()
+        activationController.present(window: window, sender: nil) {
+            showWindow(nil)
+        }
     }
 
     private func hostingController(model: OnboardingModel) -> NSViewController {

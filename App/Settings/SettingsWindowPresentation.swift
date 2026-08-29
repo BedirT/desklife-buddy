@@ -24,9 +24,10 @@ extension AppDelegate {
             settingsWindowController = controller
         }
 
-        controller.showWindow(sender)
-        controller.window?.makeKeyAndOrderFront(sender)
-        NSApp.activate()
+        guard let window = controller.window else { return }
+        appWindowActivationController.present(window: window, sender: sender) {
+            controller.showWindow(sender)
+        }
         Task { await settingsSceneModel.refreshIntegrations() }
     }
 }

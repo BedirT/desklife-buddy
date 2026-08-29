@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     lazy var settingsIntegrationsRuntime = SettingsIntegrationsAppRuntime.live()
     lazy var settingsSceneModel = buildSettingsSceneModel()
     var settingsWindowController: NSWindowController?
+    lazy var appWindowActivationController = AppWindowActivationController.live()
     var onboardingWindowController: OnboardingWindowController?
     var weeklyRhythmWindowController: NSWindowController?
     var weeklyRhythmPresentationOverride: (() -> Bool)?
@@ -54,6 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var lastRuntimeError: Error?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        appWindowActivationController.enterMenuBarOnlyMode()
         let arguments = ProcessInfo.processInfo.arguments
         Task { [weak self] in
             guard let self else { return }

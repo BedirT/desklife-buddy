@@ -112,12 +112,21 @@ extension AppDelegate {
             OverlayVerificationCapture.write(view: window.contentView, prefix: "settings")
         } ?? false
         let model = settingsSceneModel.featureModel
+        let activationPolicy = switch NSApp.activationPolicy() {
+        case .regular: "regular"
+        case .accessory: "accessory"
+        case .prohibited: "prohibited"
+        @unknown default: "unknown"
+        }
         let state: [String: Any] = [
+            "activationPolicy": activationPolicy,
+            "applicationActive": NSApp.isActive,
             "captured": captured,
             "featureReady": model.phase == .ready,
             "preferencesLoaded": model.preferences != nil,
             "routeAccepted": settingsVerificationRouteAccepted ?? false,
             "selectedSection": model.selectedSection.rawValue,
+            "windowKey": window?.isKeyWindow == true,
             "windowVisible": window?.isVisible == true,
         ]
         guard let data = try? JSONSerialization.data(

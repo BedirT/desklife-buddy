@@ -25,7 +25,7 @@ Classification terms:
 
 | Area | Existing production seam | Classification | Campaign rule |
 |---|---|---|---|
-| Activity estimate | `ActivitySample`, `ActivityEstimator`, `ActivityAssessment`; `SystemActivitySource`; five-second App sampling | **Retain, then amend** | Keep coarse content-free input/system availability and injected monotonic elapsed time. Add evidence inputs through typed seams, not a second activity loop. |
+| Activity estimate | `ActivitySample`, `ActivityEstimator`, `ActivityAssessment`; `SystemActivitySource`; five-second App sampling | **Retain, then amend** | Keep the pure `screenLocked`/system-availability contract and coarse content-free input timing. The production adapter currently reports `screenLocked = false` under DQ-21; amend that App seam if a sanctioned signal becomes available, not the Domain estimator contract. |
 | Scheduling clocks | `ProtocolEngine`, `OpportunityClockState`, `ProtocolState`; independent visual and movement counters plus recovery debt | **Amend** | The future Opportunity Coordinator must be a behavior-preserving evolution around these reducers. Do not build another scheduler beside them. |
 | Suppression | `SuppressionResolver`, `SuppressionReason`, `ProtocolRuntime.currentSuppression` | **Amend** | Reconcile Paused versus Held and richer context in this precedence path. Preserve a single resolved delivery decision. |
 | Opportunity selection | `ProtocolEngine.recommendedPresentation()` and `OpportunityPresentation` | **Replace through seam** | Move arbitration into the one coordinator only after characterization tests. Remove the old selector when all App callers use the new output. |
@@ -54,7 +54,10 @@ Classification terms:
 
 - The estimator accumulates only while the system is awake, the session is active,
   the screen is unlocked, recent input is inside the configured window, and wake
-  grace has elapsed.
+  grace has elapsed. That is the pure Domain contract. Production
+  `SystemActivitySource` deliberately hard-codes `screenLocked = false`; it observes only
+  public sleep/wake and session-active notifications, so a simple lock falls back to idle
+  behavior and may not arm unlock grace under DQ-21.
 - Long idle emits `likelyNaturalInterruption`; it does not record movement. Current
   reducer behavior changes presentation phase but does not erase either accumulated
   counter.
@@ -75,6 +78,21 @@ Classification terms:
   visual, movement, merged, snooze/recovery, completion, Settings, onboarding, and
   Weekly surfaces. These are implemented product surfaces, not mock screens.
 
+## Implemented-versus-declared gaps
+
+These are explicit baseline gaps, not silent interpretations of intended behavior. A stored
+preference or a pure injectable contract is not evidence that the production App enforces it.
+Epic 2 must preserve each distinction until the named collision owner closes it with tests and
+real-path proof.
+
+| Contract or surface | What is implemented now | What is not implemented now | Epic 2 collision ownership |
+|---|---|---|---|
+| Screen lock | `ActivitySample.screenLocked` and `ActivityEstimator.systemAvailable` correctly stop accumulation for an injected locked sample. | Production `SystemActivitySource` reports `screenLocked = false`; DQ-21 documents why public sleep/session signals are not relabeled as lock. | The **availability/context adapter** zone owns characterization and any sanctioned App signal. Do not weaken or duplicate the pure Domain contract. |
+| Manual pause | `ProtocolRuntime.pauseUntil` and `indefiniteSuppression` drive timed, until-resume, and presenting pauses while the process lives; heads-up suppression effects can be persisted separately. | The pause deadline/reason itself is absent from `ProtocolState`, `StoredProtocolState`, and settings payloads, so manual pause does not restore as a durable relaunch contract. | The **clock/pause persistence** zone owns the canonical pause state, codec migration, restore tests, and status projection before any surface promises persistence. |
+| Live context suppressions | `ProtocolRuntime.observe` accepts `activeSuppressions` and `isLowFrictionMoment`; Domain suppression precedence and low-friction handling are injectable and tested. | `AppDelegate.observe` calls `runtime.observe(sample)` with the defaults: empty context suppressions and `false` low-friction evidence. | The **availability/context adapter** zone owns App adapters and typed evidence into the one runtime/coordinator. Features must not infer suppression independently. |
+| Stored context and integration choices | Settings persists and displays `workingHoursOnly`, excluded bundle IDs, presentation-mode suppression, Calendar busy suppression, and Focus filter selections. `waitsForLowFrictionMoment` configures the delivery policy. | The live observer does not fully enforce working-hour boundaries or excluded-app, presentation, Calendar, or Focus signals, and supplies no affirmative low-friction moment. A checked control is therefore not proof of active detection. | The **context preference-to-evidence** zone owns capability truth, permission/fallback behavior, and the adapter-to-coordinator path; it must land before stronger Settings/status copy. |
+| Accepted/open break time | `VisualResetModel` and `MovementModel` derive countdown progress from monotonic `SuspendingClock` elapsed time after the lifecycle opens, and refresh reconciles directly to that deadline. | Activity, suppression, walking away, overlay occlusion, and ordinary awake inactivity do not pause an accepted countdown. System sleep suspends this clock by definition; there is no separate persisted active-break deadline contract across relaunch. | The **active-break timebase** zone owns the accepted action/deadline/pause policy and lifecycle tests. Visual, Movement, and Merged surfaces must project that one decision rather than adding local pause rules. |
+
 ## Epic 2 collision map
 
 Epic 2 is intentionally serialized until the coordinator contracts land. The paths
@@ -87,6 +105,9 @@ branches from the merged predecessor.
 | Coordinator seam | `ProtocolEngine*.swift`, `ProtocolStateStore.swift`, `ProtocolRuntime*.swift` | Behavior-preserving command/output facade over current engine | One Domain/runtime writer; no persistence or UI rewrite in the same story |
 | Stable identity/action reducer | `OpportunityEvent.swift`, lifecycle reducers, heads-up delivery types | Add versioned cycle/opportunity/action identity and idempotent terminal reduction | Lands before persisted schema, companion transport, or Why-now UI |
 | Clocks, presets, Pause/Held | `ProtocolConfiguration.swift`, `SchedulePreferences.swift`, `SuppressionResolver.swift`, YAML/generator | Canonical action/reset matrix and approved preset/hold contract | Machine/prose canonicalization precedes executable values; no duplicate clock |
+| Clock/pause persistence | `ProtocolRuntime.pauseUntil`, `indefiniteSuppression`, `ProtocolState`, stored state/codecs | Characterize process-only pause, then add only the canonically approved durable representation and restore behavior | One owner spans Domain state and App migration; status/settings remain projections until it lands |
+| Availability/context adapters | `SystemActivitySource`, `AppDelegate.observe`, runtime observation arguments, context/integration preferences | Characterize the hard-coded lock fallback and empty live context, then supply sanctioned typed evidence | App adapters feed one coordinator; no feature-local app, meeting, Focus, Calendar, or lock heuristic |
+| Active-break timebase | Visual and Movement models plus Visual/Movement/Merged overlay coordinators and lifecycle reducers | Freeze current `SuspendingClock` deadline behavior, then apply the accepted deadline/pause matrix once | Domain action policy lands before any surface timer changes; no parallel per-overlay policy |
 | Persistence migration | `StoredProtocolState`, `StoredOpportunityEvent`, `StoredAppPreferences`, codecs and SwiftData stores | Capture v1 fixture, then versioned migration and deadline metadata | Exclusive App/Persistence ownership; must land before new state is emitted |
 | App composition | `AppDelegate+RuntimeInstallation.swift`, `ProtocolRuntime`, `AppOverlayRoute` | Install exactly one coordinator and adapt current routes | Begins only after Domain identity and persistence migration are green |
 | Menu/Why-now | `StatusMenu*`, status coordinator, localized copy | Project coordinator Paused/Held/decision state | Feature is projection-only; no policy or clock mutation in view/model |

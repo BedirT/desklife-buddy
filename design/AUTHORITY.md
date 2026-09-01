@@ -42,7 +42,7 @@ Precedence is concern-specific rather than one universal file list.
 | Product state and action semantics | Normative `Active` or `Accepted` entries in `DECISIONS.md`, then `PRODUCT_MODEL.md` and `INTERACTION_SPEC.md` | A feature model, App coordinator, or persistence codec may not create a parallel semantic |
 | Screen scope and accessibility | `SCREEN_INVENTORY.md`, `ACCESSIBILITY.md`, then accepted rendered states and design-system rules | A render is not scope authority; a snapshot is not accessibility acceptance |
 | Privacy, permission, data class, and retention | `07_PRIVACY_AND_DATA_SPEC.md`, normative `Active` or `Accepted` decisions, then the canonical machine contract created by the owning story | Entitlements, adapters, and storage do not authorize collection by existing |
-| Implementation ownership and delivery | `../AGENTS.md`, this map, module `AGENTS.md`, then `HANDOFF.md` | A plan may sequence work but may not move ownership across layers silently |
+| Implementation ownership and delivery | The closest applicable nested/module `AGENTS.md`, then `../AGENTS.md`; this map and `HANDOFF.md` retain product ownership | A plan may sequence work but may not move ownership across layers silently; implementation instructions may not redefine product semantics |
 | Current behavior | Shipped source and persisted schema at the exact audited commit | Current behavior is evidence to reconcile, not authority to overwrite intent |
 | Verification | Repository scripts and retained exact-head evidence | A passing test proves its assertion only; it does not approve semantics or claims |
 
@@ -53,6 +53,13 @@ canonical files are reconciled. A qualified status such as D-029's partial `Acti
 only to the clauses not explicitly superseded. `Superseded` and non-normative statuses do
 not govern new work. Append-only history remains visible. Historical research provenance
 is never rewritten.
+
+The closest applicable `AGENTS.md` wins for scoped implementation and process concerns such
+as file placement, package boundaries, test style, concurrency, and required verification.
+That local precedence does not authorize any `AGENTS.md` to override the canonical product
+semantics, health evidence, claim boundaries, privacy rules, accessibility obligations, or
+machine values owned above. A conflict across those concern boundaries follows the
+stop-and-reconcile rule rather than whichever file is closest.
 
 ## Artifact statuses
 
@@ -124,6 +131,27 @@ The minimum known current compatibility inventory is:
   `focusFilter`, `companionFuture`;
 - built-in profile IDs: `gentle`, `balanced`, `frequent_movement`,
   `research_informed_high_frequency`, plus `custom`;
+- persisted preference tags: `AppPreferences` root keys `formatVersion`, `schedule`,
+  `historyRetention`, `content`, `context`, `accessibility`, and `integrations`;
+  `SchedulePreferences` keys `profile`, `headsUpEnabled`, and `workingHoursOnly`; explicit
+  profile coding keys `kind` and `customTiming` with kind values `gentle`, `balanced`,
+  `frequent_movement`, `research_informed_high_frequency`, and `custom`; custom-timing keys
+  `visual`, `movement`, `softDueSeconds`, `targetSeconds`, `latestPreferredSeconds`, and
+  `durationOptionsSeconds`;
+- persisted preference raw values and nested tags: retention integers `0`, `30`, and `90`;
+  movement-content values `walkOrEquivalent`, `seatedActive`, `mixed`, and
+  `positionChangeOnly`; idle value `resetPresentationTimingOnly`; presentation values
+  `standard`, `staticPresentation`, and `textOnly`; timer-announcement values
+  `coarseMilestones` and `none`; content keys `preferredMovement`,
+  `showsQuickMovementOption`, `includesBreathingContent`, and `standingDeskModeEnabled`;
+  context keys `excludedApplicationBundleIDs`, `waitsForLowFrictionMoment`,
+  `presentationModeSuppressionEnabled`, and `idleBehavior`; accessibility keys
+  `presentation`, `staticOverlayBrightness`, `timerAnnouncements`, and
+  `seatedContentFirst`; integration keys `notificationsEnabled`,
+  `calendarBusySuppressionEnabled`, `focusFilterEnabled`, and `launchAtLoginEnabled`;
+- history-export tags: formats `csv` and `json`; fields `id`, `recordedAt`, `kind`,
+  `source`, `opportunity`, and `selectedDurationSeconds`; envelope keys `formatVersion`,
+  `fields`, and `records`;
 - persisted heads-up identity and action vocabulary: `HeadsUpDeliveryID` UUID;
   `HeadsUpClock` values `visual` and `movement`; `HeadsUpOpportunityID` cases `visual`,
   `movement`, and `merged` with their cycle IDs; `HeadsUpActiveDeliveryPhase` cases

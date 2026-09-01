@@ -51,7 +51,7 @@ Further work starts from the current seams and collision map in
 | Timings and thresholds | `research/health/machine-readable/product_protocol.yaml` | **normative** — read it, don't copy tables |
 | Strings | `COPY_INVENTORY.md` | **Strings ship as written.** Rewording is a claims decision (`claims_register.csv`), not a code decision |
 | Screen list + per-screen a11y acceptance | `SCREEN_INVENTORY.md` (+ §K blocks) | scope and acceptance |
-| Decisions and their reasoning | `DECISIONS.md` (D-001–D-029) | why; do not relitigate in code review |
+| Decisions and their reasoning | `DECISIONS.md`, the full append-only log through its latest entry (currently including D-030–D-032) | status, supersession, and why; do not relitigate governing entries in code review |
 | Renders | `renders/` (pending) | final pixels, light + dark |
 
 ## Accessibility acceptance
@@ -83,7 +83,8 @@ sensing, scoring, or feedback · no camera/mic/Screen-Recording/Accessibility pe
 window-title, URL, or app-content reading (`[07 §3]`) · no badge or countdown on the
 menu-bar glyph (D-004) · no escalation on repeated declines (D-011) · no Start button on
 break surfaces (D-021 — they self-run) · no red for skipped breaks · no sound
-requirement · no looping animation (D-025, amended by D-029, is a closed list) · no "movement verified" or
+requirement · no looping animation (D-025 remains the closed list; later entries, including
+D-029 and D-032, amend or supersede named moments) · no "movement verified" or
 any verification language (`[C034]`) · no account, no network, no analytics by default.
 
 This is an inventory, not permanent authority against owner-approved optional sensing.

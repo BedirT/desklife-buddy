@@ -35,20 +35,24 @@ Precedence is concern-specific rather than one universal file list.
 
 | Concern | Normative authority, highest first | What lower layers may not do |
 |---|---|---|
-| Owner intent and accepted product decisions | Explicit owner decision recorded as `Accepted` in `DECISIONS.md`; unresolved items in `OPEN_QUESTIONS.md` | Issues, plans, explorations, or code may not infer acceptance |
+| Owner intent and accepted product decisions | Explicit owner decision recorded with normative status `Active` or `Accepted` in `DECISIONS.md`; unresolved items in `OPEN_QUESTIONS.md` | Issues, plans, explorations, or code may not infer acceptance |
 | Health evidence and protocol meaning | The research order in `../CLAUDE.md` section 5, led by `03_PRODUCT_HEALTH_PROTOCOL_SPEC.md` | Product prose may not turn uncertainty into an outcome claim |
 | Claims and intended-purpose language | `08_CLAIMS_SAFETY_REGULATORY_REGISTER.md`, `claims_register.csv`, then registered strings in `COPY_INVENTORY.md` | A view, model, App Store draft, or generated explanation may not invent stronger copy |
 | Timing, threshold, preset, and closed machine values | `../research/health/machine-readable/product_protocol.yaml`, after any required canonical research amendment | Generated Swift and UI labels may project values but may not fork them |
-| Product state and action semantics | Accepted entries in `DECISIONS.md`, then `PRODUCT_MODEL.md` and `INTERACTION_SPEC.md` | A feature model, App coordinator, or persistence codec may not create a parallel semantic |
+| Product state and action semantics | Normative `Active` or `Accepted` entries in `DECISIONS.md`, then `PRODUCT_MODEL.md` and `INTERACTION_SPEC.md` | A feature model, App coordinator, or persistence codec may not create a parallel semantic |
 | Screen scope and accessibility | `SCREEN_INVENTORY.md`, `ACCESSIBILITY.md`, then accepted rendered states and design-system rules | A render is not scope authority; a snapshot is not accessibility acceptance |
-| Privacy, permission, data class, and retention | `07_PRIVACY_AND_DATA_SPEC.md`, accepted decisions, then the canonical machine contract created by the owning story | Entitlements, adapters, and storage do not authorize collection by existing |
+| Privacy, permission, data class, and retention | `07_PRIVACY_AND_DATA_SPEC.md`, normative `Active` or `Accepted` decisions, then the canonical machine contract created by the owning story | Entitlements, adapters, and storage do not authorize collection by existing |
 | Implementation ownership and delivery | `../AGENTS.md`, this map, module `AGENTS.md`, then `HANDOFF.md` | A plan may sequence work but may not move ownership across layers silently |
 | Current behavior | Shipped source and persisted schema at the exact audited commit | Current behavior is evidence to reconcile, not authority to overwrite intent |
 | Verification | Repository scripts and retained exact-head evidence | A passing test proves its assertion only; it does not approve semantics or claims |
 
-Within a row, a later accepted decision may supersede an earlier one only when it
-names what it supersedes and the affected canonical files are reconciled. Append-only
-history remains visible. Historical research provenance is never rewritten.
+Within a row, `Active` means the decision currently governs and `Accepted` means an
+owner-approved decision that also governs unless its text narrows its effect. Either may
+supersede an earlier decision only when it names what it supersedes and the affected
+canonical files are reconciled. A qualified status such as D-029's partial `Active` applies
+only to the clauses not explicitly superseded. `Superseded` and non-normative statuses do
+not govern new work. Append-only history remains visible. Historical research provenance
+is never rewritten.
 
 ## Artifact statuses
 
@@ -110,7 +114,7 @@ detail.
 7. Cross-device identifiers require the same rules plus origin, revision, and
    reconciliation semantics before transport ships.
 
-The current compatibility inventory is:
+The minimum known current compatibility inventory is:
 
 - opportunity event kinds: `promptPresented`, `breakStarted`, `timerFinished`,
   `userDeclaredCompleted`, `userDeclaredAlreadyMoved`, `positionChanged`, `snoozed`,
@@ -120,13 +124,34 @@ The current compatibility inventory is:
   `focusFilter`, `companionFuture`;
 - built-in profile IDs: `gentle`, `balanced`, `frequent_movement`,
   `research_informed_high_frequency`, plus `custom`;
+- persisted heads-up identity and action vocabulary: `HeadsUpDeliveryID` UUID;
+  `HeadsUpClock` values `visual` and `movement`; `HeadsUpOpportunityID` cases `visual`,
+  `movement`, and `merged` with their cycle IDs; `HeadsUpActiveDeliveryPhase` cases
+  `reserved` and `presented`; `HeadsUpDeliveryChannel` values `notification` and
+  `capsule`; `HeadsUpPromptFactStatus` values `pending` and `acknowledged`;
+  `HeadsUpPendingActionKind` values `openBreak` and `openMoreOptions`; positive integer
+  `HeadsUpCountdownMark` values; and the stored visual/movement clock ledgers;
+- OS-facing notification identifiers: category `heads-up.opportunity.v1`; actions
+  `heads-up.action.start-now.v1`, `heads-up.action.snooze-five.v1`, and
+  `heads-up.action.more-options.v1`; user-info key `heads-up.delivery-id`; request ID
+  prefix `heads-up.delivery.` followed by the lowercase delivery UUID; and Apple's fixed
+  `com.apple.UNNotificationDefaultActionIdentifier` and
+  `com.apple.UNNotificationDismissActionIdentifier` response identifiers;
+- local notification-authorization keys: `heads-up.authorization.has-presented-explainer`,
+  `heads-up.authorization.has-requested`, `heads-up.authorization.uses-in-app`, and
+  `heads-up.authorization.has-been-authorized`;
 - SwiftData protocol/event schema version `1`, settings row schema version `1`,
   `AppPreferences` format version `1`, configuration payload format version `1`,
   and heads-up delivery payload schema version `1`.
 
 These names describe the current baseline, not the final Calm Ensemble vocabulary.
-Future canonicalization may add or replace concepts only through the compatibility
-rules above.
+They are a minimum, not a claim that a hand-written document has discovered every
+serialized or OS-facing identifier. Before any action, persistence, notification, or
+cross-device migration story edits code, it must generate or otherwise mechanically audit
+the complete identifier set from source and retained fixtures, attach that receipt to the
+traceability record, and test every affected old value. An omission here is never permission
+to rename or reinterpret a value. Future canonicalization may add or replace concepts only
+through the compatibility rules above.
 
 ## Generated and executable consistency
 

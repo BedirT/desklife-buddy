@@ -14,8 +14,9 @@ implementation inventory is in [CURRENT_STATE_CONFORMANCE.md](CURRENT_STATE_CONF
 ## The governing rule
 
 No artifact wins merely because it is newer, executable, or more detailed. A change
-becomes normative only in the artifact that owns that kind of decision, with an
-explicit status and supersession record. Code proves current behavior; it cannot
+becomes normative only in the artifact that owns that kind of decision, with the status
+and supersession rules below. The legacy-unstatused dispositions below preserve earlier
+governing decisions without inventing a historical status. Code proves current behavior; it cannot
 silently amend product intent. Research explains evidence; it cannot silently select
 an interaction. An exploration, plan, issue, test, or render cannot silently promote
 itself to product authority.
@@ -35,11 +36,11 @@ Precedence is concern-specific rather than one universal file list.
 
 | Concern | Normative authority, highest first | What lower layers may not do |
 |---|---|---|
-| Owner intent and accepted product decisions | Explicit owner decision recorded with normative status `Active` or `Accepted` in `DECISIONS.md`; unresolved items in `OPEN_QUESTIONS.md` | Issues, plans, explorations, or code may not infer acceptance |
+| Owner intent and accepted product decisions | Decisions recorded as `Active` or `Accepted` in `DECISIONS.md`, plus the legacy-unstatused dispositions below; unresolved items in `OPEN_QUESTIONS.md` | Issues, plans, explorations, or code may not infer acceptance or assign a missing historical status |
 | Health evidence and protocol meaning | The research order in `../CLAUDE.md` section 5, led by `03_PRODUCT_HEALTH_PROTOCOL_SPEC.md` | Product prose may not turn uncertainty into an outcome claim |
 | Claims and intended-purpose language | `08_CLAIMS_SAFETY_REGULATORY_REGISTER.md`, `claims_register.csv`, then registered strings in `COPY_INVENTORY.md` | A view, model, App Store draft, or generated explanation may not invent stronger copy |
 | Timing, threshold, preset, and closed machine values | `../research/health/machine-readable/product_protocol.yaml`, after any required canonical research amendment | Generated Swift and UI labels may project values but may not fork them |
-| Product state and action semantics | Normative `Active` or `Accepted` entries in `DECISIONS.md`, then `PRODUCT_MODEL.md` and `INTERACTION_SPEC.md` | A feature model, App coordinator, or persistence codec may not create a parallel semantic |
+| Product state and action semantics | Governing `Active` or `Accepted` entries and the legacy-unstatused dispositions below, then `PRODUCT_MODEL.md` and `INTERACTION_SPEC.md` | A feature model, App coordinator, or persistence codec may not create a parallel semantic |
 | Screen scope and accessibility | `SCREEN_INVENTORY.md`, `ACCESSIBILITY.md`, then accepted rendered states and design-system rules | A render is not scope authority; a snapshot is not accessibility acceptance |
 | Privacy, permission, data class, and retention | `07_PRIVACY_AND_DATA_SPEC.md`, normative `Active` or `Accepted` decisions, then the canonical machine contract created by the owning story | Entitlements, adapters, and storage do not authorize collection by existing |
 | Implementation ownership and delivery | The closest applicable nested/module `AGENTS.md`, then `../AGENTS.md`; this map and `HANDOFF.md` retain product ownership | A plan may sequence work but may not move ownership across layers silently; implementation instructions may not redefine product semantics |
@@ -53,6 +54,43 @@ canonical files are reconciled. A qualified status such as D-029's partial `Acti
 only to the clauses not explicitly superseded. `Superseded` and non-normative statuses do
 not govern new work. Append-only history remains visible. Historical research provenance
 is never rewritten.
+
+The status field is absent from legacy D-012 through D-019 and D-028. Those entries govern
+only to the extent their own text has not been superseded or amended by a later governing
+decision. A later `Active` or `Accepted` clause wins only on the overlap it names; unrelated
+legacy clauses remain in force. This rule neither blanket-promotes the entries nor writes a
+status back into history. The complete legacy audit is:
+
+| Legacy decision | Current disposition |
+|---|---|
+| D-012 | Governs the visible, usable menu bar behind break surfaces. D-026 reuses that obligation after superseding D-005's default dimming, while Active D-012a separately governs Dock suppression. |
+| D-013 | Governs position change as a separate event and lower visual tier. D-024 and D-027 amend its current movement-surface presentation. It does not govern opaque full-field presentation. |
+| D-014 | Its round-1 footprint directions are explicitly superseded by D-016. It is historical rationale, not current composition authority. |
+| D-015 | Governs the prohibition on health numbers, grades, and streaks; no later decision supersedes it. |
+| D-016 | Governs the selected landscape/horizon composition and the two atmosphere roles. Later D-025 through D-029 and D-032 refine named motion, layout, contrast, and input clauses without displacing the composition. |
+| D-017 | Governs the two-beat horizon mark and its locations; D-028 refines its contrast/state rendering without replacing the mark. |
+| D-018 | Governs gradient glyph tiles in Settings and monochrome menu glyphs. It does not govern the heads-up capsule or its keyboard route. |
+| D-019 | Governs the sun-not-eye character identity, ephemeral pointer handling, and non-looping behavior except where amended. D-020a supersedes the no-eyes rule and surveillance-first rationale: closed eyes and bounded expression are allowed on aesthetic grounds. D-023 governs the later pointer-glint treatment. |
+| D-028 | Governs the measured contrast floors and re-scoped low-ink tiers; no later decision supersedes it. |
+
+A citation label is only a pointer. It never overrides the cited decision's actual text,
+recorded status, or supersession chain. Until Story #19 repairs the source files, the following
+known labels are explicitly non-authoritative:
+
+| Existing source reference | Invalid label or reading | Governing decision text | Required repair owner |
+|---|---|---|---|
+| `DESIGN_SYSTEM.md:9` | D-013 is not the landscape/horizon decision. | D-016 governs “a break is a place, not a dialog” and the horizon composition. | Story #19 |
+| `DESIGN_SYSTEM.md:46` | D-014 is superseded round-1 footprint rationale, not the two-atmosphere decision. | D-016 governs dusk visual-reset and late-golden movement atmospheres. | Story #19 |
+| `DECISIONS.md:539`, D-026's first bullet | The D-013 tag does not support opaque full-field presentation. | D-021 governs full coverage; D-026 supersedes D-005 and retains the static-presentation exception. | Story #19 |
+| `DECISIONS.md:379`, D-020a's opening | There is no D-020 entry; the amended character clauses are in D-019. | D-019 is the legacy character decision; D-020a amends its eye anatomy and rationale as dispositioned above. | Story #19 |
+| `SCREEN_INVENTORY.md:13` | The D-013…D-025 range is not a precise Horizon-selection citation. | D-016 selects Horizon; later decisions refine named parts. | Story #19 |
+| `SCREEN_INVENTORY.md:56` | D-018 governs Settings/menu glyphs, not the in-app capsule. | D-022 governs the top-center capsule; D-023 governs its glint. | Story #19 |
+| `SCREEN_INVENTORY.md:271` | D-018 does not govern the capsule's keyboard route. | D-029 governs the status-menu and notification keyboard routes. | Story #19 |
+| `COPY_INVENTORY.md:318` | D-019's blanket eye prohibition was amended. | D-020a permits closed eyes and bounded expression while retaining no open eyes or blinking. | Story #19 |
+
+Story #19 must repair these canonical cross-references before a semantics implementation may
+rely on them. The table prevents a known wrong label from selecting behavior; it does not edit
+or reinterpret the source decision text in this story.
 
 The closest applicable `AGENTS.md` wins for scoped implementation and process concerns such
 as file placement, package boundaries, test style, concurrency, and required verification.

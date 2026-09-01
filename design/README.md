@@ -11,8 +11,8 @@ it holds the product definition, the research authority order, and the non-negot
 | 2 | [INFORMATION_ARCHITECTURE.md](INFORMATION_ARCHITECTURE.md) | Where everything lives and what was deliberately left out |
 | 3 | [SCREEN_INVENTORY.md](SCREEN_INVENTORY.md) | The 90 screens and states, with status |
 | 4 | [USER_FLOWS.md](USER_FLOWS.md) | The 13 flows, written as decision paths |
-| 5 | [DECISIONS.md](DECISIONS.md) | D-001…D-011. Append-only. Each with a basis tag |
-| 6 | [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) | Research OQs' design consequences + DQ-01…DQ-12 |
+| 5 | [DECISIONS.md](DECISIONS.md) | Complete append-only decision log through its latest entry, with basis, status where recorded, and supersession history |
+| 6 | [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) | Complete current question register through its latest entry, retaining settled design-question history |
 | 7 | [COPY_INVENTORY.md](COPY_INVENTORY.md) | Every string, mapped to the claims register |
 | 8 | [ACCESSIBILITY.md](ACCESSIBILITY.md) | Commitments, the 12-field annotation block, the six personas |
 | 9 | [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) | *Phase 4* — type, color, space, materials, components |

@@ -359,7 +359,7 @@ extension MergedOverlayCoordinator {
             count: outgoingPanels.count,
             onComplete: onClosed,
         )
-        outgoingPanels.forEach { panel in
+        for panel in outgoingPanels {
             panel.dismiss(onClosed: barrier.panelDidClose)
         }
     }

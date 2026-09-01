@@ -87,10 +87,35 @@ known labels are explicitly non-authoritative:
 | `SCREEN_INVENTORY.md:56` | D-018 governs Settings/menu glyphs, not the in-app capsule. | D-022 governs the top-center capsule; D-023 governs its glint. | Story #19 |
 | `SCREEN_INVENTORY.md:271` | D-018 does not govern the capsule's keyboard route. | D-029 governs the status-menu and notification keyboard routes. | Story #19 |
 | `COPY_INVENTORY.md:318` | D-019's blanket eye prohibition was amended. | D-020a permits closed eyes and bounded expression while retaining no open eyes or blinking. | Story #19 |
+| `INTERACTION_SPEC.md:55-67` and `:136-137` | Sky rise/lower, capsule re-presentation, and the ~800 ms declaration-key guard remain from D-029. They are non-authoritative on the entrance, exit, and keyboard-arming overlap named by D-032. | Accepted D-032 governs immediate entrance/exit and first-frame Return after canonical reconciliation; unrelated D-029 capsule clauses remain governing. | Story #19 |
+| `INTERACTION_SPEC.md:174-177` | The immediate motion-table behavior matches D-032, but Moments 6 and 9 cite D-031, the privacy-export decision. | D-032 is the correct decision authority for immediate break entrance and exit. | Story #19 |
+| `SCREEN_INVENTORY.md:190-198`, `:212-214`, and `:232-233` | The accessibility blocks retain D-029's ~800 ms guard and superseded sky-rise/crossfade transitions. These clauses are non-authoritative on D-032's named overlap. | D-032 governs first-frame Return and immediate presentation; the final accessibility wording must be reconciled without weakening immediate Escape. | Story #19 |
 
 Story #19 must repair these canonical cross-references before a semantics implementation may
 rely on them. The table prevents a known wrong label from selecting behavior; it does not edit
 or reinterpret the source decision text in this story.
+
+### D-032 reconciliation boundary
+
+Accepted D-032 names only D-029's break entrance, break exit, and keyboard-arming clauses as
+superseded. Under this authority map, that supersession becomes an implementation contract only
+after Story #19 reconciles `INTERACTION_SPEC.md` and `SCREEN_INVENTORY.md`; it does not erase
+unrelated D-029 capsule, countdown, focus, or accessibility clauses. The correct D-032 reading is
+the selected field appearing and closing immediately, with no compositor transition or global
+tint, and Return available on the first active frame while Escape remains immediate.
+
+The current source is only partially aligned: App overlays present the field and key panel
+directly; `VisualResetModel.doneEarlyFromKeyboard()` is immediate and its
+“Keyboard Done early is immediate from the first active frame” test proves that seam. In
+contrast, `MovementModel` still guards Return, A, P, Q, and 1/2/3 for 0.8 seconds, as proven by
+“Keyboard choices remain inert until the declaration guard arms” and “Return A and P are
+guarded while pointer declarations remain immediate.” Therefore D-032 is neither fully shipped
+nor absent. No implementation may claim otherwise or choose a convenient hybrid.
+
+The single-writer order is: Story #19 reconciles the canonical interaction, motion, screen, and
+accessibility clauses; then the **Break surfaces** collision owner characterizes and aligns
+`VisualResetModel`, `MovementModel`, and the Visual/Movement/Merged overlay coordinators and
+tests to that one contract. A feature or overlay may not independently retain or remove a guard.
 
 The closest applicable `AGENTS.md` wins for scoped implementation and process concerns such
 as file placement, package boundaries, test style, concurrency, and required verification.

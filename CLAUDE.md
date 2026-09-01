@@ -11,20 +11,22 @@ duplicate the design package into a second app repository without a new owner de
 Working name: **Cadence** — a placeholder. See `design/DECISIONS.md` D-001. Never hard-code
 the name into a design in a way that makes renaming expensive.
 
-Implementation starts at `design/HANDOFF.md`. The template `App`, `Item`, and `ItemList`
-sources exist only to prove the harness and must not be mistaken for product implementation.
-Keep the target, scheme, module, display name, and bundle identifier neutral until the owner
-settles product identity. Before the first product change, the harness bootstrap plan and its
-retained verification commands must be green.
+Implementation starts at `design/HANDOFF.md`, then follows `design/AUTHORITY.md` and the
+exact implementation inventory in `design/CURRENT_STATE_CONFORMANCE.md`. The current `App`
+is product implementation. `Item`, `ItemStore`, `ItemList`, and their persistence seam remain
+template examples only and must not be mistaken for product architecture. Keep the target,
+scheme, module, display name, and bundle identifier neutral until the owner settles product
+identity. The harness bootstrap plan is complete; retained verification must still be green at
+the exact head being reviewed.
 
 ## 2. Product in one paragraph
 
-Cadence is a private, native macOS menu-bar utility that helps an adult computer user
+The implemented baseline is a private, native macOS menu-bar utility that helps an adult computer user
 interrupt long runs of **estimated active computer use** with short visual resets and real
 movement opportunities. It keeps two independent clocks (visual and movement), offers each
 break as a dismissible invitation rather than an enforced lockout, adapts its timing to
 context it can honestly observe, treats seated and limited-mobility movement as equal-status,
-runs entirely locally with no account and no invasive permissions, and reflects the week back
+runs locally with no account and no required invasive permissions, and reflects the week back
 to the user as a pattern rather than a score. It is a **general wellness product, not a
 medical product**.
 
@@ -33,9 +35,11 @@ breaks without fighting your workflow.*
 
 ## 3. Platform
 
-Native macOS first. `MenuBarExtra`-style menu-bar utility with overlay break surfaces,
-a settings window, and a weekly view. No iOS/iPadOS/web in scope. A future iPhone/Watch
-companion is deferred and must not shape the Mac design.
+Native macOS is implemented first: a menu-bar utility with overlay break surfaces, a settings
+window, and a weekly view. The owner-approved Calm Ensemble intake explores iPhone and Apple
+Watch companions, but it remains non-canonical until the owning product, privacy, claims,
+machine, and platform contracts are promoted explicitly. No companion assumption may silently
+change the current Mac behavior.
 
 ## 4. Positioning
 
@@ -76,6 +80,8 @@ Rules:
 - Preserve research identifiers (`[S###]`, `[C###]`, `[OQ-##]`, card IDs like `[L01]`)
   in any evidence-sensitive decision, so a reviewer can verify it.
 - Do not treat source *quantity* as authority. The package's stated conclusions govern.
+- `design/AUTHORITY.md` defines concern-specific precedence between research, accepted product
+  decisions, machine values, code, and verification. Its rules preserve this research order.
 
 ## 6. Scientific semantics that may not be distorted
 
@@ -189,6 +195,8 @@ from blue light · sitting detected · movement verified. Full list: `08 §12`.
 | Concern | File |
 |---|---|
 | Research index and authority map | `research/INDEX.md` |
+| Cross-artifact product authority and traceability | `design/AUTHORITY.md` |
+| Exact implemented baseline and collision map | `design/CURRENT_STATE_CONFORMANCE.md` |
 | Product model / state model | `design/PRODUCT_MODEL.md` |
 | Information architecture | `design/INFORMATION_ARCHITECTURE.md` |
 | Screen + state inventory (**check before adding a screen**) | `design/SCREEN_INVENTORY.md` |

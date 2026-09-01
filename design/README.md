@@ -18,6 +18,8 @@ it holds the product definition, the research authority order, and the non-negot
 | 9 | [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) | *Phase 4* — type, color, space, materials, components |
 | 10 | [INTERACTION_SPEC.md](INTERACTION_SPEC.md) | *Phase 5* — timing, states, transitions, keyboard |
 | 11 | [HANDOFF.md](HANDOFF.md) | *Phase 7* — what a developer needs and nothing more |
+| 12 | [AUTHORITY.md](AUTHORITY.md) | Which artifact owns each concern; supersession, traceability, and stable-ID rules |
+| 13 | [CURRENT_STATE_CONFORMANCE.md](CURRENT_STATE_CONFORMANCE.md) | Exact implemented seams and the Epic 2 collision map |
 
 ## Directories
 
@@ -50,18 +52,18 @@ it holds the product definition, the research authority order, and the non-negot
 
 ## Current state
 
-**Phases 1–3 complete, consolidation done (2026-08-25).** Round 1 produced three
-directions; **Horizon** won (D-013: a break is a place — sky holds the instruction, ground
-holds the controls, the horizon line is the progress). Round 2 in `explorations/round-2/`
-carries the full slice: visual reset (dark + light), movement surface, notch-capsule
-heads-up, status menu, settings, character spec, and the closed motion vocabulary
-(D-025). `DESIGN_SYSTEM.md`, `INTERACTION_SPEC.md`, and `HANDOFF.md` are drafted;
-`SCREEN_INVENTORY.md` §K holds annotation blocks for the four core surfaces; the three
-review passes have run on round 2.
+**The Mac product baseline is implemented.** At clean commit
+`e6e9ca094cfbbee50f1d554be6640653f85caf2d`, the repository contains the independent clock
+engine and event history, SwiftData protocol/settings persistence, menu and Dock surfaces,
+heads-up delivery, visual/movement/merged/break-flow overlays, Settings, onboarding, Weekly,
+Previews/snapshots, and real-app verification seams. `Item` and `ItemList` remain unrelated
+harness examples.
 
-**Next:** produce the canonical 2x light+dark renders in `renders/` (plus the owed
-assets listed in `HANDOFF.md`), advancing SCREEN_INVENTORY entries `explored → designed
-→ reviewed`. Implementation can start from `HANDOFF.md` in parallel.
+The owner-approved Calm Ensemble exploration is historical implementation intake, not a
+blanket override of canonical product, research, privacy, claims, or machine contracts.
+**Next:** promote its decisions story by story using `AUTHORITY.md`, and begin Epic 2 from the
+existing seams and serialization map in `CURRENT_STATE_CONFORMANCE.md`. Do not start a second
+clock, event, persistence, or surface stack.
 
 ## The standing test
 

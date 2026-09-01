@@ -1,21 +1,25 @@
 # Developer Handoff
 
-**Status: first draft (2026-08-25), covering the Horizon direction.** Written for someone
-who has not read the rest of the repo. It points at the canonical artifacts; it does not
-restate them. Renders are still being produced — until an entry in `SCREEN_INVENTORY.md`
-reaches `designed`, the round-2 artboards in `explorations/round-2/` plus
-`DESIGN_SYSTEM.md` are the working reference.
+**Status: implemented Mac baseline, audited 2026-09-01 at
+`e6e9ca094cfbbee50f1d554be6640653f85caf2d`.** Written for someone who has not read the rest
+of the repo. Read [AUTHORITY.md](AUTHORITY.md) for precedence and
+[CURRENT_STATE_CONFORMANCE.md](CURRENT_STATE_CONFORMANCE.md) before modifying an existing
+engine, store, runtime, or surface. This handoff points at canonical artifacts; it does not
+restate them.
 
 ## The one paragraph a developer must read
 
-This product's differentiator is that it does not lie about what it knows. It estimates active
-computer use from input events; it cannot see sitting, posture, gaze, or movement. Every
-completion is a user declaration. Every break is dismissible with Escape. Nothing escalates.
-No score, no streak, no verification. If an implementation shortcut would require the UI to
-assert something the Mac cannot observe, the shortcut is wrong — raise it rather than shipping
-it.
+This product's differentiator is that it does not lie about what it knows. The current runtime
+estimates active computer use from coarse input timing; it cannot see sitting, posture, gaze,
+or movement. Current completions are timer facts or user declarations. Every break is
+dismissible with Escape. Nothing escalates. No score, no streak, no health-outcome
+verification. Optional sensing in the approved historical intake does not change those facts
+until its observation, claim, permission, retention, fallback, and verification contracts are
+promoted canonically.
 
-## Build order
+## Implemented build history and next authority
+
+The original build order below is complete and remains useful as a dependency map:
 
 1. **Clock engine + event log** — the two independent clocks, the activity estimator,
    suppression evaluation, and the ten-event vocabulary (`INTERACTION_SPEC.md` §6–§7,
@@ -30,13 +34,18 @@ it.
 5. **Heads-up: fixed top-center capsule first, notification fallback second**
    (`HeadsUp.dc.html`, K.3). Its restrained one-shot entrance and ephemeral pointer-reactive
    glint are polish; the product functions without either.
-6. **Settings, onboarding, weekly** — in that order. Weekly is deliberately last
+6. **Settings, onboarding, weekly** — in that order. Weekly was deliberately last
    (`[03 §14]` patterns-not-grades needs real logged data to design against).
+
+Further work starts from the current seams and collision map in
+`CURRENT_STATE_CONFORMANCE.md`; it must not replay this list as a second implementation.
 
 ## Canonical artifacts
 
 | What | Where | Authoritative for |
 |---|---|---|
+| Cross-artifact precedence and traceability | `AUTHORITY.md` | conflict handling, supersession, stable identifiers |
+| Exact implemented baseline | `CURRENT_STATE_CONFORMANCE.md` | existing types, stores, runtimes, and collision ownership |
 | Tokens, type, color, materials, components | `DESIGN_SYSTEM.md` | every visual value |
 | Lifecycle, timing, motion, keyboard, events, suppression | `INTERACTION_SPEC.md` | every behavior |
 | Timings and thresholds | `research/health/machine-readable/product_protocol.yaml` | **normative** — read it, don't copy tables |
@@ -55,10 +64,11 @@ parity, multi-display. A surface that fails any line of its block is not done.
 
 ## Events
 
-The ten-event table in `INTERACTION_SPEC.md` §6 is exhaustive. Do not add events, merge
-events, or derive "outcome" fields from them. `positionChanged` never touches the
-movement clock. `likelyNaturalInterruption` may reset presentation timing and records
-nothing else.
+The ten-event table in `INTERACTION_SPEC.md` §6 is the current closed vocabulary. Preserve its
+raw identifiers and distinct historical meanings. Do not add events, merge events, or derive
+"outcome" fields until an accepted canonical story defines the new vocabulary and migration.
+`positionChanged` never touches the movement clock. `likelyNaturalInterruption` may reset
+presentation timing and records nothing else under the current contract.
 
 ## Defaults
 
@@ -66,15 +76,19 @@ Every default ships from `product_protocol.yaml` (`profiles.balanced` unless onb
 chose otherwise). Do not hard-code numbers into views — the Gentle / Balanced / Frequent
 profiles and future tuning all flow from that file's structure.
 
-## What is deliberately absent — do not add
+## What is absent from the current baseline
 
 No lockout (`lockout_allowed: false`) · no streaks, scores, or grades · no posture
-anything · no camera/mic/Screen-Recording/Accessibility permissions · no keystroke,
+sensing, scoring, or feedback · no camera/mic/Screen-Recording/Accessibility permissions · no keystroke,
 window-title, URL, or app-content reading (`[07 §3]`) · no badge or countdown on the
 menu-bar glyph (D-004) · no escalation on repeated declines (D-011) · no Start button on
 break surfaces (D-021 — they self-run) · no red for skipped breaks · no sound
 requirement · no looping animation (D-025, amended by D-029, is a closed list) · no "movement verified" or
 any verification language (`[C034]`) · no account, no network, no analytics by default.
+
+This is an inventory, not permanent authority against owner-approved optional sensing.
+Adding a protected capability still requires the complete traceability record in
+`AUTHORITY.md` and the owning canonical amendments before code or entitlements land.
 
 ## Review gates before shipping
 

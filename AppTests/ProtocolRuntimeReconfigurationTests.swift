@@ -439,6 +439,7 @@ private final class SettingsPresentationPanel: BreakFlowPanelPresenting, VisualR
         close()
         onClosed()
     }
+
     func makeKey() {}
 }
 

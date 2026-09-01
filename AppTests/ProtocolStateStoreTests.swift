@@ -4,6 +4,8 @@ import SwiftData
 import Testing
 @testable import App
 
+private final class LegacyProtocolStoreFixture {}
+
 @Suite("Restart-safe protocol state")
 struct ProtocolStateStoreTests {
     @Test("Both independent counters round-trip into a safe restart grace")
@@ -524,10 +526,7 @@ extension ProtocolStateStoreTests {
         let visualSnooze = Date(timeIntervalSince1970: 1_750_000_000)
         let recoveryAnchor = Date(timeIntervalSince1970: 1_750_000_100)
 
-        try seedLegacyProtocolStore(
-            at: storeURL,
-            sourceURL: directory.appending(path: "LegacyProtocolStoreSeeder.swift"),
-        )
+        try seedLegacyProtocolStore(at: storeURL)
 
         let migratedContainer = try AppModelContainer.make(url: storeURL)
         let store = try SwiftDataProtocolStateStore(container: migratedContainer)
@@ -548,134 +547,12 @@ extension ProtocolStateStoreTests {
         #expect(loaded.headsUpDeliveryState == HeadsUpDeliveryState())
     }
 
-    func seedLegacyProtocolStore(at storeURL: URL, sourceURL: URL) throws {
-        let source = #"""
-        import Foundation
-        import SwiftData
-
-        @Model
-        final class StoredItem {
-            @Attribute(.unique) var id: UUID
-            var title: String
-            var isDone: Bool
-            var createdAt: Date
-
-            init(id: UUID, title: String, isDone: Bool, createdAt: Date) {
-                self.id = id
-                self.title = title
-                self.isDone = isDone
-                self.createdAt = createdAt
-            }
-        }
-
-        @Model
-        final class StoredOpportunityEvent {
-            @Attribute(.unique) var id: UUID
-            var schemaVersion: Int
-            var appendSequence: Int64
-            var kind: String
-            var recordedAt: Date
-            var source: String
-            var opportunity: String?
-            var selectedDurationSeconds: Double?
-
-            init(id: UUID, sequence: Int64, recordedAt: Date) {
-                self.id = id
-                schemaVersion = 1
-                appendSequence = sequence
-                kind = "promptPresented"
-                self.recordedAt = recordedAt
-                source = "localTimer"
-                opportunity = "visual"
-                selectedDurationSeconds = nil
-            }
-        }
-
-        @Model
-        final class StoredProtocolState {
-            @Attribute(.unique) var key: String
-            var schemaVersion: Int
-            var profileID: String
-            var visualAccumulatedActiveUseSeconds: Double
-            var movementAccumulatedActiveUseSeconds: Double
-            var visualSnoozeDeadline: Date?
-            var movementSnoozeDeadline: Date?
-            var recoveryActiveUseSeconds: Double = 0
-            var recoveryMovementDeferralCount: Int = 0
-            var recoveryWasOfferedThisSession: Bool = false
-            var recoveryLastObservedAt: Date?
-            var visualNotAppropriateThisSession: Bool?
-            var movementNotAppropriateThisSession: Bool?
-
-            init() {
-                key = "current"
-                schemaVersion = 1
-                profileID = "frequent_movement"
-                visualAccumulatedActiveUseSeconds = 111
-                movementAccumulatedActiveUseSeconds = 222
-                visualSnoozeDeadline = Date(timeIntervalSince1970: 1_750_000_000)
-                movementSnoozeDeadline = nil
-                recoveryActiveUseSeconds = 333
-                recoveryMovementDeferralCount = 2
-                recoveryWasOfferedThisSession = true
-                recoveryLastObservedAt = Date(timeIntervalSince1970: 1_750_000_100)
-                visualNotAppropriateThisSession = true
-                movementNotAppropriateThisSession = false
-            }
-        }
-
-        let storeURL = URL(fileURLWithPath: CommandLine.arguments[1])
-        let schema = Schema([
-            StoredItem.self,
-            StoredOpportunityEvent.self,
-            StoredProtocolState.self,
-        ])
-        let configuration = ModelConfiguration("App", schema: schema, url: storeURL)
-        let container = try ModelContainer(for: schema, configurations: [configuration])
-        let context = ModelContext(container)
-        context.insert(StoredProtocolState())
-        context.insert(StoredOpportunityEvent(
-            id: UUID(uuidString: "00000000-0000-4000-8000-000000000001")!,
-            sequence: 0,
-            recordedAt: Date(timeIntervalSince1970: -1),
+    func seedLegacyProtocolStore(at storeURL: URL) throws {
+        let fixtureURL = try #require(Bundle(for: LegacyProtocolStoreFixture.self).url(
+            forResource: "LegacyProtocolStore",
+            withExtension: "store",
         ))
-        context.insert(StoredOpportunityEvent(
-            id: UUID(uuidString: "00000000-0000-4000-8000-000000000002")!,
-            sequence: 1,
-            recordedAt: Date(timeIntervalSince1970: 0),
-        ))
-        try context.save()
-        """#
-        try source.write(to: sourceURL, atomically: true, encoding: .utf8)
-
-        let process = Process()
-        let errorPipe = Pipe()
-        let moduleCacheURL = sourceURL.deletingLastPathComponent()
-            .appending(path: "ModuleCache", directoryHint: .isDirectory)
-        try FileManager.default.createDirectory(
-            at: moduleCacheURL,
-            withIntermediateDirectories: true,
-        )
-        var environment = ProcessInfo.processInfo.environment
-        environment["CLANG_MODULE_CACHE_PATH"] = moduleCacheURL.path()
-        environment["SWIFT_MODULECACHE_PATH"] = moduleCacheURL.path()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
-        process.arguments = ["swift", "-disable-sandbox", sourceURL.path(), storeURL.path()]
-        process.environment = environment
-        process.standardError = errorPipe
-        try process.run()
-        process.waitUntilExit()
-        guard process.terminationStatus == 0 else {
-            let error = String(
-                decoding: errorPipe.fileHandleForReading.readDataToEndOfFile(),
-                as: UTF8.self,
-            )
-            throw NSError(
-                domain: "LegacyProtocolStoreSeeder",
-                code: Int(process.terminationStatus),
-                userInfo: [NSLocalizedDescriptionKey: error],
-            )
-        }
+        try FileManager.default.copyItem(at: fixtureURL, to: storeURL)
     }
 
     @Test("Completing a snoozed visual opportunity cannot resurrect snooze after restart")

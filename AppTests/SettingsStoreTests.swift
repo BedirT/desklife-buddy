@@ -148,10 +148,7 @@ struct SettingsStoreTests {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
         let storeURL = directory.appending(path: "settings.store")
-        try ProtocolStateStoreTests().seedLegacyProtocolStore(
-            at: storeURL,
-            sourceURL: directory.appending(path: "LegacySettingsStoreSeeder.swift"),
-        )
+        try ProtocolStateStoreTests().seedLegacyProtocolStore(at: storeURL)
 
         let first = try SwiftDataSettingsStore(
             container: AppModelContainer.make(url: storeURL),

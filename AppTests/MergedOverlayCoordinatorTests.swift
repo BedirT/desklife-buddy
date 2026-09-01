@@ -129,7 +129,7 @@ struct MergedOverlayCoordinatorTests {
         visualHarness.panels[0].cancel()
 
         #expect(visualHarness.lifecycle == [.opened, .skipped])
-        #expect(visualHarness.panels.allSatisfy { $0.wasDismissed })
+        #expect(visualHarness.panels.filter { !$0.wasDismissed }.isEmpty)
         #expect(visualHarness.restoredProcessIdentifiers == [41])
 
         let movementHarness = try MergedOverlayHarness(
@@ -155,7 +155,7 @@ struct MergedOverlayCoordinatorTests {
 
         harness.panels[0].cancel()
 
-        #expect(harness.panels.allSatisfy { $0.wasDismissed })
+        #expect(harness.panels.filter { !$0.wasDismissed }.isEmpty)
         #expect(harness.panels.allSatisfy { !$0.wasClosed })
         #expect(harness.restoredProcessIdentifiers.isEmpty)
 
@@ -514,11 +514,11 @@ private final class MergedOverlayHarness {
             displays: { self.displays },
             makePanel: {
                 display,
-                role,
-                content,
-                accessibilityPreferences,
-                onEntranceSettled,
-                onCancel in
+                    role,
+                    content,
+                    accessibilityPreferences,
+                    onEntranceSettled,
+                    onCancel in
                 let panel = TestMergedPanel(
                     displayID: display.id,
                     frame: display.frame,

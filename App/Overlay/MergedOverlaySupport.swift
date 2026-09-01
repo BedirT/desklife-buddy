@@ -32,11 +32,11 @@ extension MergedOverlayCoordinator {
             displays: AppKitOverlayDisplays.current,
             makePanel: {
                 display,
-                role,
-                content,
-                accessibilityPreferences,
-                onEntranceSettled,
-                onCancel in
+                    role,
+                    content,
+                    accessibilityPreferences,
+                    onEntranceSettled,
+                    onCancel in
                 MergedPanel(
                     displayID: display.id,
                     frame: display.frame,

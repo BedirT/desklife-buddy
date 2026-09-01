@@ -100,11 +100,11 @@ final class VisualResetOverlayCoordinator {
             displays: AppKitOverlayDisplays.current,
             makePanel: {
                 display,
-                role,
-                model,
-                accessibilityPreferences,
-                onEntranceSettled,
-                onCancel in
+                    role,
+                    model,
+                    accessibilityPreferences,
+                    onEntranceSettled,
+                    onCancel in
                 VisualResetPanel(
                     displayID: display.id,
                     frame: display.frame,
@@ -260,7 +260,7 @@ final class VisualResetOverlayCoordinator {
             count: outgoingPanels.count,
             onComplete: onClosed,
         )
-        outgoingPanels.forEach { panel in
+        for panel in outgoingPanels {
             panel.dismiss(onClosed: barrier.panelDidClose)
         }
     }

@@ -237,7 +237,7 @@ struct VisualResetOverlayCoordinatorTests {
 
         #expect(harness.lifecycle == [.opened, .skipped])
         #expect(!harness.panels.contains { !$0.wasClosed })
-        #expect(harness.panels.allSatisfy { $0.wasDismissed })
+        #expect(harness.panels.filter { !$0.wasDismissed }.isEmpty)
         #expect(harness.restoredProcessIdentifiers == [41])
         #expect(harness.refreshCancellationCount == 1)
         #expect(harness.screenCancellationCount == 1)
@@ -253,7 +253,7 @@ struct VisualResetOverlayCoordinatorTests {
 
         harness.panels[0].cancel()
 
-        #expect(harness.panels.allSatisfy { $0.wasDismissed })
+        #expect(harness.panels.filter { !$0.wasDismissed }.isEmpty)
         #expect(harness.panels.allSatisfy { !$0.wasClosed })
         #expect(harness.restoredProcessIdentifiers.isEmpty)
 
@@ -760,11 +760,11 @@ private final class OverlayHarness {
             displays: { self.displays },
             makePanel: {
                 display,
-                role,
-                model,
-                accessibilityPreferences,
-                onEntranceSettled,
-                onCancel in
+                    role,
+                    model,
+                    accessibilityPreferences,
+                    onEntranceSettled,
+                    onCancel in
                 let panel = TestVisualResetPanel(
                     displayID: display.id,
                     frame: display.frame,
@@ -923,7 +923,6 @@ private final class TestVisualResetPanel: VisualResetPanelPresenting {
         guard role == .interactive else { return }
         onCancel()
     }
-
 
     func settleEntrance() {
         onEntranceSettled()

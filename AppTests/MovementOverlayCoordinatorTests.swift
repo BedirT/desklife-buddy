@@ -116,7 +116,7 @@ struct MovementOverlayCoordinatorTests {
 
         #expect(harness.lifecycle == [.opened, .skipped])
         #expect(!harness.panels.contains { !$0.wasClosed })
-        #expect(harness.panels.allSatisfy { $0.wasDismissed })
+        #expect(harness.panels.filter { !$0.wasDismissed }.isEmpty)
         #expect(harness.restoredProcessIdentifiers == [41])
         #expect(harness.refreshCancellationCount == 1)
         #expect(harness.screenCancellationCount == 1)
@@ -133,7 +133,7 @@ struct MovementOverlayCoordinatorTests {
 
         harness.panels[0].cancel()
 
-        #expect(harness.panels.allSatisfy { $0.wasDismissed })
+        #expect(harness.panels.filter { !$0.wasDismissed }.isEmpty)
         #expect(harness.panels.allSatisfy { !$0.wasClosed })
         #expect(harness.restoredProcessIdentifiers.isEmpty)
 

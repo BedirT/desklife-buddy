@@ -51,6 +51,10 @@ identities:
       - origin_device_id
       - origin_session_id
       - origin_revision
+      - origin_phase
+      - origin_segment_id_when_segmented
+      - origin_device_counter
+      - causal_parent_action_ids
   decision_id:
     format: uuid
     scope: one_automatic_hold_release_shift_merge_or_schedule_restart
@@ -74,7 +78,7 @@ time:
       - deadline_at_utc
       - anchor_recorded_at_utc
       - remaining_seconds_at_anchor
-    purpose: display_exchange_audit_and_cross_epoch_recovery_only
+    purpose: display_exchange_and_audit_only_never_countdown_reconstruction
   local_monotonic_anchor:
     clock: continuous_monotonic
     required:
@@ -91,11 +95,38 @@ time:
       shutdown, sleep, an unavailable session, or an unobserved gap.
   accepted_ritual_deadline:
     rule: >-
-      A running visual or movement ritual has an absolute deadline. The local
-      monotonic deadline is primary in the same epoch. If that epoch is unavailable,
-      deadline_at_utc minus current wall time reconstructs a value clamped from zero
-      through the originally selected duration. Sleep, lock, relaunch, and callback
-      suspension do not extend the ritual.
+      A running visual, movement, merged, or recovery segment has one coordinator-issued
+      deadline ID and a continuous-monotonic deadline. Persist the boot/clock epoch,
+      anchor ticks, selected duration, last known remaining duration, and opportunity
+      revision. If the exact continuous epoch cannot be resumed, expire the segment;
+      wall time never reconstructs or extends remaining duration. Sleep, lock, relaunch,
+      callback suspension, and handoff therefore cannot extend the accepted duration.
+    persisted_anchor_requires:
+      - deadline_id
+      - coordinator_device_id
+      - monotonic_epoch_id
+      - accepted_at_ticks
+      - deadline_ticks
+      - selected_duration_seconds
+      - last_known_remaining_seconds
+      - opportunity_revision
+    same_epoch_restore: remaining_is_max_zero_deadline_ticks_minus_current_ticks
+    epoch_or_anchor_discontinuity: remaining_is_zero_and_timer_finished_is_reconciled_once
+    wall_clock_change: ignored_for_countdown
+    handoff:
+      authority_before_ack: sender_deadline_remains_authoritative
+      acknowledgement_requires:
+        - deadline_id_and_opportunity_revision
+        - sender_epoch_and_send_ticks
+        - receiver_epoch_and_receive_ticks
+        - bounded_round_trip_uncertainty
+        - final_sender_commit_ticks
+      commit_rule: >-
+        Transfer only after a bounded monotonic handshake. The receiving deadline uses
+        the sender's remaining duration at final commit minus the full measured
+        uncertainty bound. If the bound, epochs, revision, or acknowledgement is missing
+        or stale, do not transfer; the sender remains authoritative. A negative result
+        expires immediately. Wall clocks never choose remaining duration.
     on_return_after_deadline: timer_finished_once_and_quiet_receipt
     lifecycle_return_order:
       - reconcile_companion_terminal_candidates
@@ -115,30 +146,52 @@ time:
     rule: >-
       Working-hour boundaries choose Paused versus eligible state. They never
       supply elapsed schedule time; monotonic samples inside an eligible window do.
+  boundary_predicates:
+    universal_deadline: elapsed_seconds_greater_than_or_equal_to_deadline_seconds
+    recent_input_eligible: seconds_since_input_less_than_or_equal_to_60
+    long_idle_begins: seconds_since_input_greater_than_or_equal_to_300
+    valid_covered_sample: adjacent_interval_seconds_less_than_or_equal_to_15
+    invalid_sample_gap: adjacent_interval_seconds_greater_than_15
+    release_corridor_active: elapsed_seconds_less_than_corridor_seconds
+    release_corridor_ends: elapsed_seconds_greater_than_or_equal_to_corridor_seconds
+    snooze_active: elapsed_seconds_less_than_selected_snooze_seconds
+    snooze_reoffers: elapsed_seconds_greater_than_or_equal_to_selected_snooze_seconds
+    due_boundary: accumulated_eligible_seconds_greater_than_or_equal_to_configured_boundary
+    rule: evaluate_each_edge_once_and_never_use_strict_greater_than_for_a_deadline
 
 clock_contract:
   visual:
-    meaning: estimated_near_screen_exposure_need
+    meaning: visual_reset_schedule_based_on_estimated_active_computer_use
     permission_free_accrual: >-
       Awake, active, unlocked, inside enabled working hours, not manually paused,
-      not in accepted visual or movement ritual, not in a confirmed-away interval,
+      not in any accepted ritual, not in a qualified confirmed-away interval,
       and covered by adjacent valid samples. Input silence below long-idle onset
-      remains eligible so passive reading is not treated as a visual reset.
+      remains eligible so passive reading is not treated as a visual reset. This is
+      not a gaze, face-presence, viewing-distance, or near-screen estimate.
   movement:
-    meaning: estimated_low_movement_desk_need
+    meaning: movement_opportunity_schedule_based_on_estimated_active_computer_use
     permission_free_accrual: >-
       The same system eligibility as visual plus recent input at or below 60 seconds.
-      Input silence over 60 seconds freezes this estimate; it never proves movement.
+      Input silence over 60 seconds freezes this schedule; it estimates neither body
+      stillness nor movement and never proves either.
   position:
-    meaning: estimated_or_declared_position_stability_need
+    meaning: optional_position_change_schedule_based_on_estimated_active_computer_use_or_user_interval
     permission_free_accrual: >-
       Optional/manual. When enabled without sensing, it accrues under visual
-      eligibility and stops at long-idle onset. It never supplies a posture score.
+      eligibility, freezes during every accepted ritual, and stops at long-idle
+      onset. It estimates no body position, stability, or posture score.
   recovery:
-    meaning: long_run_and_repeated_movement_deferral_load
+    meaning: optional_recovery_schedule_from_eligible_interaction_time_and_explicit_deferrals
     permission_free_accrual: >-
       Accrues only while movement timing is eligible after a movement deferral.
       It creates at most one optional recovery offer and is never a risk state.
+  qualified_optional_assessment:
+    rule: >-
+      Near-screen, likely movement, likely away, or position assessments may exist only
+      in a separately authorized capability. Every assessment carries source capability,
+      provenance, observation time, expiry, qualification, confidence band, and a
+      correction path. Missing, stale, conflicting, or unavailable evidence is unknown
+      and cannot mutate a schedule unless an approved rule explicitly accepts unknown.
 
 presentation_states:
   manual_pause_options:
@@ -154,31 +207,57 @@ presentation_states:
       - outside_working_hours
       - system_inactive_or_locked
       - system_asleep_or_unavailable
-      - confirmed_away
+      - qualified_confirmed_away
       - relevant_accepted_ritual
     reason_clock_scope:
       manual_pause: [visual, movement, position, recovery]
       outside_working_hours: [visual, movement, position, recovery]
       system_inactive_or_locked: [visual, movement, position, recovery]
       system_asleep_or_unavailable: [visual, movement, position, recovery]
-      confirmed_away: [visual, movement, position, recovery]
-      accepted_visual_ritual: [visual]
-      accepted_movement_merged_or_recovery_ritual: [visual, movement, recovery]
+      qualified_confirmed_away: [visual, movement, position, recovery]
+      accepted_visual_ritual: [visual, position]
+      accepted_movement_merged_or_recovery_ritual: [visual, movement, position, recovery]
     visible_term: Paused
   held:
     rule: all_clocks_continue_under_their_normal_eligibility
     reasons:
-      - meeting_or_call
-      - screen_sharing_or_presentation
+      - user_declared_meeting_or_call
+      - user_declared_screen_sharing_or_presentation
+      - inferred_likely_call
       - user_selected_timed_task
       - explicit_presentation_mode
-      - focus_filter
-      - calendar_busy
-      - selected_deep_focus_app_game_or_media
-      - excluded_application
+      - selected_focus_filter_active
+      - selected_calendar_busy_interval
+      - selected_application_active
       - snooze
       - low_friction_wait
     visible_term: Held
+    evidence_contract:
+      required:
+        - provenance_kind
+        - source_capability_id
+        - observed_at_utc
+        - expires_at_utc_or_explicit_end
+        - qualification
+        - correction_action_when_automatic
+      provenance_kinds:
+        explicit_user_selection:
+          confidence_band: not_applicable
+          visible_rule: say_what_the_person_selected
+        selected_calendar_busy_free:
+          confidence_band: not_applicable
+          visible_rule: selected_busy_time_never_meeting_or_call
+        selected_focus_filter:
+          confidence_band: not_applicable
+          visible_rule: selected_focus_is_active_never_deep_work_detected
+        selected_application:
+          confidence_band: not_applicable
+          visible_rule: selected_app_is_active_never_task_or_productivity_inference
+        inferred_context:
+          confidence_band: [low, medium, high]
+          visible_rule: always_say_likely_and_name_the_enabled_signal_category
+      confirmed_away_requires: explicit_user_away_or_fresh_unambiguous_authorized_evidence
+      stale_missing_or_conflicting: unknown_no_hold_no_pause_no_body_claim
   release_corridors_seconds:
     wake_or_unlock: 90
     return_from_long_idle: 60
@@ -190,20 +269,102 @@ presentation_states:
     - system_inactive_or_locked
     - system_asleep_or_unavailable
     - relevant_accepted_ritual
-    - confirmed_away
+    - qualified_confirmed_away
     - outside_working_hours
-    - meeting_or_call
-    - screen_sharing_or_presentation
+    - user_declared_meeting_or_call
+    - user_declared_screen_sharing_or_presentation
+    - inferred_likely_call
     - user_selected_timed_task
     - explicit_presentation_mode
-    - focus_filter
-    - calendar_busy
-    - selected_deep_focus_app_game_or_media
-    - excluded_application
+    - selected_focus_filter_active
+    - selected_calendar_busy_interval
+    - selected_application_active
     - snooze
     - low_friction_wait
 
 action_contract:
+  opportunity_phase_graph:
+    phases:
+      - coordinated
+      - heads_up
+      - visual_offered
+      - visual_running
+      - movement_offered
+      - movement_running
+      - position_offered
+      - recovery_offered
+      - recovery_running
+      - merged_visual_offered
+      - merged_visual_running
+      - merged_movement_offered
+      - merged_movement_running
+      - held
+      - paused
+      - snoozed
+      - release_corridor
+      - terminal_provisional
+      - closed
+    edges:
+      coordinated: [heads_up, visual_offered, movement_offered, position_offered, recovery_offered, merged_visual_offered, held, paused]
+      heads_up: [visual_offered, movement_offered, position_offered, recovery_offered, merged_visual_offered, visual_running, merged_visual_running, held, paused, snoozed, terminal_provisional]
+      visual_offered: [visual_running, held, paused, snoozed, terminal_provisional]
+      visual_running: [paused, terminal_provisional]
+      movement_offered: [movement_running, held, paused, snoozed, terminal_provisional]
+      movement_running: [paused, terminal_provisional]
+      position_offered: [held, paused, snoozed, terminal_provisional]
+      recovery_offered: [recovery_running, held, paused, snoozed, terminal_provisional]
+      recovery_running: [paused, terminal_provisional]
+      merged_visual_offered: [merged_visual_running, held, paused, snoozed, terminal_provisional]
+      merged_visual_running: [merged_movement_offered, paused, terminal_provisional]
+      merged_movement_offered: [merged_movement_running, held, paused, terminal_provisional]
+      merged_movement_running: [paused, terminal_provisional]
+      held: [release_corridor, paused, terminal_provisional]
+      paused: [release_corridor, terminal_provisional]
+      snoozed: [release_corridor, held, paused, terminal_provisional]
+      release_corridor: [visual_offered, movement_offered, position_offered, recovery_offered, merged_visual_offered, held, paused, terminal_provisional]
+      terminal_provisional: [closed]
+      closed: []
+    terminal_slots:
+      standalone: opportunity_close
+      merged_visual_segment: visual_segment
+      merged_opportunity: opportunity_close
+    rule: >-
+      A transition must use its registered source phase, opportunity kind, participant
+      set, segment, and required payload. A phase reached only because of a provisional
+      candidate is replayed if that candidate later loses reconciliation.
+  nonterminal_reconciliation:
+    rule: >-
+      Nonterminal actions that name the same opportunity revision and source phase compare
+      together, including a global-with-optional-opportunity Pause. Validate guards first,
+      then select one winner by the fixed least-interruptive intent rank and stable ActionID.
+      The winner alone emits facts/effects and increments the opportunity revision. Losing
+      concurrent candidates remain ledger no-ops. A causally later action may run only
+      against the resulting revision and phase. Arrival order is never an input.
+    least_interruptive_intent_rank_smallest_wins:
+      pause.start: 0
+      later.snooze: 10
+      hold.begin: 20
+      companion.take_with_me: 30
+      now.accept_visual: 40
+      now.accept_movement: 40
+      merged.accept: 40
+      merged.movement_accept: 40
+      now.accept_recovery: 40
+      movement.change_content: 50
+      merged.movement_change_content: 50
+      delivery.shift_to_seam: 60
+      opportunity.presented: 70
+    winner_sort_key:
+      - smallest_intent_rank
+      - lexicographically_smallest_action_id
+    global_state_rule: >-
+      A global action without an opportunity uses the coordinator state revision. Pause and
+      hold state is reduced from the complete fresh evidence set using collision_precedence.
+      Before an opportunity action commits, that same coordinator revision is checked; a
+      concurrently winning global Pause/Held state advances it and makes the incompatible
+      opportunity action fail its phase guard. Releases must name the decision or pause
+      revision they clear. System samples are reduced by coordinator epoch and monotonic
+      sample sequence, not callback arrival.
   clock_effect_definitions:
     accrue: add_only_the_current_valid_sample_interval
     freeze: add_zero_while_the_named_state_or_ritual_is_active
@@ -218,11 +379,13 @@ action_contract:
     continue_eligibility: keep_cycle_and_due_state_while_adding_only_normally_eligible_sample_time
     restore_decision_snapshot: restore_every_affected_cycle_id_time_phase_and_recovery_value_from_the_named_decision
     unchanged: make_no_immediate_clock_mutation
-  stale_action_rule: >-
-    An unknown ActionID, mismatched OpportunityID or ClockCycleID, invalid phase,
-    superseded terminal candidate, or action for a closed opportunity is recorded in
-    the applicable operational or companion ledger as a no-op. It creates no product
-    fact, clock mutation, new opportunity, or user-facing interruption.
+  late_and_invalid_action_rule: >-
+    Unknown identity, mismatched participants, unsupported source phase, invalid payload,
+    or an action originated after its actor had observed the terminal revision is an
+    audited no-op. A valid terminal candidate that originated from an allowed phase and
+    revision before that actor learned of closure remains eligible even when it arrives
+    after another device provisionally closed the opportunity. Late arrival is not
+    staleness; causal origin metadata and guards decide validity.
   transitions:
     - id: opportunity.presented
       terminal: false
@@ -252,7 +415,7 @@ action_contract:
       terminal: false
       facts: [breakStarted]
       ledgers: [product_fact]
-      clocks: {visual: freeze, movement: continue_eligibility, position: continue_eligibility, recovery: continue_eligibility}
+      clocks: {visual: freeze, movement: continue_eligibility, position: freeze, recovery: continue_eligibility}
       visible: visual_running_from_first_active_frame
       stale: no_op
       recovery: absolute_deadline_reopens_or_finishes_once
@@ -260,8 +423,8 @@ action_contract:
       terminal: false
       facts: [breakStarted]
       ledgers: [product_fact]
-      clocks: {visual: freeze, movement: freeze, position: unchanged, recovery: freeze}
-      visible: movement_running_from_first_active_frame
+      clocks: {visual: freeze, movement: freeze, position: freeze, recovery: freeze}
+      visible: selected_300_or_120_second_movement_running_from_acceptance_frame
       stale: no_op
       recovery: absolute_deadline_reopens_or_finishes_once
     - id: later.snooze
@@ -388,7 +551,7 @@ action_contract:
       terminal: false
       facts: [breakStarted]
       ledgers: [product_fact]
-      clocks: {visual: freeze, movement: freeze, position: unchanged, recovery: freeze}
+      clocks: {visual: freeze, movement: freeze, position: freeze, recovery: freeze}
       visible: recovery_running_from_first_active_frame
       stale: no_op
       recovery: selected_300_or_600_second_absolute_deadline_reopens_or_finishes_once
@@ -548,7 +711,7 @@ action_contract:
       terminal: false
       facts: [breakStarted]
       ledgers: [product_fact]
-      clocks: {visual: freeze, movement: freeze, position: unchanged, recovery: freeze}
+      clocks: {visual: freeze, movement: freeze, position: freeze, recovery: freeze}
       visible: one_running_ritual_visual_segment_first
       stale: no_op
       recovery: one_absolute_deadline_per_active_segment_same_opportunity_id
@@ -557,9 +720,73 @@ action_contract:
       facts: [timerFinished]
       ledgers: [product_fact]
       clocks: {visual: fresh_cycle, movement: freeze, position: freeze, recovery: freeze}
-      visible: movement_segment_continues_without_second_overlay
-      stale: no_op_if_visual_component_already_terminal
+      visible: movement_duration_offer_replaces_visual_segment_without_second_overlay
+      stale: reconcile_visual_segment_candidate
       recovery: retain_visual_effect_even_if_movement_later_ends
+    - id: merged.visual_segment_done_early
+      terminal: false
+      facts: [userDeclaredCompleted]
+      ledgers: [product_fact]
+      clocks: {visual: fresh_cycle, movement: freeze, position: freeze, recovery: freeze}
+      visible: movement_duration_offer_replaces_visual_segment_immediately
+      stale: reconcile_visual_segment_candidate
+      recovery: retain_visual_effect_even_if_movement_later_ends
+    - id: merged.movement_accept
+      terminal: false
+      facts: [breakStarted]
+      ledgers: [product_fact]
+      clocks: {visual: retain, movement: freeze, position: freeze, recovery: freeze}
+      visible: selected_300_or_120_second_merged_movement_running_from_acceptance_frame
+      stale: no_op
+      recovery: preserve_fresh_visual_component_and_run_one_absolute_movement_deadline
+    - id: merged.movement_timer_finished
+      terminal: true
+      facts: [timerFinished]
+      ledgers: [product_fact]
+      clocks: {visual: retain, movement: fresh_cycle, position: retain, recovery: fresh_cycle}
+      visible: closed_with_quiet_timer_receipt
+      stale: reconcile_terminal_candidate
+      recovery: preserve_fresh_visual_component_and_start_fresh_movement_cycle
+    - id: merged.movement_done_early
+      terminal: true
+      facts: [userDeclaredCompleted]
+      ledgers: [product_fact]
+      clocks: {visual: retain, movement: fresh_cycle, position: retain, recovery: fresh_cycle}
+      visible: closed_immediately
+      stale: reconcile_terminal_candidate
+      recovery: preserve_fresh_visual_component_and_start_fresh_movement_cycle
+    - id: merged.movement_already_moved
+      terminal: true
+      facts: [userDeclaredAlreadyMoved]
+      ledgers: [product_fact]
+      clocks: {visual: retain, movement: fresh_cycle, position: retain, recovery: fresh_cycle}
+      visible: closed_immediately_as_user_declaration
+      stale: reconcile_terminal_candidate
+      recovery: preserve_the_already_fresh_visual_component
+    - id: merged.movement_change_content
+      terminal: false
+      facts: []
+      ledgers: [operational]
+      clocks: {visual: retain, movement: retain, position: retain, recovery: retain}
+      visible: same_merged_movement_segment_with_selected_equal_status_content
+      stale: no_op
+      recovery: preserve_absolute_deadline_and_fresh_visual_component
+    - id: merged.movement_position_changed
+      terminal: true
+      facts: [positionChanged]
+      ledgers: [product_fact]
+      clocks: {visual: retain, movement: retain, position: fresh_cycle, recovery: retain}
+      visible: closed_immediately_with_movement_still_due
+      stale: reconcile_terminal_candidate
+      recovery: preserve_fresh_visual_component_and_hold_before_movement_reoffer
+    - id: merged.movement_skip
+      terminal: true
+      facts: [skipped]
+      ledgers: [product_fact]
+      clocks: {visual: retain, movement: fresh_cycle, position: retain, recovery: deferral_increment}
+      visible: closed_immediately_without_completion_credit
+      stale: reconcile_terminal_candidate
+      recovery: preserve_fresh_visual_component_and_start_normal_movement_cycle
     - id: merged.visual_only
       terminal: true
       facts: [skipped]
@@ -616,21 +843,92 @@ action_contract:
       visible: prior_schedule_restored_without_interruption
       stale: unknown_expired_or_already_undone_decision_is_no_op
       recovery: exact_predecision_snapshot_and_cycle_ids_are_restored_once
+  transition_guards:
+    opportunity.presented: {phase_scope: opportunity, source_phases: [coordinated, heads_up, release_corridor], target_phase: payload_selected_heads_up_or_kind_specific_offered_phase, opportunity_kinds: [visual, movement, position, recovery, merged], participant_guard: exact_registered_participant_set, required_payload: [presentation_level]}
+    merge.created: {phase_scope: opportunity, source_phases: [none], target_phase: coordinated, opportunity_kinds: [merged], participant_guard: exactly_visual_and_movement, required_payload: [merge_decision_id]}
+    delivery.shift_to_seam: {phase_scope: opportunity, source_phases: [coordinated, heads_up, visual_offered, movement_offered, position_offered, recovery_offered, merged_visual_offered, release_corridor], target_phase: unchanged, opportunity_kinds: [visual, movement, position, recovery, merged], participant_guard: exact_registered_participant_set, required_payload: [decision_id, bounded_seam_deadline]}
+    now.accept_visual: {phase_scope: opportunity, source_phases: [heads_up, visual_offered], target_phase: visual_running, opportunity_kinds: [visual], participant_guard: exactly_visual, required_payload: [selected_duration_seconds_20]}
+    now.accept_movement: {phase_scope: opportunity, source_phases: [movement_offered], target_phase: movement_running, opportunity_kinds: [movement], participant_guard: exactly_movement, required_payload: [selected_duration_seconds_300_or_120]}
+    later.snooze: {phase_scope: opportunity, source_phases: [heads_up, visual_offered, movement_offered, position_offered, recovery_offered, merged_visual_offered], target_phase: snoozed, opportunity_kinds: [visual, movement, position, recovery, merged], participant_guard: exact_registered_participant_set, required_payload: [selected_snooze_seconds_300_600_or_900, reoffer_count_0]}
+    later.snooze_after_reoffer: {phase_scope: opportunity, source_phases: [visual_offered, movement_offered, position_offered, recovery_offered, merged_visual_offered], target_phase: terminal_provisional, opportunity_kinds: [visual, movement, position, recovery, merged], participant_guard: exact_registered_participant_set, required_payload: [selected_snooze_seconds_300_600_or_900, reoffer_count_1]}
+    visual.timer_finished: {phase_scope: opportunity, source_phases: [visual_running], target_phase: terminal_provisional, opportunity_kinds: [visual], participant_guard: exactly_visual, required_payload: [deadline_id, elapsed_greater_than_or_equal_deadline]}
+    visual.done_early: {phase_scope: opportunity, source_phases: [visual_running], target_phase: terminal_provisional, opportunity_kinds: [visual], participant_guard: exactly_visual, required_payload: [none]}
+    visual.skip: {phase_scope: opportunity, source_phases: [visual_offered, visual_running], target_phase: terminal_provisional, opportunity_kinds: [visual], participant_guard: exactly_visual, required_payload: [none]}
+    visual.escape: {phase_scope: opportunity, source_phases: [visual_offered, visual_running], target_phase: terminal_provisional, opportunity_kinds: [visual], participant_guard: exactly_visual, required_payload: [none]}
+    movement.timer_finished: {phase_scope: opportunity, source_phases: [movement_running], target_phase: terminal_provisional, opportunity_kinds: [movement], participant_guard: exactly_movement, required_payload: [deadline_id, selected_duration_seconds, elapsed_greater_than_or_equal_deadline]}
+    movement.done_early: {phase_scope: opportunity, source_phases: [movement_running], target_phase: terminal_provisional, opportunity_kinds: [movement], participant_guard: exactly_movement, required_payload: [selected_duration_seconds]}
+    movement.already_moved: {phase_scope: opportunity, source_phases: [movement_offered, movement_running], target_phase: terminal_provisional, opportunity_kinds: [movement], participant_guard: exactly_movement, required_payload: [optional_screen_away_basis_id]}
+    movement.change_content: {phase_scope: opportunity, source_phases: [movement_running], target_phase: unchanged, opportunity_kinds: [movement], participant_guard: exactly_movement, required_payload: [selected_equal_status_content_id]}
+    movement.position_changed: {phase_scope: opportunity, source_phases: [movement_offered, movement_running], target_phase: terminal_provisional, opportunity_kinds: [movement], participant_guard: exactly_movement_and_position, required_payload: [none]}
+    movement.skip: {phase_scope: opportunity, source_phases: [movement_offered, movement_running], target_phase: terminal_provisional, opportunity_kinds: [movement], participant_guard: exactly_movement, required_payload: [none]}
+    movement.escape: {phase_scope: opportunity, source_phases: [movement_offered, movement_running], target_phase: terminal_provisional, opportunity_kinds: [movement], participant_guard: exactly_movement, required_payload: [none]}
+    position.changed: {phase_scope: opportunity, source_phases: [position_offered], target_phase: terminal_provisional, opportunity_kinds: [position], participant_guard: exactly_position, required_payload: [none]}
+    position.skip: {phase_scope: opportunity, source_phases: [position_offered], target_phase: terminal_provisional, opportunity_kinds: [position], participant_guard: exactly_position, required_payload: [none]}
+    now.accept_recovery: {phase_scope: opportunity, source_phases: [recovery_offered], target_phase: recovery_running, opportunity_kinds: [recovery], participant_guard: exactly_visual_movement_and_recovery, required_payload: [selected_duration_seconds_300_or_600]}
+    recovery.timer_finished: {phase_scope: opportunity, source_phases: [recovery_running], target_phase: terminal_provisional, opportunity_kinds: [recovery], participant_guard: exactly_visual_movement_and_recovery, required_payload: [deadline_id, selected_duration_seconds, elapsed_greater_than_or_equal_deadline]}
+    recovery.done_early: {phase_scope: opportunity, source_phases: [recovery_running], target_phase: terminal_provisional, opportunity_kinds: [recovery], participant_guard: exactly_visual_movement_and_recovery, required_payload: [selected_duration_seconds]}
+    recovery.skip: {phase_scope: opportunity, source_phases: [recovery_offered, recovery_running], target_phase: terminal_provisional, opportunity_kinds: [recovery], participant_guard: exactly_visual_movement_and_recovery, required_payload: [none]}
+    recovery.escape: {phase_scope: opportunity, source_phases: [recovery_offered, recovery_running], target_phase: terminal_provisional, opportunity_kinds: [recovery], participant_guard: exactly_visual_movement_and_recovery, required_payload: [none]}
+    offer.not_appropriate: {phase_scope: opportunity, source_phases: [heads_up, visual_offered, movement_offered, position_offered, recovery_offered, merged_visual_offered, merged_movement_offered], target_phase: terminal_provisional, opportunity_kinds: [visual, movement, position, recovery, merged], participant_guard: nonempty_subset_of_registered_participants, required_payload: [content_scope_id]}
+    capsule.escape: {phase_scope: opportunity, source_phases: [heads_up], target_phase: terminal_provisional, opportunity_kinds: [visual, movement, position, recovery, merged], participant_guard: exact_registered_participant_set, required_payload: [none]}
+    pause.start: {phase_scope: global_with_optional_opportunity, source_phases: [any_nonclosed], target_phase: paused, opportunity_kinds: [none, visual, movement, position, recovery, merged], participant_guard: all_enabled_clocks, required_payload: [pause_revision, reason, deadline_or_indefinite]}
+    pause.resume: {phase_scope: global_with_optional_opportunity, source_phases: [paused], target_phase: release_corridor, opportunity_kinds: [none, visual, movement, position, recovery, merged], participant_guard: all_enabled_clocks, required_payload: [matching_pause_revision]}
+    hold.begin: {phase_scope: opportunity, source_phases: [coordinated, heads_up, visual_offered, movement_offered, position_offered, recovery_offered, merged_visual_offered, merged_movement_offered, snoozed, release_corridor], target_phase: held, opportunity_kinds: [visual, movement, position, recovery, merged], participant_guard: exact_registered_participant_set, required_payload: [decision_id, fresh_hold_evidence_envelope]}
+    hold.release: {phase_scope: opportunity, source_phases: [held], target_phase: release_corridor, opportunity_kinds: [visual, movement, position, recovery, merged], participant_guard: exact_registered_participant_set, required_payload: [matching_decision_id]}
+    hold.correction_release: {phase_scope: opportunity, source_phases: [held], target_phase: release_corridor, opportunity_kinds: [visual, movement, position, recovery, merged], participant_guard: exact_registered_participant_set, required_payload: [matching_decision_id, correction_reason]}
+    working_hours.exit: {phase_scope: global_schedule, source_phases: [eligible, release_corridor], target_phase: paused, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [resolved_wall_boundary_and_time_zone]}
+    working_hours.enter: {phase_scope: global_schedule, source_phases: [paused], target_phase: release_corridor, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [resolved_wall_boundary_and_time_zone]}
+    system.unavailable: {phase_scope: global_schedule, source_phases: [eligible, release_corridor], target_phase: paused, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [coordinator_epoch_and_sample_sequence]}
+    system.available: {phase_scope: global_schedule, source_phases: [paused], target_phase: release_corridor, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [coordinator_epoch_and_sample_sequence]}
+    system.short_input_idle: {phase_scope: global_schedule, source_phases: [eligible], target_phase: unchanged, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [seconds_since_input_greater_than_60_and_less_than_300]}
+    system.long_idle_began: {phase_scope: global_schedule, source_phases: [eligible], target_phase: paused, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [seconds_since_input_greater_than_or_equal_to_300, idle_episode_id]}
+    system.returned_from_long_idle: {phase_scope: global_schedule, source_phases: [paused], target_phase: release_corridor, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [matching_idle_episode_id, recent_input]}
+    system.sample_gap: {phase_scope: global_schedule, source_phases: [eligible, release_corridor, paused], target_phase: unchanged, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [nonfinite_backward_or_interval_greater_than_15]}
+    merged.accept: {phase_scope: opportunity, source_phases: [heads_up, merged_visual_offered], target_phase: merged_visual_running, opportunity_kinds: [merged], participant_guard: exactly_visual_and_movement, required_payload: [selected_visual_duration_seconds_20]}
+    merged.visual_segment_finished: {phase_scope: opportunity, source_phases: [merged_visual_running], target_phase: merged_movement_offered, opportunity_kinds: [merged], participant_guard: exactly_visual_and_movement, required_payload: [visual_segment_id, deadline_id, elapsed_greater_than_or_equal_deadline]}
+    merged.visual_segment_done_early: {phase_scope: opportunity, source_phases: [merged_visual_running], target_phase: merged_movement_offered, opportunity_kinds: [merged], participant_guard: exactly_visual_and_movement, required_payload: [visual_segment_id]}
+    merged.movement_accept: {phase_scope: opportunity, source_phases: [merged_movement_offered], target_phase: merged_movement_running, opportunity_kinds: [merged], participant_guard: exactly_visual_and_movement, required_payload: [movement_segment_id, selected_duration_seconds_300_or_120]}
+    merged.movement_timer_finished: {phase_scope: opportunity, source_phases: [merged_movement_running], target_phase: terminal_provisional, opportunity_kinds: [merged], participant_guard: exactly_visual_and_movement, required_payload: [movement_segment_id, deadline_id, selected_duration_seconds, elapsed_greater_than_or_equal_deadline]}
+    merged.movement_done_early: {phase_scope: opportunity, source_phases: [merged_movement_running], target_phase: terminal_provisional, opportunity_kinds: [merged], participant_guard: exactly_visual_and_movement, required_payload: [movement_segment_id, selected_duration_seconds]}
+    merged.movement_already_moved: {phase_scope: opportunity, source_phases: [merged_movement_offered, merged_movement_running], target_phase: terminal_provisional, opportunity_kinds: [merged], participant_guard: exactly_visual_and_movement, required_payload: [movement_segment_id]}
+    merged.movement_change_content: {phase_scope: opportunity, source_phases: [merged_movement_running], target_phase: unchanged, opportunity_kinds: [merged], participant_guard: exactly_visual_and_movement, required_payload: [movement_segment_id, selected_equal_status_content_id]}
+    merged.movement_position_changed: {phase_scope: opportunity, source_phases: [merged_movement_offered, merged_movement_running], target_phase: terminal_provisional, opportunity_kinds: [merged], participant_guard: exactly_visual_movement_and_position, required_payload: [movement_segment_id]}
+    merged.movement_skip: {phase_scope: opportunity, source_phases: [merged_movement_offered, merged_movement_running], target_phase: terminal_provisional, opportunity_kinds: [merged], participant_guard: exactly_visual_and_movement, required_payload: [movement_segment_id]}
+    merged.visual_only: {phase_scope: opportunity, source_phases: [merged_movement_offered], target_phase: terminal_provisional, opportunity_kinds: [merged], participant_guard: exactly_visual_and_movement, required_payload: [movement_segment_id]}
+    merged.escape_during_visual: {phase_scope: opportunity, source_phases: [merged_visual_running], target_phase: terminal_provisional, opportunity_kinds: [merged], participant_guard: exactly_visual_and_movement, required_payload: [visual_segment_id]}
+    merged.escape_during_movement: {phase_scope: opportunity, source_phases: [merged_movement_offered, merged_movement_running], target_phase: terminal_provisional, opportunity_kinds: [merged], participant_guard: exactly_visual_and_movement, required_payload: [movement_segment_id]}
+    companion.take_with_me: {phase_scope: opportunity, source_phases: [visual_running, movement_running, recovery_running, merged_visual_running, merged_movement_running], target_phase: unchanged, opportunity_kinds: [visual, movement, recovery, merged], participant_guard: exact_registered_participant_set, required_payload: [deadline_handoff_envelope]}
+    companion.terminal_action: {phase_scope: opportunity_origin, source_phases: [visual_running, movement_offered, movement_running, position_offered, recovery_offered, recovery_running, merged_visual_running, merged_movement_offered, merged_movement_running], target_phase: terminal_provisional, opportunity_kinds: [visual, movement, position, recovery, merged], participant_guard: exact_registered_participant_set, required_payload: [registered_terminal_action_kind_and_payload, causal_origin_envelope]}
+    sensor.strong_movement_restart: {phase_scope: global_schedule, source_phases: [eligible, paused, release_corridor], target_phase: unchanged, opportunity_kinds: [none], participant_guard: visual_movement_and_recovery, required_payload: [decision_id, fresh_qualified_evidence_envelope, retained_predecision_snapshot]}
+    schedule_restart.undo: {phase_scope: global_schedule, source_phases: [eligible, paused, release_corridor], target_phase: unchanged, opportunity_kinds: [none], participant_guard: exact_decision_affected_clocks, required_payload: [matching_decision_id]}
 
 terminal_reconciliation:
-  terminal_fact_id: deterministic_hash_of_opportunity_id_and_terminal_slot
+  terminal_fact_id: deterministic_hash_of_opportunity_id_terminal_slot_and_participant_ids
   valid_candidate_requires:
     - exact_opportunity_id
     - exact_participating_clock_cycle_ids
-    - supported_action_type_and_phase
+    - registered_source_phase_opportunity_kind_participants_segment_and_payload
     - unique_action_id
-    - origin_device_id_session_id_and_revision
-    - portable_wall_metadata
-    - local_monotonic_deadline_offset_when_available
+    - origin_device_id_session_id_and_persistent_device_counter
+    - origin_opportunity_revision_and_phase
+    - origin_segment_id_and_terminal_slot
+    - causal_parent_action_ids
+    - actor_had_not_observed_a_terminal_revision_at_origin
+  originated_after_known_closure: invalid_audited_no_op
+  arrived_after_provisional_closure_but_valid_at_origin: include_in_candidate_set
+  terminal_claim_rank_smallest_wins:
+    skipped: 0
+    snoozed: 5
+    notAppropriate: 10
+    positionChanged: 20
+    userDeclaredAlreadyMoved: 30
+    userDeclaredCompleted: 40
+    timerFinished: 50
   winner_sort_key:
-    - greatest_remaining_milliseconds_at_action
+    - smallest_terminal_claim_rank
+    - lexicographically_smallest_registered_action_kind
     - lexicographically_smallest_origin_device_id
-    - smallest_origin_revision
+    - smallest_origin_device_counter
     - lexicographically_smallest_action_id
   rules:
     - reduction_is_commutative_associative_and_idempotent
@@ -640,6 +938,30 @@ terminal_reconciliation:
     - a_later_winning_candidate_updates_the_same_terminal_fact_projection_not_a_second_fact
     - losing_and_duplicate_candidates_remain_only_in_the_companion_or_operational_ledger
     - unknown_or_mismatched_candidates_fail_closed
+    - unsynchronized_wall_time_remaining_duration_and_segment_duration_never_rank_candidates
+  rebase_contract:
+    retained_preterminal_snapshot_requires:
+      - opportunity_id_revision_phase_and_active_segment
+      - every_participant_clock_cycle_id_accumulated_time_and_phase
+      - recovery_deferral_and_session_offer_state
+      - existing_component_fact_projections
+      - accepted_deadline_and_handoff_state
+      - scheduling_decision_chain
+    postterminal_inputs_retained_until_settlement:
+      - idempotent_eligible_interval_records
+      - later_schedule_actions_and_decisions_with_causal_parents
+      - companion_candidates_and_acknowledgements
+    apply_rule: >-
+      Terminal clock state is a pure projection of the retained preterminal snapshot plus
+      the selected winner. If a late valid candidate becomes winner, atomically restore
+      the snapshot, apply the new winner exactly once, keep already-final independent
+      merged-component effects, discard descendants whose causal parent was the losing
+      provisional branch, and deterministically replay the retained idempotent
+      postterminal inputs against the replacement cycles.
+    fact_rule: >-
+      Upsert the same deterministic terminal fact ID and projection revision. Never append
+      a second terminal fact, repeat an accessibility announcement, notification, haptic,
+      or other external side effect. Raw losing candidates remain in their separate ledger.
 
 product_facts:
   closed_vocabulary:
@@ -683,18 +1005,60 @@ product_facts:
 input_and_motion:
   decision: D-032
   entrance: instant_final_field_no_global_tint_blur_or_compositor_transition
-  countdown_start: same_committed_open_action_as_break_started
+  countdown_start:
+    visual: same_committed_open_action_as_break_started
+    movement: only_now_accept_movement_or_merged_movement_accept_with_selected_duration
+    recovery: only_now_accept_recovery_with_selected_duration
+  movement_acceptance:
+    offered_state:
+      timer_running: false
+      done_early_present: false
+      initial_focus: start_5_minutes
+      focus_order: [start_5_minutes, start_2_minutes, already_moved, change_position, skip]
+      controls_first_frame:
+        start_5_minutes: {shortcut: [return, "5"], action: now.accept_movement, duration_seconds: 300}
+        start_2_minutes: {shortcut: [q, "2"], action: now.accept_movement, duration_seconds: 120}
+        already_moved: {shortcut: [a], action: movement.already_moved}
+        change_position: {shortcut: [p], action: movement.position_changed}
+        skip: {shortcut: [escape, command_period], action: movement.escape}
+      voiceover_value: Movement opportunity. Choose five minutes or two minutes. Timer not started.
+    running_state:
+      timer_running: true
+      selected_duration_required: true
+      initial_focus: done_early
+      focus_order: [walk_or_wheel, small_space, seated, done_early, already_moved, change_position, skip]
+      controls_first_frame:
+        walk_or_wheel: {shortcut: ["1"], action: movement.change_content}
+        small_space: {shortcut: ["2"], action: movement.change_content}
+        seated: {shortcut: ["3"], action: movement.change_content}
+        done_early: {shortcut: [return], action: movement.done_early}
+        already_moved: {shortcut: [a], action: movement.already_moved}
+        change_position: {shortcut: [p], action: movement.position_changed}
+        skip: {shortcut: [escape, command_period], action: movement.escape}
+      voiceover_value: Movement opportunity running for the selected duration.
+    merged_rule: replace_movement_action_ids_with_merged_phase_specific_ids_and_keep_the_same_focus_copy_and_shortcuts
+    voiceover_names:
+      start_5_minutes: Start five minutes, Return or 5
+      start_2_minutes: Start two minutes, Q or 2
+      done_early: Done early, Return
+      already_moved: I already moved, A
+      change_position: Change position instead, P, logged separately
+      skip: Skip, Escape
+    escape_rule: immediate_skipped_from_offered_or_running_never_requires_acceptance
   first_active_frame:
     - escape
     - command_period
     - return
-    - movement_shortcuts_1_2_3_q_a_p
+    - movement_offered_shortcuts_5_2_q_a_p
+    - movement_running_shortcuts_1_2_3_a_p
     - every_pointer_control
   exit: instant_then_restore_previous_application
   declaration_guard_seconds: 0
   rule: >-
     No entrance settlement callback or local animation gate may delay the accepted
-    deadline, focus, Escape, Return, or another printed declaration shortcut.
+    deadline, focus, Escape, Return, or another printed declaration shortcut. Movement
+    Done early is absent until a duration acceptance commits `breakStarted`; the offered
+    state's 5- and 2-minute controls and exits are first-frame actions instead.
 
 activation:
   current_runtime: legacy_v1

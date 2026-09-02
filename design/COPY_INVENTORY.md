@@ -332,9 +332,15 @@ The heads-up chip (D-019, DQ-10). Registered per `.claude/rules/health-and-claim
 |---|---|---|---|
 | CP-HU16 | Visual reset · in 45 s | A | Presentation timing `[03 §4.1]` |
 | CP-HU17 | Later ▸ → 5 min · 10 min · 15 min | A | Snooze options verbatim `[03 §4.1]` |
-| CP-HU18 | After this meeting | A | Only shown for a bounded actual Calendar busy-end deadline `[03 §4.1, §9]`; reused by BR-13 |
+| CP-HU18 | After this meeting | A | **Legacy current-runtime copy only.** It may remain only when the person explicitly declared an actual meeting; Calendar busy evidence alone cannot support "meeting." Superseded for the v2 Calendar path by CP-HU22. |
 | CP-HU19 | Presenting for 1 hour | A | Protocol-sanctioned mode `[03 §9]` |
-| CP-HU20 | On hold · busy until 3:00 | A | Calendar busy suppression; shows source honestly `[03 §8]` |
+| CP-HU20 | On hold · busy until 3:00 | A | **Legacy current-runtime copy only.** D-033 supersedes future `On hold` with `Held`; "busy" alone does not identify evidence provenance. |
+| CP-HU22 | Held · selected busy time until 3:00 | A | Canonical v2 Calendar hold. Says only that a user-selected Calendar busy interval is fresh and bounded; never calls it a meeting. |
+| CP-HU23 | After this busy time | A | Canonical v2 bounded Calendar deferral. Available only for a fresh selected busy interval with a known end. |
+| CP-HU24 | Held · Focus you selected | A | Canonical v2 selected-Focus hold; never calls Focus deep work. |
+| CP-HU25 | Held · selected app is active | A | Canonical v2 selected-app hold; never infers the task or productivity. |
+| CP-HU26 | Held · likely call | A | Canonical v2 qualified inference; shown only while fresh enabled evidence meets its rule. `likely` is load-bearing. |
+| CP-HU27 | Held · meeting you selected | A | Canonical v2 explicit user-declared meeting hold; unavailable for Calendar busy evidence alone. |
 
 Rejected in this pass: "Focus mode detected" (implies sensing beyond honest sources);
 "Break enforced" (lockout framing, `[03 §16]`); "We'll hold your calls" (capability lie).
@@ -365,9 +371,9 @@ Spoken strings are user-facing copy and follow the same claims discipline.
 |---|---|---|---|
 | CP-VO01 | "Visual reset. Look at something comfortably far away. Twenty seconds." | A | `[V01]`, `[C004]`; instruction + factual duration |
 | CP-VO02 | "Finished." (timer end) · "Skipped." (Esc) | A | Event vocabulary `[03 §10]` — never "completed successfully" `[C034]` |
-| CP-VO03 | "Movement opportunity. Move in a way that works for you. Five minutes." | A | `[C010]`, `[C047]`; matches the eyebrow terminology |
+| CP-VO03 | "Movement opportunity. Choose five or two minutes. Timer not started." | A | Canonical movement-offered announcement; no duration is accepted and no countdown exists yet. |
 | CP-VO04 | "Cadence: visual reset in 45 seconds. Now, button. Later, menu button." | A | Factual; "Cadence" is a placeholder name (D-001) |
-| CP-VO05 | "On hold: busy until 3:00." / "Paused: busy until 3:00." | A | Honest suppression reason (`07`); never "smart pause" |
+| CP-VO05 | "On hold: busy until 3:00." / "Paused: busy until 3:00." | A | **Legacy current-runtime copy only.** Neither form is canonical v2; D-033 uses `Held` plus qualified evidence. |
 | CP-VO06 | "Visual reset in about 12 minutes. Movement in about 31 minutes. Estimated active computer use, 48 minutes." | A | "about" keeps estimate-level precision; "estimated" never dropped `[C033]` |
 | CP-VO07 | "10 seconds remaining." (coarse timer announcement) · "Done early." (declaration exit) | A | Factual timer milestone + `userDeclaredCompleted`; neither is a health outcome `[03 §10]`, `[C034]` |
 | CP-VO08 | "Visual reset. Look at something comfortably far away. %d seconds." | A | Dynamic fallback when protocol configuration changes the timer; `%d` must equal the actual configured duration. Instruction + factual duration only `[V01]`, `[C004]` |
@@ -378,6 +384,9 @@ Spoken strings are user-facing copy and follow the same claims discipline.
 | CP-VO13 | "Snoozed for %d minutes." | A | Persistence-confirmed selected deferral duration; `%d` equals the retained duration |
 | CP-VO14 | "Paused for 1 hour." | A | Persistence-confirmed manual pause duration; no health or outcome claim |
 | CP-VO15 | "Noted for this session." | A | Confirms only the session-scoped choice; no permanent preference or health claim |
+| CP-VO16 | "Held: selected busy time until 3:00." / "Held: Focus you selected." / "Held: selected app is active." / "Held: likely call." / "Held: meeting you selected." | A | Canonical v2 qualified hold announcements. Each variant requires matching fresh provenance; stale, missing, conflicting, or unqualified evidence is unknown and produces none of these strings. |
+| CP-VO17 | "Start five minutes, Return or 5." / "Start two minutes, Q or 2." | A | Movement-offered actions; accepting either creates the timer and selected duration. |
+| CP-VO18 | "Five minutes selected." / "Two minutes selected." | A | Movement-running value; exactly reflects the accepted duration. |
 
 Cadence rule (not a string): timers announce at coarse marks only (open, 10 s/1:00, end),
 polite live region — per-second announcement is an accessibility defect (`accessibility.md` §5).
@@ -395,14 +404,15 @@ Strings the review pass found unregistered in the round-2 artboards, plus the D-
 | CP-MB18 | Quit | A | Standard platform item; neutral while product identity remains deferred (D-001) |
 | CP-MB19 | Break status | A | Neutral accessibility label; the dynamic value carries the actual clock and suppression state |
 | CP-MB20 | Recovery suggestion | A | Exact protocol term (`03` §4.3); names a suggestion, never a recovered outcome; reused as BR-12 eyebrow |
-| CP-MB21 | Quiet while the Mac is inactive · Presenting, reminders off · Quiet in Focus · Quiet in this app · Snoozed · Waiting for a pause | A | Exact `SuppressionReason` variants, visible and appended to VoiceOver only when that reason is active |
+| CP-MB21 | Quiet while the Mac is inactive · Presenting, reminders off · Quiet in Focus · Quiet in this app · Snoozed · Waiting for a pause | A | **Current-runtime/v1 projection only.** Canonical v2 Paused/Held reasons use CP-HU22–27 and CP-MB23. |
+| CP-MB23 | Paused while the Mac is inactive · Held · meeting you selected · Held · presenting you selected · Held · likely call · Held · timed task you selected · Held · presentation mode you selected · Held · Focus you selected · Held · selected busy time until %@ · Held · selected app is active · Held · snoozed · Held · waiting for a low-friction moment | A | Canonical v2 reason set. Each source-derived variant requires matching fresh provenance and says no more than that evidence proves. `%@` is a fresh known busy-end time. |
 | CP-MB22 | `%@ due.` | A | VoiceOver clock-state format; current concrete outputs are `Visual reset due.` and `Movement due.` |
 | CP-HU21 | in 45 s · in 30 s · in 15 s · in 5 s | A | Coarse capsule steps (D-029) — nothing ticks; height is the continuous signal |
 | CP-SE25 | Breaks · Visual resets · Movement · Schedule | A | Settings sidebar group + rows (functional labels) |
 | CP-SE26 | Quiet · Quiet times · Apps & Focus | A | Settings sidebar; "Quiet times", never "blocked" or "locked" |
 | CP-SE27 | Review · Weekly rhythm | A | "Rhythm", never "report" or "score" `[C039]` |
 | CP-SE28 | Cadence · Notifications · Privacy | A | App group; name is a placeholder (D-001) |
-| CP-SE29 | Gentle — about 30 min · about 75 min / Balanced — about 25 min · about 60 min / Frequent movement — about 25 min · about 35 min | A | Profile subtitles; targets from `product_protocol.yaml` profiles (1800/4500 · 1500/3600 · 1500/2100 s). "About" is repeated in every row because it is the load-bearing CP-SE08 window framing. |
+| CP-SE29 | Gentle — about 30 min · about 75 min / Balanced — about 25 min · about 60 min / Frequent movement — about 25 min · about 35 min | A | **Current-runtime/v1 projection only.** Targets use legacy profiles (1800/4500 · 1500/3600 · 1500/2100 s). "About" remains load-bearing. Canonical v2 uses the registered set and distinct Balanced v2 values below. |
 | CP-SE30 | Visual reset — about every 25 min, for 20 s / Movement — about every 60 min, suggested 5 min | A | Timing rows; "about every" (not "every about" — reviewed 2026-08-25), "suggested" never "required" |
 | CP-SE31 | Heads-up before a break — About 45 seconds | A | `heads_up_seconds_before_target: 45` |
 | CP-SE32 | Wait for a low-friction moment | A | `low_friction_wait` toggle; describes delivery timing, no sensing implied |
@@ -431,6 +441,24 @@ the string labels app state or an action and makes no health claim. Class A stri
 only the injected product configuration or the app's behavior. The four advisory strings are
 non-blocking comparisons against injected thresholds; they do not recommend an outcome.
 
+The Step 3 keys below inventory **current-runtime/v1 copy**. They do not activate the v2
+contract. Canonical future v2 Settings must register and project this complete set instead:
+
+| Stable v2 ID | Display copy | Exact explanation |
+|---|---|---|
+| `calm` | Calm | More space between offers. |
+| `balanced_v2` | Balanced v2 | Starts offering visual resets after 20 minutes and movement after 50 minutes of estimated active computer use. |
+| `frequent_reset` | Frequent reset | Offers resets sooner while preserving the same choice to start, defer, or skip. |
+| `adaptive` | Adaptive | Starts with Balanced v2 timing. At first, it may change only when reminders are delivered or held, not their frequency and not any health conclusion. |
+| `custom_v2` | Custom | Uses the timing values you choose. |
+
+Migration copy is explicit and neutral: **Keep current schedule** preserves the legacy ID and
+every value; **Review new schedule** shows the successor before acceptance. Legacy Balanced is
+not called Balanced v2: its visual window is 20/25/30 minutes and movement window is 50/60/70;
+Balanced v2 is 20/25/27 and 50/55/70. A legacy `custom` selection carries every v1 field, unit,
+ordering, and value unchanged into `custom_v2`; only contract version, identifier, and migration
+state change after acceptance. No automatic migration, inference, or health promise is implied.
+
 | Catalog keys | Exact string or format | Classification and basis | Status |
 |---|---|---|---|
 | `settings.navigation_title`; `settings.section.schedule`; `settings.section.break_content`; `settings.section.context_and_exclusions`; `settings.section.accessibility`; `settings.section.privacy_and_data`; `settings.section.integrations`; `settings.section.why_defaults`; `settings.section.safety_support` | `Settings`; `Schedule`; `Break content`; `Context & exclusions`; `Accessibility`; `Privacy & data`; `Integrations`; `Why these defaults?`; `Safety & support` | Neutral UI navigation labels | Reviewed |
@@ -438,7 +466,7 @@ non-blocking comparisons against injected thresholds; they do not recommend an o
 | `settings.loading`; `settings.load_failed.title`; `settings.load_failed.message`; `settings.retry` | `Loading settings…`; `Settings couldn't be loaded`; `Your existing settings have not been changed.`; `Try again` | Neutral UI status, factual rollback state, and action | Reviewed |
 | `settings.coming_later.title`; `settings.coming_later.message` | `This section is coming next`; `Schedule is ready now. The remaining local settings are being built in order.` | Neutral implementation-status placeholder; no capability or outcome claim | Reviewed |
 | `settings.schedule.rhythm`; `settings.schedule.timing`; `settings.schedule.delivery` | `Rhythm`; `Timing`; `Delivery` | Neutral UI grouping labels | Reviewed |
-| `settings.profile.gentle`; `settings.profile.balanced`; `settings.profile.frequent`; `settings.profile.high_frequency`; `settings.profile.custom` | `Gentle`; `Balanced`; `Frequent movement`; `Research-informed high frequency`; `Custom` | Class A profile names; built-ins map to the injected protocol catalog, per CP-SE23 | Reviewed |
+| `settings.profile.gentle`; `settings.profile.balanced`; `settings.profile.frequent`; `settings.profile.high_frequency`; `settings.profile.custom` | `Gentle`; `Balanced`; `Frequent movement`; `Research-informed high frequency`; `Custom` | **Current-runtime/v1 only.** Built-ins map to the injected legacy protocol catalog, per CP-SE23; canonical v2 uses the registered set above. | Reviewed legacy |
 | `settings.schedule.advanced`; `settings.schedule.visual_reset`; `settings.schedule.movement` | `Advanced schedules`; `Visual reset`; `Movement` | Neutral product-setting and event labels | Reviewed |
 | `settings.schedule.independent_clocks` | `Two clocks run independently. A visual reset never completes movement.` | Class A product-model fact, CP-SE20 | Approved |
 | `settings.schedule.heads_up`; `settings.schedule.low_friction`; `settings.schedule.working_hours_only` | `Heads-up before a break`; `Wait for a low-friction moment`; `Only during working hours` | Class A configuration labels, CP-SE31/32 and CP-MB14 | Approved |

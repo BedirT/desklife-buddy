@@ -64,9 +64,9 @@ the invoking `/usr/bin/swift` process has not been granted Accessibility permiss
 | BR-02 | Visual reset — running | Self-running (D-021); round-2 `Visual.dc.html` + `VisualLight.dc.html` | explored |
 | BR-03 | Visual reset — final seconds | Blink prompt state | todo |
 | BR-04 | Visual reset — text-only / static mode | Reduced-motion + migraine presentation | todo |
-| BR-05 | Movement — offered | Folded into BR-07: surface opens running with choice chips (D-021, D-024) | explored |
+| BR-05 | Movement — offered | Distinct final-field state: choose 5 or 2 minutes; no countdown, `breakStarted`, or Done early before acceptance (D-033) | explored |
 | BR-06 | Movement — activity choice | Three equal chips + position-change tertiary (D-024); round-2 `Movement.dc.html` | explored |
-| BR-07 | Movement — running | Self-running countdown, one guidance sentence (D-024); round-2 `Movement.dc.html` | explored |
+| BR-07 | Movement — running | Begins only after explicit 5/2-minute acceptance; selected duration, countdown, Done early, and one guidance sentence (D-024/D-033); round-2 `Movement.dc.html` | explored |
 | BR-08 | Movement — user-declared completion | Completion is declared, never verified | todo |
 | BR-09 | Merged break | Visual segment → movement, one surface `[03 §6.3]` | explored |
 | BR-10 | Merged — "visual only" chosen | Movement stays due; must say so | explored |
@@ -114,7 +114,7 @@ covered by previews and snapshots.
 |---|---|---|---|
 | ON-01 | What this is | Promise, one screen | todo |
 | ON-02 | What it can and cannot know | The thesis screen | todo |
-| ON-03 | Choose a rhythm | Calm · Balanced · Frequent reset · Adaptive · Custom; legacy rows keep exact values until explicit migration | todo |
+| ON-03 | Choose a rhythm | Calm · Balanced v2 · Frequent reset · Adaptive · Custom (`custom_v2`); legacy rows keep exact IDs/values until explicit migration | todo |
 | ON-04 | How you move | Four options, equal weight | todo |
 | ON-05 | Comfort | Motion, brightness, static mode | todo |
 | ON-06 | Ready | Works now; integrations named, not requested | todo |
@@ -223,29 +223,35 @@ Multi-display        — Atmosphere per chosen display; the full pill stack appe
                        exactly one reachable control stack (ED-03).
 ```
 
-### K.2 Movement break — running (BR-05/06/07, `Movement.dc.html`)
+### K.2 Movement break — offered and running (BR-05/06/07, `Movement.dc.html`)
 
 ```
-Keyboard path        — Appears on its own or via menu "Start movement"; 1/2/3 select the
-                       movement choice, Q two-minutes, ↩ done early, A already-moved,
-                       P change-position, Esc leaves — every key printed on its control.
+Keyboard path        — Offered: Return or 5 accepts 5 minutes; Q or 2 accepts 2 minutes;
+                       A already-moved, P change-position, Esc/⌘. leaves. Running: 1/2/3
+                       select content, Return is Done early, and A/P/Esc/⌘. retain their
+                       labeled actions. Every visible key works on the first frame.
                        In the merged segment, "Just the visual one" precedes Skip in the
                        same Tab path. Every printed key is immediate first-frame. No pointer
                        is needed.
-Initial focus        — "Done early" pill (same position as BR-02 — predictability rule).
-Focus order          — Walk or wheel → Small space → Seated → 2 minutes instead →
-                       Done early → I already moved → [Just the visual one, merged only] →
-                       Skip → Change position → (wraps).
+Initial focus        — Offered: "Start 5 minutes." Running: "Done early."
+Focus order          — Offered: Start 5 minutes → 2 minutes → I already moved → Change
+                       position instead → Skip. Running: Walk or wheel → Small space →
+                       Seated → Done early → I already moved → Change position instead →
+                       [Just the visual one, merged only] → Skip → (wraps).
 Escape               — Leaves immediately → `skipped`. ⌘. same.
-VoiceOver names      — "Walk or wheel, 1" · "Small space, 2" · "Seated, 3" (equal rank,
+VoiceOver names      — Offered: "Start five minutes, Return or 5" · "Start two minutes,
+                       Q or 2" · "I already moved, A" · "Change position instead, P,
+                       logged separately" · "Skip, Escape". Running: "Walk or wheel, 1"
+                       · "Small space, 2" · "Seated, 3" (equal rank,
                        same trait set — never "alternative") · "Two minutes instead" ·
                        "Done early, Return" · "I already moved, A" · ["Just the visual one",
                        merged only] · "Skip, Escape" ·
                        "Change position instead, P — logged separately". Siblings with
                        parallel names, per ACCESSIBILITY.md BR-05 (tertiary tier is
                        visual only — D-027).
-VoiceOver values     — Open: "Movement opportunity. Move in a way that works for you. Five
-                       minutes." Selection change announces the chip title + its one
+VoiceOver values     — Offered: "Movement opportunity. Choose five or two minutes. Timer
+                       not started." Running names the selected duration. Selection change
+                       announces the chip title + its one
                        guidance sentence. Countdown at 1:00 and 0 only, polite.
 Text scaling         — Chips grow in height, stay one row to +20%, wrap to 2+1 at +35%;
                        guidance sentence wraps to 2 lines; safety footer wraps to 2 lines
@@ -275,7 +281,8 @@ Focus order          — When tabbed into (system status-item navigation): Now �
                        out. Hover reveals the same two exits.
 Escape               — With capsule key: waves it off for this cycle → `skipped`.
 VoiceOver names      — "Cadence: visual reset in 45 seconds. Now, button. Later, menu
-                       button." Hold state: "Held — busy until 3:00."
+                       button." Hold examples qualify evidence: "Held — selected busy time
+                       until 3:00," "Held — Focus you selected," or "Held — likely call."
 VoiceOver values     — One polite announcement at appearance; one at hold-state change.
                        Numerals step 45 → 30 → 15 → 5 s (CP-HU21) and are not announced
                        per step. Never per-second.
@@ -284,8 +291,8 @@ Text scaling        — Capsule grows in height/width with text; on overflow it 
 High contrast        — Border `rgba(255,255,255,0.40)`; solid fill (already near-solid).
 Reduced motion       — No slide (fade in); sun static at three stepped heights; reactive
                        glint off and centered (D-023).
-Meaning w/o color    — Time = sun height (position); hold = dashed ring + the word "On
-                       hold"; break type is named in text.
+Meaning w/o color    — Time = sun height (position); hold = dashed ring + the word "Held";
+                       break type is named in text.
 Alternative movement — n/a (no movement content on this surface).
 Multi-display        — Lives fixed at top-center on the active pointer/key display (D-029).
                        The capsule itself covers full-screen and hidden-bar cases; an
@@ -306,7 +313,8 @@ Escape               — Closes the menu (system).
 VoiceOver names      — Status region group: "Visual reset in about 12 minutes. Movement
                        in about 31 minutes. Estimated active computer use, 48 minutes."
                        Items by their visible labels; Pause reads its submenu.
-VoiceOver values     — Held context reads its reason: "Held — busy until 3:00." Manual
+VoiceOver values     — Held context reads its qualified reason, such as "Held — selected
+                       busy time until 3:00." Manual
                        pause reads "Paused until you resume" (CP-MB17). "Only during working hours"
                        reads its checked state.
 Text scaling         — Menu grows with system menu text size (platform-owned); bars keep
@@ -330,8 +338,10 @@ Initial focus        — The sidebar's selected row (platform convention).
 Focus order          — Sidebar (arrow keys within) → content controls top-to-bottom in
                        reading order → (window controls, platform-owned).
 Escape               — Closes the window (standard settings-window behavior); ⌘W same.
-VoiceOver names      — Sidebar rows by visible label (CP-SE25–28); profile rows read name
-                       + subtitle ("Balanced, 25 minutes visual, 60 minutes movement");
+VoiceOver names      — Sidebar rows by visible label (CP-SE25–28); canonical v2 profile rows
+                       read name + subtitle (for example, "Balanced v2, about 25 minutes
+                       visual, about 55 minutes movement"); legacy rows retain exact v1 names
+                       and values until migration;
                        every toggle names its consequence, not its mechanism.
 VoiceOver values     — Toggles announce state on change (system). Nothing announces
                        spontaneously.
@@ -408,12 +418,12 @@ Multi-display        — Uses the break overlay display plan; one shared model a
 ```
 Keyboard path        — Standard sheet Tab order; Space activates the focused row. Esc is
                        printed on Skip and records only the sheet's typed scope.
-Initial focus        — First configured duration (5 minutes in the Balanced profile).
-Focus order          — 5 → 10 → 15 minutes → [After this meeting, when bounded] →
+Initial focus        — First configured duration (5 minutes in the Balanced v2 preset).
+Focus order          — 5 → 10 → 15 minutes → [After this busy time, when bounded] →
                        For 1 hour → This one doesn't work for me → Skip → (wraps).
 Escape               — Skip immediately, no confirmation or escalation.
-VoiceOver names      — "Snooze for 5 minutes" · 10 · 15; "After this meeting" only for a
-                       bounded Calendar busy end; remaining rows use their visible labels.
+VoiceOver names      — "Snooze for 5 minutes" · 10 · 15; "After this busy time" only for a
+                       fresh selected bounded Calendar busy end; remaining rows use their visible labels.
 VoiceOver values     — A persistence-confirmed action is announced once; repeat deferrals
                        never change tone, size, color, copy, or announcement urgency.
 Text scaling         — The native vertical scroll container keeps every row reachable at

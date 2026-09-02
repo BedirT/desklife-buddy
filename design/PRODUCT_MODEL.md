@@ -40,18 +40,22 @@ Four independent scheduling accumulators. Their exact eligibility and every acti
 [`machine-readable/timing_runtime_v2.yaml`](machine-readable/timing_runtime_v2.yaml). A clock
 rotation means a fresh schedule, not a verified body outcome.
 
-| Clock | Scheduling meaning | Permission-free accrual | Balanced v2 target / latest | Fresh-cycle causes |
+| Clock | Scheduling meaning | Permission-free accrual | Balanced v2 target / latest | Exhaustive fresh-cycle effects |
 |---|---|---|---|---|
-| **Visual** | Estimated near-screen exposure need | Valid awake/active/unlocked monotonic intervals; input silence below 5 min still counts for passive reading | 25 / 27 min | Visual timer or declaration; return from ≥5 min long idle; completed movement courtesy; approved strong movement/away scheduling decision |
-| **Movement** | Estimated low-movement desk need | Same system eligibility, but only while input is recent (≤60 s) | 55 / 70 min | Movement timer or declaration; `I already moved`; approved strong movement scheduling decision; Skip starts a new schedule without completion credit |
-| **Position** | Estimated or declared position stability | Optional/manual; visual eligibility until long-idle onset | 45 min | `positionChanged` only, or a later validated position rule that never scores posture |
-| **Recovery** | Long run plus repeated movement deferral | Only while movement timing is eligible after deferral | eligible 90 / typically 120 min | Movement schedule restart or session recovery; never a risk score |
+| **Visual** | Visual-reset schedule based on estimated active computer use | Valid awake/active/unlocked monotonic intervals; input silence below 5 min still counts; every accepted ritual freezes position and visual as scoped by the matrix | 25 / 27 min | Visual timer/Done/Skip/Escape; long-idle return; movement or recovery timer/Done courtesy; merged visual terminal or visual-phase Escape; capsule Escape/second snooze when visual participates; `I already moved` only with qualified screen-away basis; approved restart decision |
+| **Movement** | Movement-opportunity schedule based on estimated active computer use | Same system eligibility, but only while input is recent (≤60 s); not a body-movement/stillness estimate | 55 / 70 min | Movement timer/Done/`I already moved`/Skip/Escape; merged visual-phase Escape; merged movement timer/Done/already-moved/Skip/Escape; recovery terminal; capsule Escape/second snooze when movement participates; approved restart decision |
+| **Position** | Optional position-change schedule based on estimated active computer use or a user interval | Visual eligibility until long-idle onset, except it freezes during every accepted ritual; not a body-position/stability estimate | 45 min | Standalone or in-movement `positionChanged`; standalone position Skip; capsule Escape/second snooze when position participates |
+| **Recovery** | Optional recovery schedule from eligible interaction time and explicit deferrals | Only while movement timing is eligible after deferral | eligible 90 / typically 120 min | Movement timer/Done/already-moved; recovery timer/Done/Skip/Escape; capsule Escape/second snooze when recovery participates; approved restart decision. Movement Skip increments deferral instead of refreshing recovery |
 
-New preset IDs are Calm (`calm`), Balanced (`balanced_v2`, default), Frequent reset
-(`frequent_reset`), Adaptive (`adaptive`), and Custom (`custom`). Exact values and the explicit
+New preset IDs are Calm (`calm`), Balanced v2 (`balanced_v2`, default), Frequent reset
+(`frequent_reset`), Adaptive (`adaptive`), and Custom (`custom_v2`). Exact values and the explicit
 legacy-ID migration disposition live under `preset_contract_v2` in
 `../research/health/machine-readable/product_protocol.yaml`. Shipped IDs retain exact v1 values
-until the person accepts a successor; no update silently retunes a schedule.
+until the person accepts a successor; no update silently retunes a schedule. Every v2 selection
+persists contract version `2`, its identifier, and migration state. Legacy `custom` retains its
+exact payload until explicit acceptance of `custom_v2`, whose payload fields/units/values are
+compatible without reinterpretation. Adaptive starts at Balanced v2 and initially changes only
+delivery inside the window and bounded holds, never frequency or health outcomes.
 
 **Non-negotiable relationships:**
 
@@ -118,9 +122,19 @@ Per independent `ClockCycleID`, coordinated by one `OpportunityID`:
      └── Escape ────────────► dismissed == skip, no penalty, no follow-up
 ```
 
+The machine phase graph distinguishes offered, running, merged visual, merged movement, Held,
+Paused, corridor, provisional-terminal, and closed states. Movement `Done early` exists only after
+a 5- or 2-minute acceptance. Each action registers its source phase/revision, opportunity kind,
+participants, segment, and payload. Concurrent nonterminal actions use a fixed
+least-interruptive rank; arrival order never changes the winner.
+
 Escape is always equivalent to the least-committal exit. It is never a trap and never asks
-"are you sure". `ActionID` makes retries idempotent. A stale, mismatched-cycle, duplicate, or
-losing terminal candidate is an audited no-op; arrival order never changes the winner.
+"are you sure". `ActionID` makes retries idempotent. An action originated after its actor knew the
+opportunity closed is an audited no-op. A valid candidate originated before that actor learned of
+closure still reconciles when it arrives late. Terminal order uses fact-claim rank and stable
+logical identity, never wall time or remaining/segment duration. A replacement winner rebases
+from the retained pre-terminal snapshot and replays idempotent later inputs; one projected fact
+and already-final merged-component effects remain.
 
 ## 6. Paused and Held
 
@@ -129,8 +143,12 @@ and clock effect explicit:
 
 | State | Reasons | Clock effect | Visible rule |
 |---|---|---|---|
-| **Paused** | Manual Pause; outside selected working hours; asleep, locked, inactive, or unavailable system; confirmed away; relevant accepted ritual | The affected clocks freeze | Say `Paused` and the exact user-relevant reason/deadline; system-only reasons may remain invisible |
-| **Held** | Meeting/call; screen share/presentation; selected timed task; Focus; Calendar busy; excluded/deep-focus app, game, or media; snooze; low-friction wait | Need continues under each clock's eligibility rules, but no opportunity is presented | Say `Held` and the actual reason, never “smart pause” |
+| **Paused** | Manual Pause; outside selected working hours; asleep, locked, inactive, or unavailable system; qualified confirmed away; relevant accepted ritual | The affected clocks freeze | Say `Paused` and the exact user-relevant reason/deadline; system-only reasons may remain invisible |
+| **Held** | User-declared meeting/presentation; inferred likely call; selected timed task/presentation mode; selected Focus, busy interval, or app; snooze; low-friction wait | Eligible schedule time continues, but no opportunity is presented | Say `Held` plus the qualified source: selected busy time is not a meeting, selected app is not deep focus, and inference says `likely` |
+
+Every hold carries provenance, source capability, observation/expiry, qualification, and an
+automatic-correction action when applicable. Missing, stale, unavailable, or conflicting evidence
+is unknown and cannot create a hold, an away pause, or a body/activity claim.
 
 Explicit manual pause outranks the remaining Paused reasons in the machine-defined order, and
 every Paused reason outranks a hold. Timed pause persists across relaunch; “until I resume” is
@@ -149,6 +167,10 @@ When visual and movement come due within five minutes of each other `[03 §6.3]`
 - The visual schedule becomes fresh when its segment reaches a timer/declaration terminal. The
   movement schedule becomes fresh only under its own terminal action. Starting a timer is not a
   terminal effect.
+- Visual timer and `Done early` both advance to a distinct movement-duration offer. The 5- or
+  2-minute selection records movement `breakStarted`; movement timer, Done, already-moved,
+  position-change, Skip, visual-only, and Escape each have phase-specific transitions. Every
+  movement-phase exit retains the already-fresh visual-segment effect.
 - Never two consecutive overlays. Never a "2 of 2" counter.
 - The merged `OpportunityID` carries both original `ClockCycleID` values. It never creates a
   merged clock or a generic merged outcome.

@@ -388,16 +388,19 @@ with health values and preset compatibility in
 
 ### 17.1 Clock meaning and permission-free eligibility
 
-The four clocks now have explicit scheduling meanings: estimated near-screen exposure need,
-estimated low-movement desk need, position-stability need, and recovery load. None is a
-diagnosis, body measurement, or health score.
+The four clocks are schedules based on estimated active computer use: visual-reset schedule,
+movement-opportunity schedule, optional position-change schedule, and optional recovery schedule
+after explicit deferrals. They are not estimates of gaze, near-screen exposure, body movement,
+stillness, position, stability, posture, diagnosis, or health.
 
 For the permission-free path, valid adjacent monotonic samples must show an awake, active,
 unlocked Mac session inside enabled working hours. Manual pause, system unavailability, a
-confirmed-away interval, and each clock's relevant accepted ritual freeze accrual. Input silence
+qualified confirmed-away interval, and each clock's relevant accepted ritual freeze accrual.
+Position timing freezes during every accepted ritual. Input silence
 below 300 seconds remains eligible for the visual clock so passive reading is not treated as a
-visual reset. The movement estimate accrues only through the 60-second recent-input window;
-longer input silence freezes it without implying movement. This supersedes §7.2's blanket
+visual reset. The movement-opportunity schedule accrues only through the 60-second recent-input
+window; longer input silence freezes it without implying body movement or stillness. This
+supersedes §7.2's blanket
 “idle between 60 seconds and 5 minutes: pause accumulation” only for visual timing.
 
 Non-finite or backward time and adjacent samples more than 15 seconds apart establish a new
@@ -413,32 +416,42 @@ likely-away interval.
 ### 17.2 Paused, Held, and accepted time
 
 `Paused` means its named clock scope does not accrue: explicit Pause, outside selected working
-hours, sleep/lock/inactive/unavailable session, and confirmed away freeze all four clocks; an
-accepted visual ritual freezes visual, while an accepted movement, merged, or recovery ritual
-freezes visual, movement, and recovery. `Held`
-means accrued need continues but presentation is quiet: meeting/call, screen sharing,
-presentation, selected timed task, Focus, Calendar busy, selected deep-focus app/game/media,
-snooze, or low-friction waiting. Hold release has a 90-second landing corridor and presents at
+hours, sleep/lock/inactive/unavailable session, and qualified confirmed away freeze all four
+clocks; an accepted visual ritual freezes visual and position, while an accepted movement,
+merged, or recovery ritual freezes all four. `Held` means eligible schedule time continues but
+presentation is quiet. Its visible explanation preserves provenance: a user-declared meeting is
+stated as selected by the person; Calendar says selected busy time, not meeting; Focus says the
+selected Focus is active; a selected app says only that the selected app is active; inference
+must say `likely`. Missing, stale, unavailable, or conflicting evidence is unknown and creates no
+hold or body/activity claim. Snooze and low-friction waiting remain typed holds. Hold release has
+a 90-second landing corridor and presents at
 most one merged opportunity. Manual-pause resume also uses 90 seconds; working-hours re-entry
 uses 60 seconds. The visible state must use these exact terms and the actual reason.
 
-An accepted visual, movement, merged, or recovery ritual has one absolute deadline. Local continuous monotonic time
-is primary; portable wall deadline metadata reconstructs only the accepted countdown when its
-monotonic epoch is unavailable. Sleep, lock, callback suspension, relaunch, or device handoff does
-not extend that duration. Schedule clocks still never use wall catch-up.
+An accepted visual, movement, merged, or recovery segment has one continuous-monotonic deadline.
+Its epoch and anchor persist. Same-epoch restore subtracts current monotonic ticks; an unavailable
+or discontinuous epoch expires the segment rather than reconstructing it from wall time. A
+companion transfer requires a bounded monotonic handshake and subtracts its full uncertainty;
+without acknowledgment the sender remains authoritative. Portable wall values are display and
+audit metadata only. Sleep, lock, callback suspension, relaunch, clock changes, or handoff cannot
+extend the accepted duration. Every deadline, snooze, target, and release boundary uses
+`elapsed >= deadline`; exact 60-, 90-, and 300-second edges fire once.
 
 ### 17.3 Presets and compatibility
 
-New selections are Calm (`calm`), Balanced (`balanced_v2`, default), Frequent reset
-(`frequent_reset`), Adaptive (`adaptive`), and Custom (`custom`). Their exact soft/target/latest,
+New selections are Calm (`calm`), Balanced v2 (`balanced_v2`, default), Frequent reset
+(`frequent_reset`), Adaptive (`adaptive`), and Custom (`custom_v2`). Their exact soft/target/latest,
 duration, and position values are the `preset_contract_v2` keys in `product_protocol.yaml`.
-Adaptive begins at Balanced bounds and may adapt delivery, bounded holds, cross-clock courtesy,
-and explicit approved restart rules; it does not silently personalize frequency.
+Adaptive begins at Balanced v2 bounds and initially adapts only delivery within the configured
+window and bounded holds; it does not personalize frequency or health outcomes.
 
 The shipped IDs `gentle`, `balanced`, `frequent_movement`, and
 `research_informed_high_frequency` retain their exact v1 values. Decode and display them without
-retuning. Offer a successor explicitly; migrate only after acceptance. The high-frequency preset
-becomes an exact custom snapshot rather than being coerced into a different built-in. This
+retuning. Legacy `custom` and v2 `custom_v2` are distinct persisted identifiers under an explicit
+contract version and migration state. The v2 custom payload preserves v1 field names, units,
+ordering, and values; acceptance changes only its version/identifier/migration tags. Offer a
+successor explicitly; migrate only after acceptance. The high-frequency preset becomes an exact
+`custom_v2` snapshot rather than being coerced into a different built-in. This
 supersedes §5 for new selections without rewriting the historical modes.
 
 ### 17.4 Action effects
@@ -446,6 +459,8 @@ supersedes §5 for new selections without rewriting the historical modes.
 The v2 machine transition table is normative. In summary:
 
 - a visual timer finish or `Done early` begins a fresh visual cycle;
+- movement has a distinct offered state with no timer, `breakStarted`, or `Done early`; accepting
+  the visible 5- or 2-minute action creates the running state and selected-duration deadline;
 - a movement timer finish or `Done early` begins fresh movement and visual cycles, preventing
   the post-walk early-visual failure;
 - `I already moved` begins a fresh movement cycle, and refreshes visual only when the declared
@@ -453,14 +468,17 @@ The v2 machine transition table is normative. In summary:
 - a position change refreshes only the position clock;
 - a standalone position skip begins a new position cycle without completion credit, avoiding a
   rapid repeat while leaving visual, movement, and recovery unchanged;
-- a 5- or 10-minute recovery acceptance freezes visual, movement, and recovery while its
+- a 5- or 10-minute recovery acceptance freezes visual, movement, position, and recovery while its
   absolute deadline runs; finish or `Done early` starts fresh visual, movement, and recovery
   cycles, while Skip/Escape restores the pre-ritual visual state, starts fresh movement and
   recovery cycles without completion credit, and prevents another recovery offer that session;
 - visual and movement Skip/Escape close immediately, record `skipped`, and begin a fresh cycle
   for the refused standalone need without completion credit or rapid re-offer;
 - snooze preserves the same due cycle and OpportunityID through one bounded re-offer;
-- merged work keeps the independent cycle IDs and retains every completed segment's effect;
+- merged work keeps the independent cycle IDs: visual timer or `Done early` records that segment
+  once and advances to the movement-duration offer; movement 5/2 acceptance starts its deadline;
+  movement timer, Done early, already moved, content change, position change, Skip, visual-only,
+  and Escape are phase-specific, and every movement-phase exit retains the fresh visual effect;
 - a strong sensor observation may support an explained, undoable scheduling restart under a
   validated, enabled rule, but creates no completion product fact.
 
@@ -472,9 +490,19 @@ the terminal action owns the fresh-cycle effect.
 ### 17.5 Identity, reconciliation, and facts
 
 Every clock cycle, coordinated opportunity, action, and automatic decision has its own stable
-identity. A merged opportunity references its separate visual and movement cycle IDs. Duplicate,
-unknown, stale, mismatched-cycle, and losing actions are audited no-ops. Cross-device terminal
-reduction is commutative, associative, and idempotent, so arrival order never selects the result.
+identity. A merged opportunity references its separate visual and movement cycle IDs. Every
+action names its origin phase/revision/segment, participant set, persistent device counter, and
+causal parents. An action originated after known closure is an audited no-op; a valid candidate
+originated before its device learned of closure remains eligible even if it arrives later.
+Nonterminal conflicts use a fixed least-interruptive intent rank. Terminal conflicts use a fixed
+fact-claim rank and stable identifiers, never wall time, remaining duration, segment duration, or
+arrival order. Both reductions are commutative, associative, and idempotent.
+
+Before a terminal projection, retain the exact opportunity/clock/deadline snapshot. If a late
+candidate replaces a provisional winner, restore that snapshot, apply the new winner once,
+preserve already-final independent merged-segment effects, discard only causal descendants of the
+losing branch, and replay retained idempotent post-terminal inputs. The same deterministic fact ID
+is updated; no second fact, announcement, haptic, or notification is emitted.
 
 The ten §10 product facts remain closed. Operational records, sensor observations, fused
 assessments, scheduling decisions, corrections, and companion actions are separate ledgers. The

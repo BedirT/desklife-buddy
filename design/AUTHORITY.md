@@ -189,13 +189,13 @@ claims, migration, or accessibility field.
 | Normative prose | `research/health/03_PRODUCT_HEALTH_PROTOCOL_SPEC.md` §17; `PRODUCT_MODEL.md` §§3, 5–8; `INTERACTION_SPEC.md` §§1–9; `USER_FLOWS.md` F-01–F-14. |
 | Machine contract | `machine-readable/timing_runtime_v2.yaml` version 2.0; `product_protocol.yaml.preset_contract_v2`; legacy-read-only mapping in `event_schema.json.x_contract_status`. |
 | Behavior owner | Existing `ActivityEstimator`, `ProtocolEngine`, lifecycle reducers, `ProtocolRuntime`, `ProtocolStateStore`, `SwiftDataProtocolStore`, App composition, and existing Features. This story changes none; `CURRENT_STATE_CONFORMANCE.md` assigns each runtime gap. |
-| Action and identity | `ClockCycleID`, `OpportunityID`, `ActionID`, `DecisionID`, device/session identity, the complete transition table, idempotent stale-action rule, and commutative terminal winner are defined in the v2 machine contract. |
+| Action and identity | `ClockCycleID`, `OpportunityID`, `ActionID`, `DecisionID`, device/session identity, persistent device counters and causal parents, the canonical phase graph/guards, deterministic nonterminal rank, valid-late terminal rule, total logical terminal order, retained pre-terminal snapshot, and idempotent rebase are defined in the v2 machine contract. |
 | Permission | None for this permission-free contract. No entitlement or permission is added. Optional sensor restart remains disabled until its separate permission/claims/privacy/validation story; refusal cannot alter the core. |
 | Data lifecycle | No runtime data change in this story. Ten product facts remain distinct. Operational, observation, assessment, decision, correction, and companion ledgers are separate future stores; raw protected buffers are never product facts. |
-| Fallback | Awake/active/unlocked coarse sampling, recent input for movement, passive-reading visual eligibility, zero gap catch-up, 300-second long-idle edge, 60-second return grace, 90-second wake grace, and no sensor-completion inference. |
-| Accessibility | D-032/D-033 first-frame Escape/⌘./Return/1–3/Q/A/P and pointer controls; immediate static equivalent; existing focus restore, VoiceOver, contrast, text-size, equal movement, and multi-display obligations remain. Runtime conflict stays declared. |
+| Fallback | Honest schedules based on estimated active computer use; awake/active/unlocked coarse sampling, recent input only as movement-clock accrual eligibility, passive-reading visual accrual, zero gap catch-up, exact `elapsed >= deadline` 300-second long-idle and 90-second wake edges, conservative accepted-deadline expiry on monotonic discontinuity, and no gaze/body/position/sensor-completion inference. |
+| Accessibility | D-032/D-033 first-frame Escape/⌘./Return/5/2/1–3/Q/A/P and pointer controls; movement offered/running distinction, initial focus/order, VoiceOver timer-not-started/selected-duration states, immediate static equivalent, and existing focus restore, contrast, text-size, equal movement, and multi-display obligations remain. Runtime conflict stays declared. |
 | Verification | Machine parity/citation/link checks plus lint, Domain, and Features in Story #19. Runtime stories require RED characterization, retained v1 fixtures, focused reducers, snapshots, real app/device proof, and exact-head gates. |
-| Compatibility | V2 presets use new IDs; all shipped raw values decode unchanged. No historical identity is invented. Schedule clocks never wall-catch-up. Unknown/stale/duplicate/mismatched actions fail closed. `event_schema.json` v1 remains decode-only. |
+| Compatibility | V2 presets use new IDs including `custom_v2`; all shipped raw values decode unchanged, with exact payload compatibility for legacy `custom`. No historical identity is invented. Schedule clocks never wall-catch-up. Actions originated after known closure and unknown/duplicate/mismatched actions fail closed; already-originated valid late candidates still reconcile. `event_schema.json` v1 remains decode-only. |
 
 ## Stable identifier compatibility
 
@@ -227,7 +227,7 @@ The minimum known current compatibility inventory is:
 - built-in profile IDs: `gentle`, `balanced`, `frequent_movement`,
   `research_informed_high_frequency`, plus `custom`;
 - canonical v2 preset IDs, not runtime-activated yet: `calm`, `balanced_v2`,
-  `frequent_reset`, `adaptive`, and `custom`. The first four legacy IDs remain decodable at
+  `frequent_reset`, `adaptive`, and `custom_v2`. The first four legacy IDs remain decodable at
   exact v1 values; explicit migration successors are owned by
   `product_protocol.yaml.preset_contract_v2.legacy_identifier_disposition`;
 - persisted preference tags: `AppPreferences` root keys `formatVersion`, `schedule`,

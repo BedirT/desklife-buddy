@@ -13,14 +13,14 @@ Legend: `→` next step · `⤳` background/no UI · `✕` flow ends
 Install → launch → ON-01 What this is
   → ON-02 What it can and cannot know          (the honesty screen; not skippable content,
                                                 but the whole flow is skippable)
-  → ON-03 Choose a rhythm  [Calm | Balanced✓ | Frequent reset | Adaptive | Custom]
+  → ON-03 Choose a rhythm  [Calm | Balanced v2✓ | Frequent reset | Adaptive | Custom]
   → ON-04 How you move     [Walk/wheel | Seated movement | Mix movement paths | Position change]
   → ON-05 Comfort          [Standard | Static + brightness; macOS choices shown read-only]
   → ON-06 Ready            (Choices summarized; integrations named, not requested.)
   ✕ Menu bar item appears (MB-01). Clocks start.
 ```
 
-- **Skip at any point** → ON-07: Balanced profile, all four movement options offered
+- **Skip at any point** → ON-07: Balanced v2 preset, all four movement options offered
   equally, no permissions requested, no reminder to finish setup.
 - **No permission is requested during onboarding** `[09 §7 permission-first onboarding]`.
   Notifications are requested at F-03 step 1; Calendar at SE-12.
@@ -33,7 +33,7 @@ Install → launch → ON-01 What this is
 ```
 ⤳ permission-free estimator running (5 s expected samples; 15 s maximum covered gap)
 ⤳ four clocks advancing: visual · movement · position · recovery
-  → visual clock reaches soft-due (20 min, Balanced)
+  → visual clock reaches soft-due (20 min, Balanced v2)
     → MB-02 glyph changes            ← Level 0. This is the whole interaction 
                                         most of the time.
     → Paused/Held check (PRODUCT_MODEL §6)
@@ -53,7 +53,7 @@ If a direction cannot make MB-01→MB-02 legible and calm, the direction fails.
 ```
 HU-01 heads-up (45 s before target)
   ├ Start now          → BR-01 → BR-02 immediate + absolute 20 s deadline
-  │                      → BR-03 blink cue → timerFinished
+  │                      → coarse final milestone → timerFinished
   │                      → AK-02 (nothing shown) ✕  fresh visual schedule
   ├ In 5 minutes       → snoozed(300) → return to F-02 ✕
   ├ More options       → HU-05 → BR-13 [5·10·15 min | after meeting | pause 1 hr |
@@ -61,7 +61,7 @@ HU-01 heads-up (45 s before target)
   └ ignored            → at target: BR-01 appears
                           ├ Escape / click away → skipped ✕   (fresh visual schedule,
                           │                                    no completion credit)
-                          ├ "I already looked away" → userDeclaredCompleted ✕
+                          ├ "Done early" → userDeclaredCompleted ✕
                           └ run to completion → as above
 ```
 
@@ -75,17 +75,22 @@ HU-01 heads-up (45 s before target)
 
 ```
 HU-02 heads-up
-  → BR-05 offered  [Start 5 minutes (primary) | 2 minutes | Choose activity | Not now]
-      ├ Choose activity → BR-06  four equal options:
-      │     walk/wheel [L01] · seated active [M02] · small space [L03] · position change [P01]
-      │     └ position change chosen → F-05 (does NOT reset the movement clock)
-      ├ Start 5 min / 2 min → breakStarted + absolute deadline → BR-07 running
-      │     → timerFinished / BR-08 "Done" → fresh movement + visual schedules ✕
+  → BR-05 offered  [Start 5 minutes (initial focus) | 2 minutes | I already moved |
+                    Change position instead | Skip]
+      ├ Start 5 min / 2 min → breakStarted + selected duration + absolute deadline
+      │     → BR-07 running [three equal content choices | Done early | I already moved |
+      │                      Change position instead | Skip]
+      │     → timerFinished / BR-08 "Done early" → fresh movement + visual schedules ✕
       │     └ user leaves or device sleeps/locks → deadline continues → finish/receipt on return
       ├ "I already moved" → userDeclaredAlreadyMoved → fresh movement schedule;
       │     visual fresh only with an explicit or strong fresh screen-away basis ✕
-      └ Not now → BR-13 snooze sheet
+      └ Skip / Escape → skipped; fresh movement schedule without completion credit ✕
 ```
+
+BR-05 has no timer or Done early. Its focus order is 5 → 2 → already moved → position → Skip;
+Return/5 and Q/2 accept their durations on the first frame. BR-07 focuses Done early and exposes
+1/2/3 content choices. A/P/Escape/⌘. remain first-frame actions in both states. VoiceOver says
+"timer not started" while offered and names the accepted duration while running.
 
 - Movement timer/declaration and `I already moved` create a fresh movement schedule. Skip/Escape
   also starts a new schedule to respect refusal, but records no completion credit. Acceptance
@@ -116,7 +121,13 @@ Both due inside merge_window (300 s)
   → BR-09 single surface:
         segment 1 · look far away (≈20 s)
         segment 2 · movement (5 or 2 min, or choose activity)
-  ├ complete both → fresh independent visual + movement schedules ✕
+  ├ visual timer / Done early → retain fresh visual effect → movement offered
+  │   ├ accept 5 / 2 min → movement running
+  │   │   ├ timer / Done early → fresh movement; visual remains fresh ✕
+  │   │   ├ I already moved → declared movement fact; visual remains fresh ✕
+  │   │   ├ Change position → position fact/cycle; visual remains fresh ✕
+  │   │   └ Skip / Escape → skipped movement schedule; visual remains fresh ✕
+  │   └ content changes while running never alter selected duration
   ├ "Just the visual one" → BR-10 → visual schedule is fresh, movement remains due,
   │                          screen says so plainly, returns to F-02
   └ Escape during visual → skipped facts; fresh schedules prevent rapid re-offer ✕
@@ -145,13 +156,20 @@ This flow is where most competitors fail. It is a first-class design target, not
 ```
 MB-12 → [30 min | 1 hour | Until… | Until tomorrow | While presenting]
   → explicit Pause: clocks freeze, deadline/reason survive relaunch
-  → presenting/call/Focus/Calendar/timed task: Held; eligible need continues
+  → explicit presenting/meeting/call, selected Focus, selected Calendar busy interval,
+    selected app, or qualified likely-call inference: Held; eligible need continues
   → MB-04 glyph + menu state says Paused or Held and the actual reason/deadline
   → resume is always one click, followed by a 90 s quiet corridor
 Working hours begin → new monotonic baseline + 60 s quiet corridor; no wall catch-up
 Presentation mode left on (ED-14): once, quietly, at the next natural moment —
   "Still held for presenting. Resume?" Dismissible. Never repeated in the same session.
 ```
+
+Every hold record carries source provenance, qualification, observed-at, expiry, and correction
+state. UI says only what the evidence proves: Calendar is "selected busy time," Focus is "Focus
+you selected," an app is "selected app is active," and inference is "likely." Stale, missing,
+conflicting, or unqualified evidence is unknown, not a hold. Confirmed away additionally requires
+fresh, unambiguous, authorized evidence and never becomes a movement-completion fact.
 
 ---
 
@@ -189,7 +207,7 @@ Core function requires **zero** permissions `[protocol: required_for_core: []]`.
 ## F-11 · Recovery suggestion
 
 ```
-recoveryDebtSeconds eligible (90 min, Balanced) and typically by 120 min
+recoveryDebtSeconds eligible (90 min, Balanced v2) and typically by 120 min
   → BR-12: a longer break, 5–10 min, offered once
   → declined → not re-offered as a longer break this session
 Tone: an offer between peers. Never an alarm, never "you have not taken a real break."
@@ -200,9 +218,17 @@ Tone: an offer between peers. Never an alarm, never "you have not taken a real b
 ## F-12 · Changing the schedule
 
 ```
-SE-02 → Calm / Balanced / Frequent reset / Adaptive / Custom
+SE-02 → Calm / Balanced v2 / Frequent reset / Adaptive / Custom (`custom_v2`)
   Legacy Gentle/Balanced/Frequent movement/High frequency value loaded:
-    → preserve exact v1 schedule; offer its named successor; migrate only after acceptance
+    → Keep current schedule preserves exact v1 ID/values
+    → Review new schedule shows the named successor; migrate only after acceptance
+  Legacy Balanced remains 20/25/30 visual and 50/60/70 movement; Balanced v2 is
+    20/25/27 visual and 50/55/70 movement. Never label legacy Balanced as Balanced v2.
+  Legacy custom accepted for migration:
+    → preserve every v1 field, unit, ordering, and value; change only contract version,
+      identifier to custom_v2, and migration state
+  Adaptive starts at Balanced v2 and initially changes only delivery within the due window
+    and bounded automatic holds, never reminder frequency or a health conclusion
   Very frequent (SE-03) or effectively disabled (SE-04):
     → one neutral note about what that means. No warning icon, no block, no shame [03 §5].
 Default changed by an app update (ED-18): first launch after → say what changed and why,

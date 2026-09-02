@@ -28,7 +28,8 @@ status menu (§1.5).
   glint leans subtly toward pointer movement while the sun body and capsule stay fixed
   (place = you), input-driven only (D-023).
 - **Hover** reveals `Now` and `Later ▾` (5 · 10 · 15 min via `delivery.snooze_options
-  _seconds: [300, 600, 900]`; "After this meeting" only when Calendar is on; "Presenting
+  _seconds: [300, 600, 900]`; "After this busy time" only for a selected Calendar busy
+  interval with a fresh known end; "Presenting
   for 1 hour" = manual hold). One click, zero hunting.
 - **Esc** while the capsule has key focus waves it off → emits `skipped` for this
   opportunity (provisional reading of `[03 §10]` — DQ-19). No re-prompt, no escalation
@@ -48,8 +49,9 @@ status menu (§1.5).
   whichever comes first — the capsule never sits landed indefinitely.
 - **Sun touches its horizon** → the break surface opens (§1.3/1.4) and the capsule
   retracts. The full-screen sky continues the same sunset.
-- **A hold begins mid-countdown** (call starts, Focus flips): the capsule crossfades
-  to **Held** with its honest reason ("Held · busy until 3:00"), then
+- **A hold begins mid-countdown**: the capsule crossfades
+  to **Held** with its honestly qualified reason (for example, "Held · selected busy time
+  until 3:00"), then
   retracts. Nothing interrupts a hold.
 
 ### 1.3 Visual reset (Level 2, self-running — D-021)
@@ -70,11 +72,18 @@ status menu (§1.5).
 ### 1.4 Movement break (Level 2)
 - Same immediate entrance and exit; window per
   `preset_contract_v2.presets.balanced_v2.movement` (soft 3000 / target 3300 / latest 4200 s).
-- Three equal choice chips (`Walk or wheel` / `Small space` / `Seated`, keys 1/2/3,
+- **Offered state:** the final field appears immediately, but no countdown, `breakStarted`, or
+  `Done early` exists yet. The first focus is `Start 5 minutes`; the complete focus order is
+  `Start 5 minutes` → `2 minutes` → `I already moved` → `Change position instead` → `Skip`.
+  Return or `5` accepts five minutes; `Q` or `2` accepts two minutes; `A`, `P`, Escape, and
+  `⌘.` perform their labeled actions on the first frame. VoiceOver says that a duration must be
+  chosen and that the timer has not started.
+- **Running state:** accepting 5 or 2 minutes records `breakStarted`, persists the selected
+  duration, establishes its monotonic deadline, and moves focus to `Done early`. Three equal
+  choice chips (`Walk or wheel` / `Small space` / `Seated`, keys 1/2/3,
   equal weight per `[C047, C048]`); selection swaps the single guidance sentence.
-  Default duration `movement.recommended_duration_seconds: 300`; the `2 minutes
-  instead` pill (key `Q`) switches to `quick_option_seconds: 120` and is a legitimate
-  option, not a lesser one `[C012]`. `I already moved` carries key `A`; `Change position
+  The accepted duration remains 300 or 120 seconds; content choice never changes it.
+  `I already moved` carries key `A`; `Change position
   instead` is a quiet 44px bordered pill with key `P` — tertiary visual tier, equal
   semantic rank (D-027). Every key is printed on its control.
   The selected chip carries a 2px border + check glyph, and the guidance sentence opens
@@ -127,17 +136,22 @@ user-initiated weekly window (patterns, never grades `[03 §10]`) — design pen
 | Recovery eligible / latest | 5400 / 7200 s | | | `preset_contract_v2.recovery` |
 | Escalations / lockout | max 1 / **never** | | | `opportunity_delivery` |
 
-Adaptive starts at Balanced v2 bounds; Custom has the YAML ordering rule and 10–60 s visual
-duration range. Legacy IDs and values remain readable and unchanged until explicit migration.
+Adaptive starts at Balanced v2 bounds and may initially change only delivery within a due window
+and bounded automatic holds, never frequency or health conclusions. `custom_v2` has the YAML
+ordering rule and 10–60 s visual duration range. Legacy IDs and values remain readable and
+unchanged until explicit migration; a v1 `custom` payload is field-for-field compatible and is
+reidentified only after explicit acceptance.
 
 ## 3. Keyboard and Escape
 
 | Key | Break surfaces | Capsule | Menu |
 |---|---|---|---|
 | `Esc` / `⌘.` | Leave now → `skipped`. Immediate, always, mid-animation included | Wave off → `skipped` for this cycle | Close (system) |
-| `↩` | `Done early` → `userDeclaredCompleted` | `Now` (when exits shown) | Activate item |
-| `1 2 3` | Movement choice chips | — | — |
-| `Q` | `2 minutes instead` (movement) | — | — |
+| `↩` | Visual/running movement: `Done early`; offered movement: accept 5 minutes | `Now` (when exits shown) | Activate item |
+| `5` | Offered movement: accept 5 minutes | — | — |
+| `2` | Offered movement: accept 2 minutes | — | — |
+| `1 2 3` | Running movement: choice chips | — | — |
+| `Q` | Offered movement: accept 2 minutes | — | — |
 | `A` | `I already moved` (movement) | — | — |
 | `P` | `Change position instead` (movement) | — | — |
 | `⌘,` | Settings (global) | | |
@@ -155,10 +169,11 @@ control (keycap chips) because the user is mid-interruption (accessibility rule 
 - The break panel is a borderless floating panel, one per target display, coordinated
   as one experience. It becomes key on open (predictable — it covers the screen) and
   **restores focus to the previously active app on close**, every exit path.
-- Initial focus: `Done early` — the least destructive primary action (D-021,
-  macos-design §8). Focus ring per DESIGN_SYSTEM §8, visible in both appearances.
-- Focus order (visual): Done early → Skip. (Movement): chip 1 → 2 → 3 → 2-minutes →
-  Done early → I already moved → Skip → Change position. VoiceOver focus is never
+- Initial focus: visual and running movement use `Done early`; offered movement uses `Start 5
+  minutes`. Focus ring per DESIGN_SYSTEM §8, visible in both appearances.
+- Focus order (visual): Done early → Skip. (Movement offered): Start 5 minutes → 2 minutes →
+  I already moved → Change position instead → Skip. (Movement running): chip 1 → 2 → 3 →
+  Done early → I already moved → Change position instead → Skip. VoiceOver focus is never
   trapped; the ring wraps.
 - The capsule is non-activating and never steals typing focus. It is *pointer-first*:
   hover reveals its exits. It is **not tabbable from another app** — the keyboard routes
@@ -215,23 +230,28 @@ ledgers. Sensor evidence can support a reversible schedule restart but never emi
 
 Reason precedence (highest wins; YAML `suppression_precedence`): manual_pause →
 system_inactive_or_locked → system_asleep_or_unavailable → relevant_accepted_ritual →
-confirmed_away → outside_working_hours →
-meeting_or_call → screen_sharing_or_presentation → user_selected_timed_task →
-explicit_presentation_mode → focus_filter → calendar_busy →
-selected_deep_focus_app_game_or_media → excluded_application → snooze → low_friction_wait.
+qualified_confirmed_away → outside_working_hours → user_declared_meeting_or_call →
+user_declared_screen_sharing_or_presentation → inferred_likely_call →
+user_selected_timed_task → explicit_presentation_mode → selected_focus_filter_active →
+selected_calendar_busy_interval → selected_application_active → snooze → low_friction_wait.
 
-- `manual_pause`, `system_inactive_or_locked`, outside working hours, confirmed away, and a
+- `manual_pause`, `system_inactive_or_locked`, outside working hours, qualified confirmed away, and a
   relevant accepted ritual are **Paused**: affected schedule clocks freeze. Meeting,
   presentation, Focus, Calendar busy, excluded/deep-focus context, snooze, and low-friction wait
   are **Held**: eligible need continues but presentation does not.
-- The capsule names the *actual* state and reason honestly ("Held · busy until 3:00",
-  "Paused until you resume") — never a vague "smart pause".
+- The capsule names the *actual* state and evidence honestly ("Held · selected busy time until
+  3:00", "Held · Focus you selected", "Held · likely call", or "Paused until you resume") —
+  never a vague "smart pause".
 - A hold that begins **mid-heads-up** retracts the capsule to Held; a break
   **already on screen is never yanked** — the user exits it, or it ends.
 - Accepted break deadlines continue through sleep, lock, relaunch, and callback suspension.
   Schedule-clock accrual stays frozen until eligibility returns.
-- Holds come only from sanctioned typed evidence. Never infer them from app content the product
-  is not allowed to inspect (`[07 §3]`).
+- Holds come only from sanctioned typed evidence. Each carries provenance, qualification,
+  observed-at and expires-at freshness, and correction state. Calendar means selected busy time,
+  not a meeting; Focus means the selected filter is active, not deep work; a selected app means
+  only that the selected app is active; inference is labeled "likely." Missing, stale,
+  conflicting, or unqualified evidence is unknown and cannot hold. Never infer from app content
+  the product is not allowed to inspect (`[07 §3]`).
 
 ## 8. Multi-display (DQ-03, closed by owner review)
 
@@ -257,14 +277,14 @@ selected_deep_focus_app_game_or_media → excluded_application → snooze → lo
 | Non-finite/backward sample or gap >15 s | Add zero elapsed time and establish a new local monotonic baseline; record only operational gap evidence | timing runtime v2 |
 | Spaces / Stage Manager switch | Break panels join the active Space; controls remain reachable | ED-11 |
 | Screen sharing detected via presentation-mode signal user enabled | explicit_presentation_mode hold only if the user set it — no automatic detection is possible without prohibited permissions | `[07]` |
-| System clock change | Schedule clocks ignore wall deltas. Accepted deadlines use same-epoch monotonic time, or their clamped portable wall deadline only when the epoch is unavailable | D-033 |
+| System clock change or monotonic-epoch loss | Schedule clocks ignore wall deltas. Accepted deadlines use same-epoch monotonic time; an epoch/anchor discontinuity conservatively expires the accepted duration and reconciles once. A device handoff requires a bounded monotonic send/receive acknowledgement and subtracts the full uncertainty; otherwise the sender remains authoritative. Wall metadata is display/exchange/audit only. | D-033 |
 
 ## 10. Permission degradation (each denied state is designed)
 
 | Permission | Denied / revoked behavior |
 |---|---|
 | Notifications | Capsule / in-app heads-up is first-class — identical function, no nag, no re-ask outside Settings |
-| Calendar | "After this meeting" and busy-holds simply absent; everything else identical; Settings row says exactly that |
+| Calendar | "After this busy time" and selected-busy-time holds simply absent; everything else identical; Settings row says exactly that |
 | Focus filter | Focus-based holds absent; manual hold unaffected |
 | Launch at login | App runs when opened; a single Settings row offers it at the moment of value |
 
@@ -298,20 +318,28 @@ owner-approved story, disclosure, fallback, and proof; the core may not imply th
 - `DecisionID` identifies one automatic hold, release, shift, merge, restart, or undo in the
   scheduling-decision ledger. It can never stand in for an ActionID or product fact.
 
-Schedule accrual uses covered local monotonic intervals only. Portable wall metadata includes UTC
-record/deadline/anchor values, time-zone ID, and remaining seconds at anchor for display,
-exchange, audit, and accepted-deadline recovery. It never adds schedule time after sleep,
-shutdown, relaunch, or a sample gap. Same-epoch continuous monotonic time owns a running ritual;
-when unavailable, its wall deadline reconstructs remaining time clamped to the originally
-selected duration.
+Schedule accrual uses covered local monotonic intervals only. Portable wall metadata is display,
+exchange, and audit context, never countdown reconstruction. A running ritual persists its
+coordinator monotonic epoch, anchor and deadline ticks, selected duration, last nonincreasing
+remaining value, and opportunity revision. Epoch loss conservatively expires the ritual and
+reconciles once. Cross-device handoff requires a bounded monotonic request/acknowledgement and
+subtracts all measured uncertainty; incomplete or stale handoff leaves the sender authoritative.
 
-A terminal candidate must match the OpportunityID, every participating ClockCycleID, phase, and
-supported action. The convergent reducer orders the same candidate set by greatest recorded
-remaining milliseconds, then stable origin device, origin revision, and ActionID. Reduction is
-commutative, associative, and idempotent, never arrival-ordered. Projections close immediately on
-a valid local action. If later reconciliation selects another candidate, it updates the same
-deterministic terminal-fact slot; it never appends a second terminal fact or repeats clock
-effects. Losing, duplicate, unknown, stale, and mismatched candidates remain auditable no-ops.
+The canonical phase graph and every source/target/opportunity/participant/payload guard live in
+the machine contract. A nonterminal conflict is reduced by a registered least-interruptive action
+rank and stable ActionID, never arrival order. A terminal candidate must match OpportunityID,
+every participating ClockCycleID, origin revision, origin phase and segment, causal parents, and
+the exact transition guard. An action originated after its actor knew the opportunity was closed
+is invalid; an already-originated valid candidate may arrive after provisional close and still
+participates. The total winner order is product-fact claim rank, registered action kind, stable
+device ID, persistent device counter, then ActionID. It never compares wall time, remaining time,
+or incomparable segment durations.
+
+The coordinator retains one pre-terminal opportunity snapshot plus idempotent post-terminal
+inputs. If a late winning candidate replaces the provisional winner, it restores that snapshot,
+applies the new winner once, keeps independent merged-component facts, discards only causal
+descendants of the losing branch, and replays the idempotent inputs. It upserts the same projected
+fact slot and never repeats an announcement, haptic, notification, or clock effect.
 
 The exact per-transition clock/fact/ledger/visible/stale/recovery matrix is
 `machine-readable/timing_runtime_v2.yaml.action_contract.transitions`. No Feature or App surface
@@ -322,3 +350,7 @@ a new position cycle, but only `Changed` records `positionChanged`. Recovery off
 explicit 5- or 10-minute choice. Finish or `Done early` receives the same visual/movement
 scheduling courtesy as a movement ritual; Skip/Escape records no completion credit and ends
 recovery offers for that session. Every recovery timer uses the same absolute-deadline rule.
+
+Every due, deadline, snooze, release-corridor, and exact 90/300-second edge uses one predicate:
+`elapsed >= deadline`. An active corridor uses `elapsed < duration`; exact equality has already
+left the corridor.

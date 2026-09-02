@@ -76,7 +76,10 @@ profiles:
       recommended_duration_seconds: 300
       quick_duration_seconds: 120
 preset_contract_v2:
+  contract_version: 2
   new_install_default: balanced_v2
+  persisted_selection_requires: [preset_contract_version, preset_identifier, migration_state]
+  migration_states: [legacy_unmigrated, v2_selected, v2_migrated_with_explicit_acceptance]
   recovery:
     eligible_after_seconds: 5400
     latest_typical_seconds: 7200
@@ -100,7 +103,7 @@ preset_contract_v2:
         quick_duration_seconds: 120
       position_target_seconds: 3600
     balanced_v2:
-      display_name: Balanced
+      display_name: Balanced v2
       default: true
       visual:
         soft_due_seconds: 1200
@@ -135,10 +138,9 @@ preset_contract_v2:
       allowed_initial_adaptation:
         - delivery_within_window
         - bounded_automatic_holds
-        - cross_clock_courtesy
-        - explicit_user_approved_schedule_restart
-    custom:
+    custom_v2:
       display_name: Custom
+      payload_schema_version: 2
       visual_duration_range_seconds: [10, 60]
       movement_duration_options_seconds: [120, 300]
       ordering_rule: 0_less_than_soft_due_less_than_or_equal_target_less_than_or_equal_latest
@@ -159,11 +161,15 @@ preset_contract_v2:
       suggested_successor: frequent_reset
     research_informed_high_frequency:
       exact_values_from: profiles.research_informed_high_frequency
-      suggested_successor: custom
+      suggested_successor: custom_v2
       successor_seed: exact_v1_snapshot
     custom:
       exact_values_from: persisted_custom_timing
-      suggested_successor: custom
+      suggested_successor: custom_v2
+      payload_compatibility: >-
+        The v2 payload preserves the exact v1 custom timing fields, units, ordering,
+        and values. Explicit acceptance changes only preset_contract_version,
+        preset_identifier, and migration_state; it does not reinterpret timing.
 activity_estimator:
   recent_input_window_seconds: 60
   long_idle_reset_seconds: 300
@@ -176,6 +182,19 @@ activity_estimator:
     - passive_reading_may_be_undercounted
     - input_does_not_indicate_body_position
     - idle_does_not_indicate_movement
+clock_semantics_v2:
+  visual: visual_reset_schedule_based_on_estimated_active_computer_use
+  movement: movement_opportunity_schedule_based_on_estimated_active_computer_use
+  position: optional_position_change_schedule_based_on_estimated_active_computer_use_or_user_interval
+  recovery: optional_recovery_schedule_from_eligible_interaction_time_and_explicit_deferrals
+  prohibited_permission_free_inferences: [gaze, near_screen_exposure, body_movement, body_stillness, body_position, position_stability, posture]
+boundary_predicates:
+  deadline_reached: elapsed_seconds_greater_than_or_equal_to_deadline_seconds
+  recent_input_eligible: seconds_since_input_less_than_or_equal_to_60
+  long_idle_begins: seconds_since_input_greater_than_or_equal_to_300
+  valid_covered_sample: adjacent_interval_seconds_less_than_or_equal_to_15
+  corridor_releases: elapsed_seconds_greater_than_or_equal_to_corridor_seconds
+  snooze_reoffers: elapsed_seconds_greater_than_or_equal_to_selected_snooze_seconds
 opportunity_delivery:
   wait_for_low_friction_moment: true
   merge_window_seconds: 300
@@ -192,16 +211,16 @@ suppression_precedence:
   - system_inactive_or_locked
   - system_asleep_or_unavailable
   - relevant_accepted_ritual
-  - confirmed_away
+  - qualified_confirmed_away
   - outside_working_hours
-  - meeting_or_call
-  - screen_sharing_or_presentation
+  - user_declared_meeting_or_call
+  - user_declared_screen_sharing_or_presentation
+  - inferred_likely_call
   - user_selected_timed_task
   - explicit_presentation_mode
-  - focus_filter
-  - calendar_busy
-  - selected_deep_focus_app_game_or_media
-  - excluded_application
+  - selected_focus_filter_active
+  - selected_calendar_busy_interval
+  - selected_application_active
   - snooze
   - low_friction_wait
 state_semantics_v2:
@@ -218,29 +237,30 @@ state_semantics_v2:
       - outside_working_hours
       - system_inactive_or_locked
       - system_asleep_or_unavailable
-      - confirmed_away
+      - qualified_confirmed_away
       - relevant_accepted_ritual
     reason_clock_scope:
       manual_pause: [visual, movement, position, recovery]
       outside_working_hours: [visual, movement, position, recovery]
       system_inactive_or_locked: [visual, movement, position, recovery]
       system_asleep_or_unavailable: [visual, movement, position, recovery]
-      confirmed_away: [visual, movement, position, recovery]
-      accepted_visual_ritual: [visual]
-      accepted_movement_merged_or_recovery_ritual: [visual, movement, recovery]
+      qualified_confirmed_away: [visual, movement, position, recovery]
+      accepted_visual_ritual: [visual, position]
+      accepted_movement_merged_or_recovery_ritual: [visual, movement, position, recovery]
   held:
     rule: all_clocks_continue_under_their_normal_eligibility
     reasons:
-      - meeting_or_call
-      - screen_sharing_or_presentation
+      - user_declared_meeting_or_call
+      - user_declared_screen_sharing_or_presentation
+      - inferred_likely_call
       - user_selected_timed_task
       - explicit_presentation_mode
-      - focus_filter
-      - calendar_busy
-      - selected_deep_focus_app_game_or_media
-      - excluded_application
+      - selected_focus_filter_active
+      - selected_calendar_busy_interval
+      - selected_application_active
       - snooze
       - low_friction_wait
+    evidence_contract_from: ../../../design/machine-readable/timing_runtime_v2.yaml#presentation_states.held.evidence_contract
 completion_semantics:
   visual:
     schedule_restart_facts: [timerFinished, userDeclaredCompleted]

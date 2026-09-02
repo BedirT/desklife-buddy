@@ -445,11 +445,11 @@ the primary automatic route. Only if it cannot present may an already-authorized
 notification be attempted with the same delivery identity. Automatic fallback never requests
 notification permission.
 
-**Hover/keyboard exits on the capsule:** Now · Later ▸ (5 · 10 · 15 min `[03 §4.1]`,
-"After this meeting" only when Calendar is enabled `[03 §4.1, §9]`, "Presenting for
+**Legacy D-022 hover/keyboard exits on the capsule:** Now · Later ▸ (5 · 10 · 15 min `[03 §4.1]`,
+the then-approved "After this meeting" copy when Calendar was enabled `[03 §4.1, §9]`, "Presenting for
 1 hour" `[03 §9]`). Esc waves the capsule off for the cycle.
 
-**Hold state.** "On hold · busy until 3:00" — driven only by the protocol's sanctioned
+**Legacy D-022 hold copy, superseded by D-033.** "On hold · busy until 3:00" — driven only by the protocol's sanctioned
 suppression sources `[03 §8, §9]`: manual pause, working hours, optional Calendar busy,
 Focus filter, user-named meeting apps. The MVP never promises automatic meeting detection
 `[03 §9]` and never inspects other apps `[03 §9, 07 §3]`.
@@ -698,12 +698,19 @@ accepted-ritual deadlines, stable identities, every action, merge, stale actions
 terminal reconciliation, and separate ledgers. Timing and preset values live in
 [`product_protocol.yaml`](../research/health/machine-readable/product_protocol.yaml).
 
-The new preset IDs are `calm`, `balanced_v2`, `frequent_reset`, `adaptive`, and `custom`.
+The new preset IDs are `calm`, `balanced_v2`, `frequent_reset`, `adaptive`, and `custom_v2`.
 Shipped raw IDs retain their exact v1 meanings and decode unchanged until the person explicitly
-accepts a successor. No migration silently retunes an existing schedule.
+accepts a successor. Legacy `custom` is payload-compatible field-for-field and becomes
+`custom_v2` only with contract version and migration state after acceptance. No migration
+silently retunes an existing schedule. Adaptive initially changes only delivery within a due
+window and bounded automatic holds, never schedule frequency or a health conclusion.
 
-Schedule clocks accrue from local monotonic samples and never catch up from wall time. Wall
-metadata is for display, exchange, audit, and accepted-deadline recovery. A five-minute
+Schedule clocks accrue from local monotonic samples and never catch up from wall time. Their
+honest permission-free meanings are schedules based on estimated active computer use; they do
+not claim gaze/near-screen exposure, body movement, position, posture, or stability. Wall
+metadata is for display, exchange, and audit, never countdown reconstruction. Accepted deadlines
+use a persisted same-epoch monotonic anchor. Epoch loss expires conservatively; a device handoff
+requires a bounded monotonic acknowledgement and subtracts all uncertainty. A five-minute
 permission-free idle episode preserves movement need and starts a fresh visual cycle when the
 person returns, followed by a 60-second grace. A visual reset therefore cannot appear minutes
 after that likely away interval.
@@ -713,9 +720,28 @@ strong fresh movement/away evidence to create an explained, undoable `scheduling
 restarts future timing. The ten product facts remain closed and live apart from operational,
 observation, assessment, scheduling-decision, correction, and companion-action ledgers.
 
+Every hold carries typed provenance, qualification, observation and expiry time, and correction
+state. Calendar proves only selected busy time, Focus only a selected active filter, and a
+selected application only that it is active; any inference remains explicitly "likely." Missing,
+stale, conflicting, or unqualified evidence is unknown. Confirmed away requires fresh,
+unambiguous, authorized qualifying evidence and still never proves movement completion.
+
+The machine contract's canonical phase graph and per-transition source, target, opportunity,
+participant, and payload guards are mandatory. Concurrent nonterminal actions use a registered
+least-interruptive rank and stable identity, never arrival order. A valid terminal candidate
+originated before learning closure remains eligible when it arrives late; one originated after
+known closure does not. Terminal winners use product-fact rank and logical identity only, never
+wall time, remaining duration, or incomparable segment time. One retained pre-terminal snapshot
+supports deterministic rebase when a late winner changes: apply the winner and clock effects
+once, preserve independent merged-component effects, replay idempotent inputs, and upsert one
+projected fact without repeating user-visible side effects. Every threshold edge is
+`elapsed >= deadline`, including exact 90- and 300-second boundaries.
+
 This entry also resolves D-032's keyboard-arming overlap: entrance, exit, accepted deadline,
-focus, every printed shortcut (`Escape`, `⌘.`, Return, `1`/`2`/`3`, `Q`, `A`, `P`), and every
-pointer control are active on the first frame. There is no declaration guard or
+focus, every printed shortcut (`Escape`, `⌘.`, Return, `5`, `2`, `1`/`2`/`3`, `Q`, `A`, `P`),
+and every pointer control are active on the first frame. Movement first presents a distinct
+offered state: 5/2 acceptance starts its timer, and Done early exists only in the running state.
+There is no declaration guard or
 entrance-settlement countdown gate. D-029's unrelated capsule, coarse-countdown, focus, and
 accessibility clauses remain active. D-022's capsule location, behavior, and sanctioned hold
 sources also remain active, but its visible label **"On hold" is superseded by "Held"** so the

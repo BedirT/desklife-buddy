@@ -85,6 +85,8 @@ HU-02 heads-up
       │                              → operational recovery, no timer fact/fresh cycle
       ├ "I already moved" → userDeclaredAlreadyMoved → fresh movement schedule;
       │     visual fresh only with an explicit or strong fresh screen-away basis ✕
+      ├ "Change position instead" → positionChanged → rotate the always-present position cycle;
+      │     when reminders are off they remain off with no due state or prompt ✕
       └ Skip / Escape → skipped; fresh movement schedule without completion credit ✕
 ```
 
@@ -123,7 +125,7 @@ Both due inside merge_window (300 s)
   → BR-09 single surface:
         segment 1 · look far away (≈20 s)
         segment 2 · movement (5 or 2 min, or choose activity)
-  ├ visual timer / Done early → retain fresh visual effect → movement offered
+  ├ visual timer / Done early → cross-slot arbiter commits visual component → movement offered
   │   ├ accept 5 / 2 min → movement running
   │   │   ├ timer / Done early → fresh movement; visual remains fresh ✕
   │   │   ├ I already moved → declared movement fact; visual remains fresh ✕
@@ -133,9 +135,13 @@ Both due inside merge_window (300 s)
   │   ├ Change position → position fact/cycle; base participants remain visual+movement ✕
   │   ├ Just the visual one (V) → BR-10 → visual fresh, movement remains due ✕
   │   └ Skip / Escape → skipped movement schedule; visual remains fresh ✕
-  └ Escape during visual → skipped facts; fresh schedules prevent rapid re-offer ✕
+  └ Escape during visual → same-revision cross-slot arbiter preempts uncommitted component;
+     one skipped path and one visual successor effect, never timerFinished + skipped ✕
      Escape during movement → retain finished visual effect; skipped movement starts fresh ✕
 ```
+
+If visual completion was already acknowledged at the successor revision, it is final and Escape
+uses the movement-phase path. Same-revision timer/Done/Escape never project independently.
 
 ---
 
@@ -261,22 +267,37 @@ typed and disclosed before their owning features retain or export them.
 
 ```
 Accepted visual or movement ritual → Take with me
-  → Mac sends OpportunityID + independent ClockCycleIDs + absolute deadline + ActionID
-  ├ companion acknowledges bounded monotonic handoff + ≤90 s projection lease → Synced
-  │   ├ terminal action on any device → local projection closes immediately
-  │   └ action set reconciles by deterministic key, never arrival order
+  → Mac shows live/offline availability; Take with me is enabled only while live
+  → Mac sends GlobalStateID + generation + OpportunityID + projection epoch + independent
+    ClockCycleIDs + absolute deadline + ActionID
+  ├ companion acknowledges bounded monotonic handoff + ≤90 s exact-generation lease → Live
+  │   ├ terminal action → Pending → causal acknowledgement
+  │   └ same-generation action set reconciles by deterministic key, never arrival order
   │       → winner materializes one terminal product fact and clock effect
-  │       → other devices show Ended elsewhere; losing actions stay companion-ledger only
-  └ no acknowledgement → Transfer failed; Mac deadline remains valid
+  │       → other devices show Already ended / Ended on another device
+  │       → losing/duplicate raw candidates erase from memory at settlement/fence
+  ├ connectivity lost → Offline; controls disabled; Keep using this Mac
+  ├ lease elapsed → Expired → Revalidating → Live or Rejected, no-op
+  ├ old generation / fenced projection → Rejected, no-op; No change was recorded
+  └ no acknowledgement → Transfer failed; Retry or keep using Mac; Mac deadline remains valid
 ```
 
 Sleep, lock, relaunch, and connectivity loss never extend the accepted duration. If the monotonic
 epoch/anchor cannot be resumed, the ritual closes operationally with no `timerFinished` or fresh
-schedule and the due need is re-offered after grace. Offline intent cannot affect state until a
-coordinator renews its lease and revalidates phase/revision. Duplicate, unknown, settled,
-post-lease, or mismatched-cycle actions are auditable no-ops. A sensed movement observation
+schedule. Same-generation candidates settle, the old projection epoch is signed/fenced, then the
+60-second grace begins; only fence + grace permits re-offer. The recovery projection says no finish
+was recorded and the schedule is still due. Offline intent cannot affect state until a coordinator
+renews its lease and revalidates generation/phase/revision. Duplicate, unknown, settled,
+post-lease, old-generation, or mismatched-cycle actions are explicit rejected no-ops, never silent.
+Raw candidates are memory-only for at most 90 seconds and are not history/export data. A sensed movement observation
 may support a separate user-approved schedule restart; it cannot masquerade as the timer or a
 user declaration.
+
+Keyboard/focus: Take with me receives focus when live and uses Return/Space. Pending and
+revalidating disable terminal controls; Escape/Command-period closes only companion status and
+returns to the authoritative timer. When a trigger becomes unavailable, focus moves to Retry or
+Close. Every transition has visible copy and one VoiceOver announcement. The fallback requires no
+HealthKit, motion, location, camera, or other sensor data.
 
 ---
 

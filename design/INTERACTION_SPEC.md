@@ -291,7 +291,12 @@ selected_calendar_busy_interval → selected_application_active → snooze → l
 | Non-finite/backward sample or gap >15 s | Add zero elapsed time and establish a new local monotonic baseline; record only operational gap evidence | timing runtime v2 |
 | Spaces / Stage Manager switch | Break panels join the active Space; controls remain reachable | ED-11 |
 | Screen sharing detected via presentation-mode signal user enabled | explicit_presentation_mode hold only if the user set it — no automatic detection is possible without prohibited permissions | `[07]` |
-| System clock change or monotonic-epoch loss | Schedule clocks ignore wall deltas. An unavailable accepted epoch/anchor closes the unusable ritual via operational-only `timerRecoveryUnavailable`: no `timerFinished`, completion, or fresh schedule; affected due schedules remain and can be re-offered under a new OpportunityID after 60 s grace. A bounded monotonic handoff acknowledgement is required; otherwise the sender remains authoritative. Wall metadata is display/exchange/audit only. | D-033 |
+| System clock change or monotonic-epoch loss | Schedule clocks ignore wall deltas. An unavailable accepted epoch/anchor closes through operational-only `timerRecoveryUnavailable`: no `timerFinished`, completion, or fresh schedule. The coordinator settles admitted same-generation candidates, commits the disposition plus signed high-water projection fence, then starts 60 s grace. Successors remain blocked until fence + grace. Old-generation actions are rejected no-ops with honest feedback. Wall metadata is display/exchange/audit only. | D-033 |
+
+The recovery surface says **“Timer couldn’t be restored”** and **“No finish was recorded. This
+schedule is still due.”** VoiceOver announces the same meaning once. Focus starts on **Close**;
+Return, Escape, or Command-period closes the unusable ritual. The status menu remains **“Still due
+· timer not restored”** during the 60-second quiet grace, with no countdown or completion mark.
 
 ## 10. Permission degradation (each denied state is designed)
 
@@ -331,29 +336,47 @@ owner-approved story, disclosure, fallback, and proof; the core may not imply th
   revision, and the exact cycle set. Duplicate IDs are idempotent no-ops.
 - `DecisionID` identifies one automatic hold, release, shift, merge, restart, or undo in the
   scheduling-decision ledger. It can never stand in for an ActionID or product fact.
+- `GlobalStateID` plus global revision identifies Pause, working-hours, system, sample, and
+  schedule-restart commands that do not belong to an OpportunityID. Every authoritative lease
+  declares exactly one scope: opportunity commands use OpportunityID + revision; global commands
+  use GlobalStateID + revision and never require a fabricated OpportunityID.
 
 Schedule accrual uses covered local monotonic intervals only. Portable wall metadata is display,
 exchange, and audit context, never countdown reconstruction. A running ritual persists its
 coordinator monotonic epoch, anchor and deadline ticks, selected duration, last nonincreasing
-remaining value, and opportunity revision. Epoch/anchor loss closes through
-`timerRecoveryUnavailable` without a product fact or fresh cycle. Cross-device handoff requires a bounded monotonic request/acknowledgement and
-subtracts all measured uncertainty; incomplete or stale handoff leaves the sender authoritative.
+remaining value, opportunity revision, coordinator generation, and projection epoch. Epoch/anchor
+loss closes through `timerRecoveryUnavailable` without a product fact or fresh cycle. GlobalStateID,
+global revision, coordinator generation, action-counter high-water marks, and projection fences are
+restart-safe. Cross-device handoff requires a bounded monotonic request/acknowledgement and subtracts
+all measured uncertainty; incomplete or stale handoff leaves the sender authoritative.
 
 The canonical phase graph and every source/target/opportunity/participant/payload guard live in
 the machine contract. Position can be an affected nonparticipant cycle in a movement or merged
-opportunity; its exact current cycle ID is guarded and snapshotted without changing the base
-participant identity. Effect-bearing nonterminal commands require an online coordinator lease,
-are linearized and atomically acknowledged before exposing a fact, deadline, phase, or effect.
+opportunity. A latent manual position cycle remains present while reminders are off; Change
+position rotates that cycle without enabling prompts. Its identity, manual-only state, and
+enablement are guarded and snapshotted without changing the base participant identity.
+Effect-bearing nonterminal commands require an online coordinator lease, are linearized and
+atomically acknowledged before exposing a fact, deadline, phase, or effect.
 Offline intent has no effect until renewed and revalidated, so concurrent `Now` and offline `Later`
 cannot orphan a start fact or deadline. A terminal candidate must match OpportunityID,
 every participating ClockCycleID, origin revision, origin phase and segment, causal parents, and
 the exact transition guard. An action originated after its actor knew the opportunity was closed
 is invalid; an already-originated valid candidate may arrive after provisional close and still
-participates only when it originated under a live, causally acknowledged projection lease. Leases
-last at most 90 monotonic seconds; settlement waits for every issued lease to be acknowledged,
-revoked, or expired before successor cycles may advance. The total winner order is product-fact claim rank, registered action kind, stable
+participates only when it originated under a live, causally acknowledged projection lease in the
+same unfenced coordinator generation and projection epoch. Leases and raw Class-0 candidate buffers
+last at most 90 monotonic seconds. Every closure settles the admitted set, commits a signed
+high-water projection fence, revokes old leases, erases losing/duplicate buffers, and only then
+allows successors. Epoch loss fences the old generation from persisted high water instead of
+waiting on an unverifiable old monotonic expiry. Later old-generation actions are rejected no-ops
+with visible and VoiceOver feedback. The total terminal winner order is product-fact claim rank, registered action kind, stable
 device ID, persistent device counter, then ActionID. It never compares wall time, remaining time,
 or incomparable segment durations.
+
+Every authoritative nonterminal transition is registered exactly once with one scope and one
+total causal/precedence rank. A single exclusive coordinator grant covers one causal frontier;
+eligible requests at that frontier reduce by transition rank then canonical ActionID. The winner
+advances the relevant revision, and later requests revalidate against that successor. Callback
+arrival order never resolves a same-frontier race.
 
 Identifiers use the versioned `cadence_contract_bytes_v1` encoding: UUIDs normalize to 16
 network-order bytes; strings are NFC UTF-8; integers are big-endian; sets/maps sort canonical bytes;
@@ -361,7 +384,8 @@ SHA-256 output is lowercase hex. Locale, wall time, process hashes, and pointer 
 inputs. A terminal fact ID is OpportunityID + canonical terminal slot + the fixed registered
 component scope, never the candidate winner or participant subset.
 
-The coordinator retains every enabled clock's cycle, accumulated time, due/eligibility/phase,
+The coordinator retains all four clocks' cycle, accumulated time, due/eligibility/phase and
+enablement, including the disabled reminder position cycle,
 recovery/session state, evidence, deadlines, component projections, and decisions plus idempotent
 post-terminal inputs. Offered exits project from their action checkpoint after offer-time accrual;
 running exits may restore only the snapshot taken atomically at acceptance. If a late winning
@@ -369,6 +393,20 @@ candidate replaces the provisional winner, it restores the applicable snapshot,
 applies the new winner once, keeps independent merged-component facts, discards only causal
 descendants of the losing branch, and replays the idempotent inputs. It upserts the same projected
 fact slot and never repeats an announcement, haptic, notification, or clock effect.
+
+During a merged visual segment, timer completion/Done early and parent Escape from the same
+generation, revision, and segment enter one cross-slot arbiter. Escape preempts a same-revision
+component candidate; otherwise Done early ranks before timer completion. Exactly one winner
+advances the revision and applies one visual successor effect. If visual completion was already
+acknowledged at a successor revision, it is final and a later movement-phase Escape retains it.
+
+`Take with me` and companion terminal controls are enabled only for a live paired projection with
+matching generation, projection epoch, opportunity revision, and segment. Live, offline, expired,
+pending, revalidating, rejected-no-op, already-ended, and transfer-failed states always say what
+happened, announce once, and expose Retry/Close or the still-authoritative Mac controls. Escape
+closes companion status only; it never silently finishes or cancels the timer. No sensor is needed.
+Raw candidate envelopes, duplicates, losers, and post-fence rejections are Class 0, memory-only,
+erased within 90 seconds, and never retained, exported, or assigned a durable record identity.
 
 The exact per-transition clock/fact/ledger/visible/stale/recovery matrix is
 `machine-readable/timing_runtime_v2.yaml.action_contract.transitions`. No Feature or App surface

@@ -773,3 +773,29 @@ phrasing above; the approval provenance and non-activation boundary remain uncha
   All portable IDs use the machine contract's versioned canonical byte encoding.
 - The stable preset ID remains `balanced_v2`; its ordinary user-facing display name is **Balanced**.
   Migration UI may distinguish **legacy Balanced** from **Balanced (current v2 schedule)**.
+
+#### D-033 generation, companion, and cross-slot repair addendum — 2026-09-01
+
+This append-only repair supersedes only the prior addendum's unqualified “permits after 60
+seconds,” “live coordinator lease,” and “valid late” shorthand. It does not change D-033 approval
+provenance, health values, fact vocabulary, or non-activation boundary.
+
+- Opportunity-scoped leases use OpportunityID + revision. Global/system/schedule commands use
+  stable GlobalStateID + global revision and never require a fabricated OpportunityID. One complete
+  causal/precedence rank covers every authoritative nonterminal transition.
+- Every terminal or operational closure settles admitted same-generation candidates, commits a
+  signed high-water projection-epoch fence, revokes old leases, and only then allows successors.
+  The timer-recovery 60-second grace begins after that fence. Coordinator epoch loss fences the old
+  persisted generation; an old-generation action becomes a rejected no-op with honest feedback,
+  not an indefinitely valid late action.
+- A valid-late candidate means same live, unfenced coordinator generation and projection epoch.
+  Leases and raw candidate buffers remain bounded to 90 seconds without wall-time ranking.
+- Position always has a latent manual cycle. Change position rotates it even when reminders are
+  off and never enables prompts; snapshots retain that identity and enablement.
+- Merged visual timer/Done and same-revision parent Escape share one cross-slot arbiter. Escape
+  preempts an uncommitted component, otherwise component finality advances the revision. There is
+  exactly one fact path and one visual successor effect; an already-acknowledged component remains
+  final for a later movement-phase Escape.
+- Companion live/offline/expired/pending/revalidating/rejected-no-op/already-ended/transfer-failed
+  states have explicit copy and accessible fallback. Raw candidates/losers/duplicates/rejections
+  are Class 0, memory-only for at most 90 seconds, then erased without persistence/export.

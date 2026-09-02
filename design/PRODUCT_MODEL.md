@@ -44,7 +44,7 @@ rotation means a fresh schedule, not a verified body outcome.
 |---|---|---|---|---|
 | **Visual** | Visual-reset schedule based on estimated active computer use | Valid awake/active/unlocked monotonic intervals; input silence below 5 min still counts; every accepted ritual freezes position and visual as scoped by the matrix | 25 / 27 min | Visual timer/Done/Skip/Escape; long-idle return; proven ≥300 s same-epoch system-unavailable return with no unresolved ritual; movement or recovery timer/Done courtesy; merged visual terminal or visual-phase Escape; capsule Escape/second snooze when visual participates; `I already moved` only with qualified screen-away basis; approved restart decision |
 | **Movement** | Movement-opportunity schedule based on estimated active computer use | Same system eligibility, but only while input is recent (≤60 s); not a body-movement/stillness estimate | 55 / 70 min | Movement timer/Done/`I already moved`/Skip/Escape; merged visual-phase Escape; merged movement timer/Done/already-moved/Skip/Escape; recovery terminal; capsule Escape/second snooze when movement participates; approved restart decision |
-| **Position** | Optional position-change schedule based on estimated active computer use or a user interval | Visual eligibility until long-idle onset, except it freezes during every accepted ritual; not a body-position/stability estimate | 45 min | Standalone or in-movement `positionChanged`; standalone position Skip; capsule Escape/second snooze when position participates |
+| **Position** | Optional position-change schedule based on estimated active computer use or a user interval; one latent manual cycle always exists even when reminders are off | When enabled, visual eligibility until long-idle onset, except it freezes during every accepted ritual; disabled means manual-only with no accrual/due/offer; not a body-position/stability estimate | 45 min | Standalone or in-movement `positionChanged`; standalone position Skip; capsule Escape/second snooze when position participates. A manual change rotates the latent cycle without enabling reminders |
 | **Recovery** | Optional recovery schedule from eligible interaction time and explicit deferrals | Only while movement timing is eligible after deferral | eligible 90 / typically 120 min | Movement timer/Done/already-moved; recovery timer/Done/Skip/Escape; capsule Escape/second snooze when recovery participates; approved restart decision. Movement Skip increments deferral instead of refreshing recovery |
 
 New preset displays are Calm (`calm`), Balanced (`balanced_v2`, default), Frequent reset
@@ -69,9 +69,10 @@ delivery inside the window and bounded holds, never frequency or health outcomes
 - A same-epoch sleep, lock, or system-unavailable interval of at least five minutes, with no
   unresolved ritual, receives the same visual courtesy and 60-second return grace. Unknown elapsed
   time receives no fact or courtesy. Neither path creates movement or completion credit.
-- Finished or explicitly declared movement starts fresh movement and visual schedules so the app
-  cannot ask for a visual reset minutes after a walk. The cross-clock effect is scheduling
-  courtesy, not a visual-completion fact.
+- Finished or explicitly declared movement starts fresh movement and visual schedules. Therefore
+  visual time accrued before that movement cannot cause a prompt minutes later. A genuinely new
+  fresh or Custom visual cycle may still become due under the person's configured bounds. The
+  cross-clock effect is scheduling courtesy, not a visual-completion fact or proof of a walk.
 - Strong fresh sensor evidence may create an explained, undoable schedule restart only after the
   owning validation and permission gates. It never creates one of the ten product facts.
 - Recovery produces a gentle optional suggestion, never an alarm or “risk” state.
@@ -133,23 +134,34 @@ Paused, corridor, provisional-terminal, and closed states. Movement `Now` opens 
 timer or `breakStarted`; a 5- or 2-minute acceptance creates both, and only then exposes `Done
 early`. Each action registers its source phase/revision, opportunity kind, base participants,
 affected nonparticipants, segment, and payload. Position may be affected from a movement or merged
-opportunity without joining its participant identity. Effect-bearing nonterminal commands require
-a coordinator lease and atomic acknowledgement before exposing any effect; offline intent is inert
-until renewed and revalidated.
+opportunity without joining its participant identity, including while reminders are off through
+its always-present manual cycle. Effect-bearing nonterminal commands require a coordinator lease
+and atomic acknowledgement before exposing any effect. Opportunity commands use OpportunityID +
+revision; Pause/system/schedule commands use stable GlobalStateID + global revision. No global
+command invents an OpportunityID. One complete registered causal/precedence rank covers every
+authoritative nonterminal transition; offline intent is inert until renewed and revalidated.
 
 Escape is always equivalent to the least-committal exit. It is never a trap and never asks
 "are you sure". `ActionID` makes retries idempotent. An action originated after its actor knew the
-opportunity closed is an audited no-op. A valid candidate originated before that actor learned of
-closure still reconciles when it arrives late. Terminal order uses fact-claim rank and stable
+opportunity closed is a rejected no-op with honest feedback. A valid candidate originated before
+that actor learned of provisional closure still reconciles only inside the same live, unfenced
+coordinator generation and projection epoch. Terminal order uses fact-claim rank and stable
 logical identity, never wall time or remaining/segment duration. A replacement winner rebases
 from the retained pre-terminal snapshot and replays idempotent later inputs; one projected fact
 and already-final merged-component effects remain.
 
-Terminal projection leases last at most 90 monotonic seconds. Settlement waits for issued leases
-to be acknowledged, revoked, or expired, then prevents predecessor actions from mutating successor
-cycles. The terminal fact ID is invariant across candidate winners: versioned canonical SHA-256
+Terminal projection leases and Class-0 raw candidate buffers last at most 90 monotonic seconds.
+Every closure settles admitted same-generation candidates, commits a signed high-water projection
+fence, revokes leases, erases losing/duplicate buffers, then permits successors. Persisted
+GlobalStateID, generation, revision, and high water make reboot deterministic: old-generation
+actions are rejected no-ops rather than remaining indefinitely valid. The terminal fact ID is invariant across candidate winners: versioned canonical SHA-256
 bytes encode OpportunityID, terminal slot, and fixed registered component scope, never a candidate
 participant subset.
+
+Merged visual timer/Done and parent Escape from the same revision share one cross-slot arbiter.
+Escape preempts a same-revision component; otherwise Done ranks before timer completion. Exactly
+one fact path and visual successor effect wins. A visual component already acknowledged at the
+successor revision remains final when a later movement-phase Escape closes the parent.
 
 ## 6. Paused and Held
 
@@ -205,9 +217,16 @@ It may never combine them into a grade or interpret them as health outcomes.
 `userDeclaredAlreadyMoved` · `positionChanged` · `snoozed` · `skipped` · `notAppropriate` ·
 `likelyNaturalInterruption`
 
-Operational events, observations, assessments, scheduling decisions, corrections, and companion
-actions use separate ledgers. A sensor observation may support a `scheduling_decision`; it cannot
+Operational events, observations, assessments, scheduling decisions, corrections, and retained
+companion state use separate ledgers. Raw companion/terminal candidates, losers, duplicates, and
+old-generation rejection envelopes are Class 0: memory-only for at most 90 seconds, erased at
+settlement/fence, and never persisted, exported, or given a durable record identity. A sensor observation may support a `scheduling_decision`; it cannot
 be encoded as `timerFinished`, `userDeclaredCompleted`, or `userDeclaredAlreadyMoved`.
+
+Companion controls project eight explicit conditions: live, offline, expired, pending,
+revalidating, rejected-no-op, already-ended, and transfer-failed. “Any device” applies only to a
+live exact-generation lease. Every other state disables ineffective controls, says whether the Mac
+timer remains authoritative, announces the result, and offers Retry/Close. No sensor is required.
 
 ## 9. Adaptation — what the app may and may not learn
 

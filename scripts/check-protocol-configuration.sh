@@ -343,11 +343,12 @@ resolver_groups.each do |name, ids|
   expected_terminal = {
     "authoritative_opportunity_nonterminal" => false,
     "authoritative_global_nonterminal" => false,
-    "component_terminal_candidate_set" => false,
+    "merged_visual_cross_slot_candidate_set" => nil,
     "terminal_candidate_set" => true,
     "operational_terminal_disposition" => true,
   }.fetch(name)
   ids.each do |id|
+    next if expected_terminal.nil?
     assert(transition_by_id.fetch(id).fetch("terminal") == expected_terminal, "#{id} terminal flag conflicts with #{name}")
   end
 end
@@ -430,9 +431,39 @@ assert(
 %w[merged.visual_segment_finished merged.visual_segment_done_early].each do |id|
   transition = transition_by_id.fetch(id)
   assert(transition.fetch("visible").include?("movement_duration_offer"), "#{id} must reach the movement offer")
-  assert(transition.fetch("stale") == "reconcile_visual_segment_candidate", "#{id} must reconcile the visual segment")
-  assert(transition.fetch("recovery") == "retain_visual_effect_even_if_movement_later_ends", "#{id} must retain visual completion")
+  assert(transition.fetch("stale").include?("merged_visual_cross_slot_arbiter"), "#{id} must reconcile through the cross-slot arbiter")
+  assert(transition.fetch("recovery").include?("only_if_cross_slot_arbiter_commits"), "#{id} must not become final before cross-slot settlement")
 end
+cross_slot = runtime.dig("action_contract", "merged_visual_cross_slot_arbiter")
+assert(
+  cross_slot &&
+    cross_slot.fetch("competing_transition_ids") == %w[
+      merged.escape_during_visual
+      merged.visual_segment_done_early
+      merged.visual_segment_finished
+    ] &&
+    cross_slot.fetch("requires_same_origin") == %w[opportunity_id coordinator_generation opportunity_revision visual_segment_id] &&
+    cross_slot.fetch("winner_rank_smallest_wins") == {
+      "merged.escape_during_visual" => 0,
+      "merged.visual_segment_done_early" => 10,
+      "merged.visual_segment_finished" => 20,
+    } &&
+    cross_slot.fetch("loser_effect") == "operational_rejected_no_op_no_fact_no_clock_effect" &&
+    cross_slot.fetch("already_committed_component_rule").include?("merged.escape_during_movement"),
+  "merged visual completion and same-revision parent Escape need one cross-slot arbiter",
+)
+assert(
+  resolver_groups.fetch("merged_visual_cross_slot_candidate_set").sort == cross_slot.fetch("competing_transition_ids").sort &&
+    cross_slot.fetch("component_finality").include?("create no timerFinished") &&
+    cross_slot.fetch("convergence").include?("both timerFinished and skipped") &&
+    cross_slot.fetch("convergence").include?("Arrival time and wall time are not inputs") &&
+    guards.fetch("merged.escape_during_visual").fetch("required_payload").include?("coordinator_generation") &&
+    %w[merged.visual_segment_finished merged.visual_segment_done_early merged.escape_during_visual].all? do |id|
+      guards.fetch(id).fetch("source_phases") == ["merged_visual_running"] &&
+        transition_by_id.fetch(id).dig("clocks", "visual") == "fresh_cycle"
+    end,
+  "cross-slot resolver must own the exact same-revision race and one visual successor path",
+)
 %w[
   merged.movement_timer_finished
   merged.movement_done_early
@@ -486,6 +517,38 @@ assert(
     runtime.dig("clock_contract", "position", "explicit_action_eligibility").include?("does not complete movement"),
   "explicit position actions must remain reachable without conflating accrual or movement",
 )
+latent_position = runtime.dig("clock_contract", "position", "latent_manual_cycle")
+assert(
+  latent_position &&
+    latent_position.fetch("always_present") == true &&
+    latent_position.fetch("disabled_schedule_state") == "manual_only_no_accrual_no_due_no_offer" &&
+    latent_position.fetch("explicit_position_changed_effect") == "rotate_latent_cycle_without_enabling_reminders" &&
+    %w[movement.position_changed_offered movement.position_changed_running merged.movement_position_changed].all? do |id|
+      guards.fetch(id).fetch("required_payload").include?("affected_position_cycle_id")
+    end,
+  "disabled position reminders still need a reachable latent manual cycle",
+)
+assert(
+  protocol.dig("clock_semantics_v2", "position_manual_cycle") == {
+    "always_present" => true,
+    "disabled_schedule_state" => "manual_only_no_accrual_no_due_no_offer",
+    "explicit_change_rotates_cycle" => true,
+    "explicit_change_enables_reminders" => false,
+  },
+  "health protocol position-disabled lifecycle drifted",
+)
+%w[
+  movement.position_changed_offered
+  movement.position_changed_running
+  position.changed
+  position.skip
+  merged.movement_position_changed
+].each do |id|
+  assert(
+    transition_by_id.fetch(id).dig("clocks", "position") == "rotate_position_cycle_preserving_enablement",
+    "#{id} must rotate position without enabling reminders",
+  )
+end
 held_evidence = runtime.dig("presentation_states", "held", "evidence_contract")
 assert(
   held_evidence.fetch("required") ==
@@ -543,13 +606,16 @@ assert(
     timer_recovery.fetch("ledgers") == ["operational"] &&
     timer_recovery.fetch("clocks").values.all? { |effect| effect == "retain" } &&
     deadline.dig("recovery_unavailable", "grace_seconds") == 60 &&
-    deadline.dig("recovery_unavailable", "product_facts") == [],
+    deadline.dig("recovery_unavailable", "product_facts") == [] &&
+    deadline.dig("recovery_unavailable", "grace_begins") == "after_signed_fence_and_operational_disposition_commit" &&
+    timer_recovery.fetch("recovery").include?("commit_signed_projection_fence"),
   "unknown timer recovery must remain operational-only and preserve every due schedule",
 )
 assert(
   guards.fetch("system.timer_recovery_unavailable").fetch("source_phases").sort ==
     %w[merged_movement_running merged_visual_running movement_running recovery_running visual_running] &&
-    guards.fetch("system.timer_recovery_unavailable").fetch("required_payload").include?("unavailable_epoch_or_anchor_reason"),
+    guards.fetch("system.timer_recovery_unavailable").fetch("required_payload").include?("unavailable_epoch_or_anchor_reason") &&
+    guards.fetch("system.timer_recovery_unavailable").fetch("required_payload").include?("signed_high_water_fence_checkpoint"),
   "unknown timer recovery must guard every running ritual phase",
 )
 unavailable = runtime.dig("time", "system_unavailable_interval")
@@ -567,6 +633,47 @@ assert(
     protocol.dig("activity_estimator", "system_unavailable_return_grace_seconds") == 60 &&
     protocol.dig("completion_semantics", "likely_natural_interruption", "unknown_elapsed_creates_fact_or_courtesy") == false,
   "protocol system-unavailable courtesy thresholds drifted",
+)
+candidate_lifecycle = runtime.dig("product_facts", "candidate_data_lifecycle")
+assert(
+  candidate_lifecycle.fetch("class") == "class_0_ephemeral_operational_state" &&
+    candidate_lifecycle.fetch("location") == "memory_only" &&
+    candidate_lifecycle.fetch("maximum_retention_seconds") <= 120 &&
+    candidate_lifecycle.fetch("maximum_retention_seconds") == 90 &&
+    candidate_lifecycle.fetch("export") == "never" &&
+    candidate_lifecycle.fetch("persistence") == "prohibited" &&
+    candidate_lifecycle.fetch("stable_record_identity") == "none" &&
+    protocol.dig("candidate_data_lifecycle_v2", "maximum_retention_seconds") == 90 &&
+    protocol.dig("candidate_data_lifecycle_v2", "persistence") == false,
+  "raw candidate lifecycle must be Class 0, memory-only, bounded, and unexported",
+)
+companion = runtime.fetch("companion_contract")
+expected_companion_states = %w[live offline expired pending revalidating rejected_no_op already_ended transfer_failed]
+assert(companion.fetch("states").keys == expected_companion_states, "companion state registry is incomplete or reordered")
+expected_companion_states.each do |state|
+  projection = companion.dig("states", state)
+  %w[take_with_me_enabled terminal_controls_enabled recovery_control_enabled visible_status voiceover_announcement recovery_action].each do |field|
+    assert(projection.key?(field), "companion #{state} is missing #{field}")
+  end
+end
+assert(
+  companion.dig("states", "live", "take_with_me_enabled") == true &&
+    companion.dig("states", "live", "terminal_controls_enabled") == true &&
+    expected_companion_states.drop(1).all? { |state| companion.dig("states", state, "take_with_me_enabled") == false } &&
+    expected_companion_states.drop(1).all? { |state| companion.dig("states", state, "terminal_controls_enabled") == false } &&
+    companion.fetch("live_scope_rule").include?("coordinator generation") &&
+    companion.dig("interaction", "escape_rule").include?("never_cancel_or_finish") &&
+    companion.fetch("sensor_free_fallback").include?("without HealthKit, motion, location, camera"),
+  "companion controls must be live-generation gated, explicit, accessible, and sensor-free",
+)
+timer_projection = runtime.fetch("timer_recovery_user_projection")
+assert(
+  timer_projection.dig("exact_copy", "title") == "Timer couldn’t be restored" &&
+    timer_projection.dig("exact_copy", "body") == "No finish was recorded. This schedule is still due." &&
+    timer_projection.dig("exact_copy", "menu_status") == "Still due · timer not restored" &&
+    timer_projection.dig("interaction", "initial_focus") == "close_action" &&
+    timer_projection.dig("interaction", "quiet_transition").include?("60_second_grace"),
+  "timer recovery user projection must be neutral, localized, focused, and still due",
 )
 assert(
   runtime.dig("input_and_motion", "declaration_guard_seconds") == 0,
@@ -615,10 +722,41 @@ assert(
 nonterminal = runtime.dig("action_contract", "nonterminal_reconciliation")
 assert(
   nonterminal.fetch("rule").downcase.include?("arrival order is never an input") &&
-    nonterminal.fetch("winner_sort_key") == %w[smallest_intent_rank lexicographically_smallest_action_id],
+    nonterminal.fetch("winner_sort_key") == %w[causally_satisfied_exact_scope_revision smallest_authoritative_transition_rank lexicographically_smallest_action_id],
   "nonterminal reconciliation must be deterministic and arrival-independent",
 )
 coordinator = runtime.dig("action_contract", "authoritative_action_coordinator")
+scope_contract = coordinator["scope_contract"]
+assert(
+  scope_contract &&
+    scope_contract.dig("opportunity", "identity_fields") == %w[opportunity_id opportunity_revision] &&
+    scope_contract.dig("global", "identity_fields") == %w[global_state_id global_state_revision] &&
+    scope_contract.dig("global", "forbidden_fields") == ["opportunity_id"] &&
+    runtime.dig("identities", "global_state_id", "stable_through").include?("relaunch"),
+  "authoritative leases must separate opportunity and global scope identity",
+)
+authoritative_opportunity_ids = resolver_groups.fetch("authoritative_opportunity_nonterminal")
+authoritative_global_ids = resolver_groups.fetch("authoritative_global_nonterminal")
+authoritative_opportunity_ids.each do |id|
+  assert(
+    scope_contract.fetch("opportunity").fetch("phase_scopes").include?(guards.fetch(id).fetch("phase_scope")),
+    "#{id} resolver and opportunity lease scope are incompatible",
+  )
+end
+authoritative_global_ids.each do |id|
+  assert(
+    scope_contract.fetch("global").fetch("phase_scopes").include?(guards.fetch(id).fetch("phase_scope")),
+    "#{id} resolver and global lease scope are incompatible",
+  )
+end
+authoritative_rank = nonterminal.fetch("authoritative_transition_rank_smallest_wins")
+authoritative_ids = authoritative_opportunity_ids + authoritative_global_ids
+assert(
+  authoritative_rank.keys.sort == authoritative_ids.sort &&
+    authoritative_rank.values.uniq.length == authoritative_rank.values.length &&
+    nonterminal.fetch("order_coverage_rule").include?("exactly the union"),
+  "authoritative nonterminal rank must be total and match resolver membership",
+)
 assert(
   coordinator.fetch("lease_maximum_seconds") == 90 &&
     coordinator.fetch("rule").include?("before any product fact, deadline, phase, or clock effect") &&
@@ -660,6 +798,12 @@ assert(
 )
 terminal = runtime.fetch("terminal_reconciliation")
 projection_lease = runtime.dig("action_contract", "terminal_projection_lease")
+fence = runtime.dig("action_contract", "generation_and_closure_fence")
+all_closure_guards_are_opportunity_scoped = transitions
+  .select { |transition| transition.fetch("terminal") }
+  .all? do |transition|
+    %w[opportunity opportunity_origin].include?(guards.fetch(transition.fetch("id")).fetch("phase_scope"))
+  end
 assert(
   projection_lease.fetch("maximum_seconds") == 90 &&
     projection_lease.fetch("eligibility").include?("before_lease_expiry") &&
@@ -670,8 +814,23 @@ assert(
   "terminal candidate origination and settlement must be monotonic, bounded, and successor-safe",
 )
 assert(
-  terminal.fetch("originated_after_known_closure") == "invalid_audited_no_op" &&
-    terminal.fetch("arrived_after_provisional_closure_but_valid_at_origin") == "include_in_candidate_set",
+  fence.fetch("maximum_settlement_seconds") == 90 &&
+    fence.fetch("closure_coverage_selector") == "every_action_contract_transition_whose_terminal_field_is_true" &&
+    all_closure_guards_are_opportunity_scoped &&
+    fence.fetch("persisted_coordinator_state_requires").include?("coordinator_generation") &&
+    fence.fetch("persisted_coordinator_state_requires").include?("committed_action_counter_high_water_by_paired_device") &&
+    fence.fetch("signed_fence_requires").include?("ed25519_signature_from_installation_local_coordinator_key") &&
+    fence.fetch("every_opportunity_closure_order").last == "then_allow_successor_cycle_or_opportunity_eligibility" &&
+    fence.fetch("coordinator_epoch_loss_order").include?("reject_every_later_arriving_old_generation_action_as_operational_no_op") &&
+    fence.fetch("bounded_rule").include?("never waits for an old monotonic expiry"),
+  "closure and epoch-loss fences must be persisted, signed, high-water, and bounded",
+)
+assert(
+  terminal.fetch("originated_after_known_closure") == "operational_rejected_no_op_ephemeral_receipt" &&
+    terminal.fetch("arrived_after_provisional_closure_but_valid_at_origin").include?("same_live_unfenced_coordinator_generation") &&
+    terminal.fetch("arrived_after_generation_or_projection_epoch_fence") == "operational_rejected_no_op_with_user_visible_receipt" &&
+    terminal.fetch("valid_candidate_requires").include?("exact_current_coordinator_generation") &&
+    terminal.fetch("valid_candidate_requires").include?("exact_current_unfenced_opportunity_projection_epoch_id"),
   "late valid candidates and post-closure-originated actions must remain distinct",
 )
 assert(
@@ -724,7 +883,7 @@ assert(
 )
 rebase = terminal.fetch("rebase_contract")
 candidate_transition_ids = resolver_groups.fetch("terminal_candidate_set") +
-  resolver_groups.fetch("component_terminal_candidate_set") +
+  resolver_groups.fetch("merged_visual_cross_slot_candidate_set") +
   resolver_groups.fetch("operational_terminal_disposition")
 candidate_effect_closure = candidate_transition_ids.flat_map do |id|
   transition_by_id.fetch(id).fetch("clocks").keys + guards.fetch(id).fetch("affected_nonparticipants", [])
@@ -732,8 +891,8 @@ end.uniq.sort
 assert(
   candidate_effect_closure == expected_clocks.sort &&
     rebase.fetch("snapshot_scope_rule").include?("union of every clock") &&
-  rebase.fetch("retained_preterminal_snapshot_requires").include?("every_enabled_visual_movement_position_and_recovery_clock_cycle_id") &&
-    rebase.fetch("retained_preterminal_snapshot_requires").include?("every_enabled_clock_accumulated_time_due_state_eligibility_and_phase") &&
+  rebase.fetch("retained_preterminal_snapshot_requires").include?("all_four_visual_movement_position_and_recovery_clock_cycle_ids_including_latent_manual_position") &&
+    rebase.fetch("retained_preterminal_snapshot_requires").include?("all_four_clock_accumulated_time_due_state_eligibility_phase_and_enablement") &&
     rebase.fetch("apply_rule").include?("apply the new winner exactly once") &&
     rebase.fetch("apply_rule").include?("keep already-final independent merged-component effects") &&
     rebase.fetch("fact_rule").include?("Upsert the same deterministic terminal fact ID") &&
@@ -746,7 +905,17 @@ assert(
     rebase.dig("offered_and_running_checkpoints", "merged_component_action").include?("remain in scope"),
   "offered, accepted-running, and merged-component snapshot checkpoints must remain distinct",
 )
-%w[clock_cycle_id opportunity_id action_id decision_id device_id session_id].each do |identity|
+%w[
+  clock_cycle_id
+  opportunity_id
+  global_state_id
+  coordinator_generation
+  opportunity_projection_epoch_id
+  action_id
+  decision_id
+  device_id
+  session_id
+].each do |identity|
   assert(runtime.fetch("identities").key?(identity), "missing #{identity} contract")
 end
 
@@ -759,6 +928,9 @@ accessibility = root.join("design/ACCESSIBILITY.md").read
 health = root.join("research/health/03_PRODUCT_HEALTH_PROTOCOL_SPEC.md").read
 decisions = root.join("design/DECISIONS.md").read
 conformance = root.join("design/CURRENT_STATE_CONFORMANCE.md").read
+flows = root.join("design/USER_FLOWS.md").read
+authority = root.join("design/AUTHORITY.md").read
+privacy = root.join("research/health/07_PRIVACY_AND_DATA_SPEC.md").read
 assert(product_model.include?("Exhaustive fresh-cycle effects"), "PRODUCT_MODEL fresh-cycle table must declare its scope")
 %w[snooze skip capsule position recovery merged].each do |variant|
   assert(product_model.downcase.include?(variant), "PRODUCT_MODEL fresh-cycle table is missing #{variant}")
@@ -814,6 +986,60 @@ assert(
   interaction.include?("Movement `Now` opens its offered field") &&
     copy.include?("standalone movement opens the offered field and records no product fact yet"),
   "breakStarted copy/event ownership is inconsistent",
+)
+assert(
+  authority.include?("operational-only `timerRecoveryUnavailable`") &&
+    authority.include?("sign/fence the old projection epoch") &&
+    authority.include?("1–3/Q/A/P/**V**") &&
+    accessibility.include?("three equal-rank content choices") &&
+    !accessibility.include?("four options stack vertically"),
+  "AUTHORITY/accessibility trace cleanup drifted",
+)
+[
+  "Ready on this device",
+  "Device offline. Keep using this Mac.",
+  "Session expired. Reconnect to continue.",
+  "Sending timer…",
+  "Reconnecting…",
+  "That action no longer applies. No change was recorded.",
+  "Ended on another device.",
+  "Couldn’t transfer. The timer is still running on this Mac.",
+].each do |phrase|
+  assert(copy.include?(phrase) && screens.include?(phrase.split(".").first), "companion copy/screen state missing #{phrase}")
+end
+assert(
+  expected_companion_states.all? { |state| accessibility.include?(state.tr("_", "-")) } &&
+    flows.include?("old generation / fenced projection → Rejected, no-op") &&
+    interaction.include?("matching generation") && interaction.include?("projection epoch") &&
+    interaction.include?("opportunity revision") && interaction.include?("segment"),
+  "companion UX/a11y flow is not reconciled across governing documents",
+)
+[
+  "Timer couldn’t be restored",
+  "No finish was recorded. This schedule is still due.",
+  "Still due · timer not restored",
+].each do |phrase|
+  assert(
+    [copy, screens, interaction].all? { |document| document.gsub(/\s+/, " ").include?(phrase) },
+    "timer recovery copy missing #{phrase}",
+  )
+end
+assert(
+  privacy.gsub(/\s+/, " ").include?("**90 seconds**") &&
+    privacy.gsub(/\s+/, " ").include?("no durable record identity") &&
+    privacy.gsub(/\s+/, " ").include?("never enter an") &&
+    privacy.gsub(/\s+/, " ").include?("Delete history") &&
+    privacy.gsub(/\s+/, " ").include?("Reset app data") &&
+    copy.include?("Temporary action buffers") &&
+    conformance.include?("Class-0 ≤90 s memory-only candidate disposal"),
+  "candidate privacy lifecycle is incomplete across privacy/copy/conformance",
+)
+assert(
+  product_model.include?("visual time accrued before that movement cannot cause a prompt") &&
+    health.include?("Visual time accrued before that likely-away interval cannot cause a") &&
+    product_model.include?("A genuinely new") &&
+    health.include?("new fresh or Custom visual cycle"),
+  "trust guarantee must apply to pre-movement/pre-away accrual without banning new cycles",
 )
 RUBY
 

@@ -107,13 +107,55 @@ before anything else.
    pretending it completes movement. Merged offered additionally names "Just the visual one, V."
 6. **VoiceOver values** — offered announces "Timer not started." Running announces the selected
    duration at start and completion, with at most one halfway announcement.
-7. **Text scaling** — four options stack vertically; they never become a horizontal scroller.
+7. **Text scaling** — the three equal-rank content choices stack vertically; separate
+   duration/declaration/position/exit controls follow in reading order and never become a
+   horizontal scroller.
 8. **Increase Contrast** — option boundaries become explicit.
 9. **Reduce Motion** — no animated demonstrations. Instructions are text `[04 §2]`.
 10. **Meaning without color** — the selected activity is indicated by more than a tint.
 11. **Alternative movement** — this screen *is* the commitment. Seated and small-space options
-    carry the same type size, same target size, same position class as walking.
+    carry the same type size, same target size, same position class as walking. Change position
+    remains reachable when position reminders are off; it rotates the manual cycle without
+    enabling prompts and remains explicitly separate from movement completion.
 12. **Multi-display** — as BR-01.
+
+### ED-20/21 — Companion timer projection
+
+1. **Keyboard path** — Live Take with me and terminal controls use Return/Space. Retry/Close
+   replaces an unavailable action. Escape/Command-period dismisses status only, never the timer.
+2. **Initial focus** — Take with me when live; Retry when expired or transfer failed; Close when
+   rejected-no-op or already ended. Pending/revalidating retains a non-action status focus.
+3. **Focus order** — status → enabled terminal controls → Retry/Close. Disabled controls are
+   announced disabled and leave the actionable tab order.
+4. **Escape** — returns to the authoritative timer without applying a companion action.
+5. **VoiceOver names** — semantic action names, never device appearance or sensor language.
+6. **VoiceOver values** — exactly one registered announcement for live, offline, expired,
+   pending, revalidating, rejected-no-op, already-ended, or transfer-failed. No silent no-op.
+7. **Text scaling** — state and recovery copy wrap above a vertical action group.
+8. **Increase Contrast** — labels, traits, focus rings, and boundaries distinguish every state.
+9. **Reduce Motion** — immediate state replacement; no spinner or transfer animation required.
+10. **Meaning without color** — each state has explicit text and control enabled/disabled traits.
+11. **Alternative movement** — sensor-free manual controls remain on the authoritative device;
+    Watch/iPhone ownership, motion, location, HealthKit, walking, and standing are not required.
+12. **Multi-display** — the Mac key panel remains reachable until acknowledged handoff; failure
+    returns focus without stranding a panel.
+
+### ED-19 — Timer recovery unavailable
+
+1. **Keyboard path** — Close works with Return, Escape, and Command-period; Retry is shown only
+   when a failed fence/storage transaction can be attempted again.
+2. **Initial focus** — Close, or Retry when it is the only recovery action.
+3. **Focus order** — recovery status → Retry when present → Close.
+4. **Escape** — closes the unusable ritual without recording skip, completion, or timer finish.
+5. **VoiceOver names** — “Timer could not be restored. No finish was recorded. The schedule is
+   still due.” Announced once before Close receives focus.
+6. **VoiceOver values** — menu status is “Still due · timer not restored”; no countdown chatter.
+7. **Text scaling** — title, body, and actions wrap in one vertical group.
+8. **Increase Contrast** — explicit boundary and focus ring.
+9. **Reduce Motion** — immediate quiet transition, no entrance/exit gate.
+10. **Meaning without color** — “still due” and “not restored” carry the complete state.
+11. **Alternative movement** — no body state or completion is inferred.
+12. **Multi-display** — one key recovery status, one focus restoration, menu due state reachable.
 
 ### MB-01…MB-05 — Menu bar glyph
 

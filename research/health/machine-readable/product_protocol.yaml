@@ -190,6 +190,19 @@ clock_semantics_v2:
   position: optional_position_change_schedule_based_on_estimated_active_computer_use_or_user_interval
   recovery: optional_recovery_schedule_from_eligible_interaction_time_and_explicit_deferrals
   prohibited_permission_free_inferences: [gaze, near_screen_exposure, body_movement, body_stillness, body_position, position_stability, posture]
+  position_manual_cycle:
+    always_present: true
+    disabled_schedule_state: manual_only_no_accrual_no_due_no_offer
+    explicit_change_rotates_cycle: true
+    explicit_change_enables_reminders: false
+candidate_data_lifecycle_v2:
+  class: class_0_ephemeral
+  memory_only: true
+  maximum_retention_seconds: 90
+  discard_at_settlement_or_fence: true
+  persistence: false
+  export: false
+  analytics: false
 boundary_predicates:
   deadline_reached: elapsed_seconds_greater_than_or_equal_to_deadline_seconds
   recent_input_eligible: seconds_since_input_less_than_or_equal_to_60

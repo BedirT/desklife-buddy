@@ -410,8 +410,9 @@ unobserved gaps never catch up from wall time. Wake/unlock has a 90-second grace
 At the first 300-second idle threshold, record `likelyNaturalInterruption` once and freeze while
 away. On return, begin a fresh visual cycle at the return boundary, preserve the unresolved
 movement need, and apply a 60-second grace. This is presentation courtesy, not an inferred visual
-break or movement completion, and it forbids a visual interruption minutes after a five-minute
-likely-away interval.
+break or movement completion. Visual time accrued before that likely-away interval cannot cause a
+prompt after return; a new fresh or Custom visual cycle may still follow the person's configured
+bounds, with no additional unsupported minimum implied.
 
 ### 17.2 Paused, Held, and accepted time
 
@@ -440,7 +441,11 @@ An accepted visual, movement, merged, or recovery segment has one continuous-mon
 Its epoch and anchor persist. Same-epoch restore subtracts current monotonic ticks. An unavailable
 or discontinuous epoch is unknown and closes through operational-only
 `timerRecoveryUnavailable`: emit no `timerFinished`, create no fresh schedule, preserve each
-affected due cycle, then permit a new OpportunityID after 60 seconds. A
+affected due cycle, settle only admitted candidates from the same live generation, then atomically
+commit the operational disposition and signed high-water projection fence. The 60-second grace
+begins after that fence; only fence + grace permits a new OpportunityID. The surface says “Timer
+couldn’t be restored” and “No finish was recorded. This schedule is still due”; the menu keeps the
+due state visible. Old-generation actions are rejected no-ops with an explicit receipt. A
 companion transfer requires a bounded monotonic handshake and subtracts its full uncertainty;
 without acknowledgment the sender remains authoritative. Portable wall values are display and
 audit metadata only. Sleep, lock, callback suspension, relaunch, clock changes, or handoff cannot
@@ -478,8 +483,9 @@ The v2 machine transition table is normative. In summary:
   `Now` only opens the offered state and records nothing;
 - movement has a distinct offered state with no timer, `breakStarted`, or `Done early`; accepting
   the visible 5- or 2-minute action creates the running state and selected-duration deadline;
-- a movement timer finish or `Done early` begins fresh movement and visual cycles, preventing
-  the post-walk early-visual failure;
+- a movement timer finish or `Done early` begins fresh movement and visual cycles, so visual time
+  accrued before the movement cannot trigger the reported early-visual failure; a genuinely new
+  cycle may still follow configured bounds;
 - `I already moved` begins a fresh movement cycle, and refreshes visual only when the declared
   or strong fresh evidence also establishes screen-away timing;
 - a position change refreshes only the position clock;
@@ -515,13 +521,22 @@ identity. A merged opportunity references its separate visual and movement cycle
 action names its origin phase/revision/segment, base participant set, affected nonparticipant cycle,
 persistent device counter, and causal parents. Movement/merged position actions keep movement or
 visual+movement as their base participants and guard the exact affected position cycle separately.
-An action originated after known closure is an audited no-op; a valid candidate
-originated before its device learned of closure remains eligible even if it arrives later.
-Effect-bearing nonterminal commands require a live coordinator lease and atomically commit/ack
-before exposing effects; offline intents remain operational-only until renewed and revalidated.
+That manual position cycle exists even while position reminders are disabled; changing it rotates
+the cycle without enabling accrual, due state, or prompts. An action originated after known closure
+is a rejected no-op with an explicit operational receipt. A candidate originated before provisional
+closure remains eligible only while its exact coordinator generation and projection epoch are live
+and unfenced. Effect-bearing nonterminal commands require a live coordinator lease and atomically
+commit/ack before exposing effects. Opportunity commands use OpportunityID + revision; global,
+system, and schedule commands use stable GlobalStateID + global revision, never an invented
+OpportunityID. One complete causal/precedence rank covers every authoritative nonterminal
+transition; offline intents remain operational-only until renewed and revalidated.
 Terminal candidates require a causally acknowledged projection lease of at most 90 monotonic
-seconds. Settlement waits for issued leases to be acknowledged, revoked, or expired, then protects
-successor cycles. Terminal conflicts use a fixed
+seconds. Every closure settles admitted same-generation candidates, commits a signed high-water
+projection fence, revokes leases, discards raw buffers, then allows successors. GlobalStateID,
+coordinator generation, revisions, and high-water acknowledgement persist for restart safety.
+Epoch loss fences the old generation rather than waiting for an unverifiable old monotonic expiry;
+later old-generation actions receive an honest rejected-no-op receipt and never a product fact.
+Terminal conflicts use a fixed
 fact-claim rank and stable identifiers, never wall time, remaining duration, segment duration, or
 arrival order. Both reductions are commutative, associative, and idempotent.
 
@@ -530,8 +545,8 @@ integers, canonically byte-sorted sets/maps, and SHA-256 lowercase hex. Wall tim
 hashes, and pointer addresses are excluded. A terminal fact ID uses OpportunityID, the canonical
 terminal slot, and fixed registered component scope, so it is invariant across candidate winners.
 
-Before a terminal projection, retain every enabled clock's cycle ID, accumulated time, due state,
-eligibility and phase, plus recovery/session state, evidence, decisions, deadlines, and component
+Before a terminal projection, retain all four clocks' cycle ID, accumulated time, due state,
+eligibility, phase, and enablement, including the latent manual position cycle, plus recovery/session state, evidence, decisions, deadlines, and component
 facts. The required scope is the union of every eligible candidate effect, including cross-clock
 and affected-nonparticipant effects. Offered actions project from their action checkpoint after
 offer-time accrual; running actions may restore only the acceptance snapshot. If a late
@@ -540,8 +555,17 @@ preserve already-final independent merged-segment effects, discard only causal d
 losing branch, and replay retained idempotent post-terminal inputs. The same deterministic fact ID
 is updated; no second fact, announcement, haptic, or notification is emitted.
 
+Merged visual timer/Done and parent Escape from the same generation/revision/segment enter one
+cross-slot arbiter. Escape preempts same-revision component completion; otherwise Done ranks before
+timer completion. One causal winner produces at most one visual successor effect. A component
+already acknowledged at the successor revision is final, and a later movement-phase Escape retains
+it.
+
 The ten §10 product facts remain closed. Operational records, sensor observations, fused
-assessments, scheduling decisions, corrections, and companion actions are separate ledgers. The
+assessments, scheduling decisions, corrections, and retained companion continuity are separate
+ledgers. Raw terminal/companion candidate envelopes, losers, duplicates, and post-fence rejects are
+Class 0 memory-only for at most 90 seconds, erased at settlement/fence, and never persisted,
+exported, analyzed, or assigned a durable record identity. The
 legacy `event_schema.json` is now explicitly a read-only v1 envelope whose mappings project to
 the ten facts; its broader record kinds never enlarge the product-fact vocabulary. No timer,
 idle, sensor, camera, motion, HealthKit, companion, or model observation is a completion fact or

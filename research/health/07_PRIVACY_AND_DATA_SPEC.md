@@ -19,6 +19,7 @@ Examples:
 - frontmost bundle ID for matching a local exclusion;
 - current Calendar busy interval;
 - active overlay state.
+- raw companion/terminal candidate envelopes, duplicates, losers, and rejected stale actions.
 
 Requirements:
 
@@ -26,6 +27,14 @@ Requirements:
 - discard quickly;
 - no analytics;
 - no server transmission.
+
+For D-033 coordination, raw candidate buffers are strictly memory-only and minimized to fields
+needed for the current reduction. They have no durable record identity; ActionID is only transient
+protocol correlation and is erased with the buffer. Discard occurs at settlement, generation or
+projection fence, or **90 seconds**, whichever comes first. These buffers never enter an
+operational/companion history ledger, crash recovery, export, Weekly, analytics, logs, or backups.
+An old-generation rejected action may produce immediate on-screen/VoiceOver feedback, but that
+receipt is not retained.
 
 ### Class 1 — Local routine data
 
@@ -38,6 +47,9 @@ Examples:
 - longest estimated run;
 - content preference;
 - skip/snooze categories.
+- current coordination continuity state: GlobalStateID, coordinator generation/revision,
+  per-device action-counter high-water acknowledgements, active projection fences, and paired
+  public-key fingerprints, without raw candidate payloads.
 
 Requirements:
 
@@ -56,6 +68,7 @@ Examples:
 - exact timestamps;
 - inferred work pattern;
 - accessibility preferences.
+- paired-device trust mapping and the local private coordinator signing key.
 
 Requirements:
 
@@ -63,6 +76,8 @@ Requirements:
 - local only unless user explicitly enables sync;
 - do not use to infer employment, disability, or productivity;
 - minimize granularity.
+- never export a private signing key; retain it only until reset/unpair and export only a public
+  fingerprint needed to inspect paired trust.
 
 ### Class 3 — Health-adjacent or health data
 
@@ -216,6 +231,8 @@ Proposed defaults:
 | Data | Default retention |
 |---|---:|
 | Ephemeral input/activity signal | memory only |
+| Raw terminal/companion candidate, losing/duplicate/rejected envelope | memory only; ≤90 seconds and until settlement/fence, whichever comes first |
+| Current coordination continuity and signed fence/high-water state | current state plus the immediately previous fence for at most 90 seconds; compact current generation/high-water persists until reset |
 | Raw opportunity event | 30–90 days locally |
 | Daily aggregate | 12 months locally |
 | Settings/profile | until deletion |
@@ -238,6 +255,14 @@ Users need:
 - disable and clear Calendar/app integrations;
 - clear synced data if sync is later added;
 - confirmation of what remains after deletion.
+
+When D-033 coordination is implemented, the local data report must include current generation,
+global revision, fence/high-water status, and paired public-key fingerprints in a human-readable
+form. It must exclude raw candidate buffers and the private coordinator signing key. **Delete
+history** keeps coordination continuity so a live timer is not made unsafe. **Reset app data** and
+device unpairing delete the applicable coordination state, paired trust, and local private signing
+key. The UI must disclose these boundaries before either action. This is a future v2 obligation,
+not a claim about the current runtime/export.
 
 Deletion must be tested, including backups, caches, crash logs, and queued analytics.
 
@@ -268,6 +293,15 @@ Future companion principles:
 - absence/delay is unknown, not failure;
 - provide local data deletion and revoke guidance;
 - no server collection unless independently justified.
+- “Any device” means only a paired device with a live exact-generation lease; offline, expired,
+  fenced, or unacknowledged actions are rejected no-ops with immediate user feedback;
+- raw candidate/duplicate/loser buffers follow the Class-0 90-second maximum above and are never
+  retained as an audit trail;
+- restart safety retains only minimized Class-1 generation/fence/high-water continuity and paired
+  public fingerprints; the Ed25519 private coordinator key remains local, non-exportable, and is
+  deleted by reset/unpair;
+- live/offline/expired/pending/revalidating/rejected-no-op/already-ended/transfer-failed states
+  remain usable without HealthKit, motion, location, camera, or another sensor.
 
 ## 13. Camera and posture sensing gate
 

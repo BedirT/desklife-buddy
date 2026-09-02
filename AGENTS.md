@@ -13,11 +13,13 @@ then follow its canonical links into `design/` and the normative
 claims safety, privacy, accessibility, copy, screen inventory, and design
 decisions are defined in root `CLAUDE.md`.
 
-The current `App`, `Item`, and `ItemList` code is an untouched harness proof,
-not the product. Do not begin the clock engine or any user-facing product slice
-until the bootstrap plan in `docs/plans/2026-08-25-harness-bootstrap.md` is
-complete and verified. The first implementation slice then follows the build
-order in `design/HANDOFF.md`: clock engine and exhaustive event log first.
+The harness bootstrap and the first product implementation sequence are complete.
+The current tree contains the production clock engine, persistence, operating
+surfaces, Settings, onboarding, and Weekly. `Item`, `ItemStore`, `ItemList`, and
+their persistence seam remain template examples only; do not extend them for
+product work. Before changing existing behavior, read
+`design/CURRENT_STATE_CONFORMANCE.md` and `design/AUTHORITY.md`, then extend or
+explicitly migrate the named production seam rather than creating a parallel engine.
 
 ## Architecture
 
@@ -26,7 +28,7 @@ order in `design/HANDOFF.md`: clock engine and exhaustive event log first.
 | `App/` | Thin shell: entry point, scenes, commands, settings, SwiftData composition root. Real stores are built here and nowhere else. |
 | `AppTests/` | Xcode app-target tests for App-owned seams such as SwiftData stores and scene composition. |
 | `Packages/Domain` | Models, protocols, stores, business logic. Never imports SwiftUI/AppKit. |
-| `Packages/Features` | One target per window/screen/flow: @Observable model + view + previews + tests. `ItemList` is the desktop worked example. |
+| `Packages/Features` | One target per window/screen/flow: @Observable model + view + previews + tests. `ItemList` remains a harness example, not a product surface. |
 | `Packages/DesignSystem` | Every color/font/spacing/radius/motion token + reusable components. Catalog: `DSGallery`. |
 | `Packages/TestSupport` | `SnapshotSupport`: deterministic macOS SwiftUI snapshot helpers and preview-review PNG export. |
 

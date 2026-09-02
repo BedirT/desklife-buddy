@@ -1,7 +1,7 @@
 # User Flows
 
 Flows are written as **decision paths**, not happy paths. Every flow states its exit, its
-suppression behavior, and what the product records. Screen IDs refer to `SCREEN_INVENTORY.md`.
+Paused/Held behavior, and what the product records. Screen IDs refer to `SCREEN_INVENTORY.md`.
 
 Legend: `→` next step · `⤳` background/no UI · `✕` flow ends
 
@@ -13,7 +13,7 @@ Legend: `→` next step · `⤳` background/no UI · `✕` flow ends
 Install → launch → ON-01 What this is
   → ON-02 What it can and cannot know          (the honesty screen; not skippable content,
                                                 but the whole flow is skippable)
-  → ON-03 Choose a rhythm  [Gentle | Balanced✓ | Frequent]
+  → ON-03 Choose a rhythm  [Calm | Balanced✓ | Frequent reset | Adaptive | Custom]
   → ON-04 How you move     [Walk/wheel | Seated movement | Mix movement paths | Position change]
   → ON-05 Comfort          [Standard | Static + brightness; macOS choices shown read-only]
   → ON-06 Ready            (Choices summarized; integrations named, not requested.)
@@ -31,14 +31,15 @@ Install → launch → ON-01 What this is
 ## F-02 · Steady state (the flow that runs 40× a day)
 
 ```
-⤳ activity estimator running (CGEventSource; 60 s window)
+⤳ permission-free estimator running (5 s expected samples; 15 s maximum covered gap)
 ⤳ four clocks advancing: visual · movement · position · recovery
   → visual clock reaches soft-due (20 min, Balanced)
     → MB-02 glyph changes            ← Level 0. This is the whole interaction 
                                         most of the time.
-    → suppression check (PRODUCT_MODEL §6)
-        suppressed → ⤳ hold, accumulate per policy, do not queue duplicates
-        clear      → wait for a low-friction moment (max: latest_preferred 30 min)
+    → Paused/Held check (PRODUCT_MODEL §6)
+        Paused → ⤳ freeze affected clocks; no catch-up
+        Held   → ⤳ eligible need continues; do not present or queue duplicates
+        clear  → wait for a low-friction moment (max: Balanced v2 latest 27 min)
     → F-03
 ```
 
@@ -51,14 +52,15 @@ If a direction cannot make MB-01→MB-02 legible and calm, the direction fails.
 
 ```
 HU-01 heads-up (45 s before target)
-  ├ Start now          → BR-01 → BR-02 (≈20 s) → BR-03 blink cue → timerFinished
-  │                      → AK-02 (nothing shown) ✕  clock resets
+  ├ Start now          → BR-01 → BR-02 immediate + absolute 20 s deadline
+  │                      → BR-03 blink cue → timerFinished
+  │                      → AK-02 (nothing shown) ✕  fresh visual schedule
   ├ In 5 minutes       → snoozed(300) → return to F-02 ✕
   ├ More options       → HU-05 → BR-13 [5·10·15 min | after meeting | pause 1 hr |
   │                                     not appropriate]
   └ ignored            → at target: BR-01 appears
-                          ├ Escape / click away → skipped ✕   (never blocked, never re-shown
-                          │                                    for this opportunity)
+                          ├ Escape / click away → skipped ✕   (fresh visual schedule,
+                          │                                    no completion credit)
                           ├ "I already looked away" → userDeclaredCompleted ✕
                           └ run to completion → as above
 ```
@@ -77,16 +79,19 @@ HU-02 heads-up
       ├ Choose activity → BR-06  four equal options:
       │     walk/wheel [L01] · seated active [M02] · small space [L03] · position change [P01]
       │     └ position change chosen → F-05 (does NOT reset the movement clock)
-      ├ Start 5 min / 2 min → BR-07 running → BR-08 "Done" → userDeclaredCompleted ✕
-      │     └ user leaves the Mac entirely → timer continues → on return, BR-08
-      ├ "I already moved" → userDeclaredAlreadyMoved ✕  (no follow-up question)
+      ├ Start 5 min / 2 min → breakStarted + absolute deadline → BR-07 running
+      │     → timerFinished / BR-08 "Done" → fresh movement + visual schedules ✕
+      │     └ user leaves or device sleeps/locks → deadline continues → finish/receipt on return
+      ├ "I already moved" → userDeclaredAlreadyMoved → fresh movement schedule;
+      │     visual fresh only with an explicit or strong fresh screen-away basis ✕
       └ Not now → BR-13 snooze sheet
 ```
 
-- The movement clock resets **only** on `userDeclaredCompleted` /
-  `userDeclaredAlreadyMoved` for a movement activity.
-- Idle never resets it. A `likelyNaturalInterruption` is recorded and **does not count**
-  `[protocol: likely_natural_interruption.counts_as_movement: false]`.
+- Movement timer/declaration and `I already moved` create a fresh movement schedule. Skip/Escape
+  also starts a new schedule to respect refusal, but records no completion credit. Acceptance
+  alone never resets the schedule.
+- Idle never completes movement. At five minutes, `likelyNaturalInterruption` preserves movement
+  need and starts a fresh visual schedule only when the person returns.
 - Safety line is present on every running movement screen `[C040]`.
 
 ---
@@ -111,10 +116,11 @@ Both due inside merge_window (300 s)
   → BR-09 single surface:
         segment 1 · look far away (≈20 s)
         segment 2 · movement (5 or 2 min, or choose activity)
-  ├ complete both → both clocks reset ✕
-  ├ "Just the visual one" → BR-10 → visual resets, movement remains due,
+  ├ complete both → fresh independent visual + movement schedules ✕
+  ├ "Just the visual one" → BR-10 → visual schedule is fresh, movement remains due,
   │                          screen says so plainly, returns to F-02
-  └ Escape at any point → whatever completed is recorded; the rest stays due ✕
+  └ Escape during visual → skipped facts; fresh schedules prevent rapid re-offer ✕
+     Escape during movement → retain finished visual effect; skipped movement starts fresh ✕
 ```
 
 ---
@@ -122,26 +128,29 @@ Both due inside merge_window (300 s)
 ## F-07 · Snooze and repeated deferral
 
 ```
-snoozed(n) → suppression active for n → opportunity returns once
+snoozed(n) → Held for n with same OpportunityID → opportunity returns once
 Second deferral of the same opportunity → no immediate re-offer; wait for the next normal cycle
 Further deferrals → NO escalation: no bigger surface, no color change, no counter, no guilt copy
 Session pattern (ED-15): after the session, at most one neutral note in the
   weekly rhythm or a settings suggestion — "Balanced may be too frequent for how you
-  work. Try Gentle?" — never mid-session, never as an interruption.
+  work. Try Calm?" — never mid-session, never as an interruption.
 ```
 
 This flow is where most competitors fail. It is a first-class design target, not an edge case.
 
 ---
 
-## F-08 · Pause and presentation
+## F-08 · Paused and Held
 
 ```
 MB-12 → [30 min | 1 hour | Until… | Until tomorrow | While presenting]
-  → MB-04 glyph + MB-08 menu state showing what is paused and until when
-  → resume is always one click
+  → explicit Pause: clocks freeze, deadline/reason survive relaunch
+  → presenting/call/Focus/Calendar/timed task: Held; eligible need continues
+  → MB-04 glyph + menu state says Paused or Held and the actual reason/deadline
+  → resume is always one click, followed by a 90 s quiet corridor
+Working hours begin → new monotonic baseline + 60 s quiet corridor; no wall catch-up
 Presentation mode left on (ED-14): once, quietly, at the next natural moment —
-  "Still paused for presenting. Resume?" Dismissible. Never repeated in the same session.
+  "Still held for presenting. Resume?" Dismissible. Never repeated in the same session.
 ```
 
 ---
@@ -191,7 +200,9 @@ Tone: an offer between peers. Never an alarm, never "you have not taken a real b
 ## F-12 · Changing the schedule
 
 ```
-SE-02 → profile or custom
+SE-02 → Calm / Balanced / Frequent reset / Adaptive / Custom
+  Legacy Gentle/Balanced/Frequent movement/High frequency value loaded:
+    → preserve exact v1 schedule; offer its named successor; migrate only after acceptance
   Very frequent (SE-03) or effectively disabled (SE-04):
     → one neutral note about what that means. No warning icon, no block, no shame [03 §5].
 Default changed by an app update (ED-18): first launch after → say what changed and why,
@@ -210,6 +221,30 @@ SE-09 → what is stored (plain list) · retention · export · delete
   → SE-10 delete: states exactly what will be removed and what remains
 Nothing here is buried, and nothing requires an account to reach.
 ```
+
+The export/history surface projects the ten product facts. Operational, observation,
+assessment, scheduling-decision, correction, and companion-action ledgers remain separately
+typed and disclosed before their owning features retain or export them.
+
+---
+
+## F-14 · Take an accepted timer away
+
+```
+Accepted visual or movement ritual → Take with me
+  → Mac sends OpportunityID + independent ClockCycleIDs + absolute deadline + ActionID
+  ├ companion acknowledges → Synced; each device computes remaining time locally
+  │   ├ terminal action on any device → local projection closes immediately
+  │   └ action set reconciles by deterministic key, never arrival order
+  │       → winner materializes one terminal product fact and clock effect
+  │       → other devices show Ended elsewhere; losing actions stay companion-ledger only
+  └ no acknowledgement → Transfer failed; Mac deadline remains valid
+```
+
+Sleep, lock, relaunch, and connectivity loss never extend the absolute deadline. Duplicate,
+unknown, stale, or mismatched-cycle actions are auditable no-ops. A sensed movement observation
+may support a separate user-approved schedule restart; it cannot masquerade as the timer or a
+user declaration.
 
 ---
 

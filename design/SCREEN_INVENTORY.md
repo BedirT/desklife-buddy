@@ -10,7 +10,7 @@ exists) · `reviewed` (passed all three review skills) · `canonical` (in `rende
 Every entry marked `designed` or beyond must have: light + dark renders, an accessibility
 annotation block (`ACCESSIBILITY.md` §2), and its copy registered in `COPY_INVENTORY.md`.
 
-Phase: **2 → 3 — direction chosen (Horizon, D-013…D-025), consolidation done, canonical renders next.**
+Phase: **2 → 3 — direction chosen (Horizon, D-016), refined by D-017–D-029 and D-032–D-033; consolidation done, canonical renders next.**
 Round-2 artboards live in `explorations/round-2/`; annotation blocks for the four core
 surfaces are in §K below.
 
@@ -23,12 +23,12 @@ surfaces are in §K below.
 | MB-01 | Glyph — operating, nothing due | Template symbol, quiet. No countdown. | explored |
 | MB-02 | Glyph — visual soft-due | Subtle variant; must read at 24 pt, monochrome | todo |
 | MB-03 | Glyph — movement soft-due | Distinguishable from MB-02 without color | todo |
-| MB-04 | Glyph — paused / suppressed | One glyph, reason lives in the menu | todo |
+| MB-04 | Glyph — Paused / Held | One glyph, exact state and reason live in the menu | todo |
 | MB-05 | Glyph — break running | Optional; may be identical to MB-01 | explored |
 | MB-06 | Status menu — normal | Status region + items (`IA` §2); round-2 `Menu.dc.html` | explored |
 | MB-07 | Status menu — something due | Status region reflects due state | todo |
 | MB-08 | Status menu — paused | State line + resume affordance | todo |
-| MB-09 | Status menu — suppressed (each of 7 reasons) | Reason phrasing per `PRODUCT_MODEL` §6 | todo |
+| MB-09 | Status menu — Held (each context reason) | Eligible need continues; reason phrasing per `PRODUCT_MODEL` §6 | todo |
 | MB-10 | Status menu — outside working hours | Next start time shown | todo |
 | MB-11 | Start movement submenu | 5 min · 2 min · Position change | todo |
 | MB-12 | Pause submenu | 30 min · 1 hr · Until… · Until tomorrow · Presenting | todo |
@@ -53,7 +53,7 @@ the invoking `/usr/bin/swift` process has not been granted Accessibility permiss
 | HU-01 | Visual heads-up — notification | Start now · In 5 minutes · More options | explored |
 | HU-02 | Movement heads-up — notification | Same three actions | todo |
 | HU-03 | Merged heads-up | One notice, not two | todo |
-| HU-04 | In-app heads-up panel | Notch capsule, first-class (D-018, D-023); round-2 `HeadsUp.dc.html` | explored |
+| HU-04 | In-app heads-up panel | Top-center capsule, first-class (D-022, D-023); round-2 `HeadsUp.dc.html` | explored |
 | HU-05 | "More options" expansion | Snooze set + not appropriate | todo |
 
 ## C. Break surfaces (Level 2)
@@ -114,7 +114,7 @@ covered by previews and snapshots.
 |---|---|---|---|
 | ON-01 | What this is | Promise, one screen | todo |
 | ON-02 | What it can and cannot know | The thesis screen | todo |
-| ON-03 | Choose a rhythm | Gentle · Balanced · Frequent | todo |
+| ON-03 | Choose a rhythm | Calm · Balanced · Frequent reset · Adaptive · Custom; legacy rows keep exact values until explicit migration | todo |
 | ON-04 | How you move | Four options, equal weight | todo |
 | ON-05 | Comfort | Motion, brightness, static mode | todo |
 | ON-06 | Ready | Works now; integrations named, not requested | todo |
@@ -160,7 +160,7 @@ covered by previews and snapshots.
 | ED-02 | Two opportunities due together | Merge `[03 §6.3]`, never stack | todo |
 | ED-03 | Display disconnected during a break | No stranded panel, no crash, exit intact | todo |
 | ED-04 | Mirrored displays | One coherent presentation | todo |
-| ED-05 | Screen locks during a break | Pause; do not resume into a lock screen | todo |
+| ED-05 | Screen locks during a break | Hide callbacks/UI; absolute accepted deadline continues; reconcile once on unlock | todo |
 | ED-06 | Calendar permission revoked | Explain once, quietly; feature off | todo |
 | ED-07 | Notifications denied | In-app heads-up path | todo |
 | ED-08 | Reduce Motion enabled while running | Applies immediately, no restart | todo |
@@ -187,15 +187,16 @@ additionally: **Increase Contrast** · **Reduce Transparency** · **largest text
 
 Format per `.claude/rules/accessibility.md` §1. These blocks cover the implemented and drawn
 core surfaces; every further screen gets its block before it can be marked `designed`.
-Cross-cutting rule (D-029): declaration keys (↩, 1–3, Q, A, P) arm ~800 ms after a break
-surface opens; Esc and ⌘. are exempt and always immediate.
+Cross-cutting rule (D-032/D-033): the final field, accepted deadline, focus, every printed
+declaration key (↩, 1–3, Q, A, P), Esc/⌘., and every pointer control are active on the first
+frame. There is no declaration guard or entrance-settlement gate.
 
 ### K.1 Visual reset — running (BR-02, `Visual.dc.html`)
 
 ```
 Keyboard path        — Appears on its own (self-running, D-021) or via menu "Start visual
                        reset"; operated entirely with ↩ / Esc / Tab. No pointer needed.
-                       ↩ arms ~800 ms after open; Esc is immediate from the first frame.
+                       ↩ and Esc are immediate from the first frame.
 Initial focus        — "Done early" pill: the least destructive primary action (D-021).
 Focus order          — Done early → Skip → (wraps). Two stops, deliberately.
 Escape               — Leaves immediately, mid-animation included → `skipped`. ⌘. same.
@@ -209,9 +210,9 @@ Text scaling         — Display line wraps to 3 lines at +35%; ground stack has
 High contrast        — Pills gain `rgba(255,255,255,0.42)` borders; ink one tier up;
                        horizon track raised a tier; the field is already opaque (D-026) —
                        IC changes ink and edges, not a dim level (DESIGN_SYSTEM §4).
-Reduced motion       — Sky rise → 400 ms crossfade with the brightness ramp (D-029);
-                       horizon fill → stepped; sun static; end: crossfade out, no capsule
-                       re-present. In-app static mode: flat field (no image), no motion.
+Reduced motion       — Same immediate final-field entrance and exit (D-032); horizon fill →
+                       stepped; sun static; no completion capsule. In-app static mode: flat
+                       field (no image), no motion.
 Meaning w/o color    — Break type is named by the eyebrow ("Visual reset"); progress is
                        the horizon line's length (position, not hue); pills are labeled.
 Alternative movement — n/a for the eyes-only reset; footnote offers "closing your eyes
@@ -229,8 +230,8 @@ Keyboard path        — Appears on its own or via menu "Start movement"; 1/2/3 
                        movement choice, Q two-minutes, ↩ done early, A already-moved,
                        P change-position, Esc leaves — every key printed on its control.
                        In the merged segment, "Just the visual one" precedes Skip in the
-                       same Tab path. Declaration keys arm ~800 ms; Esc immediate. No
-                       pointer is needed.
+                       same Tab path. Every printed key is immediate first-frame. No pointer
+                       is needed.
 Initial focus        — "Done early" pill (same position as BR-02 — predictability rule).
 Focus order          — Walk or wheel → Small space → Seated → 2 minutes instead →
                        Done early → I already moved → [Just the visual one, merged only] →
@@ -268,13 +269,13 @@ Keyboard path        — No global shortcut (D-029: none ship by default). Durin
                        (CP-MB15) — the keyboard route with the same choices; reached via
                        system status-item navigation (⌃F8). The notification path's
                        actions are the second route. The capsule is additional, never
-                       the only surface (D-018).
+                       the only surface (D-022/D-029).
 Initial focus        — None. The capsule never steals focus (non-activating).
 Focus order          — When tabbed into (system status-item navigation): Now → Later →
                        out. Hover reveals the same two exits.
 Escape               — With capsule key: waves it off for this cycle → `skipped`.
 VoiceOver names      — "Cadence: visual reset in 45 seconds. Now, button. Later, menu
-                       button." Hold state: "On hold — busy until 3:00."
+                       button." Hold state: "Held — busy until 3:00."
 VoiceOver values     — One polite announcement at appearance; one at hold-state change.
                        Numerals step 45 → 30 → 15 → 5 s (CP-HU21) and are not announced
                        per step. Never per-second.
@@ -305,15 +306,15 @@ Escape               — Closes the menu (system).
 VoiceOver names      — Status region group: "Visual reset in about 12 minutes. Movement
                        in about 31 minutes. Estimated active computer use, 48 minutes."
                        Items by their visible labels; Pause reads its submenu.
-VoiceOver values     — Paused state reads its reason: "Paused — busy until 3:00." /
-                       "Paused until you resume" (CP-MB17). "Only during working hours"
+VoiceOver values     — Held context reads its reason: "Held — busy until 3:00." Manual
+                       pause reads "Paused until you resume" (CP-MB17). "Only during working hours"
                        reads its checked state.
 Text scaling         — Menu grows with system menu text size (platform-owned); bars keep
                        2px height, labels wrap never (menu width grows).
 High contrast        — System menu material/contrast; clock bars gain 1px outlines.
 Reduced motion       — No animation exists in the menu (M10: system-owned only).
 Meaning w/o color    — The two clocks are labeled rows, not just colored bars; bar length
-                       carries the value; paused/suppressed states are worded.
+                       carries the value; Paused/Held states are worded.
 Alternative movement — "Start movement" opens the movement surface with its three equal
                        chips; the submenu (MB-11) lists 5 min · 2 min · position change.
 Multi-display        — Menu-bar item appears on every display's bar per system setting;

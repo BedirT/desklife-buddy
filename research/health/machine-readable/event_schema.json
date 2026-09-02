@@ -1,8 +1,35 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "local://desk-wellness/event-schema-v1",
-  "title": "Privacy-minimized desk wellness event",
-  "description": "Schema for local product events. It intentionally excludes work content, app names, Calendar content, biometrics, and medical diagnoses.",
+  "title": "Legacy privacy-minimized local record envelope",
+  "description": "Compatibility schema for decoding version 1.0 records only. It is not the product-fact vocabulary and must not authorize new writes. The closed ten facts and separate v2 ledgers are defined by design/machine-readable/timing_runtime_v2.yaml.",
+  "x_contract_status": {
+    "status": "legacy_read_only",
+    "canonical_runtime_contract": "../../../design/machine-readable/timing_runtime_v2.yaml",
+    "new_writes_allowed": false,
+    "product_fact_mapping": {
+      "opportunity_presented": "promptPresented",
+      "break_started": "breakStarted",
+      "timer_finished": "timerFinished",
+      "user_declared_completed": "userDeclaredCompleted",
+      "user_declared_already_moved": "userDeclaredAlreadyMoved",
+      "position_changed": "positionChanged",
+      "snoozed": "snoozed",
+      "skipped": "skipped",
+      "not_appropriate": "notAppropriate",
+      "likely_natural_interruption": "likelyNaturalInterruption"
+    },
+    "separate_legacy_record_families": {
+      "active_use_aggregate": "operational",
+      "opportunity_scheduled": "scheduling_decision",
+      "suppression_started": "operational",
+      "suppression_ended": "operational",
+      "subjective_checkin": "correction_or_experiment",
+      "settings_changed": "operational"
+    },
+    "no_sensor_observation_is_completion_or_health_proof": true,
+    "unknown_v1_records": "preserve_for_decode_and_exclude_from_product_fact_projection"
+  },
   "type": "object",
   "required": [
     "schema_version",

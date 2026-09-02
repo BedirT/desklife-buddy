@@ -1,9 +1,14 @@
 meta:
   name: desktop-wellness-balanced-v1
+  schema_version: 2.0
   research_snapshot: 2026-08-24
   positioning: general_wellness
   population: adults_18_plus
   authoritative_document: 03_PRODUCT_HEALTH_PROTOCOL_SPEC.md
+  canonical_runtime_contract: ../../../design/machine-readable/timing_runtime_v2.yaml
+  activation:
+    generated_swift: legacy_v1
+    canonical_v2: not_runtime_activated
 principles:
   - estimate_active_computer_use_not_sitting
   - separate_visual_movement_and_position_change
@@ -70,10 +75,102 @@ profiles:
       latest_preferred_seconds: 2100
       recommended_duration_seconds: 300
       quick_duration_seconds: 120
+preset_contract_v2:
+  new_install_default: balanced_v2
+  recovery:
+    eligible_after_seconds: 5400
+    latest_typical_seconds: 7200
+    suggested_duration_min_seconds: 300
+    suggested_duration_max_seconds: 600
+    required_movement_deferrals: 2
+    maximum_offers_per_session: 1
+  presets:
+    calm:
+      display_name: Calm
+      visual:
+        soft_due_seconds: 1500
+        target_seconds: 1800
+        latest_preferred_seconds: 1980
+        duration_seconds: 20
+      movement:
+        soft_due_seconds: 3600
+        target_seconds: 4500
+        latest_preferred_seconds: 5400
+        recommended_duration_seconds: 300
+        quick_duration_seconds: 120
+      position_target_seconds: 3600
+    balanced_v2:
+      display_name: Balanced
+      default: true
+      visual:
+        soft_due_seconds: 1200
+        target_seconds: 1500
+        latest_preferred_seconds: 1620
+        duration_seconds: 20
+      movement:
+        soft_due_seconds: 3000
+        target_seconds: 3300
+        latest_preferred_seconds: 4200
+        recommended_duration_seconds: 300
+        quick_duration_seconds: 120
+      position_target_seconds: 2700
+    frequent_reset:
+      display_name: Frequent reset
+      visual:
+        soft_due_seconds: 1080
+        target_seconds: 1200
+        latest_preferred_seconds: 1320
+        duration_seconds: 20
+      movement:
+        soft_due_seconds: 1800
+        target_seconds: 2100
+        latest_preferred_seconds: 2700
+        recommended_duration_seconds: 300
+        quick_duration_seconds: 120
+      position_target_seconds: 1800
+    adaptive:
+      display_name: Adaptive
+      initial_bounds_from: balanced_v2
+      frequency_changes_allowed: false
+      allowed_initial_adaptation:
+        - delivery_within_window
+        - bounded_automatic_holds
+        - cross_clock_courtesy
+        - explicit_user_approved_schedule_restart
+    custom:
+      display_name: Custom
+      visual_duration_range_seconds: [10, 60]
+      movement_duration_options_seconds: [120, 300]
+      ordering_rule: 0_less_than_soft_due_less_than_or_equal_target_less_than_or_equal_latest
+      safety_note: neutral_non_blocking
+  legacy_identifier_disposition:
+    rule: >-
+      Decode every shipped identifier with its exact v1 values. Never silently
+      retune an existing user. Offer an explicit migration and preserve the old
+      selection until accepted.
+    gentle:
+      exact_values_from: profiles.gentle
+      suggested_successor: calm
+    balanced:
+      exact_values_from: profiles.balanced
+      suggested_successor: balanced_v2
+    frequent_movement:
+      exact_values_from: profiles.frequent_movement
+      suggested_successor: frequent_reset
+    research_informed_high_frequency:
+      exact_values_from: profiles.research_informed_high_frequency
+      suggested_successor: custom
+      successor_seed: exact_v1_snapshot
+    custom:
+      exact_values_from: persisted_custom_timing
+      suggested_successor: custom
 activity_estimator:
   recent_input_window_seconds: 60
   long_idle_reset_seconds: 300
   wake_unlock_grace_seconds: 90
+  return_from_long_idle_grace_seconds: 60
+  expected_sample_seconds: 5
+  maximum_covered_sample_gap_seconds: 15
   terminology: estimated_active_computer_use
   limitations:
     - passive_reading_may_be_undercounted
@@ -87,27 +184,83 @@ opportunity_delivery:
   snooze_options_seconds: [300, 600, 900]
   max_repeated_escalations_per_opportunity: 1
   lockout_allowed: false
+  post_hold_landing_corridor_seconds: 90
+  post_manual_pause_resume_corridor_seconds: 90
+  working_hours_reentry_corridor_seconds: 60
 suppression_precedence:
   - manual_pause
   - system_inactive_or_locked
+  - system_asleep_or_unavailable
+  - relevant_accepted_ritual
+  - confirmed_away
+  - outside_working_hours
+  - meeting_or_call
+  - screen_sharing_or_presentation
+  - user_selected_timed_task
   - explicit_presentation_mode
   - focus_filter
   - calendar_busy
+  - selected_deep_focus_app_game_or_media
   - excluded_application
-  - outside_working_hours
   - snooze
   - low_friction_wait
+state_semantics_v2:
+  manual_pause_options:
+    fixed_seconds: [1800, 3600]
+    calendar_deadlines: [user_selected_until, next_local_day_boundary]
+    indefinite: until_explicit_resume
+    presenting_option_maps_to: held.explicit_presentation_mode
+    persistence: reason_and_deadline_survive_relaunch
+  paused:
+    rule: named_clock_scope_does_not_accrue
+    reasons:
+      - manual_pause
+      - outside_working_hours
+      - system_inactive_or_locked
+      - system_asleep_or_unavailable
+      - confirmed_away
+      - relevant_accepted_ritual
+    reason_clock_scope:
+      manual_pause: [visual, movement, position, recovery]
+      outside_working_hours: [visual, movement, position, recovery]
+      system_inactive_or_locked: [visual, movement, position, recovery]
+      system_asleep_or_unavailable: [visual, movement, position, recovery]
+      confirmed_away: [visual, movement, position, recovery]
+      accepted_visual_ritual: [visual]
+      accepted_movement_merged_or_recovery_ritual: [visual, movement, recovery]
+  held:
+    rule: all_clocks_continue_under_their_normal_eligibility
+    reasons:
+      - meeting_or_call
+      - screen_sharing_or_presentation
+      - user_selected_timed_task
+      - explicit_presentation_mode
+      - focus_filter
+      - calendar_busy
+      - selected_deep_focus_app_game_or_media
+      - excluded_application
+      - snooze
+      - low_friction_wait
 completion_semantics:
   visual:
-    accepted_events: [timer_finished, user_declared_done]
+    schedule_restart_facts: [timerFinished, userDeclaredCompleted]
     camera_verification: false
   movement:
-    accepted_events: [user_started_5_min, user_started_2_min, user_declared_already_moved, companion_event_future]
+    schedule_restart_facts: [timerFinished, userDeclaredCompleted, userDeclaredAlreadyMoved]
     inferred_from_idle: false
+    sensor_observation_is_completion: false
+    companion_sensor_observation_is_completion: false
+    strong_fresh_movement_automation:
+      effect: scheduling_decision_restart_only
+      requires_user_opt_in: true
+      requires_explanation_and_undo: true
+      cross_clock_visual_courtesy: true
   position_change:
     resets_movement_clock: false
   likely_natural_interruption:
     counts_as_movement: false
+    visual_cycle_restarts_at_return: true
+    preserves_movement_need: true
 content:
   default_movement: easy_walking_or_equivalent
   equal_alternatives: [wheel_or_self_propel, seated_active_movement, position_change_only]

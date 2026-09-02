@@ -315,7 +315,8 @@ The heads-up chip (D-019, DQ-10). Registered per `.claude/rules/health-and-claim
 
 - "Get ready" — instructs and implies obligation.
 - "Your eyes need a break" — claims knowledge of the user's body `[C013]`-class failure.
-- Any eye character or eye iconography on the chip — implies gaze sensing; see D-019.
+- Open eyes, blinking, or gaze-like eye motion on the chip — implies sensing the character does
+  not perform. D-020a permits the closed resting eyes and bounded expression that amend D-019.
 
 ### Break surface — self-running countdown (added 2026-08-25, D-021)
 

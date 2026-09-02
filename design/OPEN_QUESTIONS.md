@@ -290,16 +290,21 @@ carries this list so implementation doesn't assume the variants exist.
 
 ### DQ-19 — What event does Esc on the capsule record?
 
+**Closed 2026-09-01 by D-033.** Esc on a capsule records `skipped` for every cycle carried by
+that coordinated opportunity. It begins a fresh schedule for those refused needs, creates no
+completion credit, and never maps to `notAppropriate` because no reason was declared. Later keeps
+the same OpportunityID and records `snoozed`.
+
 `INTERACTION_SPEC.md` §1.2 has Esc (or waving the capsule off) during the heads-up record
 `skipped`. But the heads-up happens *before* a break exists; `[03 §10]`'s event vocabulary
 does not say whether declining the approach is `skipped` (the user declined the opportunity)
 or closer to `notAppropriate` (the user said "not now" before anything started). The two
 readings change the weekly view's counts.
 
-**Interim (conservative):** record `skipped` — it claims less, since `notAppropriate` implies
+**Historical interim (now adopted):** record `skipped` — it claims less, since `notAppropriate` implies
 a stated reason the user did not give. A "Later ▸" choice records `snoozed` as usual. The
 weekly view must not word capsule-declines differently from overlay-skips until this is
-resolved. Provisional reading of `[03 §10]`; flagged for the research owner.
+resolved. This was the provisional `[03 §10]` reading before D-033 closed it.
 
 ### DQ-20 — Ten-event product vocabulary vs the machine event schema
 
@@ -309,14 +314,17 @@ instead defines sixteen `event_type` values, omits `promptPresented`, and uses
 `opportunity_presented`; it also includes aggregate, scheduling, suppression, settings, and
 subjective-check-in records outside the handoff vocabulary.
 
-**Interim (authority-preserving):** Domain implements exactly the ten handoff events. Local
+**Historical interim (now adopted):** Domain implements exactly the ten handoff events. Local
 persistence keeps its encoding centralized and does not freeze the broader JSON vocabulary
 into engine semantics. Aggregate/settings records, if later needed, must be stored as separate
 local record families rather than silently becoming extra protocol events.
 
-**Settled by:** the research owner reconciling `event_schema.json` with the authoritative
-handoff and clarifying whether it is a storage-envelope union rather than the protocol event
-vocabulary.
+**Closed 2026-09-01 by D-033 and the §17 protocol amendment.** The ten camel-case product facts
+remain exhaustive. `event_schema.json` is explicitly a read-only v1 compatibility envelope: its
+ten mapped fact-like values project to the closed vocabulary, while aggregate, scheduling,
+suppression, settings, and subjective records project to separate ledgers or remain legacy-only.
+New operational, observation, assessment, scheduling-decision, correction, and companion-action
+records never become protocol facts. `timing_runtime_v2.yaml` owns the exact split.
 
 ### DQ-21 — Immediate screen-lock state has no sanctioned public signal
 

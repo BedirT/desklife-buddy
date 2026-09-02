@@ -376,3 +376,109 @@ The protocol implementation is acceptable only when:
 - public copy passes the claims register;
 - all defaults are configurable and explained;
 - analytics cannot reconstruct personal work content.
+
+## 17. Owner-approved timing and action amendment — 2026-09-01
+
+**Status:** canonical amendment under D-033. This section preserves the 2026-08-24 research
+snapshot above as provenance while superseding only the timing/action clauses named here. The
+exact machine contract is
+[`design/machine-readable/timing_runtime_v2.yaml`](../../design/machine-readable/timing_runtime_v2.yaml),
+with health values and preset compatibility in
+[`machine-readable/product_protocol.yaml`](machine-readable/product_protocol.yaml).
+
+### 17.1 Clock meaning and permission-free eligibility
+
+The four clocks now have explicit scheduling meanings: estimated near-screen exposure need,
+estimated low-movement desk need, position-stability need, and recovery load. None is a
+diagnosis, body measurement, or health score.
+
+For the permission-free path, valid adjacent monotonic samples must show an awake, active,
+unlocked Mac session inside enabled working hours. Manual pause, system unavailability, a
+confirmed-away interval, and each clock's relevant accepted ritual freeze accrual. Input silence
+below 300 seconds remains eligible for the visual clock so passive reading is not treated as a
+visual reset. The movement estimate accrues only through the 60-second recent-input window;
+longer input silence freezes it without implying movement. This supersedes §7.2's blanket
+“idle between 60 seconds and 5 minutes: pause accumulation” only for visual timing.
+
+Non-finite or backward time and adjacent samples more than 15 seconds apart establish a new
+baseline and add zero time. Sleep, lock, inactive session, process absence, relaunch, and other
+unobserved gaps never catch up from wall time. Wake/unlock has a 90-second grace.
+
+At the first 300-second idle threshold, record `likelyNaturalInterruption` once and freeze while
+away. On return, begin a fresh visual cycle at the return boundary, preserve the unresolved
+movement need, and apply a 60-second grace. This is presentation courtesy, not an inferred visual
+break or movement completion, and it forbids a visual interruption minutes after a five-minute
+likely-away interval.
+
+### 17.2 Paused, Held, and accepted time
+
+`Paused` means its named clock scope does not accrue: explicit Pause, outside selected working
+hours, sleep/lock/inactive/unavailable session, and confirmed away freeze all four clocks; an
+accepted visual ritual freezes visual, while an accepted movement, merged, or recovery ritual
+freezes visual, movement, and recovery. `Held`
+means accrued need continues but presentation is quiet: meeting/call, screen sharing,
+presentation, selected timed task, Focus, Calendar busy, selected deep-focus app/game/media,
+snooze, or low-friction waiting. Hold release has a 90-second landing corridor and presents at
+most one merged opportunity. Manual-pause resume also uses 90 seconds; working-hours re-entry
+uses 60 seconds. The visible state must use these exact terms and the actual reason.
+
+An accepted visual, movement, merged, or recovery ritual has one absolute deadline. Local continuous monotonic time
+is primary; portable wall deadline metadata reconstructs only the accepted countdown when its
+monotonic epoch is unavailable. Sleep, lock, callback suspension, relaunch, or device handoff does
+not extend that duration. Schedule clocks still never use wall catch-up.
+
+### 17.3 Presets and compatibility
+
+New selections are Calm (`calm`), Balanced (`balanced_v2`, default), Frequent reset
+(`frequent_reset`), Adaptive (`adaptive`), and Custom (`custom`). Their exact soft/target/latest,
+duration, and position values are the `preset_contract_v2` keys in `product_protocol.yaml`.
+Adaptive begins at Balanced bounds and may adapt delivery, bounded holds, cross-clock courtesy,
+and explicit approved restart rules; it does not silently personalize frequency.
+
+The shipped IDs `gentle`, `balanced`, `frequent_movement`, and
+`research_informed_high_frequency` retain their exact v1 values. Decode and display them without
+retuning. Offer a successor explicitly; migrate only after acceptance. The high-frequency preset
+becomes an exact custom snapshot rather than being coerced into a different built-in. This
+supersedes §5 for new selections without rewriting the historical modes.
+
+### 17.4 Action effects
+
+The v2 machine transition table is normative. In summary:
+
+- a visual timer finish or `Done early` begins a fresh visual cycle;
+- a movement timer finish or `Done early` begins fresh movement and visual cycles, preventing
+  the post-walk early-visual failure;
+- `I already moved` begins a fresh movement cycle, and refreshes visual only when the declared
+  or strong fresh evidence also establishes screen-away timing;
+- a position change refreshes only the position clock;
+- a standalone position skip begins a new position cycle without completion credit, avoiding a
+  rapid repeat while leaving visual, movement, and recovery unchanged;
+- a 5- or 10-minute recovery acceptance freezes visual, movement, and recovery while its
+  absolute deadline runs; finish or `Done early` starts fresh visual, movement, and recovery
+  cycles, while Skip/Escape restores the pre-ritual visual state, starts fresh movement and
+  recovery cycles without completion credit, and prevents another recovery offer that session;
+- visual and movement Skip/Escape close immediately, record `skipped`, and begin a fresh cycle
+  for the refused standalone need without completion credit or rapid re-offer;
+- snooze preserves the same due cycle and OpportunityID through one bounded re-offer;
+- merged work keeps the independent cycle IDs and retains every completed segment's effect;
+- a strong sensor observation may support an explained, undoable scheduling restart under a
+  validated, enabled rule, but creates no completion product fact.
+
+This amends §4.1's ambiguous “dismisses/marks done” wording: Skip/Escape is `skipped`, never
+completion. It also supersedes §4.2 and §6.3 wherever starting a movement timer was described as
+completing a clock. `breakStarted` records acceptance and freezes the relevant schedule clocks;
+the terminal action owns the fresh-cycle effect.
+
+### 17.5 Identity, reconciliation, and facts
+
+Every clock cycle, coordinated opportunity, action, and automatic decision has its own stable
+identity. A merged opportunity references its separate visual and movement cycle IDs. Duplicate,
+unknown, stale, mismatched-cycle, and losing actions are audited no-ops. Cross-device terminal
+reduction is commutative, associative, and idempotent, so arrival order never selects the result.
+
+The ten §10 product facts remain closed. Operational records, sensor observations, fused
+assessments, scheduling decisions, corrections, and companion actions are separate ledgers. The
+legacy `event_schema.json` is now explicitly a read-only v1 envelope whose mappings project to
+the ten facts; its broader record kinds never enlarge the product-fact vocabulary. No timer,
+idle, sensor, camera, motion, HealthKit, companion, or model observation is a completion fact or
+proof of a health outcome.

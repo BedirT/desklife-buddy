@@ -9,9 +9,10 @@ protocol spec disagree, the protocol spec wins.
 
 ## 1. The one-sentence model
 
-The app watches a single honest signal — *is there recent input on an awake, unlocked Mac* —
-accumulates it into two independent clocks, and when a clock comes due it looks for a
-non-terrible moment to offer an invitation the user can always refuse.
+The permission-free app reduces coarse, valid system observations into four independent
+scheduling clocks, then one deterministic arbiter offers at most one invitation the user can
+always refuse. Optional evidence may later make that arbiter quieter or restart a schedule under
+an approved rule; it never becomes a completion or health fact.
 
 Everything else is consequence.
 
@@ -21,9 +22,9 @@ This table is the source of most of the design's honesty constraints. Print it o
 
 | The app knows | The app does **not** know |
 |---|---|
-| The Mac is awake, unlocked, session active | Whether a person is in front of it |
+| Whether a sanctioned public signal says the Mac is awake and session-active; injected lock state when available | Whether a person is in front of it, or whether an unavailable lock signal means unlocked |
 | Seconds since the last keyboard/mouse/scroll event | Whether the user is sitting, standing, or walking |
-| Accumulated *estimated active computer use* | Whether the user looked away, blinked, or rested their eyes |
+| Separate accumulated scheduling estimates with their exact evidence limits | Whether the user looked away, blinked, moved, or received a health benefit |
 | Which app is frontmost (ephemerally, for exclusion matching only) | What the user is doing in that app |
 | Whether a selected calendar reports busy (if enabled) | Whether a meeting is actually happening, or who is in it |
 | That the user pressed a button | Whether the user did the activity |
@@ -35,25 +36,35 @@ reported**, **shown**, **deferred**.
 
 ## 3. The four clocks
 
-Four independent accumulators. Nothing one clock does completes another.
+Four independent scheduling accumulators. Their exact eligibility and every action effect are in
+[`machine-readable/timing_runtime_v2.yaml`](machine-readable/timing_runtime_v2.yaml). A clock
+rotation means a fresh schedule, not a verified body outcome.
 
-| Clock | Accumulates | Comes due (balanced) | Cleared by |
-|---|---|---|---|
-| **Visual** | Estimated active computer use | soft 20 min · target 25 · latest 30 | Timer finish, or user declares done |
-| **Movement** | Estimated active computer use | soft 50 min · target 60 · latest 70 | User starts 5-min or 2-min, or declares already moved |
-| **Position** | Time since last position change (optional/manual in MVP) | No hard due point | User records a position change |
-| **Recovery debt** | Repeated movement deferral while active use continues | ~90–120 min with no confirmed movement | Any movement event |
+| Clock | Scheduling meaning | Permission-free accrual | Balanced v2 target / latest | Fresh-cycle causes |
+|---|---|---|---|---|
+| **Visual** | Estimated near-screen exposure need | Valid awake/active/unlocked monotonic intervals; input silence below 5 min still counts for passive reading | 25 / 27 min | Visual timer or declaration; return from ≥5 min long idle; completed movement courtesy; approved strong movement/away scheduling decision |
+| **Movement** | Estimated low-movement desk need | Same system eligibility, but only while input is recent (≤60 s) | 55 / 70 min | Movement timer or declaration; `I already moved`; approved strong movement scheduling decision; Skip starts a new schedule without completion credit |
+| **Position** | Estimated or declared position stability | Optional/manual; visual eligibility until long-idle onset | 45 min | `positionChanged` only, or a later validated position rule that never scores posture |
+| **Recovery** | Long run plus repeated movement deferral | Only while movement timing is eligible after deferral | eligible 90 / typically 120 min | Movement schedule restart or session recovery; never a risk score |
 
-Values from `machine-readable/product_protocol.yaml`. Profiles: Gentle · Balanced (default) ·
-Frequent movement · Research-informed high frequency · Deep-work aware · Custom.
+New preset IDs are Calm (`calm`), Balanced (`balanced_v2`, default), Frequent reset
+(`frequent_reset`), Adaptive (`adaptive`), and Custom (`custom`). Exact values and the explicit
+legacy-ID migration disposition live under `preset_contract_v2` in
+`../research/health/machine-readable/product_protocol.yaml`. Shipped IDs retain exact v1 values
+until the person accepts a successor; no update silently retunes a schedule.
 
 **Non-negotiable relationships:**
 
-- Visual reset ⟶ does **not** clear movement.
-- Position change ⟶ does **not** clear movement. It is its own event `[01 §3.3]`.
-- Long idle ⟶ resets *presentation timing* only, recorded as `likelyNaturalInterruption`.
-  It never clears movement and never counts as a break `[03 §7.3]`.
-- Recovery debt ⟶ produces a gentle suggestion, never an alarm, never a "risk" state.
+- A visual reset does **not** complete movement.
+- A position change does **not** complete movement. It is its own fact `[01 §3.3]`.
+- Five-minute permission-free idle records `likelyNaturalInterruption`, starts a fresh visual
+  cycle at return, and preserves movement need. It never records a break or movement.
+- Finished or explicitly declared movement starts fresh movement and visual schedules so the app
+  cannot ask for a visual reset minutes after a walk. The cross-clock effect is scheduling
+  courtesy, not a visual-completion fact.
+- Strong fresh sensor evidence may create an explained, undoable schedule restart only after the
+  owning validation and permission gates. It never creates one of the ten product facts.
+- Recovery produces a gentle optional suggestion, never an alarm or “risk” state.
 
 ## 4. Interruption levels
 
@@ -78,57 +89,56 @@ Rules across levels:
 
 ## 5. Opportunity lifecycle
 
-Per clock:
+Per independent `ClockCycleID`, coordinated by one `OpportunityID`:
 
 ```
   inactive
      │  user enables / working hours begin
      ▼
   accumulating ──────────────────────────────┐
-     │  clock reaches softDue                │ suppression begins
+     │  clock reaches softDue                │ context hold begins
      ▼                                       ▼
-  softDue  (menu-bar glyph changes, quietly)  suppressed
-     │                                       │ suppression ends
+  softDue  (menu-bar glyph changes, quietly)  held (need continues)
+     │                                       │ hold ends
      │  heads-up enabled                     ▼
      ▼                                     graced  ──► back to accumulating/due
-  headsUpPresented                           (grace period, then at most
-     │                                        one merged opportunity)
+  headsUpPresented                           (90 s, then at most one merge)
      ▼
   waitingForLowFrictionMoment
      │  input pause / app switch / busy interval ends /
      │  presentation mode exits / user opens the menu / latestPreferred reached
      ▼
   breakOffered  (Level 2 panel)
-     ├── start ──► running ──► timerFinished ──► (Level 3) ──► completed
+     ├── accept ─► running ──► terminal action ─► fresh cycle per action matrix
      ├── snooze 5/10/15 ──► snoozed ──► re-offer once
-     ├── skip ──────────────► skipped   (clock resets, skip recorded separately)
+     ├── skip ──────────────► skipped   (fresh schedule, no completion credit)
      ├── not appropriate ───► notAppropriate (suppresses related content this session)
-     ├── already moved ─────► userDeclaredAlreadyMoved  (movement only)
+     ├── already moved ─────► userDeclaredAlreadyMoved  (movement schedule; visual only
+     │                                                with screen-away basis)
      └── Escape ────────────► dismissed == skip, no penalty, no follow-up
 ```
 
 Escape is always equivalent to the least-committal exit. It is never a trap and never asks
-"are you sure".
+"are you sure". `ActionID` makes retries idempotent. A stale, mismatched-cycle, duplicate, or
+losing terminal candidate is an audited no-op; arrival order never changes the winner.
 
-## 6. Suppression
+## 6. Paused and Held
 
-Highest precedence first `[03 §8]`. The **reason** matters to the design: the menu-bar state
-and the status surface must be able to say *why* the app is quiet, in the user's words.
+The old umbrella word “suppressed” hid two materially different states. D-033 makes the reason
+and clock effect explicit:
 
-| # | Reason | User-visible phrasing (draft) | Accumulate? |
+| State | Reasons | Clock effect | Visible rule |
 |---|---|---|---|
-| 1 | Manual pause | "Paused until 3:30 PM" | No |
-| 2 | System locked / asleep / inactive | (invisible; app is quiet) | No |
-| 3 | Presentation mode | "Presenting — reminders off" | Continue |
-| 4 | Focus Filter | "Quiet in Focus" | Continue |
-| 5 | Calendar busy | "Busy until 2:00 PM" | Continue |
-| 6 | Excluded app | "Quiet in this app" | Continue |
-| 7 | Outside working hours | "Outside working hours" | No |
-| 8 | Snooze | "Snoozed — 7 min" | Continue |
-| 9 | Waiting for a good moment | "Waiting for a pause" | Continue |
+| **Paused** | Manual Pause; outside selected working hours; asleep, locked, inactive, or unavailable system; confirmed away; relevant accepted ritual | The affected clocks freeze | Say `Paused` and the exact user-relevant reason/deadline; system-only reasons may remain invisible |
+| **Held** | Meeting/call; screen share/presentation; selected timed task; Focus; Calendar busy; excluded/deep-focus app, game, or media; snooze; low-friction wait | Need continues under each clock's eligibility rules, but no opportunity is presented | Say `Held` and the actual reason, never “smart pause” |
 
-On exit from suppression: a grace period, then **at most one merged opportunity**. Never a
-queue of stacked overdue prompts `[03 §8]`.
+Explicit manual pause outranks the remaining Paused reasons in the machine-defined order, and
+every Paused reason outranks a hold. Timed pause persists across relaunch; “until I resume” is
+indefinite and immediately reversible. Accepted countdowns keep
+their absolute deadline even while callbacks are suspended. After wake/unlock use 90 seconds;
+after long idle use 60 seconds; after hold or manual-pause release use 90 seconds; after entering
+working hours use 60 seconds. Then present **at most one merged opportunity**, never a queue
+`[03 §8]`.
 
 ## 7. Merge
 
@@ -136,18 +146,25 @@ When visual and movement come due within five minutes of each other `[03 §6.3]`
 
 - Show **one** experience — a movement break that opens with the ~20 s visual segment.
 - The user may choose *visual only*; movement then remains due.
-- The visual clock clears when its segment runs; the movement clock clears **only** on an
-  explicit movement action.
+- The visual schedule becomes fresh when its segment reaches a timer/declaration terminal. The
+  movement schedule becomes fresh only under its own terminal action. Starting a timer is not a
+  terminal effect.
 - Never two consecutive overlays. Never a "2 of 2" counter.
+- The merged `OpportunityID` carries both original `ClockCycleID` values. It never creates a
+  merged clock or a generic merged outcome.
 
 ## 8. Event vocabulary
 
-The only distinctions that exist `[03 §10]`. The weekly view may count and pattern these.
-It may never combine them into a grade.
+The only product facts that exist `[03 §10]`. The weekly view may count and pattern these.
+It may never combine them into a grade or interpret them as health outcomes.
 
 `promptPresented` · `breakStarted` · `timerFinished` · `userDeclaredCompleted` ·
 `userDeclaredAlreadyMoved` · `positionChanged` · `snoozed` · `skipped` · `notAppropriate` ·
 `likelyNaturalInterruption`
+
+Operational events, observations, assessments, scheduling decisions, corrections, and companion
+actions use separate ledgers. A sensor observation may support a `scheduling_decision`; it cannot
+be encoded as `timerFinished`, `userDeclaredCompleted`, or `userDeclaredAlreadyMoved`.
 
 ## 9. Adaptation — what the app may and may not learn
 
@@ -170,7 +187,7 @@ Not marketing personas — load cases for the interface.
 
 1. **Deep-work engineer.** Hates interruption, will disable the app on day 3 if it's rude.
    Tests: heads-up quality, low-friction timing, escape cost, day-30 fatigue.
-2. **Back-to-back meetings manager.** Half the day is suppressed. Tests: suppression clarity,
+2. **Back-to-back meetings manager.** Half the day is Held. Tests: state/reason clarity,
    post-meeting grace, no stacked prompts.
 3. **Wheelchair user.** Movement means wheeling or seated active movement. Tests: parity — not
    just presence, but equal weight, wording, and completion.
@@ -194,5 +211,5 @@ Checkable statements. If a design violates one, the design is wrong.
 6. No score, grade, streak, or ranking exists anywhere in the product.
 7. The app never claims to perceive the user's body.
 8. Core function requires no permission, no account, and no network.
-9. Every suppression state can explain itself in the user's words.
+9. Every Paused or Held state can explain itself in the user's words.
 10. Every number shown is either from the protocol or labeled as an estimate.

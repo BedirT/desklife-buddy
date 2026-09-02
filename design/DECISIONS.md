@@ -376,7 +376,8 @@ pointer read.
 
 **Date:** 2026-08-25 · **Tag:** Design heuristic · **Status:** Accepted
 
-The user reviewed D-020 and rejected part of its *rationale* (not its outcome): the
+The user reviewed the D-019 character decision and rejected part of its *rationale* (not its
+outcome), producing this addendum: the
 "an open eye would imply watching" argument was overweighted. Eyes on a character read as
 care — someone keeping you company — long before they read as surveillance, and the privacy
 story belongs in onboarding and Settings, not in the character's anatomy.
@@ -536,7 +537,7 @@ overlay, ~35% dimming") and D-021 ("full coverage — the work is entirely hidde
 sky") coexisting unlogged, with `DESIGN_SYSTEM.md` §4 still carrying the 35% anchor. Resolved
 explicitly:
 
-- **The default break presentation is the full opaque field** (D-013/D-021). There is no
+- **The default break presentation is the full opaque field** (D-021). There is no
   dimming layer in it, so the 35% number does not apply to it.
 - **The anti-lock-screen obligation** (`macos-design.md` §3) that D-005's translucency used
   to carry is now carried by: the lit, visible menu bar and clock (D-012), permanently
@@ -680,3 +681,44 @@ suppression, and makes the interactive panel key so Escape and Return work befor
 Return no longer has the former 800 ms declaration delay. This owner decision supersedes the
 break-specific motion and keyboard-arming bullets in D-029. A replacement animation must be
 reviewed as a separate change and must preserve the accepted first-frame input and Dock behavior.
+
+### D-033: Canonical permission-free timing and action semantics
+
+**Date:** 2026-09-01 · **Tag:** Owner decision · **Status:** Accepted
+
+**Approval record:** after reviewing the complete Local Health Companion expansion, the owner
+said “All this looks perfect!” and explicitly directed agents to create and implement the issue
+plan. GitHub issue #19 then named this canonicalization as its outcome and acceptance contract.
+This entry promotes only the permission-free semantics in that approved intake. It does not
+authorize protected sensing, permissions, entitlements, or companion transport.
+
+[`machine-readable/timing_runtime_v2.yaml`](machine-readable/timing_runtime_v2.yaml) is the
+single exact contract for four independent clocks, Paused versus Held, elapsed time and gaps,
+accepted-ritual deadlines, stable identities, every action, merge, stale actions, cross-device
+terminal reconciliation, and separate ledgers. Timing and preset values live in
+[`product_protocol.yaml`](../research/health/machine-readable/product_protocol.yaml).
+
+The new preset IDs are `calm`, `balanced_v2`, `frequent_reset`, `adaptive`, and `custom`.
+Shipped raw IDs retain their exact v1 meanings and decode unchanged until the person explicitly
+accepts a successor. No migration silently retunes an existing schedule.
+
+Schedule clocks accrue from local monotonic samples and never catch up from wall time. Wall
+metadata is for display, exchange, audit, and accepted-deadline recovery. A five-minute
+permission-free idle episode preserves movement need and starts a fresh visual cycle when the
+person returns, followed by a 60-second grace. A visual reset therefore cannot appear minutes
+after that likely away interval.
+
+No sensor observation is a completion or health fact. A later validated, enabled rule may use
+strong fresh movement/away evidence to create an explained, undoable `scheduling_decision` that
+restarts future timing. The ten product facts remain closed and live apart from operational,
+observation, assessment, scheduling-decision, correction, and companion-action ledgers.
+
+This entry also resolves D-032's keyboard-arming overlap: entrance, exit, accepted deadline,
+focus, every printed shortcut (`Escape`, `⌘.`, Return, `1`/`2`/`3`, `Q`, `A`, `P`), and every
+pointer control are active on the first frame. There is no declaration guard or
+entrance-settlement countdown gate. D-029's unrelated capsule, coarse-countdown, focus, and
+accessibility clauses remain active. D-022's capsule location, behavior, and sanctioned hold
+sources also remain active, but its visible label **"On hold" is superseded by "Held"** so the
+presentation state cannot be confused with the user's explicit **Paused** state. This canonical
+decision does not claim current runtime conformance; `CURRENT_STATE_CONFORMANCE.md` retains
+those implementation and copy-projection gaps.

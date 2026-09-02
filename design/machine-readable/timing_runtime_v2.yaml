@@ -1,0 +1,707 @@
+meta:
+  contract: timing-runtime-v2
+  version: 2.0
+  status: canonical_not_runtime_activated
+  decision: D-033
+  health_values: ../../research/health/machine-readable/product_protocol.yaml
+  product_fact_schema: ../../research/health/machine-readable/event_schema.json
+  intended_purpose: >-
+    A private general-wellness schedule for visual resets, movement opportunities,
+    position variety, and optional recovery without claiming a health outcome.
+  prohibited_inference: >-
+    No input, idle, timer, camera, motion, companion, or model observation is a
+    completion fact or proof of movement, visual relief, posture, or health benefit.
+
+identities:
+  clock_cycle_id:
+    format: uuid
+    scope: one_clock
+    created_when:
+      - clock_is_enabled_without_an_existing_cycle
+      - a_fresh_cycle_effect_is_committed
+      - a_user_approved_schedule_restart_is_committed
+    stable_through:
+      - accumulating
+      - soft_due
+      - heads_up
+      - held
+      - snoozed
+      - running
+      - relaunch
+    rule: >-
+      A merged opportunity carries each participating ClockCycleID. It never
+      replaces them with a merged clock identity.
+  opportunity_id:
+    format: uuid
+    scope: one_coordinated_offer
+    created_when: arbiter_selects_one_or_more_due_clock_cycles
+    stable_through:
+      - every_projection_on_mac_iphone_and_watch
+      - heads_up_and_break_surfaces
+      - snooze_and_reoffer
+      - relaunch_and_handoff
+    closed_when: one_terminal_candidate_wins
+  action_id:
+    format: uuid
+    scope: one_user_system_or_companion_action
+    idempotency: duplicate_action_id_is_an_audited_no_op
+    required_context:
+      - opportunity_id_when_opportunity_scoped
+      - participating_clock_cycle_ids
+      - origin_device_id
+      - origin_session_id
+      - origin_revision
+  decision_id:
+    format: uuid
+    scope: one_automatic_hold_release_shift_merge_or_schedule_restart
+    rule: >-
+      A DecisionID belongs only to the scheduling-decision ledger and can never
+      be substituted for an ActionID or a product completion fact.
+  device_id:
+    format: locally_generated_uuid
+    lifetime: installation_until_local_reset
+    privacy: never_vendor_or_account_identity
+  session_id:
+    format: uuid
+    lifetime: one_process_run_or_companion_extension_session
+
+time:
+  wall_metadata:
+    required:
+      - recorded_at_utc
+      - origin_time_zone_identifier
+    deadline_records_also_require:
+      - deadline_at_utc
+      - anchor_recorded_at_utc
+      - remaining_seconds_at_anchor
+    purpose: display_exchange_audit_and_cross_epoch_recovery_only
+  local_monotonic_anchor:
+    clock: continuous_monotonic
+    required:
+      - monotonic_epoch_id
+      - anchor_ticks
+      - remaining_seconds_at_anchor
+    rule: >-
+      Within a live monotonic epoch, elapsed duration and ordering use monotonic
+      ticks. Wall-clock changes never add schedule-clock time.
+  schedule_clock_restore:
+    rule: >-
+      Persist accumulated eligible seconds and phase. On restore, establish a new
+      monotonic baseline at the first valid sample and add zero elapsed seconds for
+      shutdown, sleep, an unavailable session, or an unobserved gap.
+  accepted_ritual_deadline:
+    rule: >-
+      A running visual or movement ritual has an absolute deadline. The local
+      monotonic deadline is primary in the same epoch. If that epoch is unavailable,
+      deadline_at_utc minus current wall time reconstructs a value clamped from zero
+      through the originally selected duration. Sleep, lock, relaunch, and callback
+      suspension do not extend the ritual.
+    on_return_after_deadline: timer_finished_once_and_quiet_receipt
+    lifecycle_return_order:
+      - reconcile_companion_terminal_candidates
+      - resolve_local_absolute_deadline
+      - apply_the_single_winning_terminal_effect_if_any
+      - otherwise_resume_the_same_running_ritual
+      - only_then_evaluate_schedule_clock_release_corridors
+  observation_gap:
+    expected_sample_seconds: 5
+    maximum_covered_interval_seconds: 15
+    rule: >-
+      A non-finite, backward, or longer adjacent sample interval establishes a new
+      baseline and accrues zero time. There is no catch-up.
+  working_hours:
+    evaluation: local_wall_calendar_boundary
+    metadata: time_zone_identifier_and_resolved_next_boundary
+    rule: >-
+      Working-hour boundaries choose Paused versus eligible state. They never
+      supply elapsed schedule time; monotonic samples inside an eligible window do.
+
+clock_contract:
+  visual:
+    meaning: estimated_near_screen_exposure_need
+    permission_free_accrual: >-
+      Awake, active, unlocked, inside enabled working hours, not manually paused,
+      not in accepted visual or movement ritual, not in a confirmed-away interval,
+      and covered by adjacent valid samples. Input silence below long-idle onset
+      remains eligible so passive reading is not treated as a visual reset.
+  movement:
+    meaning: estimated_low_movement_desk_need
+    permission_free_accrual: >-
+      The same system eligibility as visual plus recent input at or below 60 seconds.
+      Input silence over 60 seconds freezes this estimate; it never proves movement.
+  position:
+    meaning: estimated_or_declared_position_stability_need
+    permission_free_accrual: >-
+      Optional/manual. When enabled without sensing, it accrues under visual
+      eligibility and stops at long-idle onset. It never supplies a posture score.
+  recovery:
+    meaning: long_run_and_repeated_movement_deferral_load
+    permission_free_accrual: >-
+      Accrues only while movement timing is eligible after a movement deferral.
+      It creates at most one optional recovery offer and is never a risk state.
+
+presentation_states:
+  manual_pause_options:
+    fixed_seconds: [1800, 3600]
+    calendar_deadlines: [user_selected_until, next_local_day_boundary]
+    indefinite: until_explicit_resume
+    presenting_option_maps_to: held.explicit_presentation_mode
+    persistence: reason_and_deadline_survive_relaunch
+  paused:
+    rule: named_clock_scope_does_not_accrue
+    reasons:
+      - manual_pause
+      - outside_working_hours
+      - system_inactive_or_locked
+      - system_asleep_or_unavailable
+      - confirmed_away
+      - relevant_accepted_ritual
+    reason_clock_scope:
+      manual_pause: [visual, movement, position, recovery]
+      outside_working_hours: [visual, movement, position, recovery]
+      system_inactive_or_locked: [visual, movement, position, recovery]
+      system_asleep_or_unavailable: [visual, movement, position, recovery]
+      confirmed_away: [visual, movement, position, recovery]
+      accepted_visual_ritual: [visual]
+      accepted_movement_merged_or_recovery_ritual: [visual, movement, recovery]
+    visible_term: Paused
+  held:
+    rule: all_clocks_continue_under_their_normal_eligibility
+    reasons:
+      - meeting_or_call
+      - screen_sharing_or_presentation
+      - user_selected_timed_task
+      - explicit_presentation_mode
+      - focus_filter
+      - calendar_busy
+      - selected_deep_focus_app_game_or_media
+      - excluded_application
+      - snooze
+      - low_friction_wait
+    visible_term: Held
+  release_corridors_seconds:
+    wake_or_unlock: 90
+    return_from_long_idle: 60
+    hold_release: 90
+    manual_pause_resume: 90
+    working_hours_reentry: 60
+  collision_precedence:
+    - manual_pause
+    - system_inactive_or_locked
+    - system_asleep_or_unavailable
+    - relevant_accepted_ritual
+    - confirmed_away
+    - outside_working_hours
+    - meeting_or_call
+    - screen_sharing_or_presentation
+    - user_selected_timed_task
+    - explicit_presentation_mode
+    - focus_filter
+    - calendar_busy
+    - selected_deep_focus_app_game_or_media
+    - excluded_application
+    - snooze
+    - low_friction_wait
+
+action_contract:
+  clock_effect_definitions:
+    accrue: add_only_the_current_valid_sample_interval
+    freeze: add_zero_while_the_named_state_or_ritual_is_active
+    retain: preserve_accumulated_time_cycle_identity_and_due_state_then_apply_normal_eligibility
+    resume: establish_a_new_monotonic_baseline_add_zero_then_apply_normal_eligibility
+    fresh_cycle: replace_cycle_id_zero_accumulated_time_and_create_no_completion_fact_by_itself
+    restore_pre_ritual: restore_the_exact_snapshot_taken_before_this_ritual_without_offline_catch_up
+    deferral_increment: increment_recovery_deferral_load_once_without_changing_another_clock
+    fresh_if_screen_away_basis: fresh_cycle_only_with_explicit_or_strong_fresh_screen_away_basis_otherwise_retain
+    fresh_if_carried: fresh_cycle_only_when_this_clock_cycle_is_carried_by_the_opportunity_otherwise_retain
+    fresh_if_carried_else_deferral_if_movement_carried: fresh_cycle_when_recovery_is_carried_else_increment_once_when_movement_is_carried_else_retain
+    continue_eligibility: keep_cycle_and_due_state_while_adding_only_normally_eligible_sample_time
+    restore_decision_snapshot: restore_every_affected_cycle_id_time_phase_and_recovery_value_from_the_named_decision
+    unchanged: make_no_immediate_clock_mutation
+  stale_action_rule: >-
+    An unknown ActionID, mismatched OpportunityID or ClockCycleID, invalid phase,
+    superseded terminal candidate, or action for a closed opportunity is recorded in
+    the applicable operational or companion ledger as a no-op. It creates no product
+    fact, clock mutation, new opportunity, or user-facing interruption.
+  transitions:
+    - id: opportunity.presented
+      terminal: false
+      facts: [promptPresented]
+      ledgers: [product_fact]
+      clocks: {visual: continue_eligibility, movement: continue_eligibility, position: continue_eligibility, recovery: continue_eligibility}
+      visible: one_heads_up_projection_for_the_opportunity
+      stale: no_op
+      recovery: same_opportunity_id_for_every_projection_and_response
+    - id: merge.created
+      terminal: false
+      facts: []
+      ledgers: [scheduling_decision]
+      clocks: {visual: retain, movement: retain, position: retain, recovery: retain}
+      visible: one_opportunity_carries_each_participating_cycle_id
+      stale: no_op
+      recovery: unmerge_before_acceptance_restores_the_same_independent_cycles
+    - id: delivery.shift_to_seam
+      terminal: false
+      facts: []
+      ledgers: [scheduling_decision]
+      clocks: {visual: continue_eligibility, movement: continue_eligibility, position: continue_eligibility, recovery: continue_eligibility}
+      visible: no_interruption_until_bounded_selected_seam
+      stale: no_op
+      recovery: latest_preferred_boundary_still_applies_unless_a_hold_is_active
+    - id: now.accept_visual
+      terminal: false
+      facts: [breakStarted]
+      ledgers: [product_fact]
+      clocks: {visual: freeze, movement: continue_eligibility, position: continue_eligibility, recovery: continue_eligibility}
+      visible: visual_running_from_first_active_frame
+      stale: no_op
+      recovery: absolute_deadline_reopens_or_finishes_once
+    - id: now.accept_movement
+      terminal: false
+      facts: [breakStarted]
+      ledgers: [product_fact]
+      clocks: {visual: freeze, movement: freeze, position: unchanged, recovery: freeze}
+      visible: movement_running_from_first_active_frame
+      stale: no_op
+      recovery: absolute_deadline_reopens_or_finishes_once
+    - id: later.snooze
+      terminal: false
+      facts: [snoozed]
+      ledgers: [product_fact, operational]
+      clocks: {visual: continue_eligibility, movement: continue_eligibility, position: continue_eligibility, recovery: continue_eligibility}
+      visible: held_until_selected_300_600_or_900_second_deadline
+      stale: no_op
+      recovery: same_opportunity_reoffers_once_after_deadline_and_seam
+    - id: later.snooze_after_reoffer
+      terminal: true
+      facts: [snoozed]
+      ledgers: [product_fact, operational]
+      clocks: {visual: fresh_if_carried, movement: fresh_if_carried, position: fresh_if_carried, recovery: fresh_if_carried_else_deferral_if_movement_carried}
+      visible: opportunity_closes_quietly_without_escalation
+      stale: reconcile_terminal_candidate
+      recovery: wait_for_each_carried_need_next_normal_cycle
+    - id: visual.timer_finished
+      terminal: true
+      facts: [timerFinished]
+      ledgers: [product_fact]
+      clocks: {visual: fresh_cycle, movement: unchanged, position: unchanged, recovery: unchanged}
+      visible: closed_with_quiet_timer_receipt
+      stale: reconcile_terminal_candidate
+      recovery: visual_return_grace
+    - id: visual.done_early
+      terminal: true
+      facts: [userDeclaredCompleted]
+      ledgers: [product_fact]
+      clocks: {visual: fresh_cycle, movement: unchanged, position: unchanged, recovery: unchanged}
+      visible: closed_immediately
+      stale: reconcile_terminal_candidate
+      recovery: visual_return_grace
+    - id: visual.skip
+      terminal: true
+      facts: [skipped]
+      ledgers: [product_fact]
+      clocks: {visual: fresh_cycle, movement: unchanged, position: unchanged, recovery: unchanged}
+      visible: closed_immediately_without_acknowledgement
+      stale: reconcile_terminal_candidate
+      recovery: normal_new_visual_cycle
+    - id: visual.escape
+      terminal: true
+      facts: [skipped]
+      ledgers: [product_fact]
+      clocks: {visual: fresh_cycle, movement: unchanged, position: unchanged, recovery: unchanged}
+      visible: closed_immediately_without_confirmation
+      stale: reconcile_terminal_candidate
+      recovery: normal_new_visual_cycle
+    - id: movement.timer_finished
+      terminal: true
+      facts: [timerFinished]
+      ledgers: [product_fact]
+      clocks: {visual: fresh_cycle, movement: fresh_cycle, position: retain, recovery: fresh_cycle}
+      visible: closed_with_quiet_timer_receipt
+      stale: reconcile_terminal_candidate
+      recovery: shared_visual_and_movement_return_grace
+    - id: movement.done_early
+      terminal: true
+      facts: [userDeclaredCompleted]
+      ledgers: [product_fact]
+      clocks: {visual: fresh_cycle, movement: fresh_cycle, position: retain, recovery: fresh_cycle}
+      visible: closed_immediately
+      stale: reconcile_terminal_candidate
+      recovery: shared_visual_and_movement_return_grace
+    - id: movement.already_moved
+      terminal: true
+      facts: [userDeclaredAlreadyMoved]
+      ledgers: [product_fact]
+      clocks: {visual: fresh_if_screen_away_basis, movement: fresh_cycle, position: retain, recovery: fresh_cycle}
+      visible: closed_immediately_as_user_declaration
+      stale: reconcile_terminal_candidate
+      recovery: visual_fresh_only_with_explicit_or_strong_fresh_screen_away_basis
+    - id: movement.change_content
+      terminal: false
+      facts: []
+      ledgers: [operational]
+      clocks: {visual: retain, movement: retain, position: retain, recovery: retain}
+      visible: same_running_ritual_with_selected_equal_status_content
+      stale: no_op
+      recovery: preserve_absolute_deadline
+    - id: movement.position_changed
+      terminal: true
+      facts: [positionChanged]
+      ledgers: [product_fact]
+      clocks: {visual: restore_pre_ritual, movement: retain, position: fresh_cycle, recovery: retain}
+      visible: movement_offer_closed_position_cycle_fresh_movement_still_due
+      stale: reconcile_terminal_candidate
+      recovery: hold_release_corridor_before_any_movement_reoffer
+    - id: movement.skip
+      terminal: true
+      facts: [skipped]
+      ledgers: [product_fact]
+      clocks: {visual: restore_pre_ritual, movement: fresh_cycle, position: retain, recovery: deferral_increment}
+      visible: closed_immediately_without_completion_credit
+      stale: reconcile_terminal_candidate
+      recovery: normal_new_movement_cycle_with_recovery_load_retained
+    - id: movement.escape
+      terminal: true
+      facts: [skipped]
+      ledgers: [product_fact]
+      clocks: {visual: restore_pre_ritual, movement: fresh_cycle, position: retain, recovery: deferral_increment}
+      visible: closed_immediately_without_confirmation
+      stale: reconcile_terminal_candidate
+      recovery: normal_new_movement_cycle_with_recovery_load_retained
+    - id: position.changed
+      terminal: true
+      facts: [positionChanged]
+      ledgers: [product_fact]
+      clocks: {visual: retain, movement: retain, position: fresh_cycle, recovery: retain}
+      visible: position_opportunity_closes_immediately
+      stale: reconcile_terminal_candidate
+      recovery: position_cycle_only_is_fresh
+    - id: position.skip
+      terminal: true
+      facts: [skipped]
+      ledgers: [product_fact]
+      clocks: {visual: retain, movement: retain, position: fresh_cycle, recovery: retain}
+      visible: position_opportunity_closes_immediately_without_completion_credit
+      stale: reconcile_terminal_candidate
+      recovery: normal_new_position_cycle_without_rapid_reoffer
+    - id: now.accept_recovery
+      terminal: false
+      facts: [breakStarted]
+      ledgers: [product_fact]
+      clocks: {visual: freeze, movement: freeze, position: unchanged, recovery: freeze}
+      visible: recovery_running_from_first_active_frame
+      stale: no_op
+      recovery: selected_300_or_600_second_absolute_deadline_reopens_or_finishes_once
+    - id: recovery.timer_finished
+      terminal: true
+      facts: [timerFinished]
+      ledgers: [product_fact]
+      clocks: {visual: fresh_cycle, movement: fresh_cycle, position: retain, recovery: fresh_cycle}
+      visible: closed_with_quiet_timer_receipt
+      stale: reconcile_terminal_candidate
+      recovery: no_second_recovery_offer_in_this_session
+    - id: recovery.done_early
+      terminal: true
+      facts: [userDeclaredCompleted]
+      ledgers: [product_fact]
+      clocks: {visual: fresh_cycle, movement: fresh_cycle, position: retain, recovery: fresh_cycle}
+      visible: closed_immediately
+      stale: reconcile_terminal_candidate
+      recovery: no_second_recovery_offer_in_this_session
+    - id: recovery.skip
+      terminal: true
+      facts: [skipped]
+      ledgers: [product_fact]
+      clocks: {visual: restore_pre_ritual, movement: fresh_cycle, position: retain, recovery: fresh_cycle}
+      visible: closed_immediately_without_completion_credit
+      stale: reconcile_terminal_candidate
+      recovery: no_second_recovery_offer_in_this_session
+    - id: recovery.escape
+      terminal: true
+      facts: [skipped]
+      ledgers: [product_fact]
+      clocks: {visual: restore_pre_ritual, movement: fresh_cycle, position: retain, recovery: fresh_cycle}
+      visible: closed_immediately_without_confirmation
+      stale: reconcile_terminal_candidate
+      recovery: no_second_recovery_offer_in_this_session
+    - id: offer.not_appropriate
+      terminal: true
+      facts: [notAppropriate]
+      ledgers: [product_fact, operational]
+      clocks: {visual: retain, movement: retain, position: retain, recovery: retain}
+      visible: related_content_held_for_session
+      stale: reconcile_terminal_candidate
+      recovery: no_reoffer_for_related_content_this_session
+    - id: capsule.escape
+      terminal: true
+      facts: [skipped]
+      ledgers: [product_fact]
+      clocks: {visual: fresh_if_carried, movement: fresh_if_carried, position: fresh_if_carried, recovery: fresh_if_carried_else_deferral_if_movement_carried}
+      visible: capsule_closes_immediately
+      stale: reconcile_terminal_candidate
+      recovery: apply_only_to_cycles_carried_by_the_opportunity
+    - id: pause.start
+      terminal: false
+      facts: []
+      ledgers: [operational]
+      clocks: {visual: freeze, movement: freeze, position: freeze, recovery: freeze}
+      visible: paused_with_exact_reason_and_deadline_or_until_resume
+      stale: idempotent_no_op
+      recovery: timed_pause_survives_relaunch_then_enters_release_corridor
+    - id: pause.resume
+      terminal: false
+      facts: []
+      ledgers: [operational]
+      clocks: {visual: resume, movement: resume, position: resume, recovery: resume}
+      visible: paused_clears_then_quiet_release_corridor
+      stale: idempotent_no_op
+      recovery: at_most_one_merged_opportunity_after_corridor
+    - id: hold.begin
+      terminal: false
+      facts: []
+      ledgers: [scheduling_decision, operational]
+      clocks: {visual: continue_eligibility, movement: continue_eligibility, position: continue_eligibility, recovery: continue_eligibility}
+      visible: held_with_actual_reason
+      stale: no_op
+      recovery: preserve_due_need_without_presenting
+    - id: hold.release
+      terminal: false
+      facts: []
+      ledgers: [scheduling_decision, operational]
+      clocks: {visual: continue_eligibility, movement: continue_eligibility, position: continue_eligibility, recovery: continue_eligibility}
+      visible: held_clears_then_quiet_release_corridor
+      stale: no_op
+      recovery: at_most_one_merged_opportunity_after_corridor
+    - id: hold.correction_release
+      terminal: false
+      facts: []
+      ledgers: [correction, scheduling_decision]
+      clocks: {visual: continue_eligibility, movement: continue_eligibility, position: continue_eligibility, recovery: continue_eligibility}
+      visible: held_clears_and_the_named_signal_is_marked_wrong
+      stale: no_op
+      recovery: undo_hold_decision_then_apply_one_hold_release_corridor
+    - id: working_hours.exit
+      terminal: false
+      facts: []
+      ledgers: [operational]
+      clocks: {visual: freeze, movement: freeze, position: freeze, recovery: freeze}
+      visible: paused_outside_working_hours
+      stale: idempotent_no_op
+      recovery: persist_accumulated_time_and_add_zero_outside_the_window
+    - id: working_hours.enter
+      terminal: false
+      facts: []
+      ledgers: [operational]
+      clocks: {visual: resume, movement: resume, position: resume, recovery: resume}
+      visible: quiet_60_second_grace
+      stale: idempotent_no_op
+      recovery: at_most_one_merged_opportunity_after_corridor
+    - id: system.unavailable
+      terminal: false
+      facts: []
+      ledgers: [operational]
+      clocks: {visual: freeze, movement: freeze, position: freeze, recovery: freeze}
+      visible: no_interruption
+      stale: idempotent_no_op
+      recovery: zero_wall_catch_up_and_new_monotonic_baseline
+    - id: system.available
+      terminal: false
+      facts: []
+      ledgers: [operational]
+      clocks: {visual: resume, movement: resume, position: resume, recovery: resume}
+      visible: running_ritual_resumes_or_else_quiet_90_second_grace
+      stale: idempotent_no_op
+      recovery: resolve_accepted_deadline_first_then_zero_wall_catch_up_and_normal_eligibility
+    - id: system.short_input_idle
+      terminal: false
+      facts: []
+      ledgers: []
+      clocks: {visual: accrue, movement: freeze, position: accrue, recovery: freeze}
+      visible: no_interruption
+      stale: not_applicable
+      recovery: recent_input_resumes_movement_without_backfill
+    - id: system.long_idle_began
+      terminal: false
+      facts: [likelyNaturalInterruption]
+      ledgers: [product_fact, operational]
+      clocks: {visual: freeze, movement: freeze, position: freeze, recovery: freeze}
+      visible: no_interruption
+      stale: edge_trigger_once_per_idle_episode
+      recovery: mark_visual_restart_pending_and_preserve_movement_need
+    - id: system.returned_from_long_idle
+      terminal: false
+      facts: []
+      ledgers: [operational]
+      clocks: {visual: fresh_cycle, movement: resume, position: resume, recovery: resume}
+      visible: quiet_60_second_grace
+      stale: idempotent_no_op
+      recovery: visual_cycle_starts_at_return_movement_need_is_not_cleared
+    - id: system.sample_gap
+      terminal: false
+      facts: []
+      ledgers: [operational]
+      clocks: {visual: freeze, movement: freeze, position: freeze, recovery: freeze}
+      visible: no_interruption
+      stale: not_applicable
+      recovery: establish_new_baseline_with_zero_catch_up
+    - id: merged.accept
+      terminal: false
+      facts: [breakStarted]
+      ledgers: [product_fact]
+      clocks: {visual: freeze, movement: freeze, position: unchanged, recovery: freeze}
+      visible: one_running_ritual_visual_segment_first
+      stale: no_op
+      recovery: one_absolute_deadline_per_active_segment_same_opportunity_id
+    - id: merged.visual_segment_finished
+      terminal: false
+      facts: [timerFinished]
+      ledgers: [product_fact]
+      clocks: {visual: fresh_cycle, movement: freeze, position: freeze, recovery: freeze}
+      visible: movement_segment_continues_without_second_overlay
+      stale: no_op_if_visual_component_already_terminal
+      recovery: retain_visual_effect_even_if_movement_later_ends
+    - id: merged.visual_only
+      terminal: true
+      facts: [skipped]
+      ledgers: [product_fact]
+      clocks: {visual: retain, movement: retain, position: retain, recovery: deferral_increment}
+      visible: closed_with_visual_done_and_movement_still_due
+      stale: reconcile_terminal_candidate
+      recovery: hold_release_corridor_before_movement_reoffer
+    - id: merged.escape_during_visual
+      terminal: true
+      facts: [skipped]
+      ledgers: [product_fact]
+      clocks: {visual: fresh_cycle, movement: fresh_cycle, position: retain, recovery: deferral_increment}
+      visible: closed_immediately
+      stale: reconcile_terminal_candidate
+      recovery: no_rapid_reoffer_for_either_cycle
+    - id: merged.escape_during_movement
+      terminal: true
+      facts: [skipped]
+      ledgers: [product_fact]
+      clocks: {visual: retain, movement: fresh_cycle, position: retain, recovery: deferral_increment}
+      visible: closed_immediately_visual_effect_retained
+      stale: reconcile_terminal_candidate
+      recovery: normal_new_movement_cycle
+    - id: companion.take_with_me
+      terminal: false
+      facts: []
+      ledgers: [companion_action, operational]
+      clocks: {visual: retain, movement: retain, position: retain, recovery: retain}
+      visible: transferring_then_synced_or_transfer_failed
+      stale: no_op
+      recovery: mac_deadline_remains_authoritative_until_companion_acknowledges
+    - id: companion.terminal_action
+      terminal: true
+      facts: []
+      ledgers: [companion_action]
+      clocks: {visual: retain, movement: retain, position: retain, recovery: retain}
+      visible: provisional_ended_locally_then_ended_elsewhere_after_reconciliation
+      stale: reconcile_terminal_candidate
+      recovery: winning_candidate_materializes_exactly_one_product_fact_and_clock_effect
+    - id: sensor.strong_movement_restart
+      terminal: false
+      facts: []
+      ledgers: [observation, assessment, scheduling_decision]
+      clocks: {visual: fresh_cycle, movement: fresh_cycle, position: retain, recovery: fresh_cycle}
+      visible: quiet_schedule_restart_with_why_and_undo
+      stale: expired_or_conflicting_evidence_is_no_op
+      recovery: restore_prior_cycle_snapshot_on_undo
+    - id: schedule_restart.undo
+      terminal: false
+      facts: []
+      ledgers: [correction, scheduling_decision]
+      clocks: {visual: restore_decision_snapshot, movement: restore_decision_snapshot, position: restore_decision_snapshot, recovery: restore_decision_snapshot}
+      visible: prior_schedule_restored_without_interruption
+      stale: unknown_expired_or_already_undone_decision_is_no_op
+      recovery: exact_predecision_snapshot_and_cycle_ids_are_restored_once
+
+terminal_reconciliation:
+  terminal_fact_id: deterministic_hash_of_opportunity_id_and_terminal_slot
+  valid_candidate_requires:
+    - exact_opportunity_id
+    - exact_participating_clock_cycle_ids
+    - supported_action_type_and_phase
+    - unique_action_id
+    - origin_device_id_session_id_and_revision
+    - portable_wall_metadata
+    - local_monotonic_deadline_offset_when_available
+  winner_sort_key:
+    - greatest_remaining_milliseconds_at_action
+    - lexicographically_smallest_origin_device_id
+    - smallest_origin_revision
+    - lexicographically_smallest_action_id
+  rules:
+    - reduction_is_commutative_associative_and_idempotent
+    - arrival_order_never_selects_the_winner
+    - the_same_candidate_set_produces_the_same_winner_on_every_device
+    - projections_close_immediately_on_a_valid_local_candidate
+    - a_later_winning_candidate_updates_the_same_terminal_fact_projection_not_a_second_fact
+    - losing_and_duplicate_candidates_remain_only_in_the_companion_or_operational_ledger
+    - unknown_or_mismatched_candidates_fail_closed
+
+product_facts:
+  closed_vocabulary:
+    - promptPresented
+    - breakStarted
+    - timerFinished
+    - userDeclaredCompleted
+    - userDeclaredAlreadyMoved
+    - positionChanged
+    - snoozed
+    - skipped
+    - notAppropriate
+    - likelyNaturalInterruption
+  rule: >-
+    These facts say what the product showed, timed, or the user selected. They are
+    never merged into healthy-break, verified-movement, compliance, or outcome facts.
+  record_contract:
+    nonterminal_fact_id: deterministic_hash_of_action_id_fact_type_and_participating_cycle_ids
+    terminal_fact_id: terminal_reconciliation_terminal_fact_id
+    required:
+      - fact_type
+      - opportunity_id_or_idle_episode_id
+      - participating_clock_cycle_ids
+      - action_id
+      - recorded_at_utc
+      - origin_device_id
+      - origin_session_id
+      - origin_revision
+    rule: >-
+      One action emits at most one product fact. Participant cycle IDs carry merged
+      scope. A fact reports only the named product occurrence and never proves a
+      physical behavior, completion quality, symptom change, or health outcome.
+  separate_ledgers:
+    - operational
+    - observation
+    - assessment
+    - scheduling_decision
+    - correction
+    - companion_action
+
+input_and_motion:
+  decision: D-032
+  entrance: instant_final_field_no_global_tint_blur_or_compositor_transition
+  countdown_start: same_committed_open_action_as_break_started
+  first_active_frame:
+    - escape
+    - command_period
+    - return
+    - movement_shortcuts_1_2_3_q_a_p
+    - every_pointer_control
+  exit: instant_then_restore_previous_application
+  declaration_guard_seconds: 0
+  rule: >-
+    No entrance settlement callback or local animation gate may delay the accepted
+    deadline, focus, Escape, Return, or another printed declaration shortcut.
+
+activation:
+  current_runtime: legacy_v1
+  v2_contract_is_for_following_implementation_stories: true
+  forbidden_until_runtime_migration:
+    - claiming_new_preset_ids_are_selectable
+    - claiming_pause_is_relaunch_durable
+    - claiming_cross_device_reconciliation_is_shipped
+    - claiming_sensor_schedule_restart_is_shipped
+    - claiming_d032_is_fully_implemented

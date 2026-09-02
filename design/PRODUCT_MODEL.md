@@ -40,29 +40,35 @@ Four independent scheduling accumulators. Their exact eligibility and every acti
 [`machine-readable/timing_runtime_v2.yaml`](machine-readable/timing_runtime_v2.yaml). A clock
 rotation means a fresh schedule, not a verified body outcome.
 
-| Clock | Scheduling meaning | Permission-free accrual | Balanced v2 target / latest | Exhaustive fresh-cycle effects |
+| Clock | Scheduling meaning | Permission-free accrual | Balanced v2 contract target / latest | Exhaustive fresh-cycle effects |
 |---|---|---|---|---|
-| **Visual** | Visual-reset schedule based on estimated active computer use | Valid awake/active/unlocked monotonic intervals; input silence below 5 min still counts; every accepted ritual freezes position and visual as scoped by the matrix | 25 / 27 min | Visual timer/Done/Skip/Escape; long-idle return; movement or recovery timer/Done courtesy; merged visual terminal or visual-phase Escape; capsule Escape/second snooze when visual participates; `I already moved` only with qualified screen-away basis; approved restart decision |
+| **Visual** | Visual-reset schedule based on estimated active computer use | Valid awake/active/unlocked monotonic intervals; input silence below 5 min still counts; every accepted ritual freezes position and visual as scoped by the matrix | 25 / 27 min | Visual timer/Done/Skip/Escape; long-idle return; proven ≥300 s same-epoch system-unavailable return with no unresolved ritual; movement or recovery timer/Done courtesy; merged visual terminal or visual-phase Escape; capsule Escape/second snooze when visual participates; `I already moved` only with qualified screen-away basis; approved restart decision |
 | **Movement** | Movement-opportunity schedule based on estimated active computer use | Same system eligibility, but only while input is recent (≤60 s); not a body-movement/stillness estimate | 55 / 70 min | Movement timer/Done/`I already moved`/Skip/Escape; merged visual-phase Escape; merged movement timer/Done/already-moved/Skip/Escape; recovery terminal; capsule Escape/second snooze when movement participates; approved restart decision |
 | **Position** | Optional position-change schedule based on estimated active computer use or a user interval | Visual eligibility until long-idle onset, except it freezes during every accepted ritual; not a body-position/stability estimate | 45 min | Standalone or in-movement `positionChanged`; standalone position Skip; capsule Escape/second snooze when position participates |
 | **Recovery** | Optional recovery schedule from eligible interaction time and explicit deferrals | Only while movement timing is eligible after deferral | eligible 90 / typically 120 min | Movement timer/Done/already-moved; recovery timer/Done/Skip/Escape; capsule Escape/second snooze when recovery participates; approved restart decision. Movement Skip increments deferral instead of refreshing recovery |
 
-New preset IDs are Calm (`calm`), Balanced v2 (`balanced_v2`, default), Frequent reset
+New preset displays are Calm (`calm`), Balanced (`balanced_v2`, default), Frequent reset
 (`frequent_reset`), Adaptive (`adaptive`), and Custom (`custom_v2`). Exact values and the explicit
 legacy-ID migration disposition live under `preset_contract_v2` in
 `../research/health/machine-readable/product_protocol.yaml`. Shipped IDs retain exact v1 values
 until the person accepts a successor; no update silently retunes a schedule. Every v2 selection
 persists contract version `2`, its identifier, and migration state. Legacy `custom` retains its
 exact payload until explicit acceptance of `custom_v2`, whose payload fields/units/values are
-compatible without reinterpretation. Adaptive starts at Balanced v2 and initially changes only
+compatible without reinterpretation. Adaptive starts at the current Balanced v2 contract and initially changes only
 delivery inside the window and bounded holds, never frequency or health outcomes.
 
 **Non-negotiable relationships:**
 
 - A visual reset does **not** complete movement.
 - A position change does **not** complete movement. It is its own fact `[01 §3.3]`.
+- Frozen position *accrual* during an accepted ritual does not disable the explicit Change position
+  control. That action names and refreshes the current position cycle without adding elapsed time
+  or changing the movement participant set.
 - Five-minute permission-free idle records `likelyNaturalInterruption`, starts a fresh visual
   cycle at return, and preserves movement need. It never records a break or movement.
+- A same-epoch sleep, lock, or system-unavailable interval of at least five minutes, with no
+  unresolved ritual, receives the same visual courtesy and 60-second return grace. Unknown elapsed
+  time receives no fact or courtesy. Neither path creates movement or completion credit.
 - Finished or explicitly declared movement starts fresh movement and visual schedules so the app
   cannot ask for a visual reset minutes after a walk. The cross-clock effect is scheduling
   courtesy, not a visual-completion fact.
@@ -123,10 +129,13 @@ Per independent `ClockCycleID`, coordinated by one `OpportunityID`:
 ```
 
 The machine phase graph distinguishes offered, running, merged visual, merged movement, Held,
-Paused, corridor, provisional-terminal, and closed states. Movement `Done early` exists only after
-a 5- or 2-minute acceptance. Each action registers its source phase/revision, opportunity kind,
-participants, segment, and payload. Concurrent nonterminal actions use a fixed
-least-interruptive rank; arrival order never changes the winner.
+Paused, corridor, provisional-terminal, and closed states. Movement `Now` opens offered without a
+timer or `breakStarted`; a 5- or 2-minute acceptance creates both, and only then exposes `Done
+early`. Each action registers its source phase/revision, opportunity kind, base participants,
+affected nonparticipants, segment, and payload. Position may be affected from a movement or merged
+opportunity without joining its participant identity. Effect-bearing nonterminal commands require
+a coordinator lease and atomic acknowledgement before exposing any effect; offline intent is inert
+until renewed and revalidated.
 
 Escape is always equivalent to the least-committal exit. It is never a trap and never asks
 "are you sure". `ActionID` makes retries idempotent. An action originated after its actor knew the
@@ -135,6 +144,12 @@ closure still reconciles when it arrives late. Terminal order uses fact-claim ra
 logical identity, never wall time or remaining/segment duration. A replacement winner rebases
 from the retained pre-terminal snapshot and replays idempotent later inputs; one projected fact
 and already-final merged-component effects remain.
+
+Terminal projection leases last at most 90 monotonic seconds. Settlement waits for issued leases
+to be acknowledged, revoked, or expired, then prevents predecessor actions from mutating successor
+cycles. The terminal fact ID is invariant across candidate winners: versioned canonical SHA-256
+bytes encode OpportunityID, terminal slot, and fixed registered component scope, never a candidate
+participant subset.
 
 ## 6. Paused and Held
 
@@ -152,8 +167,12 @@ is unknown and cannot create a hold, an away pause, or a body/activity claim.
 
 Explicit manual pause outranks the remaining Paused reasons in the machine-defined order, and
 every Paused reason outranks a hold. Timed pause persists across relaunch; “until I resume” is
-indefinite and immediately reversible. Accepted countdowns keep
-their absolute deadline even while callbacks are suspended. After wake/unlock use 90 seconds;
+indefinite and immediately reversible. Paused/Held evidence is orthogonal to a running ritual:
+the phase, segment, deadline, snapshot, and revision are suspended. Clearing one named reason
+reduces the full remaining evidence set. A same-epoch future deadline resumes that segment without
+a corridor when only the ritual's own intrinsic clock-scope freeze remains; proven elapsed
+reconciles; unknown timing closes operationally without a timer fact or
+fresh cycle. Nonrunning release uses the corridors below. After wake/unlock use 90 seconds;
 after long idle use 60 seconds; after hold or manual-pause release use 90 seconds; after entering
 working hours use 60 seconds. Then present **at most one merged opportunity**, never a queue
 `[03 §8]`.
@@ -174,6 +193,8 @@ When visual and movement come due within five minutes of each other `[03 §6.3]`
 - Never two consecutive overlays. Never a "2 of 2" counter.
 - The merged `OpportunityID` carries both original `ClockCycleID` values. It never creates a
   merged clock or a generic merged outcome.
+- `Just the visual one` appears only in the merged movement-offered state after Change position
+  and before Skip, with key `V`, an explicit accessible name, and first-frame keyboard/pointer use.
 
 ## 8. Event vocabulary
 

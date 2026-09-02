@@ -56,20 +56,14 @@ An unanswerable field means the design is incomplete.
 
 ## 3. Reference annotations (to be completed during design)
 
-> **2026-08-25 reconciliation note.** The blocks below predate the Horizon round-2 design;
-> the **current, per-screen blocks are `SCREEN_INVENTORY.md` §K**, which govern where the two
-> disagree. Known deltas: (a) BR-01's "offered" state is superseded by the self-running
-> surface (D-021) — "initial focus = the primary action" now resolves to **Done early**, the
-> least destructive declaration, which honors this block's reasoning; (b) the `⌥⌘V` global
-> shortcut is dropped — **no default global hotkeys** ship (D-029; it also shadowed Finder's
-> move-paste); (c) BR-05's "Start 5 minutes" initial focus no longer exists (self-running);
-> (d) BR-05's rule that the four options are VoiceOver **siblings with parallel names is
-> kept** — round 2 places "Change position" at a tertiary *visual* tier (D-024), but its
-> semantic rank, hit target (44px), and printed key (`P`) stay equal (D-027). The visual-tier
-> vs sibling-tree tension was reviewed and resolved in that direction, not silently;
-> (e) "Increase Contrast: dimming layer becomes opaque" predates D-026 — the default surface
-> is already a full opaque field; IC instead raises ink tiers, borders, and the horizon track
-> (D-028).
+> **2026-09-01 reconciliation note.** `SCREEN_INVENTORY.md` §K and the blocks below describe
+> one contract. Visual and merged-visual fields run immediately and focus **Done early**.
+> Movement is different: `Now` opens a distinct **offered** field with no timer, `breakStarted`,
+> or Done early; focus starts at **Start 5 minutes**. Accepting 5 or 2 minutes enters the running
+> field and only then records `breakStarted`. No default global hotkeys ship (D-029). Change
+> position keeps an equal semantic rank and 44px target while being visually tertiary and logged
+> separately. Increase Contrast raises ink, borders, and the horizon track rather than adding a
+> dim layer. These clauses supersede only older artwork/runtime behavior, not one another.
 
 The three below are the load-bearing ones. Design directions should be evaluated against these
 before anything else.
@@ -78,9 +72,8 @@ before anything else.
 
 1. **Keyboard path** — appears unprompted; also MB-09. *(A proposed `⌥⌘V` global shortcut
    was removed — D-029.)*
-2. **Initial focus** — the primary action. Not the exit: focusing the exit first implies the
-   product expects to be dismissed.
-3. **Focus order** — primary action → skip → (optional "why this?") → exit.
+2. **Initial focus** — "Done early," the least-destructive declaration.
+3. **Focus order** — Done early → Skip → wraps. Two stops.
 4. **Escape** — dismisses immediately, records `skipped`, no confirmation, no re-prompt for
    this opportunity (`D-009`).
 5. **VoiceOver names** — surface announces once: purpose, duration, actions available.
@@ -88,8 +81,8 @@ before anything else.
    Optionally once near the end for the blink cue. Never per second (A6).
 7. **Text scaling** — the instruction line reflows; it never truncates and never scrolls. If
    it cannot fit at the largest size, the layout is wrong, not the copy.
-8. **Increase Contrast** — dimming layer becomes opaque enough for AA text contrast; the
-   surface gains a defined edge.
+8. **Increase Contrast** — the already-opaque field raises ink, border, and horizon-track
+   contrast; it does not add a dimming layer.
 9. **Reduce Motion** — no fade of the content, no moving focal element. Dimming still
    transitions, but as a slow opacity change only (A5). Static mode replaces any animated
    focal cue with text.
@@ -100,16 +93,20 @@ before anything else.
 
 ### BR-05/06 — Movement offer and activity choice
 
-1. **Keyboard path** — MB-10, HU-02, or the break surface.
-2. **Initial focus** — "Start 5 minutes."
-3. **Focus order** — 5 min → 2 min → choose activity → I already moved → not now → exit.
-4. **Escape** — dismisses, records `skipped`.
-5. **VoiceOver names** — the four activity options must be siblings in the same group with
-   parallel names ("Walk or wheel", "Seated movement", "Small space", "Change position") —
-   **not** "Walk" plus "Accessibility alternatives" (A2). The VoiceOver tree is where unequal
-   status becomes undeniable.
-6. **VoiceOver values** — remaining time announced at start, at the halfway point at most, and
-   at completion.
+1. **Keyboard path** — MB-10, HU-02, or the break surface. `Now` opens offered; Return/5 and
+   Q/2 accept durations. A/P/Escape/Command-period and every pointer control work first-frame.
+2. **Initial focus** — offered: "Start 5 minutes"; running: "Done early."
+3. **Focus order** — offered: 5 min → 2 min → I already moved → Change position → [merged only:
+   Just the visual one] → Skip. Running: Walk or wheel → Small space → Seated → Done early →
+   I already moved → Change position → Skip.
+4. **Escape** — dismisses immediately and records `skipped` from offered or running.
+5. **VoiceOver names** — offered duration controls are "Start five minutes, Return or 5" and
+   "Start two minutes, Q or 2". Running activity options are siblings with parallel names
+   ("Walk or wheel", "Seated movement", "Small space") — never "Walk" plus "Accessibility
+   alternatives". "Change position instead, P, logged separately" has equal semantics without
+   pretending it completes movement. Merged offered additionally names "Just the visual one, V."
+6. **VoiceOver values** — offered announces "Timer not started." Running announces the selected
+   duration at start and completion, with at most one halfway announcement.
 7. **Text scaling** — four options stack vertically; they never become a horizontal scroller.
 8. **Increase Contrast** — option boundaries become explicit.
 9. **Reduce Motion** — no animated demonstrations. Instructions are text `[04 §2]`.
@@ -121,7 +118,7 @@ before anything else.
 ### MB-01…MB-05 — Menu bar glyph
 
 1. **Keyboard path** — reachable via the system menu bar keyboard shortcut (`⌃F2` /
-   Keyboard Navigation), plus a global shortcut to open the menu directly.
+   Keyboard Navigation). No default global shortcut is installed.
 2. **Initial focus** — first menu item.
 3. **Focus order** — status region (if focusable) → items in visual order.
 4. **Escape** — closes the menu.

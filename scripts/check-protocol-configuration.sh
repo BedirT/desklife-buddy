@@ -93,7 +93,7 @@ assert(
 assert(
   protocol.fetch("preset_contract_v2").fetch("presets").transform_values { |preset| preset.fetch("display_name") } == {
     "calm" => "Calm",
-    "balanced_v2" => "Balanced v2",
+    "balanced_v2" => "Balanced",
     "frequent_reset" => "Frequent reset",
     "adaptive" => "Adaptive",
     "custom_v2" => "Custom",
@@ -268,6 +268,7 @@ transitions.each do |transition|
   end
 end
 transition_ids = transitions.map { |transition| transition.fetch("id") }
+transition_by_id = transitions.to_h { |transition| [transition.fetch("id"), transition] }
 guards = runtime.dig("action_contract", "transition_guards")
 phase_graph = runtime.dig("action_contract", "opportunity_phase_graph")
 phases = phase_graph.fetch("phases")
@@ -283,13 +284,71 @@ guards.each do |id, guard|
   assert(guard.fetch("required_payload").is_a?(Array) && !guard.fetch("required_payload").empty?, "#{id} needs an explicit payload contract")
   if %w[opportunity opportunity_origin].include?(guard.fetch("phase_scope"))
     guard.fetch("source_phases").each do |source|
-      next if source == "none"
+      next if %w[none any_nonclosed].include?(source)
       assert(phases.include?(source), "#{id} uses unknown source phase #{source}")
       target = guard.fetch("target_phase")
-      next if target == "unchanged" || target.start_with?("payload_selected_")
+      next if %w[unchanged dynamic_full_evidence_projection].include?(target) || target.start_with?("payload_selected_")
       assert(phases.include?(target), "#{id} uses unknown target phase #{target}")
       assert(edges.fetch(source).include?(target), "#{id} source #{source} cannot reach #{target}")
     end
+  end
+end
+
+participants = runtime.dig("action_contract", "participant_contract")
+base_sets = participants.fetch("registered_base_sets")
+assert(base_sets == {
+  "visual" => %w[visual],
+  "movement" => %w[movement],
+  "position" => %w[position],
+  "recovery" => %w[visual movement recovery],
+  "merged" => %w[visual movement],
+}, "registered base participant sets drifted")
+specific_guards = participants.fetch("guard_meanings").slice(
+  "exactly_visual",
+  "exactly_movement",
+  "exactly_position",
+  "exactly_visual_movement_and_recovery",
+  "exactly_visual_and_movement",
+)
+affected_actions = participants.fetch("affected_nonparticipant_actions")
+guards.each do |id, guard|
+  next unless %w[opportunity opportunity_origin].include?(guard.fetch("phase_scope"))
+
+  guard.fetch("opportunity_kinds").each do |kind|
+    next if kind == "none"
+    base = base_sets.fetch(kind)
+    participant_guard = guard.fetch("participant_guard")
+    if specific_guards.key?(participant_guard)
+      assert(specific_guards.fetch(participant_guard) == base, "#{id} participant guard cannot match #{kind}")
+    else
+      assert(
+        %w[exact_registered_participant_set nonempty_subset_of_registered_participants].include?(participant_guard),
+        "#{id} uses an opportunity participant guard without compatible semantics",
+      )
+    end
+    affected = guard.fetch("affected_nonparticipants", [])
+    assert((affected & base).empty?, "#{id} affected nonparticipant overlaps its base participant set")
+  end
+  assert(
+    guard.fetch("affected_nonparticipants", []) == affected_actions.fetch(id, []),
+    "#{id} affected-nonparticipant guard differs from the participant registry",
+  )
+end
+
+resolver_groups = runtime.dig("action_contract", "resolver_membership").reject { |name, _| name == "rule" }
+resolved_ids = resolver_groups.values.flatten
+assert(resolved_ids.sort == transition_ids.sort, "every transition must belong to one named resolver")
+assert(resolved_ids.uniq.length == resolved_ids.length, "a transition belongs to multiple resolvers")
+resolver_groups.each do |name, ids|
+  expected_terminal = {
+    "authoritative_opportunity_nonterminal" => false,
+    "authoritative_global_nonterminal" => false,
+    "component_terminal_candidate_set" => false,
+    "terminal_candidate_set" => true,
+    "operational_terminal_disposition" => true,
+  }.fetch(name)
+  ids.each do |id|
+    assert(transition_by_id.fetch(id).fetch("terminal") == expected_terminal, "#{id} terminal flag conflicts with #{name}")
   end
 end
 required_merged = %w[
@@ -314,9 +373,42 @@ assert(
     movement_accept_guard.fetch("required_payload") == ["selected_duration_seconds_300_or_120"],
   "movement acceptance must originate offered and carry the chosen duration",
 )
+movement_open_guard = guards.fetch("now.open_movement_offer")
+assert(
+  movement_open_guard.fetch("source_phases") == ["heads_up"] &&
+    movement_open_guard.fetch("target_phase") == "movement_offered" &&
+    transition_by_id.fetch("now.open_movement_offer").fetch("facts").empty? &&
+    transition_by_id.fetch("now.accept_movement").fetch("facts") == ["breakStarted"],
+  "movement Now must open offered without a fact; only 5/2 acceptance starts the break",
+)
+%w[now.accept_visual merged.accept].each do |id|
+  assert(transition_by_id.fetch(id).fetch("facts") == ["breakStarted"], "#{id} must start its visual field immediately")
+end
 assert(guards.fetch("movement.done_early").fetch("source_phases") == ["movement_running"], "Done early is running-only")
 assert(guards.fetch("movement.timer_finished").fetch("source_phases") == ["movement_running"], "movement timer is running-only")
-transition_by_id = transitions.to_h { |transition| [transition.fetch("id"), transition] }
+
+offered_running_pairs = {
+  "movement.position_changed" => ["movement.position_changed_offered", "movement.position_changed_running", "visual"],
+  "movement.skip" => ["movement.skip_offered", "movement.skip_running", "visual"],
+  "movement.escape" => ["movement.escape_offered", "movement.escape_running", "visual"],
+  "recovery.skip" => ["recovery.skip_offered", "recovery.skip_running", "visual"],
+  "recovery.escape" => ["recovery.escape_offered", "recovery.escape_running", "visual"],
+}
+offered_running_pairs.each do |label, (offered_id, running_id, clock)|
+  assert(guards.fetch(offered_id).fetch("source_phases").all? { |phase| phase.end_with?("_offered") }, "#{label} offered guard is not offered-only")
+  assert(guards.fetch(running_id).fetch("source_phases").all? { |phase| phase.end_with?("_running") }, "#{label} running guard is not running-only")
+  assert(transition_by_id.fetch(offered_id).dig("clocks", clock) == "retain", "#{offered_id} must preserve offer-time accrual")
+  assert(transition_by_id.fetch(running_id).dig("clocks", clock) == "restore_pre_ritual", "#{running_id} must use the acceptance snapshot")
+end
+%w[movement.position_changed_offered movement.position_changed_running].each do |id|
+  assert(guards.fetch(id).fetch("participant_guard") == "exactly_movement", "#{id} must retain movement base participants")
+  assert(guards.fetch(id).fetch("affected_nonparticipants") == ["position"], "#{id} must guard position as affected nonparticipant")
+end
+assert(
+  guards.fetch("merged.movement_position_changed").fetch("participant_guard") == "exactly_visual_and_movement" &&
+    guards.fetch("merged.movement_position_changed").fetch("affected_nonparticipants") == ["position"],
+  "merged position action must retain visual+movement base participants",
+)
 assert(
   transition_by_id.fetch("now.accept_visual").fetch("clocks") == {
     "visual" => "freeze", "movement" => "continue_eligibility", "position" => "freeze", "recovery" => "continue_eligibility",
@@ -389,6 +481,11 @@ assert(
       expected_clocks,
   "accepted rituals must freeze position accrual consistently",
 )
+assert(
+  runtime.dig("clock_contract", "position", "explicit_action_eligibility").include?("while position accrual is frozen") &&
+    runtime.dig("clock_contract", "position", "explicit_action_eligibility").include?("does not complete movement"),
+  "explicit position actions must remain reachable without conflating accrual or movement",
+)
 held_evidence = runtime.dig("presentation_states", "held", "evidence_contract")
 assert(
   held_evidence.fetch("required") ==
@@ -430,15 +527,46 @@ assert(
 deadline = runtime.dig("time", "accepted_ritual_deadline")
 assert(
   runtime.dig("time", "wall_metadata", "purpose") == "display_exchange_and_audit_only_never_countdown_reconstruction" &&
-    deadline.fetch("epoch_or_anchor_discontinuity") == "remaining_is_zero_and_timer_finished_is_reconciled_once" &&
+    deadline.fetch("epoch_or_anchor_discontinuity") == "timerRecoveryUnavailable_operational_only_no_product_fact_no_fresh_cycle" &&
     deadline.fetch("wall_clock_change") == "ignored_for_countdown",
-  "accepted deadline fallback must never extend duration from wall time",
+  "unknown accepted timing must not manufacture completion or a fresh schedule",
 )
 assert(
   deadline.dig("handoff", "acknowledgement_requires") ==
     %w[deadline_id_and_opportunity_revision sender_epoch_and_send_ticks receiver_epoch_and_receive_ticks bounded_round_trip_uncertainty final_sender_commit_ticks] &&
     deadline.dig("handoff", "commit_rule").include?("minus the full measured uncertainty bound"),
   "deadline handoff requires a bounded monotonic acknowledgement",
+)
+timer_recovery = transition_by_id.fetch("system.timer_recovery_unavailable")
+assert(
+  timer_recovery.fetch("facts").empty? &&
+    timer_recovery.fetch("ledgers") == ["operational"] &&
+    timer_recovery.fetch("clocks").values.all? { |effect| effect == "retain" } &&
+    deadline.dig("recovery_unavailable", "grace_seconds") == 60 &&
+    deadline.dig("recovery_unavailable", "product_facts") == [],
+  "unknown timer recovery must remain operational-only and preserve every due schedule",
+)
+assert(
+  guards.fetch("system.timer_recovery_unavailable").fetch("source_phases").sort ==
+    %w[merged_movement_running merged_visual_running movement_running recovery_running visual_running] &&
+    guards.fetch("system.timer_recovery_unavailable").fetch("required_payload").include?("unavailable_epoch_or_anchor_reason"),
+  "unknown timer recovery must guard every running ritual phase",
+)
+unavailable = runtime.dig("time", "system_unavailable_interval")
+extended_unavailable = transition_by_id.fetch("system.available_after_extended_unavailable")
+assert(
+  unavailable.fetch("anchor") == "continuous_monotonic_epoch_and_start_ticks" &&
+    unavailable.fetch("return_rule").include?("at least 300 seconds") &&
+    extended_unavailable.fetch("facts") == ["likelyNaturalInterruption"] &&
+    extended_unavailable.dig("clocks", "visual") == "fresh_cycle" &&
+    extended_unavailable.fetch("recovery").include?("same_epoch_unavailable_elapsed_at_least_300"),
+  "proven five-minute system unavailability must give visual courtesy without movement credit",
+)
+assert(
+  protocol.dig("activity_estimator", "system_unavailable_visual_courtesy_seconds") == 300 &&
+    protocol.dig("activity_estimator", "system_unavailable_return_grace_seconds") == 60 &&
+    protocol.dig("completion_semantics", "likely_natural_interruption", "unknown_elapsed_creates_fact_or_courtesy") == false,
+  "protocol system-unavailable courtesy thresholds drifted",
 )
 assert(
   runtime.dig("input_and_motion", "declaration_guard_seconds") == 0,
@@ -467,11 +595,62 @@ assert(
     runtime.dig("input_and_motion", "first_active_frame").include?("movement_offered_shortcuts_5_2_q_a_p"),
   "movement 5/2 acceptance actions must work on the first frame",
 )
+assert(
+  movement_a11y.dig("offered_state", "controls_first_frame", "change_position", "action") == "movement.position_changed_offered" &&
+    movement_a11y.dig("running_state", "controls_first_frame", "change_position", "action") == "movement.position_changed_running" &&
+    movement_a11y.dig("offered_state", "controls_first_frame", "skip", "action") == "movement.escape_offered" &&
+    movement_a11y.dig("running_state", "controls_first_frame", "skip", "action") == "movement.escape_running",
+  "movement first-frame controls must use phase-specific action IDs",
+)
+merged_control = movement_a11y.fetch("merged_offered_addition")
+assert(
+  merged_control.fetch("visibility") == "merged_movement_offered_only" &&
+    merged_control.fetch("focus_position") == "after_change_position_before_skip" &&
+    merged_control.dig("control", "accessible_name") == "Just the visual one" &&
+    merged_control.dig("control", "shortcut") == ["v"] &&
+    merged_control.dig("control", "action") == "merged.visual_only" &&
+    merged_control.fetch("first_frame").include?("pointer"),
+  "merged visual-only action needs exact focus, name, V shortcut, and first-frame pointer behavior",
+)
 nonterminal = runtime.dig("action_contract", "nonterminal_reconciliation")
 assert(
-  nonterminal.fetch("rule").include?("Arrival order is never an input") &&
+  nonterminal.fetch("rule").downcase.include?("arrival order is never an input") &&
     nonterminal.fetch("winner_sort_key") == %w[smallest_intent_rank lexicographically_smallest_action_id],
   "nonterminal reconciliation must be deterministic and arrival-independent",
+)
+coordinator = runtime.dig("action_contract", "authoritative_action_coordinator")
+assert(
+  coordinator.fetch("lease_maximum_seconds") == 90 &&
+    coordinator.fetch("rule").include?("before any product fact, deadline, phase, or clock effect") &&
+    coordinator.fetch("rule").include?("offline") &&
+    coordinator.fetch("rule").include?("Later cannot orphan"),
+  "effect-bearing nonterminal actions require one bounded authoritative coordinator",
+)
+evidence_reduction = runtime.dig("presentation_states", "evidence_reduction")
+assert(
+  evidence_reduction.fetch("rule").include?("mutates only its named evidence record") &&
+    evidence_reduction.dig("running_projection", "rule").include?("Preserve the exact running opportunity phase") &&
+    evidence_reduction.dig("running_projection", "rule").include?("resume that same running segment immediately") &&
+    evidence_reduction.dig("nonrunning_projection", "else_after_release") == "release_corridor",
+  "Paused/Held must project the full evidence set without stranding running rituals",
+)
+%w[pause.resume hold.release hold.correction_release working_hours.enter system.available].each do |id|
+  guard = guards.fetch(id)
+  transition = transition_by_id.fetch(id)
+  assert(guard.fetch("target_phase") == "dynamic_full_evidence_projection", "#{id} must have a full-evidence dynamic target")
+  assert(transition.fetch("clocks").values.all? { |effect| effect == "project_full_evidence_eligibility" }, "#{id} must reduce all evidence before projection")
+  assert(transition.fetch("recovery").include?("project_full_evidence") || transition.fetch("recovery").include?("no_other_evidence"), "#{id} must not unconditionally enter a corridor")
+end
+%w[pause.start hold.begin working_hours.exit system.unavailable].each do |id|
+  assert(guards.fetch(id).fetch("source_phases") == ["any_nonclosed"], "#{id} must remain reachable while a ritual runs")
+  assert(guards.fetch(id).fetch("required_payload").include?("optional_suspended_running_state"), "#{id} must preserve suspended running state")
+end
+assert(
+  guards.fetch("system.returned_from_long_idle").fetch("target_phase") == "dynamic_full_evidence_projection" &&
+    guards.fetch("system.long_idle_began").fetch("required_payload").include?("no_unresolved_running_ritual") &&
+    transition_by_id.fetch("system.returned_from_long_idle").dig("clocks", "visual") == "fresh_cycle" &&
+    %w[movement position recovery].all? { |clock| transition_by_id.fetch("system.returned_from_long_idle").dig("clocks", clock) == "project_full_evidence_eligibility" },
+  "long-idle courtesy must not strand a ritual or clear overlapping evidence",
 )
 assert(
   runtime.dig("terminal_reconciliation", "rules").include?(
@@ -480,6 +659,16 @@ assert(
   "terminal reconciliation must be order-independent",
 )
 terminal = runtime.fetch("terminal_reconciliation")
+projection_lease = runtime.dig("action_contract", "terminal_projection_lease")
+assert(
+  projection_lease.fetch("maximum_seconds") == 90 &&
+    projection_lease.fetch("eligibility").include?("before_lease_expiry") &&
+    projection_lease.fetch("settlement").include?("acknowledged/revoked") &&
+    projection_lease.fetch("settlement").include?("No wall clock") &&
+    terminal.fetch("valid_candidate_requires").include?("live_terminal_projection_lease_at_monotonic_origin") &&
+    terminal.fetch("rules").include?("settled_predecessor_actions_can_never_mutate_a_successor_cycle"),
+  "terminal candidate origination and settlement must be monotonic, bounded, and successor-safe",
+)
 assert(
   terminal.fetch("originated_after_known_closure") == "invalid_audited_no_op" &&
     terminal.fetch("arrived_after_provisional_closure_but_valid_at_origin") == "include_in_candidate_set",
@@ -508,14 +697,54 @@ assert(
     terminal.fetch("rules").include?("unsynchronized_wall_time_remaining_duration_and_segment_duration_never_rank_candidates"),
   "terminal winner order must use logical metadata, never wall or incomparable duration",
 )
-rebase = terminal.fetch("rebase_contract")
+fact_id = terminal.fetch("terminal_fact_id")
 assert(
-  rebase.fetch("retained_preterminal_snapshot_requires").include?("every_participant_clock_cycle_id_accumulated_time_and_phase") &&
+  fact_id.fetch("algorithm") == "sha256_over_cadence_contract_bytes_v1" &&
+    fact_id.fetch("inputs") == %w[domain_literal_terminal_fact_v2 opportunity_id canonical_terminal_slot fixed_registered_component_scope_for_that_slot] &&
+    fact_id.fetch("fixed_registered_component_scope") == {
+      "standalone_opportunity_close" => "registered_base_participant_set_from_opportunity_creation",
+      "merged_visual_segment" => ["visual"],
+      "merged_opportunity_close" => %w[visual movement],
+    } &&
+    fact_id.fetch("invariant").include?("never ID inputs"),
+  "terminal fact identity must be invariant across valid candidate winners",
+)
+encoding = runtime.dig("identities", "portable_canonical_encoding")
+identifier_contract = runtime.dig("identities", "portable_identifier_contract")
+assert(
+  encoding.fetch("version") == "cadence_contract_bytes_v1" &&
+    encoding.fetch("hash_algorithm") == "sha256" &&
+    encoding.dig("scalar_encoding", "uuid").include?("16_network_order_bytes") &&
+    encoding.dig("scalar_encoding", "string").include?("unicode_nfc_utf8") &&
+    encoding.dig("collection_encoding", "set").include?("sorted_unsigned_lexicographically") &&
+    encoding.fetch("prohibited_inputs") == %w[wall_time localized_copy process_hash_seed pointer_address] &&
+    identifier_contract.fetch("wire_text") == "lowercase_hyphenated_rfc4122" &&
+    identifier_contract.fetch("deterministic_identifier_rule").include?("explicit domain literal"),
+  "portable identifier encoding is incomplete or platform-dependent",
+)
+rebase = terminal.fetch("rebase_contract")
+candidate_transition_ids = resolver_groups.fetch("terminal_candidate_set") +
+  resolver_groups.fetch("component_terminal_candidate_set") +
+  resolver_groups.fetch("operational_terminal_disposition")
+candidate_effect_closure = candidate_transition_ids.flat_map do |id|
+  transition_by_id.fetch(id).fetch("clocks").keys + guards.fetch(id).fetch("affected_nonparticipants", [])
+end.uniq.sort
+assert(
+  candidate_effect_closure == expected_clocks.sort &&
+    rebase.fetch("snapshot_scope_rule").include?("union of every clock") &&
+  rebase.fetch("retained_preterminal_snapshot_requires").include?("every_enabled_visual_movement_position_and_recovery_clock_cycle_id") &&
+    rebase.fetch("retained_preterminal_snapshot_requires").include?("every_enabled_clock_accumulated_time_due_state_eligibility_and_phase") &&
     rebase.fetch("apply_rule").include?("apply the new winner exactly once") &&
     rebase.fetch("apply_rule").include?("keep already-final independent merged-component effects") &&
     rebase.fetch("fact_rule").include?("Upsert the same deterministic terminal fact ID") &&
     rebase.fetch("fact_rule").include?("repeat an accessibility announcement"),
   "late-winner rebase must restore one snapshot without duplicate effects",
+)
+assert(
+  rebase.dig("offered_and_running_checkpoints", "offered_terminal_action").include?("Never restore a pre-ritual snapshot") &&
+    rebase.dig("offered_and_running_checkpoints", "accepted_running_terminal_action").include?("taken atomically at acceptance") &&
+    rebase.dig("offered_and_running_checkpoints", "merged_component_action").include?("remain in scope"),
+  "offered, accepted-running, and merged-component snapshot checkpoints must remain distinct",
 )
 %w[clock_cycle_id opportunity_id action_id decision_id device_id session_id].each do |identity|
   assert(runtime.fetch("identities").key?(identity), "missing #{identity} contract")
@@ -526,6 +755,10 @@ product_model = root.join("design/PRODUCT_MODEL.md").read
 interaction = root.join("design/INTERACTION_SPEC.md").read
 screens = root.join("design/SCREEN_INVENTORY.md").read
 copy = root.join("design/COPY_INVENTORY.md").read
+accessibility = root.join("design/ACCESSIBILITY.md").read
+health = root.join("research/health/03_PRODUCT_HEALTH_PROTOCOL_SPEC.md").read
+decisions = root.join("design/DECISIONS.md").read
+conformance = root.join("design/CURRENT_STATE_CONFORMANCE.md").read
 assert(product_model.include?("Exhaustive fresh-cycle effects"), "PRODUCT_MODEL fresh-cycle table must declare its scope")
 %w[snooze skip capsule position recovery merged].each do |variant|
   assert(product_model.downcase.include?(variant), "PRODUCT_MODEL fresh-cycle table is missing #{variant}")
@@ -534,7 +767,7 @@ assert(!interaction.include?("greatest recorded remaining milliseconds"), "prose
 assert(!interaction.include?("wall deadline reconstructs remaining"), "prose still reconstructs accepted deadlines from wall time")
 [
   "Calm",
-  "Balanced v2",
+  "Balanced",
   "Frequent reset",
   "Adaptive",
   "Custom",
@@ -558,6 +791,30 @@ copy.each_line do |line|
   end
 end
 assert(screens.include?('hold = dashed ring + the word "Held"'), "K.3 meaning-without-color must say Held")
+assert(!screens.include?("Two minutes instead"), "running movement must not advertise a nonexistent duration-switch control")
+assert(
+  screens.include?('Merged offered additionally announces "Just the visual one, V."') &&
+    accessibility.include?('Merged offered additionally names "Just the visual one, V."'),
+  "merged visual-only a11y copy is missing from a governing surface",
+)
+assert(
+  !accessibility.include?('BR-05\'s "Start 5 minutes" initial focus no longer exists') &&
+    accessibility.include?("Movement is different") &&
+    accessibility.include?("Timer not started"),
+  "ACCESSIBILITY movement offered/running contract remains stale",
+)
+assert(
+  interaction.include?("operational-only `timerRecoveryUnavailable`") &&
+    health.include?("operational-only") && health.include?("`timerRecoveryUnavailable`") &&
+    decisions.include?("D-033 contract-repair addendum") &&
+    conformance.include?("unknown-timer operational recovery"),
+  "unknown timer recovery is not reconciled across governing prose",
+)
+assert(
+  interaction.include?("Movement `Now` opens its offered field") &&
+    copy.include?("standalone movement opens the offered field and records no product fact yet"),
+  "breakStarted copy/event ownership is inconsistent",
+)
 RUBY
 
 if /usr/bin/grep -Eq 'Same \(D-031\)|D-013…D-025|D-013/D-021|first-class \(D-018, D-023\)|only surface \(D-018\)' \

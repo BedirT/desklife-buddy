@@ -114,7 +114,7 @@ covered by previews and snapshots.
 |---|---|---|---|
 | ON-01 | What this is | Promise, one screen | todo |
 | ON-02 | What it can and cannot know | The thesis screen | todo |
-| ON-03 | Choose a rhythm | Calm · Balanced v2 · Frequent reset · Adaptive · Custom (`custom_v2`); legacy rows keep exact IDs/values until explicit migration | todo |
+| ON-03 | Choose a rhythm | Calm · Balanced · Frequent reset · Adaptive · Custom (`custom_v2`); legacy rows keep exact IDs/values until explicit migration | todo |
 | ON-04 | How you move | Four options, equal weight | todo |
 | ON-05 | Comfort | Motion, brightness, static mode | todo |
 | ON-06 | Ready | Works now; integrations named, not requested | todo |
@@ -156,11 +156,11 @@ covered by previews and snapshots.
 
 | ID | State | Required behavior | Status |
 |---|---|---|---|
-| ED-01 | Wake from sleep with a break overdue | Grace period, then one offer, not a queue | todo |
+| ED-01 | Wake from sleep with a break overdue | Proven same-epoch unavailable ≥300 s: fresh visual courtesy, preserve other need, 60 s grace, then one offer; unknown duration earns no fact/courtesy | todo |
 | ED-02 | Two opportunities due together | Merge `[03 §6.3]`, never stack | todo |
 | ED-03 | Display disconnected during a break | No stranded panel, no crash, exit intact | todo |
 | ED-04 | Mirrored displays | One coherent presentation | todo |
-| ED-05 | Screen locks during a break | Hide callbacks/UI; absolute accepted deadline continues; reconcile once on unlock | todo |
+| ED-05 | Screen locks during a break | Preserve the running phase. Reconcile a comparable same-epoch deadline; unavailable epoch/anchor closes operationally with no timer fact or fresh cycle, preserves due need, and re-offers after grace | todo |
 | ED-06 | Calendar permission revoked | Explain once, quietly; feature off | todo |
 | ED-07 | Notifications denied | In-app heads-up path | todo |
 | ED-08 | Reduce Motion enabled while running | Applies immediately, no restart | todo |
@@ -230,25 +230,26 @@ Keyboard path        — Offered: Return or 5 accepts 5 minutes; Q or 2 accepts 
                        A already-moved, P change-position, Esc/⌘. leaves. Running: 1/2/3
                        select content, Return is Done early, and A/P/Esc/⌘. retain their
                        labeled actions. Every visible key works on the first frame.
-                       In the merged segment, "Just the visual one" precedes Skip in the
-                       same Tab path. Every printed key is immediate first-frame. No pointer
-                       is needed.
+                       In the merged offered segment, V activates "Just the visual one"
+                       between Change position and Skip. Every printed key and every pointer
+                       control is immediate first-frame. No pointer is needed.
 Initial focus        — Offered: "Start 5 minutes." Running: "Done early."
 Focus order          — Offered: Start 5 minutes → 2 minutes → I already moved → Change
-                       position instead → Skip. Running: Walk or wheel → Small space →
+                       position instead → [Just the visual one, merged only] → Skip.
+                       Running: Walk or wheel → Small space →
                        Seated → Done early → I already moved → Change position instead →
-                       [Just the visual one, merged only] → Skip → (wraps).
+                       Skip → (wraps).
 Escape               — Leaves immediately → `skipped`. ⌘. same.
 VoiceOver names      — Offered: "Start five minutes, Return or 5" · "Start two minutes,
                        Q or 2" · "I already moved, A" · "Change position instead, P,
                        logged separately" · "Skip, Escape". Running: "Walk or wheel, 1"
                        · "Small space, 2" · "Seated, 3" (equal rank,
-                       same trait set — never "alternative") · "Two minutes instead" ·
-                       "Done early, Return" · "I already moved, A" · ["Just the visual one",
-                       merged only] · "Skip, Escape" ·
+                       same trait set — never "alternative") · "Done early, Return" ·
+                       "I already moved, A" · "Skip, Escape" ·
                        "Change position instead, P — logged separately". Siblings with
                        parallel names, per ACCESSIBILITY.md BR-05 (tertiary tier is
                        visual only — D-027).
+                       Merged offered additionally announces "Just the visual one, V."
 VoiceOver values     — Offered: "Movement opportunity. Choose five or two minutes. Timer
                        not started." Running names the selected duration. Selection change
                        announces the chip title + its one
@@ -339,7 +340,7 @@ Focus order          — Sidebar (arrow keys within) → content controls top-to
                        reading order → (window controls, platform-owned).
 Escape               — Closes the window (standard settings-window behavior); ⌘W same.
 VoiceOver names      — Sidebar rows by visible label (CP-SE25–28); canonical v2 profile rows
-                       read name + subtitle (for example, "Balanced v2, about 25 minutes
+                       read name + subtitle (for example, "Balanced, about 25 minutes
                        visual, about 55 minutes movement"); legacy rows retain exact v1 names
                        and values until migration;
                        every toggle names its consequence, not its mechanism.
@@ -418,7 +419,7 @@ Multi-display        — Uses the break overlay display plan; one shared model a
 ```
 Keyboard path        — Standard sheet Tab order; Space activates the focused row. Esc is
                        printed on Skip and records only the sheet's typed scope.
-Initial focus        — First configured duration (5 minutes in the Balanced v2 preset).
+Initial focus        — First configured duration (5 minutes in the Balanced preset).
 Focus order          — 5 → 10 → 15 minutes → [After this busy time, when bounded] →
                        For 1 hour → This one doesn't work for me → Skip → (wraps).
 Escape               — Skip immediately, no confirmation or escalation.

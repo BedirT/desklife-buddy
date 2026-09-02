@@ -103,7 +103,7 @@ preset_contract_v2:
         quick_duration_seconds: 120
       position_target_seconds: 3600
     balanced_v2:
-      display_name: Balanced v2
+      display_name: Balanced
       default: true
       visual:
         soft_due_seconds: 1200
@@ -175,6 +175,8 @@ activity_estimator:
   long_idle_reset_seconds: 300
   wake_unlock_grace_seconds: 90
   return_from_long_idle_grace_seconds: 60
+  system_unavailable_visual_courtesy_seconds: 300
+  system_unavailable_return_grace_seconds: 60
   expected_sample_seconds: 5
   maximum_covered_sample_gap_seconds: 15
   terminology: estimated_active_computer_use
@@ -224,6 +226,7 @@ suppression_precedence:
   - snooze
   - low_friction_wait
 state_semantics_v2:
+  evidence_reduction_from: ../../../design/machine-readable/timing_runtime_v2.yaml#presentation_states.evidence_reduction
   manual_pause_options:
     fixed_seconds: [1800, 3600]
     calendar_deadlines: [user_selected_until, next_local_day_boundary]
@@ -281,6 +284,10 @@ completion_semantics:
     counts_as_movement: false
     visual_cycle_restarts_at_return: true
     preserves_movement_need: true
+    qualifying_permission_free_sources:
+      - input_idle_same_epoch_elapsed_greater_than_or_equal_to_300
+      - system_unavailable_same_epoch_elapsed_greater_than_or_equal_to_300_without_unresolved_ritual
+    unknown_elapsed_creates_fact_or_courtesy: false
 content:
   default_movement: easy_walking_or_equivalent
   equal_alternatives: [wheel_or_self_propel, seated_active_movement, position_change_only]

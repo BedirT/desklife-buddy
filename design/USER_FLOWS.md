@@ -13,14 +13,14 @@ Legend: `→` next step · `⤳` background/no UI · `✕` flow ends
 Install → launch → ON-01 What this is
   → ON-02 What it can and cannot know          (the honesty screen; not skippable content,
                                                 but the whole flow is skippable)
-  → ON-03 Choose a rhythm  [Calm | Balanced v2✓ | Frequent reset | Adaptive | Custom]
+  → ON-03 Choose a rhythm  [Calm | Balanced✓ | Frequent reset | Adaptive | Custom]
   → ON-04 How you move     [Walk/wheel | Seated movement | Mix movement paths | Position change]
   → ON-05 Comfort          [Standard | Static + brightness; macOS choices shown read-only]
   → ON-06 Ready            (Choices summarized; integrations named, not requested.)
   ✕ Menu bar item appears (MB-01). Clocks start.
 ```
 
-- **Skip at any point** → ON-07: Balanced v2 preset, all four movement options offered
+- **Skip at any point** → ON-07: Balanced preset, all four movement options offered
   equally, no permissions requested, no reminder to finish setup.
 - **No permission is requested during onboarding** `[09 §7 permission-first onboarding]`.
   Notifications are requested at F-03 step 1; Calendar at SE-12.
@@ -75,19 +75,21 @@ HU-01 heads-up (45 s before target)
 
 ```
 HU-02 heads-up
-  → BR-05 offered  [Start 5 minutes (initial focus) | 2 minutes | I already moved |
+  → Now → BR-05 offered (no fact or timer) [Start 5 minutes (initial focus) | 2 minutes | I already moved |
                     Change position instead | Skip]
       ├ Start 5 min / 2 min → breakStarted + selected duration + absolute deadline
       │     → BR-07 running [three equal content choices | Done early | I already moved |
       │                      Change position instead | Skip]
       │     → timerFinished / BR-08 "Done early" → fresh movement + visual schedules ✕
-      │     └ user leaves or device sleeps/locks → deadline continues → finish/receipt on return
+      │     └ device sleeps/locks → same-epoch deadline resumes/finishes; unavailable anchor
+      │                              → operational recovery, no timer fact/fresh cycle
       ├ "I already moved" → userDeclaredAlreadyMoved → fresh movement schedule;
       │     visual fresh only with an explicit or strong fresh screen-away basis ✕
       └ Skip / Escape → skipped; fresh movement schedule without completion credit ✕
 ```
 
-BR-05 has no timer or Done early. Its focus order is 5 → 2 → already moved → position → Skip;
+BR-05 has no timer, `breakStarted`, or Done early. Its focus order is 5 → 2 → already moved →
+position → [merged only: Just the visual one, V] → Skip;
 Return/5 and Q/2 accept their durations on the first frame. BR-07 focuses Done early and exposes
 1/2/3 content choices. A/P/Escape/⌘. remain first-frame actions in both states. VoiceOver says
 "timer not started" while offered and names the accepted duration while running.
@@ -126,10 +128,11 @@ Both due inside merge_window (300 s)
   │   │   ├ timer / Done early → fresh movement; visual remains fresh ✕
   │   │   ├ I already moved → declared movement fact; visual remains fresh ✕
   │   │   ├ Change position → position fact/cycle; visual remains fresh ✕
+  │   │   ├ content changes → selected duration is unchanged
   │   │   └ Skip / Escape → skipped movement schedule; visual remains fresh ✕
-  │   └ content changes while running never alter selected duration
-  ├ "Just the visual one" → BR-10 → visual schedule is fresh, movement remains due,
-  │                          screen says so plainly, returns to F-02
+  │   ├ Change position → position fact/cycle; base participants remain visual+movement ✕
+  │   ├ Just the visual one (V) → BR-10 → visual fresh, movement remains due ✕
+  │   └ Skip / Escape → skipped movement schedule; visual remains fresh ✕
   └ Escape during visual → skipped facts; fresh schedules prevent rapid re-offer ✕
      Escape during movement → retain finished visual effect; skipped movement starts fresh ✕
 ```
@@ -218,16 +221,16 @@ Tone: an offer between peers. Never an alarm, never "you have not taken a real b
 ## F-12 · Changing the schedule
 
 ```
-SE-02 → Calm / Balanced v2 / Frequent reset / Adaptive / Custom (`custom_v2`)
+SE-02 → Calm / Balanced / Frequent reset / Adaptive / Custom (`custom_v2`)
   Legacy Gentle/Balanced/Frequent movement/High frequency value loaded:
     → Keep current schedule preserves exact v1 ID/values
     → Review new schedule shows the named successor; migrate only after acceptance
-  Legacy Balanced remains 20/25/30 visual and 50/60/70 movement; Balanced v2 is
-    20/25/27 visual and 50/55/70 movement. Never label legacy Balanced as Balanced v2.
+  Legacy Balanced remains 20/25/30 visual and 50/60/70 movement; migration copy names the
+    successor "Balanced (current v2 schedule)" at 20/25/27 and 50/55/70. Normal display is Balanced.
   Legacy custom accepted for migration:
     → preserve every v1 field, unit, ordering, and value; change only contract version,
       identifier to custom_v2, and migration state
-  Adaptive starts at Balanced v2 and initially changes only delivery within the due window
+  Adaptive starts at the current Balanced v2 contract and initially changes only delivery within the due window
     and bounded automatic holds, never reminder frequency or a health conclusion
   Very frequent (SE-03) or effectively disabled (SE-04):
     → one neutral note about what that means. No warning icon, no block, no shame [03 §5].
@@ -259,7 +262,7 @@ typed and disclosed before their owning features retain or export them.
 ```
 Accepted visual or movement ritual → Take with me
   → Mac sends OpportunityID + independent ClockCycleIDs + absolute deadline + ActionID
-  ├ companion acknowledges → Synced; each device computes remaining time locally
+  ├ companion acknowledges bounded monotonic handoff + ≤90 s projection lease → Synced
   │   ├ terminal action on any device → local projection closes immediately
   │   └ action set reconciles by deterministic key, never arrival order
   │       → winner materializes one terminal product fact and clock effect
@@ -267,8 +270,11 @@ Accepted visual or movement ritual → Take with me
   └ no acknowledgement → Transfer failed; Mac deadline remains valid
 ```
 
-Sleep, lock, relaunch, and connectivity loss never extend the absolute deadline. Duplicate,
-unknown, stale, or mismatched-cycle actions are auditable no-ops. A sensed movement observation
+Sleep, lock, relaunch, and connectivity loss never extend the accepted duration. If the monotonic
+epoch/anchor cannot be resumed, the ritual closes operationally with no `timerFinished` or fresh
+schedule and the due need is re-offered after grace. Offline intent cannot affect state until a
+coordinator renews its lease and revalidates phase/revision. Duplicate, unknown, settled,
+post-lease, or mismatched-cycle actions are auditable no-ops. A sensed movement observation
 may support a separate user-approved schedule restart; it cannot masquerade as the timer or a
 user declaration.
 

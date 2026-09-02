@@ -68,7 +68,7 @@ any count of missed breaks, any numeric countdown (`D-004`).
 |---|---|---|---|
 | CP-HU01 | Visual reset in a moment | neutral UI | draft |
 | CP-HU02 | Time to move, when you're ready | neutral UI; autonomy framing `[C037]` | draft |
-| CP-HU03 | Start now | Class A explicit route; opens the exact visual, movement, or merged break, whose successful surface opening separately owns `breakStarted` | approved — Heads-Up claims review 2026-08-26 |
+| CP-HU03 | Start now | Class A route. Visual/merged visual opens running and records `breakStarted`; standalone movement opens offered with no timer/fact until 5 or 2 minutes is accepted. | approved — lifecycle clarification 2026-09-01 |
 | CP-HU04 | In 5 minutes | Class A exact duration action; maps only to the configured 300-second `snoozed` fact for the live scope | approved — Heads-Up claims review 2026-08-26 |
 | CP-HU05 | More options | Class A neutral route label; shown only during an actionable heads-up and opens BR-13 without recording a fact | approved — BreakFlow claims review 2026-08-26 |
 | CP-HU06 | Both are due. One break covers them | describes merge, asserts nothing `[03 §6.3]`; merged scope only, with visual and movement facts/clocks still independent | approved — BreakFlow claims review 2026-08-26 |
@@ -308,7 +308,7 @@ The heads-up chip (D-019, DQ-10). Registered per `.claude/rules/health-and-claim
 | CP-HU11 | in about 45 seconds | Class A — "about" keeps the estimate honest; never a per-second countdown (`accessibility.md` §5) | Approved |
 | CP-HU12 | in about 10 seconds | Same basis as CP-HU11 | Approved |
 | CP-HU13 | now, or whenever suits | Class A + autonomy framing `[C037]`, `[01 §4]`. The clause after the comma is load-bearing — do not shorten to "now" | Approved |
-| CP-HU14 | Now | Class A action label — starts the break (`breakStarted`) | Approved |
+| CP-HU14 | Now | Class A action label. Visual/merged visual starts and records `breakStarted`; standalone movement opens the offered field and records no product fact yet. | Approved — lifecycle clarification 2026-09-01 |
 | CP-HU15 | Later | Class A action label — records `snoozed`. Deliberately not "Dismiss" (which would read as skip) and not "Snooze 5 min" (menu carries the durations) | Approved |
 
 **Rejected during heads-up design:**
@@ -447,15 +447,17 @@ contract. Canonical future v2 Settings must register and project this complete s
 | Stable v2 ID | Display copy | Exact explanation |
 |---|---|---|
 | `calm` | Calm | More space between offers. |
-| `balanced_v2` | Balanced v2 | Starts offering visual resets after 20 minutes and movement after 50 minutes of estimated active computer use. |
+| `balanced_v2` | Balanced | Starts offering visual resets after 20 minutes and movement after 50 minutes of estimated active computer use. |
 | `frequent_reset` | Frequent reset | Offers resets sooner while preserving the same choice to start, defer, or skip. |
-| `adaptive` | Adaptive | Starts with Balanced v2 timing. At first, it may change only when reminders are delivered or held, not their frequency and not any health conclusion. |
+| `adaptive` | Adaptive | Starts with the current Balanced schedule. At first, it may change only when reminders are delivered or held, not their frequency and not any health conclusion. |
 | `custom_v2` | Custom | Uses the timing values you choose. |
 
 Migration copy is explicit and neutral: **Keep current schedule** preserves the legacy ID and
 every value; **Review new schedule** shows the successor before acceptance. Legacy Balanced is
-not called Balanced v2: its visual window is 20/25/30 minutes and movement window is 50/60/70;
-Balanced v2 is 20/25/27 and 50/55/70. A legacy `custom` selection carries every v1 field, unit,
+not silently retuned: its visual window is 20/25/30 minutes and movement window is 50/60/70.
+Migration copy calls it **legacy Balanced** and the selectable successor **Balanced (current v2
+schedule)**, whose windows are 20/25/27 and 50/55/70. The ordinary preset display remains simply
+**Balanced**. A legacy `custom` selection carries every v1 field, unit,
 ordering, and value unchanged into `custom_v2`; only contract version, identifier, and migration
 state change after acceptance. No automatic migration, inference, or health promise is implied.
 

@@ -31,6 +31,9 @@ status menu (§1.5).
   _seconds: [300, 600, 900]`; "After this busy time" only for a selected Calendar busy
   interval with a fresh known end; "Presenting
   for 1 hour" = manual hold). One click, zero hunting.
+- `Now` on a visual or merged-visual heads-up commits the immediately running field and
+  `breakStarted`. `Now` on a standalone movement heads-up opens the offered field only: no
+  timer, deadline, or `breakStarted` exists until 5 or 2 minutes is accepted.
 - **Esc** while the capsule has key focus waves it off → emits `skipped` for this
   opportunity (provisional reading of `[03 §10]` — DQ-19). No re-prompt, no escalation
   (`max_repeated_escalations_per_opportunity: 1`).
@@ -96,8 +99,10 @@ status menu (§1.5).
   shortcut (`1`/`2`/`3`, `Q`, Return, `A`, `P`, Esc) and pointer control works first-frame.
 - Movement timer/declaration starts fresh movement and visual schedules as cross-clock courtesy.
   `I already moved` refreshes visual only with an explicit or strong fresh screen-away basis.
-  Skip/Escape starts a fresh movement schedule without completion credit and restores the
-  pre-ritual visual cycle. A visual reset never completes movement.
+  Skip/Escape in the offered state preserves offer-time accrual because no ritual snapshot exists;
+  in the running state it restores the acceptance snapshot before applying its movement deferral.
+  Both start a fresh movement schedule without completion credit. A visual reset never completes
+  movement.
 - **Recovery suggestion** (after very long runs): eligible after
   `recovery.eligible_after_seconds: 5400`, suggested 300–600 s — same surface, calmer
   copy, never a reprimand.
@@ -121,7 +126,7 @@ user-initiated weekly window (patterns, never grades `[03 §10]`) — design pen
 
 ## 2. Timing table (informative — YAML is normative)
 
-| Parameter | Calm | Balanced v2 (default) | Frequent reset | Source key |
+| Parameter | Calm | Balanced (default, stable ID `balanced_v2`) | Frequent reset | Source key |
 |---|---|---|---|---|
 | Visual soft / target / latest | 1500 / 1800 / 1980 s | 1200 / 1500 / 1620 | 1080 / 1200 / 1320 | `preset_contract_v2.presets.*.visual` |
 | Visual reset duration | 20 s | 20 | 20 | `duration_seconds` |
@@ -136,7 +141,7 @@ user-initiated weekly window (patterns, never grades `[03 §10]`) — design pen
 | Recovery eligible / latest | 5400 / 7200 s | | | `preset_contract_v2.recovery` |
 | Escalations / lockout | max 1 / **never** | | | `opportunity_delivery` |
 
-Adaptive starts at Balanced v2 bounds and may initially change only delivery within a due window
+Adaptive starts at the current Balanced v2 contract bounds and may initially change only delivery within a due window
 and bounded automatic holds, never frequency or health conclusions. `custom_v2` has the YAML
 ordering rule and 10–60 s visual duration range. Legacy IDs and values remain readable and
 unchanged until explicit migration; a v1 `custom` payload is field-for-field compatible and is
@@ -154,10 +159,11 @@ reidentified only after explicit acceptance.
 | `Q` | Offered movement: accept 2 minutes | — | — |
 | `A` | `I already moved` (movement) | — | — |
 | `P` | `Change position instead` (movement) | — | — |
+| `V` | Merged movement offered only: `Just the visual one` | — | — |
 | `⌘,` | Settings (global) | | |
 | Tab / arrows | Full ring, §4 order | Between exits | System |
 
-All break-surface keys (`↩ 1 2 3 Q A P Esc ⌘.`) and their pointer controls are active on the
+All break-surface keys (`↩ 1 2 3 Q A P V Esc ⌘.`) and their pointer controls are active on the
 first frame (D-032/D-033). A stale action still fails closed by identity and phase; input safety
 must not be implemented as a time gate.
 
@@ -172,7 +178,8 @@ control (keycap chips) because the user is mid-interruption (accessibility rule 
 - Initial focus: visual and running movement use `Done early`; offered movement uses `Start 5
   minutes`. Focus ring per DESIGN_SYSTEM §8, visible in both appearances.
 - Focus order (visual): Done early → Skip. (Movement offered): Start 5 minutes → 2 minutes →
-  I already moved → Change position instead → Skip. (Movement running): chip 1 → 2 → 3 →
+  I already moved → Change position instead → [merged offered only: Just the visual one] → Skip.
+  (Movement running): chip 1 → 2 → 3 →
   Done early → I already moved → Change position instead → Skip. VoiceOver focus is never
   trapped; the ring wraps.
 - The capsule is non-activating and never steals typing focus. It is *pointer-first*:
@@ -212,7 +219,9 @@ photosensitivity safety, not taste (accessibility rule §3).
 | User action / condition | Event |
 |---|---|
 | Capsule or notification shown | `promptPresented` |
-| Break surface opens (self-running) | `breakStarted` |
+| Visual or merged-visual running field opens | `breakStarted` in the same commit |
+| Movement `Now` opens its offered field | no product fact; timer not started |
+| Movement or merged-movement 5/2-minute acceptance | `breakStarted` in the same commit as the deadline |
 | Timer runs out | `timerFinished` |
 | "Done early" | `userDeclaredCompleted` |
 | "I already moved" | `userDeclaredAlreadyMoved` |
@@ -220,7 +229,7 @@ photosensitivity safety, not taste (accessibility rule §3).
 | "Later" (5/10/15) | `snoozed` |
 | Esc on capsule or break | `skipped` |
 | "Not now — bad moment" patterns in Settings | `notAppropriate` |
-| Idle reaches `long_idle_reset_seconds` (300 s) | `likelyNaturalInterruption` once; visual cycle restarts only at return, movement need is preserved, **never** records movement |
+| Input idle reaches `long_idle_reset_seconds` (300 s), or same-epoch lock/sleep/system-unavailable duration reaches 300 s | `likelyNaturalInterruption` once; visual cycle restarts only at return, movement need is preserved, **never** records movement |
 
 Never merged, never graded, never rolled into "healthy break achieved." Operational records,
 observations, assessments, scheduling decisions, corrections, and companion actions are separate
@@ -242,10 +251,15 @@ selected_calendar_busy_interval → selected_application_active → snooze → l
 - The capsule names the *actual* state and evidence honestly ("Held · selected busy time until
   3:00", "Held · Focus you selected", "Held · likely call", or "Paused until you resume") —
   never a vague "smart pause".
-- A hold that begins **mid-heads-up** retracts the capsule to Held; a break
-  **already on screen is never yanked** — the user exits it, or it ends.
-- Accepted break deadlines continue through sleep, lock, relaunch, and callback suspension.
-  Schedule-clock accrual stays frozen until eligibility returns.
+- A hold that begins **mid-heads-up** retracts the capsule to Held. Paused/Held evidence is
+  orthogonal to a running ritual: the exact phase, segment, deadline, snapshot, and revision stay
+  suspended. Clearing one evidence record reduces the full remaining set; if nothing higher
+  remains except the ritual's own intrinsic clock-scope freeze, a same-epoch future deadline
+  resumes the same segment immediately. A corridor is used
+  only for nonrunning state. Proven elapsed deadlines reconcile; unknown timing uses the
+  operational-only recovery below.
+- Accepted break deadlines use continuous monotonic time through callbacks only when the persisted
+  epoch and anchor remain comparable. Schedule-clock accrual stays frozen until eligibility returns.
 - Holds come only from sanctioned typed evidence. Each carries provenance, qualification,
   observed-at and expires-at freshness, and correction state. Calendar means selected busy time,
   not a meeting; Focus means the selected filter is active, not deep work; a selected app means
@@ -269,7 +283,7 @@ selected_calendar_busy_interval → selected_application_active → snooze → l
 
 | Change | Behavior | Source |
 |---|---|---|
-| Sleep / lock / inactive / unavailable | Schedule clocks are Paused; accepted ritual deadline still elapses; wake/unlock grace `wake_unlock_grace_seconds: 90`; no wall catch-up | YAML `activity_estimator`, D-033 |
+| Sleep / lock / inactive / unavailable | Schedule clocks are Paused. Retain same-epoch unavailable start. If a running deadline remains comparable, resume or finish it; if not, use `timerRecoveryUnavailable`. A proven unavailable interval ≥300 s with no unresolved ritual gets the same visual courtesy as long idle plus 60 s grace; movement/position/recovery need stays intact | YAML `activity_estimator`, D-033 |
 | Input idle >60 s and <300 s | Visual and optional/manual position timing continue for passive-reading honesty; movement/recovery estimates freeze; no fact | timing runtime v2 |
 | Long idle reaches 300 s | Record `likelyNaturalInterruption` once and freeze. At return, begin a fresh visual cycle, preserve movement need, and apply 60 s grace | `[03 §17.1]`, D-033 |
 | Working hours end / begin | Freeze all schedule clocks outside the selected window; establish a new baseline and use a 60 s quiet corridor on re-entry | timing runtime v2 |
@@ -277,7 +291,7 @@ selected_calendar_busy_interval → selected_application_active → snooze → l
 | Non-finite/backward sample or gap >15 s | Add zero elapsed time and establish a new local monotonic baseline; record only operational gap evidence | timing runtime v2 |
 | Spaces / Stage Manager switch | Break panels join the active Space; controls remain reachable | ED-11 |
 | Screen sharing detected via presentation-mode signal user enabled | explicit_presentation_mode hold only if the user set it — no automatic detection is possible without prohibited permissions | `[07]` |
-| System clock change or monotonic-epoch loss | Schedule clocks ignore wall deltas. Accepted deadlines use same-epoch monotonic time; an epoch/anchor discontinuity conservatively expires the accepted duration and reconciles once. A device handoff requires a bounded monotonic send/receive acknowledgement and subtracts the full uncertainty; otherwise the sender remains authoritative. Wall metadata is display/exchange/audit only. | D-033 |
+| System clock change or monotonic-epoch loss | Schedule clocks ignore wall deltas. An unavailable accepted epoch/anchor closes the unusable ritual via operational-only `timerRecoveryUnavailable`: no `timerFinished`, completion, or fresh schedule; affected due schedules remain and can be re-offered under a new OpportunityID after 60 s grace. A bounded monotonic handoff acknowledgement is required; otherwise the sender remains authoritative. Wall metadata is display/exchange/audit only. | D-033 |
 
 ## 10. Permission degradation (each denied state is designed)
 
@@ -321,22 +335,37 @@ owner-approved story, disclosure, fallback, and proof; the core may not imply th
 Schedule accrual uses covered local monotonic intervals only. Portable wall metadata is display,
 exchange, and audit context, never countdown reconstruction. A running ritual persists its
 coordinator monotonic epoch, anchor and deadline ticks, selected duration, last nonincreasing
-remaining value, and opportunity revision. Epoch loss conservatively expires the ritual and
-reconciles once. Cross-device handoff requires a bounded monotonic request/acknowledgement and
+remaining value, and opportunity revision. Epoch/anchor loss closes through
+`timerRecoveryUnavailable` without a product fact or fresh cycle. Cross-device handoff requires a bounded monotonic request/acknowledgement and
 subtracts all measured uncertainty; incomplete or stale handoff leaves the sender authoritative.
 
 The canonical phase graph and every source/target/opportunity/participant/payload guard live in
-the machine contract. A nonterminal conflict is reduced by a registered least-interruptive action
-rank and stable ActionID, never arrival order. A terminal candidate must match OpportunityID,
+the machine contract. Position can be an affected nonparticipant cycle in a movement or merged
+opportunity; its exact current cycle ID is guarded and snapshotted without changing the base
+participant identity. Effect-bearing nonterminal commands require an online coordinator lease,
+are linearized and atomically acknowledged before exposing a fact, deadline, phase, or effect.
+Offline intent has no effect until renewed and revalidated, so concurrent `Now` and offline `Later`
+cannot orphan a start fact or deadline. A terminal candidate must match OpportunityID,
 every participating ClockCycleID, origin revision, origin phase and segment, causal parents, and
 the exact transition guard. An action originated after its actor knew the opportunity was closed
 is invalid; an already-originated valid candidate may arrive after provisional close and still
-participates. The total winner order is product-fact claim rank, registered action kind, stable
+participates only when it originated under a live, causally acknowledged projection lease. Leases
+last at most 90 monotonic seconds; settlement waits for every issued lease to be acknowledged,
+revoked, or expired before successor cycles may advance. The total winner order is product-fact claim rank, registered action kind, stable
 device ID, persistent device counter, then ActionID. It never compares wall time, remaining time,
 or incomparable segment durations.
 
-The coordinator retains one pre-terminal opportunity snapshot plus idempotent post-terminal
-inputs. If a late winning candidate replaces the provisional winner, it restores that snapshot,
+Identifiers use the versioned `cadence_contract_bytes_v1` encoding: UUIDs normalize to 16
+network-order bytes; strings are NFC UTF-8; integers are big-endian; sets/maps sort canonical bytes;
+SHA-256 output is lowercase hex. Locale, wall time, process hashes, and pointer identity are never
+inputs. A terminal fact ID is OpportunityID + canonical terminal slot + the fixed registered
+component scope, never the candidate winner or participant subset.
+
+The coordinator retains every enabled clock's cycle, accumulated time, due/eligibility/phase,
+recovery/session state, evidence, deadlines, component projections, and decisions plus idempotent
+post-terminal inputs. Offered exits project from their action checkpoint after offer-time accrual;
+running exits may restore only the snapshot taken atomically at acceptance. If a late winning
+candidate replaces the provisional winner, it restores the applicable snapshot,
 applies the new winner once, keeps independent merged-component facts, discards only causal
 descendants of the losing branch, and replays the idempotent inputs. It upserts the same projected
 fact slot and never repeats an announcement, haptic, notification, or clock effect.

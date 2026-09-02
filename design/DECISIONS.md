@@ -709,7 +709,9 @@ Schedule clocks accrue from local monotonic samples and never catch up from wall
 honest permission-free meanings are schedules based on estimated active computer use; they do
 not claim gaze/near-screen exposure, body movement, position, posture, or stability. Wall
 metadata is for display, exchange, and audit, never countdown reconstruction. Accepted deadlines
-use a persisted same-epoch monotonic anchor. Epoch loss expires conservatively; a device handoff
+use a persisted same-epoch monotonic anchor. The original shorthand “epoch loss expires
+conservatively” is superseded by the contract-repair addendum below: unavailable timing is unknown,
+not a timer fact. A device handoff
 requires a bounded monotonic acknowledgement and subtracts all uncertainty. A five-minute
 permission-free idle episode preserves movement need and starts a fresh visual cycle when the
 person returns, followed by a 60-second grace. A visual reset therefore cannot appear minutes
@@ -748,3 +750,26 @@ sources also remain active, but its visible label **"On hold" is superseded by "
 presentation state cannot be confused with the user's explicit **Paused** state. This canonical
 decision does not claim current runtime conformance; `CURRENT_STATE_CONFORMANCE.md` retains
 those implementation and copy-projection gaps.
+
+#### D-033 contract-repair addendum — 2026-09-01
+
+This addendum supersedes only the ambiguous recovery, concurrency, participant, and display-name
+phrasing above; the approval provenance and non-activation boundary remain unchanged.
+
+- An unavailable accepted monotonic epoch/anchor is **unknown**, not proof the timer elapsed. It
+  closes through operational-only `timerRecoveryUnavailable`, emits no `timerFinished`, creates no
+  fresh cycle, preserves affected due need, and permits a new OpportunityID only after 60 seconds.
+- A same-epoch sleep/lock/system-unavailable interval of `elapsed >= 300 s`, with no unresolved
+  running ritual, gets the long-idle visual courtesy and grace without completion or movement
+  credit. Unknown elapsed time gets neither fact nor courtesy.
+- Paused/Held evidence overlays a running ritual rather than replacing its phase. Clearing one
+  record reduces all remaining evidence; a valid future deadline resumes the same segment, while
+  corridors apply only to nonrunning state.
+- Effect-bearing nonterminal commands require a live coordinator lease and atomic acknowledgement.
+  Terminal projection leases are monotonic and at most 90 seconds; settlement closes the candidate
+  window before successor cycles advance.
+- Position is an affected nonparticipant for movement/merged position actions. Terminal fact IDs
+  use OpportunityID, fixed terminal slot, and registered component scope, never a winner's subset.
+  All portable IDs use the machine contract's versioned canonical byte encoding.
+- The stable preset ID remains `balanced_v2`; its ordinary user-facing display name is **Balanced**.
+  Migration UI may distinguish **legacy Balanced** from **Balanced (current v2 schedule)**.

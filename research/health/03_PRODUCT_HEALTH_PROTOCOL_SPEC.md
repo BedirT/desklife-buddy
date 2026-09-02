@@ -424,25 +424,40 @@ stated as selected by the person; Calendar says selected busy time, not meeting;
 selected Focus is active; a selected app says only that the selected app is active; inference
 must say `likely`. Missing, stale, unavailable, or conflicting evidence is unknown and creates no
 hold or body/activity claim. Snooze and low-friction waiting remain typed holds. Hold release has
-a 90-second landing corridor and presents at
+a 90-second landing corridor for nonrunning state and presents at
 most one merged opportunity. Manual-pause resume also uses 90 seconds; working-hours re-entry
 uses 60 seconds. The visible state must use these exact terms and the actual reason.
 
+Paused/Held evidence is orthogonal to a running ritual. Its phase, segment, deadline, snapshot,
+and revision remain suspended. Clearing any pause/hold/system/working-hours record removes only
+that named evidence and reduces the complete remaining set. When no higher external evidence
+remains, a same-epoch future deadline resumes the same segment immediately; the ritual's own
+intrinsic clock-scope freeze is not an external overlay. Proven elapsed reconciles its
+timer; unknown timing follows the operational recovery below. Only nonrunning state uses a release
+corridor.
+
 An accepted visual, movement, merged, or recovery segment has one continuous-monotonic deadline.
-Its epoch and anchor persist. Same-epoch restore subtracts current monotonic ticks; an unavailable
-or discontinuous epoch expires the segment rather than reconstructing it from wall time. A
+Its epoch and anchor persist. Same-epoch restore subtracts current monotonic ticks. An unavailable
+or discontinuous epoch is unknown and closes through operational-only
+`timerRecoveryUnavailable`: emit no `timerFinished`, create no fresh schedule, preserve each
+affected due cycle, then permit a new OpportunityID after 60 seconds. A
 companion transfer requires a bounded monotonic handshake and subtracts its full uncertainty;
 without acknowledgment the sender remains authoritative. Portable wall values are display and
 audit metadata only. Sleep, lock, callback suspension, relaunch, clock changes, or handoff cannot
 extend the accepted duration. Every deadline, snooze, target, and release boundary uses
 `elapsed >= deadline`; exact 60-, 90-, and 300-second edges fire once.
 
+A same-epoch sleep/lock/system-unavailable interval of `elapsed >= 300 seconds`, with no unresolved
+running ritual, records one `likelyNaturalInterruption`, starts a fresh visual schedule on return,
+preserves movement/position/recovery need, and applies 60 seconds of grace. Unknown elapsed time
+gets no fact or courtesy. This is scheduling courtesy only, never completion or movement proof.
+
 ### 17.3 Presets and compatibility
 
-New selections are Calm (`calm`), Balanced v2 (`balanced_v2`, default), Frequent reset
+New selection displays are Calm (`calm`), Balanced (`balanced_v2`, default), Frequent reset
 (`frequent_reset`), Adaptive (`adaptive`), and Custom (`custom_v2`). Their exact soft/target/latest,
 duration, and position values are the `preset_contract_v2` keys in `product_protocol.yaml`.
-Adaptive begins at Balanced v2 bounds and initially adapts only delivery within the configured
+Adaptive begins at the current Balanced v2 contract bounds and initially adapts only delivery within the configured
 window and bounded holds; it does not personalize frequency or health outcomes.
 
 The shipped IDs `gentle`, `balanced`, `frequent_movement`, and
@@ -459,6 +474,8 @@ supersedes §5 for new selections without rewriting the historical modes.
 The v2 machine transition table is normative. In summary:
 
 - a visual timer finish or `Done early` begins a fresh visual cycle;
+- a visual or merged-visual running field records `breakStarted` in its open commit; movement
+  `Now` only opens the offered state and records nothing;
 - movement has a distinct offered state with no timer, `breakStarted`, or `Done early`; accepting
   the visible 5- or 2-minute action creates the running state and selected-duration deadline;
 - a movement timer finish or `Done early` begins fresh movement and visual cycles, preventing
@@ -466,12 +483,16 @@ The v2 machine transition table is normative. In summary:
 - `I already moved` begins a fresh movement cycle, and refreshes visual only when the declared
   or strong fresh evidence also establishes screen-away timing;
 - a position change refreshes only the position clock;
+- position accrual remains frozen during accepted rituals, but a reachable explicit Change
+  position action may still refresh the named position cycle; this adds no elapsed time and does
+  not complete or join the movement participant set;
 - a standalone position skip begins a new position cycle without completion credit, avoiding a
   rapid repeat while leaving visual, movement, and recovery unchanged;
 - a 5- or 10-minute recovery acceptance freezes visual, movement, position, and recovery while its
   absolute deadline runs; finish or `Done early` starts fresh visual, movement, and recovery
-  cycles, while Skip/Escape restores the pre-ritual visual state, starts fresh movement and
-  recovery cycles without completion credit, and prevents another recovery offer that session;
+  cycles. Offered Skip/Escape preserves offer-time accrual and consumes only the recovery offer;
+  running Skip/Escape restores the acceptance snapshot, preserves underlying movement due, starts
+  a fresh recovery cycle without completion credit, and prevents another recovery offer that session;
 - visual and movement Skip/Escape close immediately, record `skipped`, and begin a fresh cycle
   for the refused standalone need without completion credit or rapid re-offer;
 - snooze preserves the same due cycle and OpportunityID through one bounded re-offer;
@@ -491,14 +512,29 @@ the terminal action owns the fresh-cycle effect.
 
 Every clock cycle, coordinated opportunity, action, and automatic decision has its own stable
 identity. A merged opportunity references its separate visual and movement cycle IDs. Every
-action names its origin phase/revision/segment, participant set, persistent device counter, and
-causal parents. An action originated after known closure is an audited no-op; a valid candidate
+action names its origin phase/revision/segment, base participant set, affected nonparticipant cycle,
+persistent device counter, and causal parents. Movement/merged position actions keep movement or
+visual+movement as their base participants and guard the exact affected position cycle separately.
+An action originated after known closure is an audited no-op; a valid candidate
 originated before its device learned of closure remains eligible even if it arrives later.
-Nonterminal conflicts use a fixed least-interruptive intent rank. Terminal conflicts use a fixed
+Effect-bearing nonterminal commands require a live coordinator lease and atomically commit/ack
+before exposing effects; offline intents remain operational-only until renewed and revalidated.
+Terminal candidates require a causally acknowledged projection lease of at most 90 monotonic
+seconds. Settlement waits for issued leases to be acknowledged, revoked, or expired, then protects
+successor cycles. Terminal conflicts use a fixed
 fact-claim rank and stable identifiers, never wall time, remaining duration, segment duration, or
 arrival order. Both reductions are commutative, associative, and idempotent.
 
-Before a terminal projection, retain the exact opportunity/clock/deadline snapshot. If a late
+Portable IDs use versioned canonical bytes: normalized UUIDs, NFC UTF-8 strings, big-endian
+integers, canonically byte-sorted sets/maps, and SHA-256 lowercase hex. Wall time, locale, process
+hashes, and pointer addresses are excluded. A terminal fact ID uses OpportunityID, the canonical
+terminal slot, and fixed registered component scope, so it is invariant across candidate winners.
+
+Before a terminal projection, retain every enabled clock's cycle ID, accumulated time, due state,
+eligibility and phase, plus recovery/session state, evidence, decisions, deadlines, and component
+facts. The required scope is the union of every eligible candidate effect, including cross-clock
+and affected-nonparticipant effects. Offered actions project from their action checkpoint after
+offer-time accrual; running actions may restore only the acceptance snapshot. If a late
 candidate replaces a provisional winner, restore that snapshot, apply the new winner once,
 preserve already-final independent merged-segment effects, discard only causal descendants of the
 losing branch, and replay retained idempotent post-terminal inputs. The same deterministic fact ID

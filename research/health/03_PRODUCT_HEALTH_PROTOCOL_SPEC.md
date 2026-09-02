@@ -429,9 +429,11 @@ a 90-second landing corridor for nonrunning state and presents at
 most one merged opportunity. Manual-pause resume also uses 90 seconds; working-hours re-entry
 uses 60 seconds. The visible state must use these exact terms and the actual reason.
 
-Paused/Held evidence is orthogonal to a running ritual. Its phase, segment, deadline, snapshot,
-and revision remain suspended. Clearing any pause/hold/system/working-hours record removes only
-that named evidence and reduces the complete remaining set. When no higher external evidence
+Paused/Held evidence is orthogonal to a running ritual. Each affecting global commit fences the
+predecessor revision, creates a successor revision, rebases the phase, segment, accepted deadline
+or remaining duration, and snapshot onto it, and retains predecessor/fence lineage. Clearing any
+pause/hold/system/working-hours record removes only that named evidence, reduces the complete
+remaining set, and creates/rebases onto its next successor. When no higher external evidence
 remains, a same-epoch future deadline resumes the same segment immediately; the ritual's own
 intrinsic clock-scope freeze is not an external overlay. Proven elapsed reconciles its
 timer; unknown timing follows the operational recovery below. Only nonrunning state uses a release
@@ -447,8 +449,11 @@ begins after that fence; only fence + grace permits a new OpportunityID. The sur
 couldn’t be restored,” then uses the retained schedule phase: an actually due schedule says “No
 finish was recorded. This schedule is still due,” while an accumulating or manually opened early
 schedule says “No finish was recorded. The timer was not restored, and this schedule was not
-reset.” Body due status and menu evidence status are independent: Paused always stays
-“Paused: [selected reason] · timer not restored” and Held stays “Held: [qualified evidence
+reset.” Body due status and menu evidence status are independent: manual Pause uses
+“Paused: [selected reason] · timer not restored”; outside-hours, inactive, locked, sleeping,
+unavailable, qualified confirmed-away, and accepted-ritual pauses use their registered qualified
+reason without requiring a selected reason. Intentionally hidden system detail uses “Paused · timer
+not restored.” Held stays “Held: [qualified evidence
 reason] · timer not restored,” whether due or not due. Missing/stale hold evidence is unknown, not
 a meeting or deep-focus claim. Old-generation actions get an explicit current-state receipt. A
 companion transfer requires a bounded monotonic handshake and subtracts its full uncertainty;
@@ -477,8 +482,12 @@ contract version and migration state. The v2 custom payload preserves v1 field n
 ordering, and values; acceptance changes only its version/identifier/migration tags. Offer a
 successor explicitly; migrate only after acceptance. The high-frequency preset becomes an exact
 `custom_v2` snapshot rather than being coerced into a different built-in. The storage domain accepts
-every legal positive finite v1 value unchanged, including a 5-second visual duration and `[30]`
-movement-duration option. The 10–60-second visual and 120/300 movement bounds govern only newly
+every legal positive finite v1 value unchanged. The complete v1 payload is `kind: custom`, then
+`customTiming.visual` and `.movement`, each with `softDueSeconds`, `targetSeconds`,
+`latestPreferredSeconds`, and a nonempty ordered `durationOptionsSeconds` array. All values are
+positive finite seconds, each window is soft ≤ target ≤ latest, and array order is preserved. The
+retained extreme fixture includes a 5-second visual window (5/5/5) with `[5, 7]` and movement 30/60/90 with
+`[30, 300, 45]`; migration differs only in version/identifier/state metadata. The 10–60-second visual and 120/300 movement bounds govern only newly
 created or edited v2 values; migration never clamps, rejects, or silently retunes. This
 supersedes §5 for new selections without rewriting the historical modes.
 
@@ -545,6 +554,9 @@ Begin and matching clear for one Pause, Hold DecisionID, unavailable episode, lo
 working-hours record, or restart DecisionID use identical key kind and identity bytes; operation,
 rank, transition, ActionID, and arrival are excluded. Restart/undo cannot rotate a cycle while a
 running or Paused/Held-suspended ritual exists; it waits for neutral revalidation after resolution.
+Undo binds the exact unchanged post-restart four-clock revision vector and snapshot digest. Any
+later terminal, ritual, cycle, recovery, or schedule mutation makes it stale; it cannot erase a
+later fact or restore only part of a snapshot.
 Offline intents remain operational-only until renewed and revalidated.
 Terminal candidates require a causally acknowledged projection lease of at most 90 monotonic
 seconds. Every closure settles admitted same-generation candidates, commits a signed high-water
@@ -556,19 +568,26 @@ duplicate ActionID replays a compact known acknowledgement without applying effe
 receipt remains until the device returns a verified acknowledgement-of-ack for the outcome-delivery
 token or 90 seconds elapse; ACK creation and projection/generation fences do not erase it. After
 expiry, duplicate and unseen actions say **too old to verify** and show current state. High water
-means only contiguous disposition and never proves receipt. Per-device generation is gap-free;
+means only contiguous disposition and never proves receipt. Per-device generation is gap-free
+because counter, ActionID, and a minimized encrypted crash-replay outbox entry commit atomically
+before send. Relaunch resends the same envelope or finishes the same acknowledgement-of-ack; the
+outbox is excluded from backup/history/export/logs and erases at acknowledgement-of-ack or 90 seconds.
+Thus a sender crash cannot strand a reserved hole;
 counter 11 waits in a Class-0 sparse window until 10 is disposed. Terminal conflicts use a fixed
 fact-claim rank and stable identifiers, never wall time, remaining duration, segment duration, or
 arrival order. Both reductions are commutative, associative, and idempotent.
 
 Portable IDs use versioned canonical bytes: normalized UUIDs, NFC UTF-8 strings, big-endian
 integers, typed optionals/unions/structs, and canonically byte-sorted counted sets/maps. The signed
-fence registers `cadence.timing-runtime-v2.projection-fence.v1` version 1, exact uint widths, uint8
+fence has its own independent `projection_fence_bytes_v1` schema and registers
+`cadence.timing-runtime-v2.projection-fence.v1` version 1, exact uint widths, uint8
 optional/union tags, uint16 enum vocabularies, explicit collection cardinalities, nested opportunity
-context, ordered typed schema, SHA-256 digest bytes, Ed25519 signing input, pinned-key verification,
+context, ordered typed schema, SHA-256 digest bytes, Ed25519 signing input, verification against the
+persisted actual 32-byte Ed25519 public key,
 and previous-digest chain. Unknown or mutated domain, version, type, width, tag, cardinality, order,
 digest, or signature fails closed. Wall time, locale, process hashes, and pointer addresses
-are excluded. A terminal fact ID uses OpportunityID, the canonical terminal slot, and fixed
+are excluded. A public-key fingerprint is derived display metadata only and never verifies a fence.
+A terminal fact ID uses OpportunityID, the canonical terminal slot, and fixed
 registered component scope, so it is invariant across candidate winners.
 
 Before a terminal projection, retain all four clocks' cycle ID, accumulated time, due state,
@@ -590,13 +609,21 @@ path and visual successor effect; recovery produces neither and preserves due sc
 Done advances to the movement offer rather than closing the parent. A component already
 acknowledged at the successor revision is final, and a later movement-phase Escape retains it.
 
-The companion live registry binds exact controls, focus, normalized remote IDs, and Escape to each
+The companion live registry binds exact controls, focus, and normalized remote IDs to each
 visual, movement, position, recovery, and merged phase/segment. Closed action groups include every
 remote ID, including `companion.visual.skip`; `Just the visual one` exists only in merged movement
-offered. Neutral offline/revalidating states say no operation is pending. If a terminal ACK is
+offered. That phase begins with Start 5 (initial focus, Return/5) and Start 2 (Q/2), followed by
+already-moved, position, visual-only, and explicit Skip. Escape and Command-period dismiss companion
+status only in every state; it never generates Skip, terminal action, or cancellation. Named Cancel
+controls alone cancel an uncommitted operation. `companion.take_with_me_request` normalizes to the
+concrete nonterminal `companion.take_with_me`, emits no product fact, and writes only operational and
+companion ledgers. Neutral offline/revalidating states say no operation is pending. If a terminal ACK is
 unknown, provenance for the selected action remains attached and the exact status says the
 connection was lost, it is checking whether that named action was received, and **do not repeat**.
-Checking status or reconnecting never resends the action.
+Checking status or reconnecting never resends the action. Early compact-receipt erasure requires the
+exact signed `cadence.timing-runtime-v2.ack-of-ack.v1` envelope bound to generation, paired device,
+ActionID digest, counter, outcome revision, 32-byte delivery token, outcome digest, and monotonic
+expiry, verified with the persisted paired-device 32-byte Ed25519 public key.
 
 The ten §10 product facts remain closed. Operational records, sensor observations, fused
 assessments, scheduling decisions, corrections, and retained companion continuity are separate
@@ -606,6 +633,9 @@ seconds and never exported, analyzed, or assigned a durable record identity. A c
 erased early only after verified acknowledgement-of-ack, not merely ACK generation or a fence. It
 contains no raw payload and only the ActionID digest, counter, outcome, successor revisions,
 outcome ACK, and delivery token needed for exactly-once replay. The
+sole raw-envelope persistence exception is the minimized encrypted sender crash-replay outbox,
+which exists locally for at most 90 seconds, is excluded from backup/history/export/logs, and is
+erased at valid acknowledgement-of-ack or expiry. The
 legacy `event_schema.json` is now explicitly a read-only v1 envelope whose mappings project to
 the ten facts; its broader record kinds never enlarge the product-fact vocabulary. No timer,
 idle, sensor, camera, motion, HealthKit, companion, or model observation is a completion fact or

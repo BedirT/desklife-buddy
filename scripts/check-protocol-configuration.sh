@@ -141,19 +141,59 @@ assert(
   "custom_v2 must separate legacy-compatible storage from safer new-authoring bounds",
 )
 legacy_custom = protocol.dig("preset_contract_v2", "legacy_identifier_disposition", "custom")
-extreme_custom = legacy_custom.fetch("extreme_payload_fixture")
+legacy_schema = protocol.dig("preset_contract_v2", "legacy_custom_v1_payload_schema")
+extreme_custom = protocol.dig("preset_contract_v2", "legacy_custom_extreme_fixture")
+expected_legacy_fields = [
+  {"name" => "softDueSeconds", "type" => "finite_binary64_seconds"},
+  {"name" => "targetSeconds", "type" => "finite_binary64_seconds"},
+  {"name" => "latestPreferredSeconds", "type" => "finite_binary64_seconds"},
+  {"name" => "durationOptionsSeconds", "type" => "nonempty_ordered_array_of_finite_binary64_seconds"},
+]
+expected_extreme_timing = {
+  "visual" => {
+    "softDueSeconds" => 5,
+    "targetSeconds" => 5,
+    "latestPreferredSeconds" => 5,
+    "durationOptionsSeconds" => [5, 7],
+  },
+  "movement" => {
+    "softDueSeconds" => 30,
+    "targetSeconds" => 60,
+    "latestPreferredSeconds" => 90,
+    "durationOptionsSeconds" => [30, 300, 45],
+  },
+}
+def valid_legacy_custom_schema?(schema, expected_fields)
+  schema.fetch("object_member_wire_order") == "not_semantically_significant_for_keyed_Codable_containers" &&
+    schema.fetch("canonical_schema_traversal_order") == "exactly_the_ordered_fields_lists_below" &&
+    schema.fetch("ordered_fields") == [
+    {"name" => "kind", "type" => "utf8_string", "required_value" => "custom"},
+    {"name" => "customTiming", "type" => "custom_protocol_timing_v1"},
+  ] &&
+    schema.dig("custom_protocol_timing_v1", "ordered_fields") == [
+      {"name" => "visual", "type" => "opportunity_timing_v1"},
+      {"name" => "movement", "type" => "opportunity_timing_v1"},
+    ] &&
+    schema.dig("opportunity_timing_v1", "ordered_fields") == expected_fields &&
+    schema.dig("opportunity_timing_v1", "constraints").include?("durationOptionsSeconds_element_order_is_significant_and_is_never_sorted_or_deduplicated") &&
+    schema.fetch("additional_persisted_fields") == "none"
+end
 assert(
   legacy_custom.fetch("suggested_successor") == "custom_v2" &&
     legacy_custom.fetch("payload_compatibility").include?("every legal positive finite v1") &&
     legacy_custom.fetch("payload_compatibility").include?("does not reinterpret") &&
-    extreme_custom.fetch("visual_duration_seconds") == 5 &&
-    extreme_custom.fetch("movement_duration_options_seconds") == [30] &&
-    extreme_custom.fetch("expected_migrated_values") == {
-      "visual_duration_seconds" => 5,
-      "movement_duration_options_seconds" => [30],
-    },
-  "legacy custom migration must preserve its exact payload",
+    legacy_custom.fetch("extreme_payload_fixture") == "legacy_custom_extreme_fixture" &&
+    valid_legacy_custom_schema?(legacy_schema, expected_legacy_fields) &&
+    extreme_custom.dig("legacy_payload", "kind") == "custom" &&
+    extreme_custom.dig("legacy_payload", "customTiming") == expected_extreme_timing &&
+    extreme_custom.dig("migrated_representation", "customTiming") == expected_extreme_timing &&
+    extreme_custom.fetch("allowed_difference").include?("only_selection_metadata") &&
+    extreme_custom.fetch("allowed_difference").include?("legacy_kind_custom_is_replaced"),
+  "legacy custom migration must preserve every persisted field and both ordered duration arrays",
 )
+legacy_field_mutation = Marshal.load(Marshal.dump(legacy_schema))
+legacy_field_mutation["opportunity_timing_v1"]["ordered_fields"].delete_at(2)
+assert(!valid_legacy_custom_schema?(legacy_field_mutation, expected_legacy_fields), "deleting one legacy Custom field must fail schema parity")
 assert(
   protocol.dig("preset_contract_v2", "recovery").values_at(
     "eligible_after_seconds",
@@ -659,6 +699,7 @@ assert(
   "protocol system-unavailable courtesy thresholds drifted",
 )
 candidate_lifecycle = runtime.dig("product_facts", "candidate_data_lifecycle")
+protocol_sender_outbox = protocol.dig("candidate_data_lifecycle_v2", "sender_crash_replay_outbox")
 assert(
   candidate_lifecycle.fetch("class") == "class_0_ephemeral_operational_state" &&
     candidate_lifecycle.fetch("location") == "memory_only" &&
@@ -674,8 +715,11 @@ assert(
     protocol.dig("candidate_data_lifecycle_v2", "maximum_retention_seconds") == 90 &&
     protocol.dig("candidate_data_lifecycle_v2", "persistence") == false &&
     protocol.dig("candidate_data_lifecycle_v2", "compact_replay_receipt", "raw_payload") == false &&
-    protocol.dig("candidate_data_lifecycle_v2", "compact_replay_receipt", "projection_or_generation_fence_does_not_erase") == true,
-  "raw candidate lifecycle must be Class 0, memory-only, bounded, and unexported",
+    protocol.dig("candidate_data_lifecycle_v2", "compact_replay_receipt", "projection_or_generation_fence_does_not_erase") == true &&
+    protocol_sender_outbox.fetch("maximum_retention_seconds") == 90 &&
+    protocol_sender_outbox.fetch("sole_raw_envelope_persistence_exception") == true &&
+    protocol_sender_outbox.fetch("excluded_from") == %w[backup history export analytics logs product_facts health_records],
+  "received raw candidates must remain memory-only and the sole sender crash outbox must be bounded and unexported",
 )
 companion = runtime.fetch("companion_contract")
 companion_registry = companion.fetch("state_registry")
@@ -715,63 +759,113 @@ assert(
 
 normalization = runtime.dig("action_contract", "companion_action_normalization")
 remote_registry = normalization.fetch("remote_to_concrete_transition")
-def valid_remote_registry?(registry, transition_by_id, resolved_ids)
-  registry.values.all? do |target|
+operational_wrappers = normalization.fetch("nonterminal_operational_wrappers")
+expected_remote_registry = {
+  "companion.take_with_me_request" => "companion.take_with_me",
+  "companion.visual.done_early" => "visual.done_early",
+  "companion.visual.skip" => "visual.skip",
+  "companion.movement.done_early" => "movement.done_early",
+  "companion.movement.already_moved" => "movement.already_moved",
+  "companion.movement.position_changed_offered" => "movement.position_changed_offered",
+  "companion.movement.position_changed_running" => "movement.position_changed_running",
+  "companion.movement.skip_offered" => "movement.skip_offered",
+  "companion.movement.skip_running" => "movement.skip_running",
+  "companion.position.changed" => "position.changed",
+  "companion.position.skip" => "position.skip",
+  "companion.recovery.done_early" => "recovery.done_early",
+  "companion.recovery.skip_offered" => "recovery.skip_offered",
+  "companion.recovery.skip_running" => "recovery.skip_running",
+  "companion.merged.visual_done_early" => "merged.visual_segment_done_early",
+  "companion.merged.movement_start_5" => "merged.movement_accept",
+  "companion.merged.movement_start_2" => "merged.movement_accept",
+  "companion.merged.movement_done_early" => "merged.movement_done_early",
+  "companion.merged.movement_already_moved" => "merged.movement_already_moved",
+  "companion.merged.movement_position_changed" => "merged.movement_position_changed",
+  "companion.merged.movement_skip" => "merged.movement_skip",
+  "companion.merged.visual_only" => "merged.visual_only",
+  "companion.merged.skip_during_visual" => "merged.escape_during_visual",
+}
+def valid_remote_registry?(registry, transition_by_id, resolved_ids, operational_wrappers)
+  registry.all? do |remote_id, target|
     transition = transition_by_id[target]
-    transition && !transition.fetch("facts").empty? && resolved_ids.count(target) == 1
+    next false unless transition && resolved_ids.count(target) == 1
+    if operational_wrappers.key?(remote_id)
+      exception = operational_wrappers.fetch(remote_id)
+      target == exception.fetch("required_target") &&
+        transition.fetch("facts") == exception.fetch("required_facts") &&
+        transition.fetch("ledgers") == exception.fetch("required_ledgers") &&
+        exception.fetch("product_fact") == "prohibited"
+    else
+      !transition.fetch("facts").empty?
+    end
   end
 end
 assert(
   normalization.fetch("registry_closed") == true &&
+    remote_registry == expected_remote_registry &&
     !transition_by_id.key?("companion.terminal_action") &&
-    valid_remote_registry?(remote_registry, transition_by_id, resolved_ids) &&
+    valid_remote_registry?(remote_registry, transition_by_id, resolved_ids, operational_wrappers) &&
+    remote_registry.fetch("companion.take_with_me_request") == "companion.take_with_me" &&
     remote_registry.fetch("companion.merged.visual_done_early") == "merged.visual_segment_done_early" &&
     guards.fetch(remote_registry.fetch("companion.merged.visual_done_early")).fetch("target_phase") == "merged_movement_offered",
-  "companion wrappers must materialize exact fact-producing local transitions before validation",
+  "companion wrappers must materialize exact local transitions before validation",
 )
 no_product_fact_mutation = remote_registry.merge("companion.visual.done_early" => "system.timer_recovery_unavailable")
 assert(
-  !valid_remote_registry?(no_product_fact_mutation, transition_by_id, resolved_ids),
+  !valid_remote_registry?(no_product_fact_mutation, transition_by_id, resolved_ids, operational_wrappers),
   "companion registry mutation to a no-product-fact transition must fail",
 )
 action_groups = companion_registry.fetch("action_groups_closed_remote_ids")
 live_phases = companion_registry.fetch("live_phase_registry")
 expected_action_groups = {
+  "take_with_me" => %w[companion.take_with_me_request],
+  "start_5_minutes" => %w[companion.merged.movement_start_5],
+  "start_2_minutes" => %w[companion.merged.movement_start_2],
   "done_early" => %w[companion.visual.done_early companion.movement.done_early companion.recovery.done_early companion.merged.visual_done_early companion.merged.movement_done_early],
   "already_moved" => %w[companion.movement.already_moved companion.merged.movement_already_moved],
   "change_position" => %w[companion.movement.position_changed_offered companion.movement.position_changed_running companion.position.changed companion.merged.movement_position_changed],
   "visual_only" => %w[companion.merged.visual_only],
-  "skip" => %w[companion.visual.skip companion.movement.skip_offered companion.movement.skip_running companion.position.skip companion.recovery.skip_offered companion.recovery.skip_running companion.merged.escape_during_visual companion.merged.movement_skip],
+  "skip" => %w[companion.visual.skip companion.movement.skip_offered companion.movement.skip_running companion.position.skip companion.recovery.skip_offered companion.recovery.skip_running companion.merged.skip_during_visual companion.merged.movement_skip],
 }
 expected_live_phases = %w[visual_offered visual_running movement_offered movement_running position_offered recovery_offered recovery_running merged_visual_running merged_movement_offered merged_movement_running]
-def valid_live_phase_registry?(live_phases, expected_phases, controls, action_groups, remote_registry)
+expected_live_phase_controls = {
+  "visual_offered" => %w[skip],
+  "visual_running" => %w[take_with_me done_early skip],
+  "movement_offered" => %w[already_moved change_position skip],
+  "movement_running" => %w[take_with_me done_early already_moved change_position skip],
+  "position_offered" => %w[change_position skip],
+  "recovery_offered" => %w[skip],
+  "recovery_running" => %w[take_with_me done_early skip],
+  "merged_visual_running" => %w[take_with_me done_early skip],
+  "merged_movement_offered" => %w[start_5_minutes start_2_minutes already_moved change_position visual_only skip],
+  "merged_movement_running" => %w[take_with_me done_early already_moved change_position skip],
+}
+def valid_live_phase_registry?(live_phases, expected_phases, expected_controls, controls, action_groups, remote_registry)
   return false unless live_phases.keys == expected_phases
   live_phases.all? do |phase, row|
-    row.fetch("control_ids") == row.fetch("focus_order") &&
+    row.fetch("control_ids") == expected_controls.fetch(phase) &&
+      row.fetch("control_ids") == row.fetch("focus_order") &&
       row.fetch("control_ids").include?(row.fetch("focus_target")) &&
       row.fetch("control_remote_actions").keys == row.fetch("control_ids") &&
       row.fetch("control_ids").all? { |id| controls.key?(id) } &&
       row.fetch("control_remote_actions").all? do |control_id, action_id|
-        if control_id == "take_with_me"
-          action_id == "companion.take_with_me"
-        else
-          group = controls.fetch(control_id).fetch("action_group")
-          action_groups.fetch(group).include?(action_id) && remote_registry.key?(action_id)
-        end
+        group = controls.fetch(control_id).fetch("action_group")
+        action_groups.fetch(group).include?(action_id) && remote_registry.key?(action_id)
       end &&
-      remote_registry.key?(row.fetch("escape_remote_action_id")) &&
+      row.fetch("escape_behavior") == "dismiss_companion_projection_only" &&
+      !row.key?("escape_remote_action_id") &&
       (phase == "merged_movement_offered") == row.fetch("control_ids").include?("visual_only")
   end
 end
 assert(action_groups == expected_action_groups, "companion action groups must equal the closed required remote-ID registry")
 assert(
-  valid_live_phase_registry?(live_phases, expected_live_phases, control_catalog, action_groups, remote_registry),
+  valid_live_phase_registry?(live_phases, expected_live_phases, expected_live_phase_controls, control_catalog, action_groups, remote_registry),
   "companion live controls/focus/actions must be exact for every phase and segment",
 )
-covered_remote_ids = (action_groups.values.flatten + live_phases.values.map { |row| row.fetch("escape_remote_action_id") }).uniq.sort
+covered_remote_ids = action_groups.values.flatten.uniq.sort
 assert(
   covered_remote_ids == remote_registry.keys.sort,
-  "phase controls/action groups/Escape must exhaustively cover every normalized remote action ID",
+  "phase controls/action groups must exhaustively cover every normalized remote action ID",
 )
 deleted_visual_skip_groups = Marshal.load(Marshal.dump(action_groups))
 deleted_visual_skip_groups["skip"].delete("companion.visual.skip")
@@ -779,8 +873,91 @@ assert(
   deleted_visual_skip_groups != expected_action_groups,
   "deleting companion.visual.skip from the required action group must fail parity",
 )
+merged_offer = live_phases.fetch("merged_movement_offered")
+remote_payloads = normalization.fetch("remote_payload_constraints")
+assert(
+  merged_offer.fetch("control_ids") == %w[start_5_minutes start_2_minutes already_moved change_position visual_only skip] &&
+    merged_offer.fetch("focus_target") == "start_5_minutes" &&
+    merged_offer.fetch("shortcuts", {}).fetch("start_5_minutes") == %w[return 5] &&
+    merged_offer.fetch("shortcuts", {}).fetch("start_2_minutes") == %w[q 2] &&
+    merged_offer.fetch("control_remote_actions").values_at("start_5_minutes", "start_2_minutes") ==
+      %w[companion.merged.movement_start_5 companion.merged.movement_start_2] &&
+    remote_payloads.dig("companion.merged.movement_start_5", "selected_duration_seconds_300_or_120") == 300 &&
+    remote_payloads.dig("companion.merged.movement_start_2", "selected_duration_seconds_300_or_120") == 120,
+  "merged companion movement offer must expose the complete first-frame choice set",
+)
+assert(
+  companion_states.values.all? { |state| state.dig("keyboard", "escape_command_period") == "dismiss_status_only" } &&
+    live_phases.values.all? { |row| row.fetch("escape_behavior") == "dismiss_companion_projection_only" },
+  "Escape and Command-period must dismiss companion status only",
+)
+companion_operational = companion_registry.fetch("operational_state_transitions")
+companion_provenance = companion_registry.fetch("terminal_ack_provenance_lifecycle")
+assert(
+  companion_operational.dig("every_state.escape_or_command_period", "target") == "dismiss_projection_only" &&
+    companion_operational.dig("every_state.escape_or_command_period", "remote_action") == "none" &&
+    companion_operational.dig("offline_terminal_ack_unknown.check_status", "resend_selected_action") == false &&
+    companion_operational.dig("revalidating_terminal_ack_unknown.cancel_revalidation", "resend_selected_action") == false &&
+    companion_provenance.fetch("maximum_retention_seconds") == 90 &&
+    companion_provenance.fetch("discard_at").include?("valid_signed_acknowledgement_of_ack") &&
+    companion_provenance.fetch("prohibited").include?("automatic_resend_from_status_check"),
+  "offline/revalidating companion transitions must preserve bounded terminal provenance without resend",
+)
+
+def valid_remote_semantics?(live_phases, remote_registry, guards, transition_by_id, resolver_groups)
+  expected_fact_by_control = {
+    "start_5_minutes" => "breakStarted",
+    "start_2_minutes" => "breakStarted",
+    "done_early" => "userDeclaredCompleted",
+    "already_moved" => "userDeclaredAlreadyMoved",
+    "change_position" => "positionChanged",
+    "visual_only" => "skipped",
+    "skip" => "skipped",
+  }
+  live_phases.all? do |phase, row|
+    row.fetch("control_remote_actions").all? do |control_id, remote_id|
+      target = remote_registry[remote_id]
+      guard = guards[target]
+      transition = transition_by_id[target]
+      resolver_names = resolver_groups.select { |_, ids| ids.include?(target) }.keys
+      next false unless target && guard && transition && resolver_names.length == 1
+      phase_ok = guard.fetch("source_phases").include?(phase)
+      kind_ok = guard.fetch("opportunity_kinds").include?(row.fetch("opportunity_kind"))
+      participant_ok = [row.fetch("participant_guard"), "exact_registered_participant_set"].include?(guard.fetch("participant_guard"))
+      affected = guard.fetch("affected_nonparticipants", [])
+      affected_ok = (affected - row.fetch("allowed_affected_nonparticipants")).empty?
+      fact_ok = if control_id == "take_with_me"
+        transition.fetch("facts").empty? && transition.fetch("ledgers") == %w[companion_action operational]
+      else
+        transition.fetch("facts").include?(expected_fact_by_control.fetch(control_id))
+      end
+      expected_resolver = if control_id == "take_with_me" || control_id.start_with?("start_")
+        "authoritative_opportunity_nonterminal"
+      elsif phase == "merged_visual_running"
+        "merged_visual_cross_slot_candidate_set"
+      else
+        "terminal_candidate_set"
+      end
+      resolver_slot_ok = resolver_names.first == expected_resolver
+      segment_ok = row.fetch("segment") == "none" || phase.include?(row.fetch("segment"))
+      phase_ok && kind_ok && participant_ok && affected_ok && fact_ok && resolver_slot_ok && segment_ok && transition.fetch("clocks").keys.sort == %w[movement position recovery visual]
+    end
+  end
+end
+assert(valid_remote_semantics?(live_phases, remote_registry, guards, transition_by_id, resolver_groups), "every companion wrapper must match the concrete guard, participants, segment, fact, resolver, and effects")
+wrong_phase_remote = Marshal.load(Marshal.dump(remote_registry))
+wrong_phase_remote["companion.visual.skip"] = "movement.skip_running"
+assert(!valid_remote_semantics?(live_phases, wrong_phase_remote, guards, transition_by_id, resolver_groups), "wrong-phase companion wrapper mutation must fail")
+deleted_take_phase = Marshal.load(Marshal.dump(live_phases))
+deleted_take_phase["visual_running"]["control_ids"].delete("take_with_me")
+deleted_take_phase["visual_running"]["focus_order"].delete("take_with_me")
+deleted_take_phase["visual_running"]["control_remote_actions"].delete("take_with_me")
+deleted_take_phase["visual_running"]["focus_target"] = "done_early"
+assert(!valid_live_phase_registry?(deleted_take_phase, expected_live_phases, expected_live_phase_controls, control_catalog, action_groups, remote_registry), "deleting Take with me from visual running must fail phase parity")
 timer_projection = runtime.fetch("timer_recovery_user_projection")
 recovery_menu = timer_projection.dig("exact_copy", "menu_status_by_projected_evidence")
+pause_reasons = timer_projection.dig("exact_copy", "paused_reason_registry")
+expected_pause_reasons = %w[manual_pause outside_working_hours system_inactive system_locked system_sleeping system_unavailable confirmed_away accepted_ritual intentionally_hidden_system_reason]
 assert(
   timer_projection.dig("exact_copy", "title") == "Timer couldn’t be restored" &&
     timer_projection.dig("exact_copy", "due", "body") == "No finish was recorded. This schedule is still due." &&
@@ -788,8 +965,13 @@ assert(
     recovery_menu.fetch("active_due") == "Still due · timer not restored" &&
     recovery_menu.fetch("paused_due_template") == recovery_menu.fetch("paused_not_due_template") &&
     recovery_menu.fetch("held_due_template") == recovery_menu.fetch("held_not_due_template") &&
-    recovery_menu.fetch("paused_due_template").include?("pause_reason") &&
+    recovery_menu.fetch("paused_due_template").include?("qualified_pause_reason") &&
+    recovery_menu.fetch("paused_hidden_system_reason") == "Paused · timer not restored" &&
     recovery_menu.fetch("held_due_template").include?("qualified_hold_reason") &&
+    pause_reasons.keys == expected_pause_reasons &&
+    pause_reasons.fetch("manual_pause").fetch("selected_reason_required") == true &&
+    expected_pause_reasons.drop(1).all? { |reason| pause_reasons.fetch(reason).fetch("selected_reason_required") == false } &&
+    pause_reasons.fetch("intentionally_hidden_system_reason").fetch("display").include?("paused_hidden_system_reason") &&
     timer_projection.fetch("phase_selection_rule").include?("menu status independently") &&
     timer_projection.dig("interaction", "initial_focus") == "close_action" &&
     timer_projection.dig("interaction", "quiet_transition").include?("60_second_grace"),
@@ -929,6 +1111,36 @@ assert(
 )
 replay = runtime.dig("action_contract", "action_id_replay_contract")
 replay_receipts = replay.fetch("user_receipts")
+ack_of_ack = replay.fetch("acknowledgement_of_ack_envelope")
+expected_ack_fields = [
+  {"name" => "domain_literal", "type" => "utf8_nfc_string_u32_length"},
+  {"name" => "schema_version", "type" => "unsigned_uint16_big_endian"},
+  {"name" => "global_state_id", "type" => "uuid_16_network_bytes"},
+  {"name" => "coordinator_generation", "type" => "unsigned_uint64_big_endian"},
+  {"name" => "acknowledging_device_id", "type" => "uuid_16_network_bytes"},
+  {"name" => "action_id_digest", "type" => "fixed_32_raw_bytes"},
+  {"name" => "origin_device_counter", "type" => "unsigned_uint64_big_endian"},
+  {"name" => "outcome_revision", "type" => "outcome_revision_v1"},
+  {"name" => "delivery_token", "type" => "fixed_32_raw_bytes"},
+  {"name" => "coordinator_expiry_ticks", "type" => "unsigned_uint64_big_endian"},
+  {"name" => "outcome_replay_binding_digest", "type" => "fixed_32_raw_bytes"},
+]
+def valid_ack_of_ack?(ack, expected_fields)
+  ack.fetch("domain_literal") == "cadence.timing-runtime-v2.ack-of-ack.v1" &&
+    ack.fetch("schema_version") == 1 &&
+    ack.fetch("canonical_bytes_version") == "ack_of_ack_bytes_v1" &&
+    ack.fetch("ordered_typed_fields") == expected_fields &&
+    ack.dig("exact_nested_types", "outcome_revision_v1", "ordered_fields") == [
+      {"name" => "global_state_revision", "type" => "unsigned_uint64_big_endian"},
+      {"name" => "opportunity_revision", "type" => "optional_unsigned_uint64_v1"},
+    ] &&
+    ack.dig("exact_nested_types", "optional_unsigned_uint64_v1", "present_bytes") == "unsigned_uint8_1_then_unsigned_uint64_big_endian" &&
+    ack.dig("signature", "algorithm") == "ed25519" &&
+    ack.dig("signature", "verification_key").include?("exactly_32_raw_bytes") &&
+    ack.fetch("delivery_token_rule").include?("exactly_32_raw_bytes") &&
+    ack.fetch("verification_order").last.include?("erases_its_compact_receipt") &&
+    ack.fetch("sender_outbox_erasure_rule").include?("not falsely described as one cross-device transaction")
+end
 assert(
   replay.fetch("maximum_receipt_seconds") == 90 &&
     replay.fetch("retention_rule").include?("delivery_acknowledgement_of_ack") &&
@@ -940,10 +1152,15 @@ assert(
     replay_receipts.fetch("uncertainty_safe") == "That action is too old to verify. Showing the current timer." &&
     replay.fetch("lost_ack_trace").include?("effect_fact_notification_and_haptic_counts_remain_one") &&
     replay.fetch("lost_ack_trace").last.include?("acknowledges_receipt_of_the_outcome") &&
-    replay.fetch("prohibited_copy") == "no_change_was_recorded",
+    replay.fetch("prohibited_copy") == "no_change_was_recorded" &&
+    valid_ack_of_ack?(ack_of_ack, expected_ack_fields),
   "ActionID retry receipt must survive until acknowledgement-of-ack or expiry and remain uncertainty-safe",
 )
+ack_width_mutation = Marshal.load(Marshal.dump(ack_of_ack))
+ack_width_mutation["ordered_typed_fields"][6]["type"] = "unsigned_uint32_big_endian"
+assert(!valid_ack_of_ack?(ack_width_mutation, expected_ack_fields), "ack-of-ack width mutation must fail")
 counter_contract = runtime.dig("action_contract", "device_counter_contract")
+sender_outbox = counter_contract.fetch("sender_crash_replay_outbox")
 assert(
   counter_contract.fetch("generated_sequence").include?("strict_contiguous_gap_free") &&
     counter_contract.fetch("persisted_high_water_meaning").include?("contiguous_coordinator_disposition_not_a_received_claim") &&
@@ -952,8 +1169,13 @@ assert(
     counter_contract.dig("sparse_pending_window", "class") == "class_0_ephemeral" &&
     counter_contract.dig("counter_11_before_10_trace", "first_result").include?("high_water_remains_9") &&
     counter_contract.dig("counter_11_before_10_trace", "second_result").include?("high_water_becomes_11") &&
-    counter_contract.dig("gap_expiry_trace", "later_counter_10_receipt") == "That action is too old to verify. Showing the current timer.",
-  "per-device counters must remain contiguous across out-of-order delivery and uncertainty-safe expiry",
+    counter_contract.dig("gap_expiry_trace", "later_counter_10_receipt") == "That action is too old to verify. Showing the current timer." &&
+    counter_contract.fetch("device_allocation_order").first.include?("atomically_persist") &&
+    sender_outbox.fetch("maximum_retention_seconds") == 90 &&
+    sender_outbox.fetch("atomic_fields").include?("canonical_action_envelope_required_to_resend_exactly_once") &&
+    sender_outbox.fetch("relaunch_rule").include?("same_action_id_counter_and_envelope") &&
+    counter_contract.fetch("sender_crash_traces").keys == %w[crash_before_atomic_reservation crash_after_atomic_reservation_before_send crash_after_send_before_outcome crash_after_outcome_before_ack_of_ack expiry_or_unrecoverable_corruption],
+  "per-device counters must survive sender crashes and remain contiguous across out-of-order delivery",
 )
 exact_300 = nonterminal.dig("conflict_key_reduction", "exact_300_collision_trace")
 dual_clear = nonterminal.dig("conflict_key_reduction", "release_composition_trace")
@@ -968,10 +1190,15 @@ assert(
   "conflict-key reduction must compose disjoint set and clear evidence at the exact 300-second edge",
 )
 restart_safety = nonterminal.fetch("schedule_restart_safety")
+undo_binding = restart_safety.fetch("undo_binding")
 assert(
   restart_safety.fetch("applies_to") == %w[sensor.strong_movement_restart schedule_restart.undo] &&
     restart_safety.fetch("guard").include?("paused_or_held_suspended_overlay") &&
     restart_safety.fetch("blocked_disposition").include?("Do not rotate, restore, or mutate") &&
+    undo_binding.fetch("availability").include?("byte-for-byte unchanged") &&
+    undo_binding.fetch("stale_disposition").include?("keep_every_later_fact_and_clock_effect") &&
+    undo_binding.fetch("restart_finish_undo_trace").last == "no_partial_snapshot_restore_occurs" &&
+    %w[expected_unchanged_post_decision_cycle_revision_vector expected_post_decision_snapshot_digest expected_global_state_revision].all? { |field| guards.fetch("schedule_restart.undo").fetch("required_payload").include?(field) } &&
     %w[sensor.strong_movement_restart schedule_restart.undo].all? do |id|
       guards.fetch(id).fetch("required_payload").include?("no_unresolved_running_ritual_including_suspended_paused_or_held_overlay")
     end,
@@ -980,7 +1207,8 @@ assert(
 evidence_reduction = runtime.dig("presentation_states", "evidence_reduction")
 assert(
   evidence_reduction.fetch("rule").include?("mutates only its named evidence record") &&
-    evidence_reduction.dig("running_projection", "rule").include?("Preserve the exact running opportunity phase") &&
+    evidence_reduction.dig("running_projection", "rule").include?("fences the predecessor opportunity revision") &&
+    evidence_reduction.dig("running_projection", "rule").include?("creates a successor") &&
     evidence_reduction.dig("running_projection", "rule").include?("resume that same running segment immediately") &&
     evidence_reduction.dig("nonrunning_projection", "else_after_release") == "release_corridor",
   "Paused/Held must project the full evidence set without stranding running rituals",
@@ -1038,6 +1266,7 @@ assert(
     fence.fetch("persisted_coordinator_state_requires").include?("coordinator_generation") &&
     fence.fetch("persisted_coordinator_state_requires").include?("contiguous_action_disposition_high_water_by_paired_device") &&
     fence.fetch("persisted_coordinator_state_requires").include?("last_committed_fence_digest_bytes") &&
+    fence.fetch("persisted_coordinator_state_requires").include?("installation_local_signing_ed25519_public_key_exactly_32_raw_bytes") &&
     fence.fetch("signed_fence_requires").include?("ed25519_signature_from_installation_local_coordinator_key") &&
     fence.fetch("every_opportunity_closure_order").last == "then_allow_successor_cycle_or_opportunity_eligibility" &&
     fence.fetch("coordinator_epoch_loss_order").include?("reject_every_later_arriving_old_generation_action_as_operational_no_op") &&
@@ -1047,12 +1276,12 @@ assert(
 )
 signed_fence = fence.fetch("signed_fence_portable_encoding")
 expected_fence_fields = [
-  {"name" => "domain_literal", "type" => "string"},
-  {"name" => "schema_version", "type" => "unsigned_uint16"},
-  {"name" => "global_state_id", "type" => "uuid"},
-  {"name" => "global_state_revision", "type" => "unsigned_uint64"},
-  {"name" => "closing_coordinator_generation", "type" => "unsigned_uint64"},
-  {"name" => "successor_coordinator_generation", "type" => "unsigned_uint64"},
+  {"name" => "domain_literal", "type" => "string_u32_length_nfc_utf8"},
+  {"name" => "schema_version", "type" => "unsigned_uint16_big_endian"},
+  {"name" => "global_state_id", "type" => "uuid_16_network_bytes"},
+  {"name" => "global_state_revision", "type" => "unsigned_uint64_big_endian"},
+  {"name" => "closing_coordinator_generation", "type" => "unsigned_uint64_big_endian"},
+  {"name" => "successor_coordinator_generation", "type" => "unsigned_uint64_big_endian"},
   {"name" => "opportunity_context", "type" => "optional_opportunity_context_v1"},
   {"name" => "contiguous_action_disposition_high_water_by_device", "type" => "counted_map_uuid_to_unsigned_uint64"},
   {"name" => "selected_outcome", "type" => "selected_outcome_union_v1"},
@@ -1062,15 +1291,33 @@ expected_fence_fields = [
 def valid_signed_fence_contract?(contract, expected_fields)
   nested = contract.fetch("exact_nested_types", {})
   enums = contract.fetch("enum_vocabularies", {})
+  scalars = contract.fetch("scalar_encoding", {})
+  collections = contract.fetch("collection_encoding", {})
   contract.fetch("domain_literal", nil) == "cadence.timing-runtime-v2.projection-fence.v1" &&
     contract.fetch("schema_version", nil) == 1 &&
-    contract.fetch("canonical_bytes_version", nil) == "cadence_contract_bytes_v1" &&
+    contract.fetch("canonical_bytes_version", nil) == "projection_fence_bytes_v1" &&
+    contract.fetch("self_contained_rule", "").include?("must not inherit") &&
+    scalars == {
+      "unsigned_uint8" => "one_raw_byte",
+      "unsigned_uint16" => "two_bytes_big_endian",
+      "unsigned_uint32" => "four_bytes_big_endian",
+      "unsigned_uint64" => "eight_bytes_big_endian",
+      "uuid" => "exactly_16_rfc4122_network_order_bytes_after_lowercase_hyphenated_text_normalization",
+      "string" => "unicode_nfc_utf8_prefixed_by_unsigned_uint32_big_endian_byte_length",
+      "fixed_32_bytes" => "exactly_32_raw_bytes_without_length_prefix",
+      "optional" => "one_unsigned_uint8_tag_0_absent_or_1_present_then_present_payload",
+      "enum" => "unsigned_uint16_big_endian_registered_numeric_tag",
+      "tagged_union" => "one_unsigned_uint8_registered_variant_tag_then_exact_variant_payload",
+    } &&
+    collections.fetch("map", "").include?("unsigned_uint32_big_endian_entry_count") &&
+    collections.fetch("set", "").include?("unsigned_uint32_big_endian_element_count") &&
+    collections.fetch("array", "").include?("unsigned_uint32_big_endian_element_count") &&
     contract.fetch("ordered_typed_fields", nil) == expected_fields &&
     nested.dig("optional_opportunity_context_v1", "presence_tag") == "unsigned_uint8_0_absent_1_present" &&
     nested.dig("optional_opportunity_context_v1", "present_fields_in_order") == [
-      {"name" => "opportunity_id", "type" => "uuid_16_bytes"},
-      {"name" => "projection_epoch_id", "type" => "uuid_16_bytes"},
-      {"name" => "opportunity_revision", "type" => "unsigned_uint64"},
+      {"name" => "opportunity_id", "type" => "uuid_16_network_bytes"},
+      {"name" => "projection_epoch_id", "type" => "uuid_16_network_bytes"},
+      {"name" => "opportunity_revision", "type" => "unsigned_uint64_big_endian"},
     ] &&
     nested.dig("counted_map_uuid_to_unsigned_uint64", "cardinality") == "unsigned_uint32_big_endian_entry_count" &&
     nested.dig("selected_outcome_union_v1", "tag_width") == "unsigned_uint8" &&
@@ -1080,8 +1327,11 @@ def valid_signed_fence_contract?(contract, expected_fields)
     enums.fetch("fence_reason_enum_uint16", {}).values == [1, 2, 3, 4, 5] &&
     enums.fetch("operational_disposition_enum_uint16", {}).values == [1, 2, 3, 4, 5] &&
     contract.fetch("digest", "").include?("32_raw_bytes") &&
-    contract.fetch("signing_input", "").include?("32_digest_bytes") &&
+    contract.fetch("signature_domain_literal", "") == "cadence.timing-runtime-v2.projection-fence-signature.v1" &&
+    contract.fetch("signing_input", "").include?("string_u32_length_nfc_utf8_then_exact_32_digest_bytes") &&
     contract.fetch("signature", "").start_with?("ed25519") &&
+    contract.fetch("public_key_rule", "").include?("exact 32 raw") &&
+    contract.fetch("public_key_rule", "").include?("fingerprint is derived display metadata only") &&
     contract.fetch("verification_order", []).include?("reject_unknown_domain_schema_version_type_width_enum_value_union_tag_or_collection_cardinality") &&
     contract.fetch("storage_rule", "").include?("exactly_32_unencoded_bytes")
 end
@@ -1094,6 +1344,8 @@ order_mutation = Marshal.load(Marshal.dump(signed_fence))
 order_mutation["ordered_typed_fields"][2], order_mutation["ordered_typed_fields"][3] = order_mutation["ordered_typed_fields"][3], order_mutation["ordered_typed_fields"][2]
 width_mutation = Marshal.load(Marshal.dump(signed_fence))
 width_mutation["exact_nested_types"]["selected_outcome_union_v1"]["tag_width"] = "unsigned_uint16"
+scalar_width_mutation = Marshal.load(Marshal.dump(signed_fence))
+scalar_width_mutation["scalar_encoding"]["unsigned_uint32"] = "eight_bytes_big_endian"
 tag_mutation = Marshal.load(Marshal.dump(signed_fence))
 tag_mutation["exact_nested_types"]["selected_outcome_union_v1"]["variants"][1]["payload"] = "unsigned_uint32_big_endian"
 cardinality_mutation = Marshal.load(Marshal.dump(signed_fence))
@@ -1103,6 +1355,7 @@ assert(
     !valid_signed_fence_contract?(version_mutation, expected_fence_fields) &&
     !valid_signed_fence_contract?(order_mutation, expected_fence_fields) &&
     !valid_signed_fence_contract?(width_mutation, expected_fence_fields) &&
+    !valid_signed_fence_contract?(scalar_width_mutation, expected_fence_fields) &&
     !valid_signed_fence_contract?(tag_mutation, expected_fence_fields) &&
     !valid_signed_fence_contract?(cardinality_mutation, expected_fence_fields),
   "signed fence domain/version/field-order/width/tag/cardinality mutations must fail",
@@ -1239,7 +1492,7 @@ assert(
   [product_model, interaction, health, flows, copy].all? do |document|
     normalized = document.gsub(/\s+/, " ")
     normalized.include?("positive finite v1") &&
-      normalized.include?("5-second") || normalized.include?("visual 5 s")
+      (normalized.include?("5-second") || normalized.include?("visual 5 s"))
   end &&
     [product_model, interaction, health, flows, copy].all? { |document| document.include?("new") && document.include?("edit") },
   "legacy Custom storage compatibility and safer new-authoring bounds are not reconciled",
@@ -1382,6 +1635,51 @@ assert(
     product_model.include?("A genuinely new") &&
     health.include?("new fresh or Custom visual cycle"),
   "trust guarantee must apply to pre-movement/pre-away accrual without banning new cycles",
+)
+assert(
+  [product_model, interaction, health, authority, conformance].all? do |document|
+    normalized = document.gsub(/\s+/, " ")
+    normalized.include?("predecessor") && normalized.include?("successor") && normalized.include?("rebase")
+  end &&
+    [product_model, interaction, health].none? { |document| document.match?(/revision (?:stay|stays|remain|remains|is) suspended/i) },
+  "global/running prose must fence the predecessor and rebase onto a successor revision",
+)
+assert(
+  [product_model, interaction, health, flows, screens, accessibility].all? do |document|
+    normalized = document.gsub(/\s+/, " ")
+    normalized.include?("Start 5") && normalized.include?("Start 2") &&
+      normalized.match?(/Escape(?: and|\/| or) Command-period.*dismiss/i)
+  end &&
+    [product_model, interaction, health, flows, screens, accessibility].all? { |document| document.include?("explicit Skip") || document.include?("Skip") },
+  "companion merged offer and projection-only Escape are not reconciled",
+)
+assert(
+  [product_model, interaction, health, flows, privacy, authority, conformance].all? do |document|
+    normalized = document.gsub(/\s+/, " ")
+    normalized.include?("crash-replay") && normalized.include?("90") && normalized.include?("acknowledgement-of-ack")
+  end && copy.include?("crash_outbox_detail"),
+  "sender crash outbox lifecycle is not reconciled across canonical documents",
+)
+assert(
+  [interaction, health, decisions].all? { |document| document.include?("projection_fence_bytes_v1") } &&
+    [interaction, health, decisions].all? { |document| document.include?("actual 32-byte") } &&
+    [interaction, health, privacy].all? { |document| document.include?("cadence.timing-runtime-v2.ack-of-ack.v1") },
+  "independent fence bytes, actual verification keys, and signed ack-of-ack are not canonical",
+)
+assert(
+  [product_model, health].all? do |document|
+    normalized = document.gsub(/\s+/, " ")
+    normalized.include?("revision vector") && normalized.include?("snapshot") && normalized.include?("stale") && normalized.include?("later fact")
+  end,
+  "restart Undo staleness is not reconciled",
+)
+assert(
+  [interaction, health, flows, screens, accessibility, copy].all? do |document|
+    normalized = document.gsub(/\s+/, " ")
+    normalized.include?("Paused · timer not restored") &&
+      (normalized.include?("selected reason") || normalized.include?("selected Pause reason"))
+  end,
+  "timer recovery manual/system Pause reason projections are incomplete",
 )
 RUBY
 

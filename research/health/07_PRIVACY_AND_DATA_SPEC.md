@@ -47,6 +47,23 @@ present it replays the original outcome without effects. After erasure, high wat
 contiguous disposition, not delivery; duplicate and unseen actions say “too old to verify” and
 show current state.
 
+Early receipt erasure accepts only the signed `cadence.timing-runtime-v2.ack-of-ack.v1` envelope
+bound to the exact generation, paired device, ActionID digest, counter, outcome revision, random
+32-byte delivery token, original-outcome digest, and coordinator-monotonic expiry. The signature is
+verified with that paired device's persisted actual 32-byte Ed25519 public key. A fingerprint is
+display metadata only. Invalid, replay-mismatched, expired, or duplicate envelopes do not erase a
+live receipt.
+
+The sole raw-envelope persistence exception is the **sender crash-replay outbox**. Before a paired
+device exposes a generated action, it atomically stores the next counter, ActionID, canonical resend
+envelope, local monotonic anchor/epoch, and later the bound outcome token/digest when available. The
+entry is locally encrypted, excluded from backup, history, export, analytics, and logs, and erased
+after a valid signed acknowledgement-of-ack or 90 monotonic seconds, whichever occurs first. It is
+not a product, health, audit, or companion-history fact. Relaunch may resend only the exact same
+ActionID/counter/envelope or finish that acknowledgement; it never allocates a replacement for the
+reserved counter. Corrupt or expired entries are erased and receive uncertainty-safe current-state
+copy, never a claim that the action was or was not received.
+
 ### Class 1 — Local routine data
 
 Examples:
@@ -59,8 +76,9 @@ Examples:
 - content preference;
 - skip/snooze categories.
 - current coordination continuity state: GlobalStateID, coordinator generation/revision,
-  per-device contiguous action-disposition high water, active projection fences, and paired
-  public-key fingerprints, without raw candidate payloads.
+  per-device contiguous action-disposition high water, active projection fences, actual paired and
+  installation Ed25519 public-key bytes plus derived display fingerprints, without raw candidate
+  payloads outside the bounded sender outbox exception.
 
 Requirements:
 
@@ -79,7 +97,8 @@ Examples:
 - exact timestamps;
 - inferred work pattern;
 - accessibility preferences.
-- paired-device trust mapping and the local private coordinator signing key.
+- paired-device trust mapping, actual Ed25519 public keys required for verification, and each
+  device's local private coordinator/acknowledgement signing key.
 
 Requirements:
 
@@ -87,8 +106,9 @@ Requirements:
 - local only unless user explicitly enables sync;
 - do not use to infer employment, disability, or productivity;
 - minimize granularity.
-- never export a private signing key; retain it only until reset/unpair and export only a public
-  fingerprint needed to inspect paired trust.
+- never export a private signing key; retain it only until reset/unpair. Export/display may include
+  a derived public fingerprint for inspection, but verification always uses the locally persisted
+  actual 32-byte public key from the authenticated pairing record.
 
 ### Class 3 — Health-adjacent or health data
 
@@ -245,6 +265,7 @@ Proposed defaults:
 | Raw terminal/companion candidate, losing/duplicate/rejected envelope | memory only; ≤90 seconds and until settlement/fence, whichever comes first |
 | Sparse out-of-order action-counter window | memory only; ≤90 seconds; never persisted/exported; holes dispose without a received claim |
 | Compact ActionID replay receipt without raw payload | memory only; ≤90 seconds and until verified acknowledgement-of-ack, whichever comes first; ACK/fence creation does not erase it |
+| Sender crash-replay outbox | locally encrypted persistent Class 0; ≤90 seconds or valid signed acknowledgement-of-ack, whichever comes first; exact counter/ActionID/resend envelope only; excluded from backup/history/export/logs/analytics |
 | Current coordination continuity and signed fence/high-water state | current state plus the immediately previous fence for at most 90 seconds; compact current generation/high-water persists until reset |
 | Raw opportunity event | 30–90 days locally |
 | Daily aggregate | 12 months locally |
@@ -271,7 +292,8 @@ Users need:
 
 When D-033 coordination is implemented, the local data report must include current generation,
 global revision, fence/high-water status, and paired public-key fingerprints in a human-readable
-form. It must exclude raw candidate buffers and the private coordinator signing key. **Delete
+form. It must exclude raw candidate buffers, sender crash-replay outbox contents, actual public-key
+bytes, and every private signing key. **Delete
 history** keeps coordination continuity so a live timer is not made unsafe. **Reset app data** and
 device unpairing delete the applicable coordination state, paired trust, and local private signing
 key. The UI must disclose these boundaries before either action. This is a future v2 obligation,
@@ -310,9 +332,9 @@ Future companion principles:
   fenced, or unacknowledged actions are rejected no-ops with immediate user feedback;
 - raw candidate/duplicate/loser buffers follow the Class-0 90-second maximum above and are never
   retained as an audit trail;
-- restart safety retains only minimized Class-1 generation/fence/high-water continuity and paired
-  public fingerprints; the Ed25519 private coordinator key remains local, non-exportable, and is
-  deleted by reset/unpair;
+- restart safety retains minimized Class-1 generation/fence/high-water continuity, actual paired
+  and installation Ed25519 public keys required for verification, and derived display fingerprints;
+  each Ed25519 private key remains local, non-exportable, and is deleted by reset/unpair;
 - live/neutral-offline/offline-terminal-ack-unknown/expired/transfer-pending/terminal-action-pending/neutral-revalidating/revalidating-terminal-ack-unknown/rejected-no-op/already-ended/transfer-failed states
   remain usable without HealthKit, motion, location, camera, or another sensor.
 

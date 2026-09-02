@@ -852,3 +852,38 @@ sentence is retained only as historical trace and is superseded by the uncertain
 - Timer-recovery body may state due, but its menu independently preserves actual Paused/Held state
   and qualified reason. `custom_v2` storage preserves every legal positive finite v1 payload;
   safer new-authoring bounds apply only after creation or edit.
+
+#### D-033 seventh contract-repair addendum — 2026-09-01
+
+This append-only repair supersedes the sixth addendum only where it left sender crash recovery,
+companion Escape, fence verification keys, Custom payload shape, Undo freshness, and non-manual
+timer-recovery reasons implicit. Approval provenance, health values, ten facts, permissions, and the
+non-activation boundary remain unchanged.
+
+- Gap-free sender counters are made crash-safe by one atomic local encrypted Class-0 outbox commit
+  containing counter, ActionID, and exact resend envelope. Relaunch resends the same action; valid
+  signed acknowledgement-of-ack or 90 seconds erases it. This is the sole bounded raw-envelope
+  persistence exception and is excluded from backup, history, export, logs, and analytics.
+- The acknowledgement-of-ack has an exact signed versioned envelope bound to generation, device,
+  ActionID digest, counter, outcome revision, 32-byte delivery token, original-outcome digest, and
+  monotonic expiry. Verification uses the persisted actual paired-device Ed25519 public key.
+- Projection fences use the independent complete `projection_fence_bytes_v1` encoder. Verification
+  uses the persisted actual 32-byte installation public key; fingerprints are display-only.
+- Companion Escape and Command-period dismiss status only in every state. Explicit controls alone
+  Skip, finish, cancel a transfer, or cancel revalidation. Merged movement offered exposes Start 5
+  (initial focus), Start 2, already moved, position, visual-only, and explicit Skip. `Take with me`
+  is a distinct remote request normalized to the fact-free nonterminal handoff transition.
+- Every remote wrapper is checked against its concrete guard, opportunity/phase/segment,
+  participants and affected cycles, resolver/slot, fact, and effects before commit.
+- A global command fences the predecessor opportunity revision, creates a successor, rebases the
+  exact suspended phase/segment/deadline/snapshot onto it, and retains fence lineage. No canonical
+  text describes the predecessor revision itself as preserved or suspended.
+- Legacy Custom's complete schema is the Codable `kind`/`customTiming` payload with visual and
+  movement soft/target/latest seconds and both nonempty ordered duration arrays. Migration changes
+  only v2 selection metadata; its full extreme fixture is mechanically checked.
+- Restart Undo binds the exact unchanged post-decision four-clock revision vector and snapshot.
+  Any later terminal, ritual, cycle, recovery, or schedule mutation makes it unavailable, so it
+  cannot erase a later fact while restoring older clocks.
+- Timer recovery registers manual, working-hours, inactive, locked, sleeping, unavailable,
+  qualified-away, accepted-ritual, and intentionally hidden system Pause projections. Only manual
+  Pause requires a selected reason; hidden system detail uses neutral `Paused · timer not restored`.

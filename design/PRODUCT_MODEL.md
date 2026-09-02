@@ -78,7 +78,9 @@ delivery inside the window and bounded holds, never frequency or health outcomes
 - Strong fresh sensor evidence may create an explained, undoable schedule restart only after the
   owning validation and permission gates and only when no running or Paused/Held-suspended ritual
   remains. Otherwise it queues a neutral revalidation suggestion and rotates no cycle or snapshot.
-  It never creates one of the ten product facts.
+  It never creates one of the ten product facts. Undo binds the exact unchanged post-decision
+  four-clock revision vector and snapshot digest. Any later terminal, ritual, cycle, recovery, or
+  schedule mutation makes Undo stale; it cannot erase the later fact or partially restore clocks.
 - Recovery produces a gentle optional suggestion, never an alarm or “risk” state.
 
 ## 4. Interruption levels
@@ -155,8 +157,10 @@ Escape is always equivalent to the least-committal exit. It is never a trap and 
 acknowledgement without effects until the device returns acknowledgement-of-ack or 90 seconds
 elapse. A projection/generation fence alone never erases it. After expiry, duplicate and unseen
 actions say **too old to verify** and show current state; disposition high water never claims
-receipt. Per-device counters are gap-free, and out-of-order counters wait in a Class-0 sparse
-window until every lower sequence is disposed. An action originated after its actor knew the
+receipt. Per-device counters are gap-free because allocation, ActionID, and a minimized encrypted
+crash-replay outbox entry commit atomically before send. Relaunch sends that same envelope; it never
+abandons a reserved counter or allocates a replacement. Out-of-order counters wait in a Class-0
+sparse window until every lower sequence is disposed. An action originated after its actor knew the
 opportunity closed is a rejected no-op with honest feedback. A valid candidate originated before
 that actor learned of provisional closure still reconciles only inside the same live, unfenced
 coordinator generation and projection epoch. Terminal order uses fact-claim rank and stable
@@ -197,14 +201,17 @@ Evidence commands compose by record identity, not one global winner. At one fron
 and system available both clear; Pause start and system unavailable both set; lock and long-idle at
 exactly 300 seconds both commit, so `likelyNaturalInterruption` is not discarded. Same-record
 begin/clear intents alone compete, then the full current evidence set determines Paused, Held,
-running, or corridor. A running-affecting global commit fences the old opportunity projection before
-preserving it, so an old Watch terminal cannot arrive in reverse order and finish it.
+running, or corridor. A running-affecting global commit fences the predecessor revision, creates a
+successor, rebases the exact phase, segment, accepted deadline/remaining duration, and snapshot onto
+that successor, and retains predecessor/fence lineage. An old Watch terminal therefore cannot arrive
+in reverse order and finish the successor.
 
 Explicit manual pause outranks the remaining Paused reasons in the machine-defined order, and
 every Paused reason outranks a hold. Timed pause persists across relaunch; “until I resume” is
 indefinite and immediately reversible. Paused/Held evidence is orthogonal to a running ritual:
-the phase, segment, deadline, snapshot, and revision are suspended. Clearing one named reason
-reduces the full remaining evidence set. A same-epoch future deadline resumes that segment without
+the predecessor revision is fenced and a successor revision owns the suspended phase, segment,
+deadline, and snapshot with explicit lineage. Clearing one named reason reduces the full remaining
+evidence set and creates/rebases onto its next successor. A same-epoch future deadline resumes that segment without
 a corridor when only the ritual's own intrinsic clock-scope freeze remains; proven elapsed
 reconciles; unknown timing closes operationally without a timer fact or
 fresh cycle. Nonrunning release uses the corridors below. After wake/unlock use 90 seconds;
@@ -244,7 +251,9 @@ Operational events, observations, assessments, scheduling decisions, corrections
 companion state use separate ledgers. Raw companion/terminal candidates, losers, duplicates,
 old-generation rejection envelopes, out-of-order sparse counter entries, and compact lost-ack
 receipts are Class 0: memory-only for at most 90 seconds and never exported or given a durable
-record identity. A compact receipt is erased early only after verified acknowledgement-of-ack,
+record identity. The sole persistence exception is the sender's minimized encrypted crash-replay
+outbox: counter, ActionID, exact resend envelope, and ACK binding commit atomically, are excluded
+from backup/history/export/logs, and erase at verified acknowledgement-of-ack or 90 seconds. A compact coordinator receipt is erased early only after verified acknowledgement-of-ack,
 not an ACK generation or fence, and has no raw payload. A sensor observation may support a `scheduling_decision`; it cannot
 be encoded as `timerFinished`, `userDeclaredCompleted`, or `userDeclaredAlreadyMoved`.
 
@@ -253,12 +262,16 @@ transfer-pending, terminal-action-pending, neutral revalidating,
 revalidating-terminal-ack-unknown, rejected-no-op, already-ended, and transfer-failed conditions. “Any
 device” applies only to a live exact-generation lease. The machine registry defines each state's
 available control IDs, exact labels, focus/order, VoiceOver, keyboard, Escape, and cancellation.
-Unavailable controls are absent from focus. Transfer pending can cancel only the transfer; terminal
+Unavailable controls are absent from focus. Escape and Command-period always dismiss the companion
+status projection only; they never cancel, Skip, or emit a terminal action. Transfer pending can cancel only the transfer through its named control; terminal
 pending names the selected action and cannot cancel or repeat it. Offline, expired, and transfer
 failed offer enabled Retry and Close. Unknown terminal acknowledgement preserves the selected
 action provenance and says it is checking whether that named action was received and **do not
 repeat**; checking status never resends it. Live controls/focus and remote IDs are exact per phase
-and segment, with `Just the visual one` only in merged movement offered. No sensor is required.
+and segment. Merged movement offered starts with **Start 5 minutes** and **Start 2 minutes**, then
+already-moved, position, visual-only, and explicit Skip; initial focus is Start 5. `Just the visual
+one` exists only there. `Take with me` is a distinct remote request that materializes the concrete
+nonterminal handoff transition and writes only operational/companion ledgers. No sensor is required.
 
 ## 9. Adaptation — what the app may and may not learn
 

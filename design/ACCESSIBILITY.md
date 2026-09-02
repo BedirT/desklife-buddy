@@ -128,14 +128,19 @@ before anything else.
    reconnect** and **Close**; terminal-action-pending exposes **Close** because a submitted action
    cannot be cancelled.
 2. **Initial focus** — Live uses the exact phase/segment registry: Take with me when present,
-   otherwise that row's first terminal control. Neutral offline/expired/transfer-failed focus Retry;
+   otherwise that row's first available control. Merged movement offered focuses **Start 5 minutes**;
+   Neutral offline/expired/transfer-failed focus Retry;
    offline-terminal-ack-unknown focuses Check status. Transfer-pending focuses Cancel transfer;
    both revalidating states focus Cancel reconnect; terminal-pending, rejected, and already-ended
    focus Close. No absent or disabled trigger receives focus. `Just the visual one` exists only in
    merged movement offered.
 3. **Focus order** — exactly the enabled control IDs registered for that state. Status is read but
-   not a fake focus stop. Unavailable phase-specific controls are absent, not disabled.
-4. **Escape** — returns to the authoritative timer without applying a companion action.
+   not a fake focus stop. Unavailable phase-specific controls are absent, not disabled. Merged
+   movement offered is Start 5 → Start 2 → I already moved → Change position → Just the visual one
+   → Skip, with Return/5, Q/2, A, P, V, and S respectively.
+4. **Escape** — Escape or Command-period dismisses the status projection only in every companion
+   state. It never sends Skip/terminal action or cancels a transfer/revalidation; those cancellations
+   require their named enabled controls.
 5. **VoiceOver names** — semantic action names, never device appearance or sensor language.
 6. **VoiceOver values** — exactly one registered announcement for live, neutral offline,
    offline-terminal-ack-unknown, expired, transfer-pending, terminal-action-pending, neutral
@@ -164,8 +169,11 @@ before anything else.
 5. **VoiceOver names** — due: “Timer could not be restored. No finish was recorded. The schedule
    is still due.” Not due/manual early: “Timer could not be restored. No finish was recorded. This
    schedule was not reset.” The retained phase selects the string before Close receives focus.
-6. **VoiceOver values** — active due says “Still due · timer not restored.” Paused always says
-   “Paused: [selected reason] · timer not restored,” and Held always says “Held: [fresh,
+6. **VoiceOver values** — active due says “Still due · timer not restored.” Manual Pause says
+   “Paused: [selected reason] · timer not restored.” Outside-hours, inactive, lock, sleep,
+   unavailable, qualified-away, and accepted-ritual pauses use their registered evidence-qualified
+   reason without requiring a selected reason; intentionally hidden system detail says “Paused ·
+   timer not restored.” Held always says “Held: [fresh,
    provenance-qualified reason] · timer not restored,” whether due or not due. Other not-due state
    reads the ordinary retained schedule status plus “timer not restored”; no countdown chatter.
 7. **Text scaling** — title, body, and actions wrap in one vertical group.

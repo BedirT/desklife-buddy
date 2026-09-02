@@ -254,8 +254,10 @@ selected_calendar_busy_interval → selected_application_active → snooze → l
   3:00", "Held · Focus you selected", "Held · likely call", or "Paused until you resume") —
   never a vague "smart pause".
 - A hold that begins **mid-heads-up** retracts the capsule to Held. Paused/Held evidence is
-  orthogonal to a running ritual: the exact phase, segment, deadline, snapshot, and revision stay
-  suspended. Clearing one evidence record reduces the full remaining set; if nothing higher
+  orthogonal to a running ritual: the command fences the predecessor revision, creates a successor,
+  and rebases the exact phase, segment, deadline, and snapshot onto that suspended successor while
+  retaining predecessor/fence lineage. Clearing one evidence record reduces the full remaining set
+  and creates/rebases onto the next successor; if nothing higher
   remains except the ritual's own intrinsic clock-scope freeze, a same-epoch future deadline
   resumes the same segment immediately. A corridor is used
   only for nonrunning state. Proven elapsed deadlines reconcile; unknown timing uses the
@@ -301,7 +303,10 @@ is still due.”** and the menu says **“Still due · timer not restored.”** 
 opened early schedule instead says **“No finish was recorded. The timer was not restored, and this
 schedule was not reset.”** and formats the menu as **“[actual schedule status] · timer not
 restored.”** Body copy may state due when the retained schedule is due, but the menu independently
-preserves the full evidence projection: **“Paused: [selected reason] · timer not restored”** or
+preserves the full evidence projection: manual Pause uses **“Paused: [selected reason] · timer not
+restored”**; working-hours, inactive, lock, sleep, unavailable, qualified confirmed-away, and
+accepted-ritual pauses use their registered qualified reason without requiring a selected reason;
+an intentionally hidden system reason uses **“Paused · timer not restored”**. Held uses
 **“Held: [qualified evidence reason] · timer not restored”** for both due and not-due branches.
 Held reasons retain provenance and freshness; stale or missing evidence is unknown, not a meeting
 or deep-focus claim. VoiceOver announces the selected meaning once. Focus starts on **Close**; Return,
@@ -350,7 +355,12 @@ owner-approved story, disclosure, fallback, and proof; the core may not imply th
   fence does not erase it. After expiry, neither high water nor a missing receipt proves delivery:
   duplicate and unseen stale actions say **“That action is too old to verify. Showing the current
   timer.”** rather than claiming received, rejected, or unchanged.
-- Each paired device allocates strict contiguous, gap-free counters. Coordinator high water means
+- Each paired device allocates strict contiguous, gap-free counters by atomically persisting the
+  next counter, ActionID, and minimized encrypted crash-replay resend envelope before exposing the action. A
+  crash before that transaction reserves nothing; a crash after it relaunches with the same action;
+  a crash after send retries the same ActionID; and a crash after outcome finishes the same signed
+  acknowledgement-of-ack. The outbox is excluded from backup/history/export/logs and erases by
+  acknowledgement-of-ack or 90 seconds. Coordinator high water means
   contiguous **disposition**, not receipt: counter 11 received while high water is 9 waits in a
   Class-0 sparse window until 10 is disposed, then 10 and 11 advance in order. A 90-second hole
   expiry uses the same too-old-to-verify projection and never leaps to a received claim.
@@ -421,11 +431,14 @@ Identifiers use the versioned `cadence_contract_bytes_v1` encoding: UUIDs normal
 network-order bytes; strings are NFC UTF-8; integers are big-endian; optionals, tagged unions,
 ordered typed structs, lists, sets, and maps have explicit uint32 counts/cardinalities and
 registered byte encodings. Locale, wall time, process
-hashes, and pointer identity are never inputs. A projection fence registers the literal
+hashes, and pointer identity are never inputs. A projection fence uses the independent, fully
+self-contained `projection_fence_bytes_v1` encoder and registers the literal
 `cadence.timing-runtime-v2.projection-fence.v1`, schema version 1 as uint16, exact ordered typed fields,
 uint8 optional/union tags, uint16 enum vocabularies, a counted UUID→uint64 map, an exact nested
 opportunity context, and fixed 32-byte prior digest,
-SHA-256 digest bytes, Ed25519 signing input, pinned-key verification, and previous-digest chain; a
+SHA-256 digest bytes, Ed25519 signing input, verification against the persisted actual 32-byte
+installation public key, and previous-digest chain. The public-key fingerprint is derived display
+metadata only, never verification material; a
 mutated domain, version, type, width, tag, cardinality, order, digest, or signature fails closed. A terminal fact ID is
 OpportunityID + canonical terminal slot + the fixed registered component scope, never the
 candidate winner or participant subset.
@@ -454,22 +467,34 @@ matching generation, projection epoch, opportunity revision, and segment. The si
 live, neutral offline, offline-terminal-ack-unknown, expired, **transfer pending**, **terminal action pending**, neutral revalidating,
 revalidating-terminal-ack-unknown,
 rejected-no-op, already-ended, and transfer-failed states. Each registers its exact control IDs,
-labels, enabled set, focus/order, VoiceOver, keyboard, Escape, and cancellation behavior. Transfer
+labels, enabled set, focus/order, VoiceOver, keyboard, Escape, and cancellation behavior. Escape
+and Command-period dismiss the companion projection only in every state; named Cancel controls are
+the only way to cancel an uncommitted transfer or status revalidation. Transfer
 pending may cancel only the uncommitted transfer. Terminal action pending names the selected action
 and cannot cancel or repeat the submission; Close/Escape dismisses status only. Offline, expired,
 and transfer failed expose enabled **Retry** and **Close**, never a disabled trigger. If a terminal
 ACK is unknown, the state preserves the selected action provenance and says **“Connection lost.
 Checking whether [action] was received; do not repeat.”** Check status/revalidation never resends
 the action. Neutral offline/revalidating copy explicitly says no companion operation is pending.
-The live phase registry defines exact controls, focus, concrete remote IDs, and Escape for visual,
+The live phase registry defines exact controls, focus, and concrete remote IDs for visual,
 movement, position, recovery, and both merged segments; `Just the visual one` exists only in merged
-movement offered, and each action group is a closed remote-ID set. Companion
+movement offered. That offer has Start 5 (initial focus, Return/5), Start 2 (Q/2), already-moved,
+position, visual-only, and explicit Skip controls. `Take with me` is transported as
+`companion.take_with_me_request` and materializes only the concrete nonterminal handoff action.
+Each action group is a closed remote-ID set. Companion
 wrappers materialize a closed, exact concrete local transition before phase/participant/segment/
 slot/resolver/fact/effect validation. No sensor is needed. Raw payloads and compact replay receipts
 are Class 0 and memory-only for at most 90 seconds; receipts retain only ActionID digest, device
 counter, outcome, successor revisions, outcome ACK, and delivery token until ack-of-ack or expiry,
 with no payload, export, durable
 identity, or duplicate side effect.
+
+The signed acknowledgement-of-ack uses the registered
+`cadence.timing-runtime-v2.ack-of-ack.v1` envelope: exact generation/device, ActionID digest,
+counter, outcome revision, 32-byte delivery token, outcome binding, coordinator-monotonic expiry,
+and Ed25519 signature. Verification uses the persisted paired-device 32-byte public key. A
+fingerprint is display metadata, never a verification key. Only a valid bound envelope can erase a
+compact receipt before 90 seconds.
 
 The exact per-transition clock/fact/ledger/visible/stale/recovery matrix is
 `machine-readable/timing_runtime_v2.yaml.action_contract.transitions`. No Feature or App surface

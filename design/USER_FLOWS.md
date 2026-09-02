@@ -290,8 +290,16 @@ Accepted visual or movement ritual → Take with me
   │   → Live or Rejected, no-op · Close
   ├ duplicate with compact receipt before acknowledgement-of-ack/90 s
   │   → replay recorded acknowledgement; no second effect
-  │   → device confirms receipt of outcome → receipt may erase
+  │   → device returns the signed generation/device/ActionID/counter/outcome-revision/
+  │     32-byte-token/outcome-binding envelope → receipt may erase
   ├ duplicate/unseen action after receipt expiry → too old to verify; show current timer
+  ├ merged movement offered → Start 5 (initial focus, Return/5) / Start 2 (Q/2) /
+  │   I already moved / Change position / Just the visual one / explicit Skip
+  ├ Escape or Command-period on any companion status → dismiss projection only; no Skip,
+  │   terminal action, transfer cancellation, or revalidation cancellation
+  ├ sender crash before atomic counter+ActionID+outbox commit → no reservation
+  ├ sender crash after commit/before or after send → relaunch resends the same envelope/ActionID
+  ├ sender crash after outcome → relaunch completes the same signed acknowledgement-of-ack
   ├ counter 11 arrives before 10 → hold 11 in Class-0 sparse window; high water stays 9
   │   → 10 arrives → dispose 10 then 11 in order; high water becomes 11
   └ no acknowledgement → Transfer failed · Retry / Close; Mac deadline remains valid
@@ -303,13 +311,18 @@ schedule. Same-generation candidates settle, the old projection epoch is signed/
 60-second grace begins; only fence + grace permits re-offer. The recovery projection says no finish
 was recorded, then says **still due** only if the retained schedule is due. An accumulating/manual-
 early schedule instead says the timer was not restored and the schedule was not reset, while the
-menu keeps its actual phase. A Paused menu remains **Paused: [selected reason] · timer not
-restored** and Held remains **Held: [qualified evidence reason] · timer not restored**, whether
+menu keeps its actual phase. A manual Paused menu remains **Paused: [selected reason] · timer not
+restored**; system, working-hours, qualified-away, and accepted-ritual pauses use the matching
+registered qualified reason without requiring a selected reason. Intentionally hidden system
+detail uses **Paused · timer not restored**. Held remains **Held: [qualified evidence reason] · timer not restored**, whether
 the retained schedule is due or not due. Offline intent cannot affect state until a coordinator
 renews its lease and revalidates generation/phase/revision. Duplicate, unknown,
 post-lease, old-generation, or mismatched-cycle actions get explicit current-state receipts, never
 silence or an inaccurate zero-change claim. Raw candidates and payload-free compact replay
-receipts and sparse counter entries are memory-only for at most 90 seconds and are not history/export data. A sensed movement observation
+receipts and sparse counter entries are memory-only for at most 90 seconds and are not history/export
+data. The minimized encrypted sender crash-replay outbox is the only raw-envelope persistence
+exception: it is excluded from backup/history/export/logs and erased by verified acknowledgement-of-
+ack or 90 seconds. A sensed movement observation
 may support a separate user-approved schedule restart; it cannot masquerade as the timer or a
 user declaration.
 
@@ -319,8 +332,8 @@ focus order, and `Just the visual one` exists only in merged movement offered. N
 offline/expired/transfer-failed focus Retry; offline-terminal-ACK-unknown focuses Check status;
 transfer-pending focuses Cancel transfer; both revalidating states focus Cancel reconnect; terminal-
 pending/rejected/already-ended focus Close. Focus order is exactly the available control IDs, never
-a status placeholder or disabled trigger. Escape cancels only an uncommitted transfer/revalidation;
-otherwise it dismisses status without cancelling or finishing. Every transition has visible copy
+a status placeholder or disabled trigger. Escape and Command-period always dismiss status only;
+the named Cancel transfer/Cancel reconnect controls alone cancel those uncommitted operations. Every transition has visible copy
 and one VoiceOver announcement. The fallback requires no HealthKit, motion, location, camera, or
 other sensor data.
 

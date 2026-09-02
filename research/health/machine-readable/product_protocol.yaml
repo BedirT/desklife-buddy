@@ -142,9 +142,9 @@ preset_contract_v2:
       display_name: Custom
       payload_schema_version: 2
       storage_compatibility_domain:
-        fields_and_units: exact_v1_custom_timing_fields_and_seconds_units
+        fields_and_units: legacy_custom_v1_payload_schema
         numeric_values: every_positive_finite_v1_value_without_v2_authoring_clamp
-        ordering: preserve_exact_persisted_v1_field_order_and_values
+        ordering: preserve_each_duration_array_element_order_and_every_numeric_value
         migration_rule: never_silently_retune_reject_or_coerce_a_legal_v1_payload
       new_authoring_constraints:
         visual_duration_range_seconds: [10, 60]
@@ -179,10 +179,67 @@ preset_contract_v2:
         preset_contract_version, preset_identifier, and migration_state; it does not reinterpret,
         clamp, reject, or silently retune timing. Safer v2 authoring bounds apply only after the
         person edits or creates a value.
-      extreme_payload_fixture:
-        visual_duration_seconds: 5
-        movement_duration_options_seconds: [30]
-        expected_migrated_values: {visual_duration_seconds: 5, movement_duration_options_seconds: [30]}
+      extreme_payload_fixture: legacy_custom_extreme_fixture
+  legacy_custom_v1_payload_schema:
+    source_of_truth:
+      - Packages/Domain/Sources/Domain/SchedulePreferences.swift.ScheduleProfile.Codable
+      - Packages/Domain/Sources/Domain/SchedulePreferences.swift.CustomProtocolTiming.Codable
+      - Packages/Domain/Sources/Domain/SchedulePreferences.swift.OpportunityTiming.Codable
+    top_level_type: ScheduleProfile
+    object_member_wire_order: not_semantically_significant_for_keyed_Codable_containers
+    canonical_schema_traversal_order: exactly_the_ordered_fields_lists_below
+    ordered_fields:
+      - {name: kind, type: utf8_string, required_value: custom}
+      - {name: customTiming, type: custom_protocol_timing_v1}
+    custom_protocol_timing_v1:
+      ordered_fields:
+        - {name: visual, type: opportunity_timing_v1}
+        - {name: movement, type: opportunity_timing_v1}
+    opportunity_timing_v1:
+      ordered_fields:
+        - {name: softDueSeconds, type: finite_binary64_seconds}
+        - {name: targetSeconds, type: finite_binary64_seconds}
+        - {name: latestPreferredSeconds, type: finite_binary64_seconds}
+        - {name: durationOptionsSeconds, type: nonempty_ordered_array_of_finite_binary64_seconds}
+      constraints:
+        - every_scalar_and_duration_array_element_is_finite_and_strictly_greater_than_zero
+        - softDueSeconds_less_than_or_equal_to_targetSeconds
+        - targetSeconds_less_than_or_equal_to_latestPreferredSeconds
+        - durationOptionsSeconds_is_nonempty
+        - durationOptionsSeconds_element_order_is_significant_and_is_never_sorted_or_deduplicated
+    additional_persisted_fields: none
+    unknown_field_policy: decoder_may_ignore_unknown_keys_but_migration_never_invents_them
+  legacy_custom_extreme_fixture:
+    legacy_payload:
+      kind: custom
+      customTiming:
+        visual:
+          softDueSeconds: 5
+          targetSeconds: 5
+          latestPreferredSeconds: 5
+          durationOptionsSeconds: [5, 7]
+        movement:
+          softDueSeconds: 30
+          targetSeconds: 60
+          latestPreferredSeconds: 90
+          durationOptionsSeconds: [30, 300, 45]
+    migrated_representation:
+      preset_contract_version: 2
+      preset_identifier: custom_v2
+      migration_state: v2_migrated_with_explicit_acceptance
+      customTiming:
+        visual:
+          softDueSeconds: 5
+          targetSeconds: 5
+          latestPreferredSeconds: 5
+          durationOptionsSeconds: [5, 7]
+        movement:
+          softDueSeconds: 30
+          targetSeconds: 60
+          latestPreferredSeconds: 90
+          durationOptionsSeconds: [30, 300, 45]
+    allowed_difference: only_selection_metadata_legacy_kind_custom_is_replaced_by_preset_contract_version_preset_identifier_custom_v2_and_migration_state
+    prohibited_difference: any_customTiming_field_value_array_length_or_array_order
 activity_estimator:
   recent_input_window_seconds: 60
   long_idle_reset_seconds: 300
@@ -224,6 +281,14 @@ candidate_data_lifecycle_v2:
     projection_or_generation_fence_does_not_erase: true
     export: false
     purpose: action_id_lost_ack_idempotency_only
+  sender_crash_replay_outbox:
+    class: class_0_crash_replay_only
+    local_encrypted_persistence: true
+    maximum_retention_seconds: 90
+    fields: [device_id, origin_session_id, counter, action_id, exact_canonical_resend_envelope, monotonic_anchor_and_epoch, optional_outcome_delivery_token_and_binding]
+    discard_at: valid_signed_acknowledgement_of_ack_or_90_monotonic_seconds_whichever_occurs_first
+    excluded_from: [backup, history, export, analytics, logs, product_facts, health_records]
+    sole_raw_envelope_persistence_exception: true
 boundary_predicates:
   deadline_reached: elapsed_seconds_greater_than_or_equal_to_deadline_seconds
   recent_input_eligible: seconds_since_input_less_than_or_equal_to_60

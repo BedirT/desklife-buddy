@@ -492,15 +492,19 @@ Keyboard path        — Return/Space activates the focused enabled control. Off
                        neutral revalidating exposes Cancel reconnect/Close; offline-terminal-ACK-
                        unknown exposes Check status/Close; revalidating-terminal-ACK-unknown exposes
                        Cancel reconnect/Close; terminal-pending exposes Close.
-Initial focus        — Live: exact phase row's Take with me or first terminal control. Neutral
+Initial focus        — Live: exact phase row's Take with me or first available control. Merged
+                       movement offered focuses Start 5 minutes. Neutral
                        offline/expired/transfer-failed: Retry. Offline-terminal-ACK-unknown: Check
                        status. Transfer pending: Cancel transfer. Both revalidating states: Cancel
                        reconnect. Terminal pending/rejected/already-ended: Close.
 Focus order          — Exactly the state's machine-registered enabled control IDs. Unavailable
                        phase controls are absent; no disabled trigger is focusable. `Just the
-                       visual one` appears only in merged movement offered.
-Escape               — Cancels only an uncommitted transfer/revalidation where registered;
-                       otherwise dismisses status without cancelling, repeating, or finishing.
+                       visual one` appears only in merged movement offered. That row is Start 5
+                       (Return/5) → Start 2 (Q/2) → I already moved (A) → Change position (P) →
+                       Just the visual one (V) → Skip (S).
+Escape               — Escape and Command-period always dismiss the companion status projection
+                       only. It never emits Skip/terminal action or cancels transfer/revalidation;
+                       named Cancel controls remain available where registered.
 VoiceOver names      — Take with me names the action. Terminal controls retain their ordinary
                        semantic names and append no sensor/body implication.
 VoiceOver values     — Announces exactly one registered neutral/pending condition. Terminal pending
@@ -538,8 +542,11 @@ Visible copy         — “Timer couldn’t be restored.” Due: “No finish w
                        is still due.” Not due/manual early: “No finish was recorded. The timer was
                        not restored, and this schedule was not reset.”
 VoiceOver names      — Announces the matching due or not-due CP-VO27/29 once, then focuses Close.
-VoiceOver values     — Active due: “Still due · timer not restored.” Paused: “Paused: [selected
-                       reason] · timer not restored.” Held: “Held: [qualified evidence reason] ·
+VoiceOver values     — Active due: “Still due · timer not restored.” Manual Pause: “Paused:
+                       [selected reason] · timer not restored.” Other Paused reasons use the
+                       registered working-hours/system/qualified-away/accepted-ritual reason without
+                       a selected reason; hidden system detail is “Paused · timer not restored.”
+                       Held: “Held: [qualified evidence reason] ·
                        timer not restored.” Those evidence states remain visible whether due or not
                        due. Otherwise: “[actual ordinary schedule status] · timer not restored.”
 Text scaling         — Title/body/actions stack and wrap without clipping.

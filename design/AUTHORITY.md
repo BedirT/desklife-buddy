@@ -104,18 +104,38 @@ unrelated D-029 capsule, countdown, focus, or accessibility clauses. The correct
 the selected field appearing and closing immediately, with no compositor transition or global
 tint, and Return available on the first active frame while Escape remains immediate.
 
-The current source is only partially aligned: App overlays present the field and key panel
-directly; `VisualResetModel.doneEarlyFromKeyboard()` is immediate and its
-“Keyboard Done early is immediate from the first active frame” test proves that seam. In
-contrast, `MovementModel` still guards Return, A, P, Q, and 1/2/3 for 0.8 seconds, as proven by
-“Keyboard choices remain inert until the declaration guard arms” and “Return A and P are
-guarded while pointer declarations remain immediate.” Therefore D-032 is neither fully shipped
-nor absent. No implementation may claim otherwise or choose a convenient hybrid.
+The current source is only partially aligned. `VisualResetModel.doneEarlyFromKeyboard()` is
+immediate and its “Keyboard Done early is immediate from the first active frame” test proves that
+input seam. Movement pointer declarations and Escape are also immediate. In contrast,
+`MovementModel` still guards Return, A, P, Q, and 1/2/3 for 0.8 seconds, as proven by “Keyboard
+choices remain inert until the declaration guard arms” and “Return A and P are guarded while
+pointer declarations remain immediate.”
 
-The single-writer order is: Story #19 reconciles the canonical interaction, motion, screen, and
-accessibility clauses; then the **Break surfaces** collision owner characterizes and aligns
-`VisualResetModel`, `MovementModel`, and the Visual/Movement/Merged overlay coordinators and
-tests to that one contract. A feature or overlay may not independently retain or remove a guard.
+Presentation is also a shipped conflict, not an aligned seam. Under standard accessibility
+preferences, `VisualResetPanel`, `MovementPanel`, and `MergedPanel` resolve their shared
+`BreakFieldAnimatedPanel` profile to `frostDissolve`. `DSMotion` makes that entrance 2.69 seconds
+and a settled exit 0.94 seconds. `BreakFieldPanelMotionTests` explicitly retains both behaviors.
+`VisualResetOverlayCoordinator` constructs its model with countdown-on-open disabled and calls
+`VisualResetModel.startCountdown()` only from the panel's entrance-settled callback;
+`VisualResetOverlayCoordinatorTests` explicitly requires the countdown to wait for that
+settlement. Reduced Motion, Reduce Transparency, static-presentation, and pre-settlement-exit
+fallbacks can be immediate, but those exceptions do not make the standard path conform to
+D-032's immediate entrance and exit. Therefore D-032 is neither fully shipped nor absent. No
+implementation may claim otherwise or choose a convenient hybrid.
+
+These standard frost timings, the visual countdown-settlement gate, and the Movement keyboard
+guard are quarantined as **implementation evidence**, not product authority. They must not be
+copied into new work as the intended contract. Conversely, D-032 must not be claimed as fully
+implemented while these source paths and their retaining tests remain. Story #19 first repairs
+the stale canonical clauses and D-031 mis-citation against the exact D-032 text.
+
+After that canonical repair, the **Break surfaces** collision owner is the single writer across
+`BreakFieldAnimatedPanel` and shared panel motion, the `DSMotion`/DesignSystem token seam,
+`VisualResetModel`, `MovementModel`, Visual/Movement/Merged panels and overlay coordinators,
+Visual Reset countdown start, and the affected Feature and App tests. That owner characterizes
+the shipped split before aligning entrance, exit, countdown start, and key arming to one
+contract. A feature, overlay, test, or motion-token change may not independently retain or
+remove part of this behavior.
 
 The closest applicable `AGENTS.md` wins for scoped implementation and process concerns such
 as file placement, package boundaries, test style, concurrency, and required verification.

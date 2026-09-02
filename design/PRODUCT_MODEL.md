@@ -53,8 +53,10 @@ legacy-ID migration disposition live under `preset_contract_v2` in
 `../research/health/machine-readable/product_protocol.yaml`. Shipped IDs retain exact v1 values
 until the person accepts a successor; no update silently retunes a schedule. Every v2 selection
 persists contract version `2`, its identifier, and migration state. Legacy `custom` retains its
-exact payload until explicit acceptance of `custom_v2`, whose payload fields/units/values are
-compatible without reinterpretation. Adaptive starts at the current Balanced v2 contract and initially changes only
+exact payload until explicit acceptance of `custom_v2`. Its storage domain accepts every legal
+positive finite v1 value without clamping, including 5-second visual and `[30]` movement-duration
+fixtures; safer 10–60-second and 120/300 authoring bounds apply only to a new or edited v2 value.
+Adaptive starts at the current Balanced v2 contract and initially changes only
 delivery inside the window and bounded holds, never frequency or health outcomes.
 
 **Non-negotiable relationships:**
@@ -74,7 +76,9 @@ delivery inside the window and bounded holds, never frequency or health outcomes
   fresh or Custom visual cycle may still become due under the person's configured bounds. The
   cross-clock effect is scheduling courtesy, not a visual-completion fact or proof of a walk.
 - Strong fresh sensor evidence may create an explained, undoable schedule restart only after the
-  owning validation and permission gates. It never creates one of the ten product facts.
+  owning validation and permission gates and only when no running or Paused/Held-suspended ritual
+  remains. Otherwise it queues a neutral revalidation suggestion and rotates no cycle or snapshot.
+  It never creates one of the ten product facts.
 - Recovery produces a gentle optional suggestion, never an alarm or “risk” state.
 
 ## 4. Interruption levels
@@ -139,15 +143,20 @@ its always-present manual cycle. Effect-bearing nonterminal commands require a c
 and atomic acknowledgement before exposing any effect. Opportunity commands use OpportunityID +
 revision; Pause/Held/system/schedule evidence commands use stable GlobalStateID + global revision.
 When one affects a running ritual, expected opportunity context atomically compares and fences its
-old revision without becoming the command identity. Hold may begin before due while accumulating
+old revision, creates a successor revision, and rebases the exact phase, segment, accepted
+deadline/remaining duration, and snapshot without reset or extension. Hold may begin before due while accumulating
 and no OpportunityID exists. One complete conflict-key and same-key rank registry covers every
 authoritative nonterminal transition; the coordinator applies compatible winners from disjoint
-evidence keys before reducing full state. Offline intent is inert until renewed and revalidated.
+evidence keys before reducing full state. Begin and matching clear share identical record-kind and
+identity bytes; operation and rank are not key identity. Offline intent is inert until renewed and revalidated.
 
 Escape is always equivalent to the least-committal exit. It is never a trap and never asks
 "are you sure". `ActionID` makes retries idempotent: a compact live receipt replays the original
-acknowledgement without effects, high water reports an expired receipt as already settled, and an
-unseen stale action reports expired before acceptance while showing current state. An action originated after its actor knew the
+acknowledgement without effects until the device returns acknowledgement-of-ack or 90 seconds
+elapse. A projection/generation fence alone never erases it. After expiry, duplicate and unseen
+actions say **too old to verify** and show current state; disposition high water never claims
+receipt. Per-device counters are gap-free, and out-of-order counters wait in a Class-0 sparse
+window until every lower sequence is disposed. An action originated after its actor knew the
 opportunity closed is a rejected no-op with honest feedback. A valid candidate originated before
 that actor learned of provisional closure still reconciles only inside the same live, unfenced
 coordinator generation and projection epoch. Terminal order uses fact-claim rank and stable
@@ -233,18 +242,23 @@ It may never combine them into a grade or interpret them as health outcomes.
 
 Operational events, observations, assessments, scheduling decisions, corrections, and retained
 companion state use separate ledgers. Raw companion/terminal candidates, losers, duplicates,
-old-generation rejection envelopes, and compact lost-ack receipts are Class 0: memory-only for at
-most 90 seconds, erased at acknowledgement/settlement/fence, and never exported or given a durable
-record identity. A compact receipt has no raw payload and only replays the original outcome once. A sensor observation may support a `scheduling_decision`; it cannot
+old-generation rejection envelopes, out-of-order sparse counter entries, and compact lost-ack
+receipts are Class 0: memory-only for at most 90 seconds and never exported or given a durable
+record identity. A compact receipt is erased early only after verified acknowledgement-of-ack,
+not an ACK generation or fence, and has no raw payload. A sensor observation may support a `scheduling_decision`; it cannot
 be encoded as `timerFinished`, `userDeclaredCompleted`, or `userDeclaredAlreadyMoved`.
 
-Companion controls project nine explicit conditions: live, offline, expired, transfer pending,
-terminal-action pending, revalidating, rejected-no-op, already-ended, and transfer-failed. “Any
+Companion controls project explicit live, neutral offline, offline-terminal-ack-unknown, expired,
+transfer-pending, terminal-action-pending, neutral revalidating,
+revalidating-terminal-ack-unknown, rejected-no-op, already-ended, and transfer-failed conditions. “Any
 device” applies only to a live exact-generation lease. The machine registry defines each state's
 available control IDs, exact labels, focus/order, VoiceOver, keyboard, Escape, and cancellation.
 Unavailable controls are absent from focus. Transfer pending can cancel only the transfer; terminal
 pending names the selected action and cannot cancel or repeat it. Offline, expired, and transfer
-failed offer enabled Retry and Close. No sensor is required.
+failed offer enabled Retry and Close. Unknown terminal acknowledgement preserves the selected
+action provenance and says it is checking whether that named action was received and **do not
+repeat**; checking status never resends it. Live controls/focus and remote IDs are exact per phase
+and segment, with `Just the visual one` only in merged movement offered. No sensor is required.
 
 ## 9. Adaptation — what the app may and may not learn
 

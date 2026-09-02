@@ -141,9 +141,16 @@ preset_contract_v2:
     custom_v2:
       display_name: Custom
       payload_schema_version: 2
-      visual_duration_range_seconds: [10, 60]
-      movement_duration_options_seconds: [120, 300]
-      ordering_rule: 0_less_than_soft_due_less_than_or_equal_target_less_than_or_equal_latest
+      storage_compatibility_domain:
+        fields_and_units: exact_v1_custom_timing_fields_and_seconds_units
+        numeric_values: every_positive_finite_v1_value_without_v2_authoring_clamp
+        ordering: preserve_exact_persisted_v1_field_order_and_values
+        migration_rule: never_silently_retune_reject_or_coerce_a_legal_v1_payload
+      new_authoring_constraints:
+        visual_duration_range_seconds: [10, 60]
+        movement_duration_options_seconds: [120, 300]
+        ordering_rule: 0_less_than_soft_due_less_than_or_equal_target_less_than_or_equal_latest
+        applies_to: newly_created_or_user_edited_v2_payload_only
       safety_note: neutral_non_blocking
   legacy_identifier_disposition:
     rule: >-
@@ -167,9 +174,15 @@ preset_contract_v2:
       exact_values_from: persisted_custom_timing
       suggested_successor: custom_v2
       payload_compatibility: >-
-        The v2 payload preserves the exact v1 custom timing fields, units, ordering,
-        and values. Explicit acceptance changes only preset_contract_version,
-        preset_identifier, and migration_state; it does not reinterpret timing.
+        The v2 storage domain accepts every legal positive finite v1 custom value and preserves
+        the exact fields, units, ordering, and values. Explicit acceptance changes only
+        preset_contract_version, preset_identifier, and migration_state; it does not reinterpret,
+        clamp, reject, or silently retune timing. Safer v2 authoring bounds apply only after the
+        person edits or creates a value.
+      extreme_payload_fixture:
+        visual_duration_seconds: 5
+        movement_duration_options_seconds: [30]
+        expected_migrated_values: {visual_duration_seconds: 5, movement_duration_options_seconds: [30]}
 activity_estimator:
   recent_input_window_seconds: 60
   long_idle_reset_seconds: 300
@@ -207,7 +220,8 @@ candidate_data_lifecycle_v2:
     memory_only: true
     raw_payload: false
     maximum_retention_seconds: 90
-    discard_at_ack_fence_or_limit: true
+    discard_at_verified_delivery_acknowledgement_of_ack_or_limit: true
+    projection_or_generation_fence_does_not_erase: true
     export: false
     purpose: action_id_lost_ack_idempotency_only
 boundary_predicates:

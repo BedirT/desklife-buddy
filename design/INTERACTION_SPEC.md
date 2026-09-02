@@ -142,10 +142,12 @@ user-initiated weekly window (patterns, never grades `[03 §10]`) — design pen
 | Escalations / lockout | max 1 / **never** | | | `opportunity_delivery` |
 
 Adaptive starts at the current Balanced v2 contract bounds and may initially change only delivery within a due window
-and bounded automatic holds, never frequency or health conclusions. `custom_v2` has the YAML
-ordering rule and 10–60 s visual duration range. Legacy IDs and values remain readable and
-unchanged until explicit migration; a v1 `custom` payload is field-for-field compatible and is
-reidentified only after explicit acceptance.
+and bounded automatic holds, never frequency or health conclusions. `custom_v2` separates storage
+compatibility from new authoring: storage accepts every legal positive finite v1 value unchanged,
+including a 5-second visual duration or `[30]` movement-duration option, while the 10–60-second
+visual range, 120/300 movement choices, and ordering rule apply only to newly created or edited v2
+values. Legacy IDs and values remain readable and unchanged until explicit migration; a v1
+`custom` payload is reidentified only after explicit acceptance and is never clamped or rejected.
 
 ## 3. Keyboard and Escape
 
@@ -298,7 +300,11 @@ from the retained schedule snapshot. A due schedule says **“No finish was reco
 is still due.”** and the menu says **“Still due · timer not restored.”** An accumulating or manually
 opened early schedule instead says **“No finish was recorded. The timer was not restored, and this
 schedule was not reset.”** and formats the menu as **“[actual schedule status] · timer not
-restored.”** VoiceOver announces the selected meaning once. Focus starts on **Close**; Return,
+restored.”** Body copy may state due when the retained schedule is due, but the menu independently
+preserves the full evidence projection: **“Paused: [selected reason] · timer not restored”** or
+**“Held: [qualified evidence reason] · timer not restored”** for both due and not-due branches.
+Held reasons retain provenance and freshness; stale or missing evidence is unknown, not a meeting
+or deep-focus claim. VoiceOver announces the selected meaning once. Focus starts on **Close**; Return,
 Escape, or Command-period closes the unusable ritual. The 60-second quiet grace adds no countdown
 or completion mark and never labels a not-due schedule due.
 
@@ -338,10 +344,16 @@ owner-approved story, disclosure, fallback, and proof; the core may not imply th
   projection plus snooze/re-offer. A merged opportunity carries each participating cycle ID.
 - `ActionID` identifies one explicit, system, or companion action with origin device/session,
   revision, and the exact cycle set. A duplicate never reapplies effects: while its compact
-  Class-0 receipt exists, retry replays the original outcome and acknowledgement. After receipt
-  expiry, committed high water reports **already received and settled**; a previously unseen stale
-  action reports **expired before acceptance**. Both project current state rather than making an
-  inaccurate zero-change claim.
+  Class-0 receipt exists, retry replays the original outcome and acknowledgement. The coordinator
+  retains that receipt until the device returns a verified acknowledgement-of-ack for the outcome
+  delivery token, or 90 monotonic seconds elapse. Creating an ACK, projection fence, or generation
+  fence does not erase it. After expiry, neither high water nor a missing receipt proves delivery:
+  duplicate and unseen stale actions say **“That action is too old to verify. Showing the current
+  timer.”** rather than claiming received, rejected, or unchanged.
+- Each paired device allocates strict contiguous, gap-free counters. Coordinator high water means
+  contiguous **disposition**, not receipt: counter 11 received while high water is 9 waits in a
+  Class-0 sparse window until 10 is disposed, then 10 and 11 advance in order. A 90-second hole
+  expiry uses the same too-old-to-verify projection and never leaps to a received claim.
 - `DecisionID` identifies one automatic hold, release, shift, merge, restart, or undo in the
   scheduling-decision ledger. It can never stand in for an ActionID or product fact.
 - `GlobalStateID` plus global revision identifies Pause, working-hours, system, sample, and
@@ -350,14 +362,17 @@ owner-approved story, disclosure, fallback, and proof; the core may not imply th
   commands use GlobalStateID + revision. When a global command affects a running ritual, optional
   expected OpportunityID/revision/projection-epoch/segment metadata is an atomic compare-and-fence,
   never global identity. The commit fences the old projection before suspending or resuming it, so
-  a reverse-arriving Watch terminal cannot finish the old revision.
+  a reverse-arriving Watch terminal cannot finish the old revision. It creates a successor
+  opportunity revision and rebases the same phase, segment, accepted monotonic deadline or
+  suspended remaining duration, and retained snapshot onto it. Paused/Held release resumes that
+  successor lineage; the old revision is never described as preserved.
 
 Schedule accrual uses covered local monotonic intervals only. Portable wall metadata is display,
 exchange, and audit context, never countdown reconstruction. A running ritual persists its
 coordinator monotonic epoch, anchor and deadline ticks, selected duration, last nonincreasing
 remaining value, opportunity revision, coordinator generation, and projection epoch. Epoch/anchor
 loss closes through `timerRecoveryUnavailable` without a product fact or fresh cycle. GlobalStateID,
-global revision, coordinator generation, action-counter high-water marks, and projection fences are
+global revision, coordinator generation, contiguous disposition high-water marks, and projection fences are
 restart-safe. Cross-device handoff requires a bounded monotonic request/acknowledgement and subtracts
 all measured uncertainty; incomplete or stale handoff leaves the sender authoritative.
 
@@ -394,13 +409,24 @@ arrival order never resolves the result. Hold evidence is global-state scoped an
 clocks are accumulating with no OpportunityID; an existing running opportunity adds only the
 atomic compare-and-fence context above.
 
+A conflict key encodes only one registered record kind and normalized identity bytes. Begin and
+matching clear for Pause, Hold/DecisionID, unavailable episode, long-idle episode, working-hours
+record, and schedule-restart DecisionID therefore produce identical keys; operation, transition,
+rank, ActionID, and arrival are excluded. Competing begin/clear commands for that record select one
+same-key winner. Restart and undo additionally require no unresolved running ritual, including a
+Paused/Held suspended overlay; otherwise the app queues only a neutral revalidation suggestion and
+rotates no cycle or snapshot.
+
 Identifiers use the versioned `cadence_contract_bytes_v1` encoding: UUIDs normalize to 16
 network-order bytes; strings are NFC UTF-8; integers are big-endian; optionals, tagged unions,
-ordered typed structs, sets, and maps have registered byte encodings. Locale, wall time, process
+ordered typed structs, lists, sets, and maps have explicit uint32 counts/cardinalities and
+registered byte encodings. Locale, wall time, process
 hashes, and pointer identity are never inputs. A projection fence registers the literal
-`cadence.timing-runtime-v2.projection-fence.v1`, schema version 1, exact ordered typed fields,
+`cadence.timing-runtime-v2.projection-fence.v1`, schema version 1 as uint16, exact ordered typed fields,
+uint8 optional/union tags, uint16 enum vocabularies, a counted UUID→uint64 map, an exact nested
+opportunity context, and fixed 32-byte prior digest,
 SHA-256 digest bytes, Ed25519 signing input, pinned-key verification, and previous-digest chain; a
-mutated domain, version, type, order, digest, or signature fails closed. A terminal fact ID is
+mutated domain, version, type, width, tag, cardinality, order, digest, or signature fails closed. A terminal fact ID is
 OpportunityID + canonical terminal slot + the fixed registered component scope, never the
 candidate winner or participant subset.
 
@@ -425,16 +451,24 @@ revision, it is final and a later movement-phase Escape retains it.
 
 `Take with me` and companion terminal controls are enabled only for a live paired projection with
 matching generation, projection epoch, opportunity revision, and segment. The single registry has
-live, offline, expired, **transfer pending**, **terminal action pending**, revalidating,
+live, neutral offline, offline-terminal-ack-unknown, expired, **transfer pending**, **terminal action pending**, neutral revalidating,
+revalidating-terminal-ack-unknown,
 rejected-no-op, already-ended, and transfer-failed states. Each registers its exact control IDs,
 labels, enabled set, focus/order, VoiceOver, keyboard, Escape, and cancellation behavior. Transfer
 pending may cancel only the uncommitted transfer. Terminal action pending names the selected action
 and cannot cancel or repeat the submission; Close/Escape dismisses status only. Offline, expired,
-and transfer failed expose enabled **Retry** and **Close**, never a disabled trigger. Companion
+and transfer failed expose enabled **Retry** and **Close**, never a disabled trigger. If a terminal
+ACK is unknown, the state preserves the selected action provenance and says **“Connection lost.
+Checking whether [action] was received; do not repeat.”** Check status/revalidation never resends
+the action. Neutral offline/revalidating copy explicitly says no companion operation is pending.
+The live phase registry defines exact controls, focus, concrete remote IDs, and Escape for visual,
+movement, position, recovery, and both merged segments; `Just the visual one` exists only in merged
+movement offered, and each action group is a closed remote-ID set. Companion
 wrappers materialize a closed, exact concrete local transition before phase/participant/segment/
 slot/resolver/fact/effect validation. No sensor is needed. Raw payloads and compact replay receipts
 are Class 0 and memory-only for at most 90 seconds; receipts retain only ActionID digest, device
-counter, outcome, successor revisions, and acknowledgement code, with no payload, export, durable
+counter, outcome, successor revisions, outcome ACK, and delivery token until ack-of-ack or expiry,
+with no payload, export, durable
 identity, or duplicate side effect.
 
 The exact per-transition clock/fact/ledger/visible/stale/recovery matrix is

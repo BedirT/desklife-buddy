@@ -827,3 +827,28 @@ unchanged.
   each state's controls, labels, focus/order, VoiceOver, keyboard, Escape, and cancellation.
   Recovery copy says “still due” only when the retained schedule is actually due; otherwise it
   says the timer was not restored and the schedule was not reset while showing the actual phase.
+
+#### D-033 sixth contract-repair addendum — 2026-09-01
+
+This append-only repair refines identity and delivery mechanics without changing the approved
+health purpose, facts, cadence values, permission boundary, or non-activation:
+The immediately preceding addendum's post-erasure “already settled / expired before acceptance”
+sentence is retained only as historical trace and is superseded by the uncertainty-safe rule below.
+
+- Begin and matching clear for each evidence record share identical conflict-key kind and identity
+  bytes. Operation, transition, rank, ActionID, and arrival never enter key identity.
+- A compact replay receipt survives until verified device acknowledgement-of-ack or 90 monotonic
+  seconds; ACK/fence creation cannot erase it. After expiry, high water proves only contiguous
+  disposition, so duplicate/unseen actions say too old to verify. Device counters are gap-free and
+  out-of-order entries wait in a Class-0 sparse window.
+- A global command affecting a running ritual fences its old opportunity revision, creates a
+  successor, and rebases the exact phase, segment, monotonic deadline/remaining duration, and
+  snapshot. Restart/undo cannot rotate cycles under a running or Paused/Held-suspended snapshot.
+- Fence bytes register exact integer widths, numeric enum/union tags, nested optional layout, and
+  collection cardinality. Width, tag, or cardinality mutations fail closed.
+- The companion live registry is phase/segment-specific with closed remote-ID groups. Unknown
+  terminal acknowledgement preserves the selected action and says do not repeat; neutral
+  offline/revalidating copy is used only when no operation is pending.
+- Timer-recovery body may state due, but its menu independently preserves actual Paused/Held state
+  and qualified reason. `custom_v2` storage preserves every legal positive finite v1 payload;
+  safer new-authoring bounds apply only after creation or edit.

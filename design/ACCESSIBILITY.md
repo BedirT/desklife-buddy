@@ -123,19 +123,27 @@ before anything else.
 
 1. **Keyboard path** — Return/Space activates the focused enabled control. Offline, expired, and
    transfer-failed expose **Retry** and **Close**. Transfer-pending exposes **Cancel transfer**;
-   revalidating exposes **Cancel reconnect** and **Close**; terminal-action-pending exposes
-   **Close** because a submitted action cannot be cancelled.
-2. **Initial focus** — Live uses Take with me when available, otherwise the first present normalized
-   terminal control. Offline/expired/transfer-failed focus Retry. Transfer-pending focuses Cancel
-   transfer; revalidating focuses Cancel reconnect; terminal-pending, rejected, and already-ended
-   focus Close. No absent or disabled trigger receives focus.
+   neutral revalidating exposes **Cancel reconnect** and **Close**; offline-terminal-ack-unknown
+   exposes **Check status** and **Close**; revalidating-terminal-ack-unknown exposes **Cancel
+   reconnect** and **Close**; terminal-action-pending exposes **Close** because a submitted action
+   cannot be cancelled.
+2. **Initial focus** — Live uses the exact phase/segment registry: Take with me when present,
+   otherwise that row's first terminal control. Neutral offline/expired/transfer-failed focus Retry;
+   offline-terminal-ack-unknown focuses Check status. Transfer-pending focuses Cancel transfer;
+   both revalidating states focus Cancel reconnect; terminal-pending, rejected, and already-ended
+   focus Close. No absent or disabled trigger receives focus. `Just the visual one` exists only in
+   merged movement offered.
 3. **Focus order** — exactly the enabled control IDs registered for that state. Status is read but
    not a fake focus stop. Unavailable phase-specific controls are absent, not disabled.
 4. **Escape** — returns to the authoritative timer without applying a companion action.
 5. **VoiceOver names** — semantic action names, never device appearance or sensor language.
-6. **VoiceOver values** — exactly one registered announcement for live, offline, expired,
-   transfer-pending, terminal-action-pending, revalidating, rejected-no-op, already-ended, or
-   transfer-failed. Terminal pending names the selected action, never “Sending timer.” No silent no-op.
+6. **VoiceOver values** — exactly one registered announcement for live, neutral offline,
+   offline-terminal-ack-unknown, expired, transfer-pending, terminal-action-pending, neutral
+   revalidating, revalidating-terminal-ack-unknown, rejected-no-op, already-ended, or
+   transfer-failed. Terminal pending names the selected action, never “Sending timer.” Unknown ACK
+   states preserve and name that action: “Checking whether [action] was received. Do not repeat.”
+   Check status/reconnect never resends it. Neutral states explicitly say no companion operation is
+   pending. No silent no-op.
 7. **Text scaling** — state and recovery copy wrap above a vertical action group.
 8. **Increase Contrast** — labels, traits, focus rings, and boundaries distinguish every state.
 9. **Reduce Motion** — immediate state replacement; no spinner or transfer animation required.
@@ -156,13 +164,16 @@ before anything else.
 5. **VoiceOver names** — due: “Timer could not be restored. No finish was recorded. The schedule
    is still due.” Not due/manual early: “Timer could not be restored. No finish was recorded. This
    schedule was not reset.” The retained phase selects the string before Close receives focus.
-6. **VoiceOver values** — a due menu says “Still due · timer not restored.” Otherwise it reads the
-   ordinary actual retained schedule status followed by “timer not restored”; no countdown chatter.
+6. **VoiceOver values** — active due says “Still due · timer not restored.” Paused always says
+   “Paused: [selected reason] · timer not restored,” and Held always says “Held: [fresh,
+   provenance-qualified reason] · timer not restored,” whether due or not due. Other not-due state
+   reads the ordinary retained schedule status plus “timer not restored”; no countdown chatter.
 7. **Text scaling** — title, body, and actions wrap in one vertical group.
 8. **Increase Contrast** — explicit boundary and focus ring.
 9. **Reduce Motion** — immediate quiet transition, no entrance/exit gate.
 10. **Meaning without color** — “still due” appears only when true; otherwise “schedule was not
-    reset” plus the actual menu phase carries the state. “Not restored” is always explicit.
+    reset” plus the actual menu phase carries the state. Paused/Held wording and qualified reason
+    remain visible independent of due body copy. “Not restored” is always explicit.
 11. **Alternative movement** — no body state or completion is inferred.
 12. **Multi-display** — one key recovery status, one focus restoration, actual menu phase reachable.
 

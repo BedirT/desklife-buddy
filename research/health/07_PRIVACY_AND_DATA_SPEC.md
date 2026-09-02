@@ -34,13 +34,18 @@ protocol correlation and is erased with the buffer. Discard occurs at settlement
 projection fence, or **90 seconds**, whichever comes first. These buffers never enter an
 operational/companion history ledger, crash recovery, export, Weekly, analytics, logs, or backups.
 An old-generation rejected action may produce immediate on-screen/VoiceOver feedback, but that
-user-facing projection is not retained. To make a lost acknowledgement idempotent, a compact
-Class-0 replay receipt may remain in memory until acknowledgement, fence, or 90 seconds. It contains
-only an ActionID SHA-256 digest, origin device/counter, outcome code, successor revisions, and
-acknowledgement/fence code. It contains no raw action payload, user content, sensor value, product
+user-facing projection is not retained. Out-of-order counter entries use the same Class-0 boundary:
+a sparse pending window holds only minimized device/counter/action correlation for at most 90
+seconds and is never persisted or exported. To make a lost acknowledgement idempotent, a compact
+Class-0 replay receipt remains in memory until the device returns a verified
+acknowledgement-of-ack for the delivered outcome token, or 90 monotonic seconds. Creating an
+outcome ACK, projection fence, or generation fence never erases it. It contains only an ActionID
+SHA-256 digest, origin device/counter, outcome code, successor revisions, outcome ACK, and delivery
+token. It contains no raw action payload, user content, sensor value, product
 fact, health fact, or durable identity; it is never logged, exported, analyzed, or backed up. While
-present it replays the original outcome without effects. After erasure, persisted high water can
-say only “already received and settled”; an unseen stale action says “expired before acceptance.”
+present it replays the original outcome without effects. After erasure, high water proves only a
+contiguous disposition, not delivery; duplicate and unseen actions say “too old to verify” and
+show current state.
 
 ### Class 1 — Local routine data
 
@@ -54,7 +59,7 @@ Examples:
 - content preference;
 - skip/snooze categories.
 - current coordination continuity state: GlobalStateID, coordinator generation/revision,
-  per-device action-counter high-water acknowledgements, active projection fences, and paired
+  per-device contiguous action-disposition high water, active projection fences, and paired
   public-key fingerprints, without raw candidate payloads.
 
 Requirements:
@@ -238,7 +243,8 @@ Proposed defaults:
 |---|---:|
 | Ephemeral input/activity signal | memory only |
 | Raw terminal/companion candidate, losing/duplicate/rejected envelope | memory only; ≤90 seconds and until settlement/fence, whichever comes first |
-| Compact ActionID replay receipt without raw payload | memory only; ≤90 seconds and until acknowledgement/fence, whichever comes first |
+| Sparse out-of-order action-counter window | memory only; ≤90 seconds; never persisted/exported; holes dispose without a received claim |
+| Compact ActionID replay receipt without raw payload | memory only; ≤90 seconds and until verified acknowledgement-of-ack, whichever comes first; ACK/fence creation does not erase it |
 | Current coordination continuity and signed fence/high-water state | current state plus the immediately previous fence for at most 90 seconds; compact current generation/high-water persists until reset |
 | Raw opportunity event | 30–90 days locally |
 | Daily aggregate | 12 months locally |
@@ -307,7 +313,7 @@ Future companion principles:
 - restart safety retains only minimized Class-1 generation/fence/high-water continuity and paired
   public fingerprints; the Ed25519 private coordinator key remains local, non-exportable, and is
   deleted by reset/unpair;
-- live/offline/expired/transfer-pending/terminal-action-pending/revalidating/rejected-no-op/already-ended/transfer-failed states
+- live/neutral-offline/offline-terminal-ack-unknown/expired/transfer-pending/terminal-action-pending/neutral-revalidating/revalidating-terminal-ack-unknown/rejected-no-op/already-ended/transfer-failed states
   remain usable without HealthKit, motion, location, camera, or another sensor.
 
 ## 13. Camera and posture sensing gate

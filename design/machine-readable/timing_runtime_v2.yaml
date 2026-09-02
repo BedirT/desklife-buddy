@@ -117,8 +117,8 @@ identities:
       struct: fields_encoded_in_the_exact_registered_schema_order_without_host_field_names
     collection_encoding:
       list: uint32_big_endian_count_then_items_in_declared_order
-      set: canonical_item_bytes_sorted_unsigned_lexicographically_then_encoded_as_list
-      map: canonical_key_bytes_sorted_unsigned_lexicographically_then_key_value_pairs
+      set: uint32_big_endian_cardinality_then_canonical_item_bytes_sorted_unsigned_lexicographically
+      map: uint32_big_endian_entry_count_then_canonical_key_bytes_sorted_unsigned_lexicographically_then_key_value_pairs
     lexical_order: compare_canonical_unsigned_byte_sequences_not_locale_or_platform_strings
     prohibited_inputs: [wall_time, localized_copy, process_hash_seed, pointer_address]
     output: lowercase_hex_digest_prefixed_with_sha256_colon
@@ -504,9 +504,17 @@ action_contract:
         - stop_and_revoke_old_opportunity_projection_leases
         - reject_every_uncommitted_candidate_for_the_old_revision_with_a_current_state_receipt
         - advance_and_fence_the_old_opportunity_revision
-        - preserve_or_resume_the_exact_running_phase_segment_deadline_and_snapshot_as_the_command_requires
+        - create_the_successor_opportunity_revision_for_the_same_opportunity_and_projection_epoch
+        - rebase_the_exact_phase_segment_accepted_deadline_remaining_duration_and_retained_snapshot_onto_the_successor_revision
         - commit_all_disjoint_evidence_winners_and_reduce_full_evidence_state
         - acknowledge_global_and_opportunity_successor_revisions_together
+      rebase_rule: >-
+        A matching global evidence commit never preserves the old opportunity revision. It
+        atomically fences that revision and creates one successor revision. The successor owns
+        the exact pre-command phase, segment, accepted monotonic deadline record or suspended
+        remaining duration, and retained snapshot without replay, reset, or wall-time extension.
+        Paused or Held projection suspends that successor; a later compatible clear resumes the
+        same ritual on another successor revision. Every old-revision remote action is rejected.
       reverse_arrival_rule: >-
         A Watch terminal action from the fenced opportunity revision is rejected as expired and
         receives the current projected state even when its callback arrives before the global
@@ -522,22 +530,58 @@ action_contract:
       - origin_device_id_and_counter
       - original_outcome_code
       - resulting_global_and_opportunity_revisions
-      - acknowledgement_or_fence_code
+      - outcome_acknowledgement_code_and_delivery_token
     compact_receipt_rule: memory_only_no_raw_payload_no_health_or_product_fact_no_export
     maximum_receipt_seconds: 90
+    retention_rule: retain_until_signed_delivery_acknowledgement_of_ack_is_received_or_90_monotonic_seconds_whichever_occurs_first
+    delivery_protocol:
+      - coordinator_commits_outcome_once_and_sends_outcome_ack_with_unpredictable_delivery_token
+      - device_presents_or_records_the_outcome_then_returns_signed_acknowledgement_of_ack_for_that_token
+      - coordinator_verifies_device_generation_action_id_digest_and_delivery_token_before_erasure
+      - projection_revision_generation_or_fence_acknowledgement_alone_never_erases_the_receipt
     exact_duplicate_while_receipt_present: replay_original_outcome_and_ack_without_reapplying_any_effect_fact_notification_or_haptic
-    duplicate_after_receipt_expiry_at_or_below_committed_high_water: already_received_and_settled_show_current_projected_state
-    unseen_stale_action_above_high_water_or_from_fenced_generation: expired_before_acceptance_show_current_projected_state
+    duplicate_or_unseen_after_receipt_expiry: uncertainty_safe_too_old_to_verify_show_current_projected_state
     user_receipts:
       exact_duplicate: Action already received. Showing the recorded result.
-      settled_high_water: Action already received and settled. Showing the current timer.
-      unseen_stale: That action expired before it could be accepted. Showing the current timer.
+      uncertainty_safe: That action is too old to verify. Showing the current timer.
     lost_ack_trace:
       - first_action_commits_effect_once_and_ack_is_lost
       - retry_with_same_action_id_matches_compact_receipt
       - coordinator_replays_original_outcome_and_successor_revision
       - effect_fact_notification_and_haptic_counts_remain_one
+      - device_acknowledges_receipt_of_the_outcome_before_early_receipt_erasure
     prohibited_copy: no_change_was_recorded
+  device_counter_contract:
+    generated_sequence: strict_contiguous_gap_free_unsigned_uint64_per_device_starting_at_one
+    device_allocation_order:
+      - durably_reserve_exactly_next_counter_before_exposing_the_action
+      - never_reuse_or_skip_a_reserved_counter_for_another_generated_action
+      - send_action_with_device_id_session_id_and_reserved_counter
+    persisted_high_water_meaning: greatest_counter_with_a_contiguous_coordinator_disposition_not_a_received_claim
+    advance_rule: >-
+      Advance only from H to H+1 and onward while every intervening counter has a committed,
+      rejected, or explicit unseen-gap-expired disposition. Never leap over a hole and never use
+      high water alone to tell a person that an action was received.
+    sparse_pending_window:
+      class: class_0_ephemeral
+      maximum_retention_seconds: 90
+      fields: [device_id, counter, action_id_digest, received_at_monotonic_ticks, encrypted_or_minimized_pending_envelope]
+      order_rule: hold_out_of_order_entries_until_every_lower_counter_is_disposed_or_the_hole_expires
+      persistence: prohibited
+      export: prohibited
+    counter_11_before_10_trace:
+      initial_contiguous_disposition_high_water: 9
+      receive_first: 11
+      first_result: hold_11_in_sparse_pending_window_high_water_remains_9
+      receive_second: 10
+      second_result: dispose_10_then_revalidate_and_dispose_11_in_counter_order_high_water_becomes_11
+      user_effect_rule: each_action_effect_commits_at_most_once_at_its_ordered_disposition
+    gap_expiry_trace:
+      initial_contiguous_disposition_high_water: 9
+      receive_first: 11
+      missing_counter: 10
+      at_90_seconds: record_unseen_gap_expired_for_10_and_reject_buffered_11_as_too_old_to_verify
+      later_counter_10_receipt: That action is too old to verify. Showing the current timer.
   generation_and_closure_fence:
     maximum_settlement_seconds: 90
     closure_coverage_selector: every_action_contract_transition_whose_terminal_field_is_true
@@ -550,7 +594,7 @@ action_contract:
       - global_state_id
       - global_state_revision
       - coordinator_generation
-      - committed_action_counter_high_water_by_paired_device
+      - contiguous_action_disposition_high_water_by_paired_device
       - active_opportunity_projection_epoch_ids
       - last_committed_fence_digest_bytes
       - installation_local_signing_public_key_fingerprint
@@ -559,7 +603,7 @@ action_contract:
       - closing_coordinator_generation
       - successor_coordinator_generation
       - opportunity_id_and_projection_epoch_when_opportunity_scoped
-      - admitted_action_counter_high_water_by_device
+      - contiguous_action_disposition_high_water_by_device
       - selected_projection_revision_or_operational_disposition
       - fence_reason
       - ed25519_signature_from_installation_local_coordinator_key
@@ -569,16 +613,48 @@ action_contract:
       canonical_bytes_version: cadence_contract_bytes_v1
       ordered_typed_fields:
         - {name: domain_literal, type: string}
-        - {name: schema_version, type: unsigned_uint64}
+        - {name: schema_version, type: unsigned_uint16}
         - {name: global_state_id, type: uuid}
         - {name: global_state_revision, type: unsigned_uint64}
         - {name: closing_coordinator_generation, type: unsigned_uint64}
         - {name: successor_coordinator_generation, type: unsigned_uint64}
-        - {name: opportunity_context, type: optional_struct_opportunity_id_uuid_projection_epoch_uuid}
-        - {name: admitted_action_counter_high_water_by_device, type: map_uuid_to_unsigned_uint64}
-        - {name: selected_outcome, type: tagged_union_projection_revision_uint64_or_operational_disposition_enum}
-        - {name: fence_reason, type: enum}
-        - {name: previous_fence_digest, type: optional_32_byte_string}
+        - {name: opportunity_context, type: optional_opportunity_context_v1}
+        - {name: contiguous_action_disposition_high_water_by_device, type: counted_map_uuid_to_unsigned_uint64}
+        - {name: selected_outcome, type: selected_outcome_union_v1}
+        - {name: fence_reason, type: fence_reason_enum_uint16}
+        - {name: previous_fence_digest, type: optional_fixed_32_bytes}
+      exact_nested_types:
+        optional_opportunity_context_v1:
+          presence_tag: unsigned_uint8_0_absent_1_present
+          present_fields_in_order:
+            - {name: opportunity_id, type: uuid_16_bytes}
+            - {name: projection_epoch_id, type: uuid_16_bytes}
+            - {name: opportunity_revision, type: unsigned_uint64}
+        counted_map_uuid_to_unsigned_uint64:
+          cardinality: unsigned_uint32_big_endian_entry_count
+          entry_order: canonical_uuid_bytes_unsigned_lexicographic
+          entry_fields_in_order: [uuid_16_bytes, unsigned_uint64_big_endian]
+        selected_outcome_union_v1:
+          tag_width: unsigned_uint8
+          variants:
+            1: {name: projection_revision, payload: unsigned_uint64_big_endian}
+            2: {name: operational_disposition, payload: operational_disposition_enum_uint16}
+        optional_fixed_32_bytes:
+          presence_tag: unsigned_uint8_0_absent_1_present
+          present_payload: exactly_32_unencoded_bytes_without_a_length_prefix
+      enum_vocabularies:
+        fence_reason_enum_uint16:
+          terminal_settlement: 1
+          timer_recovery_unavailable: 2
+          global_evidence_revision_rebase: 3
+          coordinator_epoch_loss: 4
+          settlement_window_expired: 5
+        operational_disposition_enum_uint16:
+          timer_recovery_unavailable: 1
+          stale_generation_rejected: 2
+          stale_revision_rejected: 3
+          settlement_window_expired: 4
+          synchronization_failure: 5
       normalization:
         uuid: identities.portable_canonical_encoding.scalar_encoding.uuid
         string: identities.portable_canonical_encoding.scalar_encoding.string
@@ -586,10 +662,10 @@ action_contract:
         map: identities.portable_canonical_encoding.collection_encoding.map
         tagged_union: identities.portable_canonical_encoding.scalar_encoding.tagged_union
       digest: sha256_of_exact_ordered_typed_canonical_bytes_as_32_raw_bytes
-      signing_input: utf8_cadence_projection_fence_signature_v1_then_32_digest_bytes
+      signing_input: cadence_contract_bytes_v1_string_cadence_projection_fence_signature_v1_then_exact_32_digest_bytes
       signature: ed25519_with_installation_local_coordinator_private_key
       verification_order:
-        - reject_unknown_domain_schema_version_type_or_union_tag
+        - reject_unknown_domain_schema_version_type_width_enum_value_union_tag_or_collection_cardinality
         - normalize_and_reencode_every_field
         - recompute_sha256_and_constant_time_compare_the_32_digest_bytes
         - verify_ed25519_signature_against_the_pinned_local_public_key_fingerprint
@@ -611,7 +687,7 @@ action_contract:
       - reject_every_later_arriving_old_generation_action_as_operational_no_op
       - expose_honest_rejected_or_sync_failure_receipt
       - then_issue_new_generation_leases
-    old_generation_receipt: action_expired_before_acceptance_show_current_projected_state
+    old_generation_receipt: action_too_old_to_verify_show_current_projected_state
     bounded_rule: >-
       A live coordinator completes settlement/fence within 90 monotonic seconds. Epoch loss
       never waits for an old monotonic expiry it can no longer prove: restart fences the old
@@ -821,6 +897,10 @@ action_contract:
       successor global revision plus any atomically fenced opportunity revision.
     conflict_key_reduction:
       key_encoding: cadence_contract_bytes_v1_of_registered_key_kind_and_normalized_identity_fields
+      key_identity_rule: >-
+        Encode only the registered key kind and identity field values. A begin and its matching
+        clear for one evidence record produce identical bytes. Transition ID, operation, rank,
+        ActionID, causal arrival position, and localized copy are never key identity.
       same_key_winner_sort:
         - causally_satisfied_exact_scope_revision
         - smallest_transition_rank_within_conflict_key
@@ -834,35 +914,35 @@ action_contract:
         is still current may enter the next frontier; stale opportunity or record identities get
         a truthful current-state receipt.
       registered_conflict_key_by_transition:
-        pause.start: manual_pause_record_by_pause_revision
-        pause.resume: manual_pause_record_by_matching_pause_revision
-        hold.begin: hold_evidence_record_by_decision_id
-        hold.release: hold_evidence_record_by_matching_decision_id
-        hold.correction_release: hold_evidence_record_by_matching_decision_id
-        working_hours.exit: working_hours_evidence_record
-        working_hours.enter: working_hours_evidence_record
-        system.unavailable: system_unavailable_record_by_episode_id
-        system.available: system_unavailable_record_by_matching_episode_id
-        system.available_after_extended_unavailable: system_unavailable_record_by_matching_episode_id
-        system.short_input_idle: short_input_idle_record_by_sample_sequence
-        system.long_idle_began: long_idle_record_by_idle_episode_id
-        system.returned_from_long_idle: long_idle_record_by_matching_idle_episode_id
-        system.sample_gap: sample_gap_record_by_sample_sequence
-        sensor.strong_movement_restart: schedule_restart_record_by_decision_id
-        schedule_restart.undo: schedule_restart_record_by_matching_decision_id
-        opportunity.presented: opportunity_phase_intent_by_opportunity_id
-        merge.created: opportunity_phase_intent_by_opportunity_id
-        delivery.shift_to_seam: opportunity_delivery_intent_by_opportunity_id
-        now.accept_visual: opportunity_phase_intent_by_opportunity_id
-        now.open_movement_offer: opportunity_phase_intent_by_opportunity_id
-        now.accept_movement: opportunity_phase_intent_by_opportunity_id
-        later.snooze: opportunity_phase_intent_by_opportunity_id
-        movement.change_content: opportunity_content_intent_by_opportunity_id_and_segment
-        now.accept_recovery: opportunity_phase_intent_by_opportunity_id
-        merged.accept: opportunity_phase_intent_by_opportunity_id
-        merged.movement_accept: opportunity_phase_intent_by_opportunity_id
-        merged.movement_change_content: opportunity_content_intent_by_opportunity_id_and_segment
-        companion.take_with_me: opportunity_handoff_intent_by_opportunity_id
+        pause.start: {kind: manual_pause_evidence_record, identity_fields: [pause_record_id]}
+        pause.resume: {kind: manual_pause_evidence_record, identity_fields: [pause_record_id]}
+        hold.begin: {kind: hold_evidence_record, identity_fields: [decision_id]}
+        hold.release: {kind: hold_evidence_record, identity_fields: [decision_id]}
+        hold.correction_release: {kind: hold_evidence_record, identity_fields: [decision_id]}
+        working_hours.exit: {kind: working_hours_evidence_record, identity_fields: [working_hours_record_id]}
+        working_hours.enter: {kind: working_hours_evidence_record, identity_fields: [working_hours_record_id]}
+        system.unavailable: {kind: system_unavailable_evidence_record, identity_fields: [unavailable_episode_id]}
+        system.available: {kind: system_unavailable_evidence_record, identity_fields: [unavailable_episode_id]}
+        system.available_after_extended_unavailable: {kind: system_unavailable_evidence_record, identity_fields: [unavailable_episode_id]}
+        system.short_input_idle: {kind: short_input_idle_sample_record, identity_fields: [sample_sequence]}
+        system.long_idle_began: {kind: long_idle_evidence_record, identity_fields: [idle_episode_id]}
+        system.returned_from_long_idle: {kind: long_idle_evidence_record, identity_fields: [idle_episode_id]}
+        system.sample_gap: {kind: sample_gap_record, identity_fields: [sample_sequence]}
+        sensor.strong_movement_restart: {kind: schedule_restart_decision_record, identity_fields: [decision_id]}
+        schedule_restart.undo: {kind: schedule_restart_decision_record, identity_fields: [decision_id]}
+        opportunity.presented: {kind: opportunity_phase_intent, identity_fields: [opportunity_id]}
+        merge.created: {kind: opportunity_phase_intent, identity_fields: [opportunity_id]}
+        delivery.shift_to_seam: {kind: opportunity_delivery_intent, identity_fields: [opportunity_id]}
+        now.accept_visual: {kind: opportunity_phase_intent, identity_fields: [opportunity_id]}
+        now.open_movement_offer: {kind: opportunity_phase_intent, identity_fields: [opportunity_id]}
+        now.accept_movement: {kind: opportunity_phase_intent, identity_fields: [opportunity_id]}
+        later.snooze: {kind: opportunity_phase_intent, identity_fields: [opportunity_id]}
+        movement.change_content: {kind: opportunity_content_intent, identity_fields: [opportunity_id, segment_id]}
+        now.accept_recovery: {kind: opportunity_phase_intent, identity_fields: [opportunity_id]}
+        merged.accept: {kind: opportunity_phase_intent, identity_fields: [opportunity_id]}
+        merged.movement_accept: {kind: opportunity_phase_intent, identity_fields: [opportunity_id]}
+        merged.movement_change_content: {kind: opportunity_content_intent, identity_fields: [opportunity_id, segment_id]}
+        companion.take_with_me: {kind: opportunity_handoff_intent, identity_fields: [opportunity_id]}
       exact_300_collision_trace:
         frontier_inputs:
           - system.unavailable_with_episode_lock_1
@@ -875,6 +955,12 @@ action_contract:
         conflict_keys: [manual_pause_record_pause_1, system_unavailable_record_lock_1]
         committed_winners: [pause.resume, system.available]
         result: both_named_records_clear_then_remaining_evidence_projects_paused_held_running_or_corridor
+      same_record_competition_trace:
+        frontier_inputs: [pause.start_for_pause_record_1, pause.resume_for_pause_record_1]
+        canonical_conflict_key: {kind: manual_pause_evidence_record, identity_bytes_from: [pause_record_1]}
+        candidate_count_for_key: 2
+        winner_by_registered_same_key_rank: pause.start
+        result: exactly_one_operation_applies_for_pause_record_1_then_full_evidence_reduces
     transition_rank_within_conflict_key_smallest_wins:
       pause.start: 0
       system.unavailable: 5
@@ -905,6 +991,14 @@ action_contract:
       merged.movement_change_content: 71
       delivery.shift_to_seam: 80
       opportunity.presented: 90
+    schedule_restart_safety:
+      applies_to: [sensor.strong_movement_restart, schedule_restart.undo]
+      guard: no_unresolved_running_ritual_including_a_paused_or_held_suspended_overlay
+      blocked_disposition: >-
+        Do not rotate, restore, or mutate a cycle or retained snapshot. Offer or queue a neutral
+        suggestion for revalidation after the ritual resolves; it is not a product fact,
+        completion, DecisionID commit, or sensor proof.
+      allowed_commit: only_after_guard_revalidation_at_the_current_global_and_opportunity_revision
     order_coverage_rule: >-
       Conflict-key registry and rank keys each equal exactly the union of authoritative
       opportunity and authoritative global nonterminal resolver membership. Rank then ActionID
@@ -1536,19 +1630,19 @@ action_contract:
     recovery.escape_running: {phase_scope: opportunity, source_phases: [recovery_running], target_phase: terminal_provisional, opportunity_kinds: [recovery], participant_guard: exactly_visual_movement_and_recovery, required_payload: [retained_preterminal_snapshot_id]}
     offer.not_appropriate: {phase_scope: opportunity, source_phases: [heads_up, visual_offered, movement_offered, position_offered, recovery_offered, merged_visual_offered, merged_movement_offered], target_phase: terminal_provisional, opportunity_kinds: [visual, movement, position, recovery, merged], participant_guard: nonempty_subset_of_registered_participants, required_payload: [content_scope_id]}
     capsule.escape: {phase_scope: opportunity, source_phases: [heads_up], target_phase: terminal_provisional, opportunity_kinds: [visual, movement, position, recovery, merged], participant_guard: exact_registered_participant_set, required_payload: [none]}
-    pause.start: {phase_scope: global_with_optional_opportunity, source_phases: [any_nonclosed], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none, visual, movement, position, recovery, merged], participant_guard: all_enabled_clocks, required_payload: [pause_revision, reason, deadline_or_indefinite, optional_suspended_running_state, optional_expected_running_opportunity_compare_and_fence]}
-    pause.resume: {phase_scope: global_with_optional_opportunity, source_phases: [any_nonclosed], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none, visual, movement, position, recovery, merged], participant_guard: all_enabled_clocks, required_payload: [matching_pause_revision, full_current_evidence_revision, optional_expected_running_opportunity_compare_and_fence]}
+    pause.start: {phase_scope: global_with_optional_opportunity, source_phases: [any_nonclosed], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none, visual, movement, position, recovery, merged], participant_guard: all_enabled_clocks, required_payload: [pause_record_id, reason, deadline_or_indefinite, optional_suspended_running_state, optional_expected_running_opportunity_compare_and_fence]}
+    pause.resume: {phase_scope: global_with_optional_opportunity, source_phases: [any_nonclosed], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none, visual, movement, position, recovery, merged], participant_guard: all_enabled_clocks, required_payload: [pause_record_id, full_current_evidence_revision, optional_expected_running_opportunity_compare_and_fence]}
     hold.begin: {phase_scope: global_with_optional_opportunity, source_phases: [any_state_including_accumulating_without_opportunity], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none, visual, movement, position, recovery, merged], participant_guard: all_enabled_clocks, required_payload: [decision_id, fresh_hold_evidence_envelope, optional_suspended_running_state, optional_expected_running_opportunity_compare_and_fence]}
-    hold.release: {phase_scope: global_with_optional_opportunity, source_phases: [any_state_including_accumulating_without_opportunity], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none, visual, movement, position, recovery, merged], participant_guard: all_enabled_clocks, required_payload: [matching_decision_id, full_current_evidence_revision, optional_expected_running_opportunity_compare_and_fence]}
-    hold.correction_release: {phase_scope: global_with_optional_opportunity, source_phases: [any_state_including_accumulating_without_opportunity], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none, visual, movement, position, recovery, merged], participant_guard: all_enabled_clocks, required_payload: [matching_decision_id, correction_reason, full_current_evidence_revision, optional_expected_running_opportunity_compare_and_fence]}
-    working_hours.exit: {phase_scope: global_schedule, source_phases: [any_nonclosed], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [resolved_wall_boundary_and_time_zone, optional_suspended_running_state, optional_expected_running_opportunity_compare_and_fence]}
-    working_hours.enter: {phase_scope: global_schedule, source_phases: [any_nonclosed], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [resolved_wall_boundary_and_time_zone, full_current_evidence_revision, optional_expected_running_opportunity_compare_and_fence]}
-    system.unavailable: {phase_scope: global_schedule, source_phases: [any_nonclosed], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [coordinator_epoch_and_sample_sequence, monotonic_unavailable_episode_id, optional_suspended_running_state, optional_expected_running_opportunity_compare_and_fence]}
-    system.available: {phase_scope: global_schedule, source_phases: [any_nonclosed], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [coordinator_epoch_and_sample_sequence, matching_unavailable_episode_id, extended_visual_courtesy_guard_not_satisfied, full_current_evidence_revision, optional_expected_running_opportunity_compare_and_fence]}
-    system.available_after_extended_unavailable: {phase_scope: global_schedule, source_phases: [any_nonclosed], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [matching_unavailable_episode_id, same_epoch_elapsed_greater_than_or_equal_to_300, no_unresolved_running_ritual, full_current_evidence_revision]}
+    hold.release: {phase_scope: global_with_optional_opportunity, source_phases: [any_state_including_accumulating_without_opportunity], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none, visual, movement, position, recovery, merged], participant_guard: all_enabled_clocks, required_payload: [decision_id, full_current_evidence_revision, optional_expected_running_opportunity_compare_and_fence]}
+    hold.correction_release: {phase_scope: global_with_optional_opportunity, source_phases: [any_state_including_accumulating_without_opportunity], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none, visual, movement, position, recovery, merged], participant_guard: all_enabled_clocks, required_payload: [decision_id, correction_reason, full_current_evidence_revision, optional_expected_running_opportunity_compare_and_fence]}
+    working_hours.exit: {phase_scope: global_schedule, source_phases: [any_nonclosed], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [working_hours_record_id, resolved_wall_boundary_and_time_zone, optional_suspended_running_state, optional_expected_running_opportunity_compare_and_fence]}
+    working_hours.enter: {phase_scope: global_schedule, source_phases: [any_nonclosed], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [working_hours_record_id, resolved_wall_boundary_and_time_zone, full_current_evidence_revision, optional_expected_running_opportunity_compare_and_fence]}
+    system.unavailable: {phase_scope: global_schedule, source_phases: [any_nonclosed], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [coordinator_epoch_and_sample_sequence, unavailable_episode_id, optional_suspended_running_state, optional_expected_running_opportunity_compare_and_fence]}
+    system.available: {phase_scope: global_schedule, source_phases: [any_nonclosed], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [coordinator_epoch_and_sample_sequence, unavailable_episode_id, extended_visual_courtesy_guard_not_satisfied, full_current_evidence_revision, optional_expected_running_opportunity_compare_and_fence]}
+    system.available_after_extended_unavailable: {phase_scope: global_schedule, source_phases: [any_nonclosed], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [unavailable_episode_id, same_epoch_elapsed_greater_than_or_equal_to_300, no_unresolved_running_ritual, full_current_evidence_revision]}
     system.short_input_idle: {phase_scope: global_schedule, source_phases: [eligible], target_phase: unchanged, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [seconds_since_input_greater_than_60_and_less_than_300]}
     system.long_idle_began: {phase_scope: global_schedule, source_phases: [eligible], target_phase: paused, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [seconds_since_input_greater_than_or_equal_to_300, idle_episode_id, no_unresolved_running_ritual]}
-    system.returned_from_long_idle: {phase_scope: global_schedule, source_phases: [any_nonclosed], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [matching_idle_episode_id, recent_input, full_current_evidence_revision]}
+    system.returned_from_long_idle: {phase_scope: global_schedule, source_phases: [any_nonclosed], target_phase: dynamic_full_evidence_projection, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [idle_episode_id, recent_input, full_current_evidence_revision]}
     system.sample_gap: {phase_scope: global_schedule, source_phases: [eligible, release_corridor, paused], target_phase: unchanged, opportunity_kinds: [none], participant_guard: all_enabled_clocks, required_payload: [nonfinite_backward_or_interval_greater_than_15]}
     system.timer_recovery_unavailable: {phase_scope: opportunity, source_phases: [visual_running, movement_running, recovery_running, merged_movement_running], target_phase: terminal_provisional, opportunity_kinds: [visual, movement, recovery, merged], participant_guard: exact_registered_participant_set, required_payload: [deadline_id, unavailable_epoch_or_anchor_reason, retained_preterminal_snapshot_id, retained_schedule_phase, coordinator_generation, opportunity_projection_epoch_id, signed_high_water_fence_checkpoint]}
     system.timer_recovery_unavailable_merged_visual: {phase_scope: opportunity, source_phases: [merged_visual_running], target_phase: terminal_provisional, opportunity_kinds: [merged], participant_guard: exactly_visual_and_movement, required_payload: [visual_segment_id, deadline_id, unavailable_epoch_or_anchor_reason, retained_preterminal_snapshot_id, retained_schedule_phase, coordinator_generation, opportunity_projection_epoch_id, opportunity_revision, signed_high_water_fence_checkpoint]}
@@ -1566,8 +1660,8 @@ action_contract:
     merged.escape_during_visual: {phase_scope: opportunity, source_phases: [merged_visual_running], target_phase: terminal_provisional, opportunity_kinds: [merged], participant_guard: exactly_visual_and_movement, required_payload: [visual_segment_id, coordinator_generation, opportunity_revision]}
     merged.escape_during_movement: {phase_scope: opportunity, source_phases: [merged_movement_offered, merged_movement_running], target_phase: terminal_provisional, opportunity_kinds: [merged], participant_guard: exactly_visual_and_movement, required_payload: [movement_segment_id]}
     companion.take_with_me: {phase_scope: opportunity, source_phases: [visual_running, movement_running, recovery_running, merged_visual_running, merged_movement_running], target_phase: unchanged, opportunity_kinds: [visual, movement, recovery, merged], participant_guard: exact_registered_participant_set, required_payload: [deadline_handoff_envelope, global_state_id, coordinator_generation, opportunity_projection_epoch_id]}
-    sensor.strong_movement_restart: {phase_scope: global_schedule, source_phases: [eligible, paused, release_corridor], target_phase: unchanged, opportunity_kinds: [none], participant_guard: visual_movement_and_recovery, required_payload: [decision_id, fresh_qualified_evidence_envelope, retained_predecision_snapshot]}
-    schedule_restart.undo: {phase_scope: global_schedule, source_phases: [eligible, paused, release_corridor], target_phase: unchanged, opportunity_kinds: [none], participant_guard: exact_decision_affected_clocks, required_payload: [matching_decision_id]}
+    sensor.strong_movement_restart: {phase_scope: global_schedule, source_phases: [eligible, paused, held, release_corridor], target_phase: unchanged, opportunity_kinds: [none], participant_guard: visual_movement_and_recovery, required_payload: [decision_id, fresh_qualified_evidence_envelope, retained_predecision_snapshot, no_unresolved_running_ritual_including_suspended_paused_or_held_overlay]}
+    schedule_restart.undo: {phase_scope: global_schedule, source_phases: [eligible, paused, held, release_corridor], target_phase: unchanged, opportunity_kinds: [none], participant_guard: exact_decision_affected_clocks, required_payload: [decision_id, no_unresolved_running_ritual_including_suspended_paused_or_held_overlay]}
 
 terminal_reconciliation:
   terminal_fact_id:
@@ -1739,10 +1833,11 @@ product_facts:
       No raw candidate payload or losing/duplicate audit row enters companion_action,
       operational history, export, Weekly, analytics, or another durable store.
     compact_replay_receipt:
-      fields: action_id_digest_device_counter_outcome_code_successor_revisions_and_ack_code_only
+      fields: action_id_digest_device_counter_outcome_code_successor_revisions_outcome_ack_and_delivery_token_only
       location: memory_only
       maximum_retention_seconds: 90
-      discard_when: acknowledgement_projection_fence_or_90_seconds_whichever_occurs_first
+      discard_when: verified_delivery_acknowledgement_of_ack_or_90_monotonic_seconds_whichever_occurs_first
+      never_discard_for: [outcome_ack_generation, projection_revision_fence, generation_fence]
       purpose: replay_lost_ack_without_reapplying_effects
       prohibited: [raw_payload, user_content, product_fact, health_fact, durable_identity, export, analytics]
 
@@ -1755,15 +1850,122 @@ companion_contract:
   state_registry:
     control_catalog:
       take_with_me: {label: Take with me, action: companion.take_with_me}
-      done_early: {label: Done early, action_group: normalized_phase_specific_done_early}
-      already_moved: {label: I already moved, action_group: normalized_phase_specific_already_moved}
-      change_position: {label: Change position, action_group: normalized_phase_specific_position_changed}
-      visual_only: {label: Just the visual one, action_group: companion.merged.visual_only}
-      skip: {label: Skip, action_group: normalized_phase_specific_skip_or_escape}
+      done_early: {label: Done early, action_group: done_early}
+      already_moved: {label: I already moved, action_group: already_moved}
+      change_position: {label: Change position, action_group: change_position}
+      visual_only: {label: Just the visual one, action_group: visual_only}
+      skip: {label: Skip, action_group: skip}
       retry: {label: Retry, action: revalidate_or_retry_transfer}
+      check_status: {label: Check status, action: revalidate_pending_terminal_action_without_repeating_it}
       close: {label: Close, action: dismiss_companion_status_only}
       cancel_transfer: {label: Cancel transfer, action: cancel_uncommitted_transfer}
       cancel_revalidation: {label: Cancel reconnect, action: cancel_revalidation}
+    action_groups_closed_remote_ids:
+      done_early:
+        - companion.visual.done_early
+        - companion.movement.done_early
+        - companion.recovery.done_early
+        - companion.merged.visual_done_early
+        - companion.merged.movement_done_early
+      already_moved:
+        - companion.movement.already_moved
+        - companion.merged.movement_already_moved
+      change_position:
+        - companion.movement.position_changed_offered
+        - companion.movement.position_changed_running
+        - companion.position.changed
+        - companion.merged.movement_position_changed
+      visual_only: [companion.merged.visual_only]
+      skip:
+        - companion.visual.skip
+        - companion.movement.skip_offered
+        - companion.movement.skip_running
+        - companion.position.skip
+        - companion.recovery.skip_offered
+        - companion.recovery.skip_running
+        - companion.merged.escape_during_visual
+        - companion.merged.movement_skip
+    live_phase_registry:
+      visual_offered:
+        opportunity_kind: visual
+        segment: none
+        control_ids: [skip]
+        control_remote_actions: {skip: companion.visual.skip}
+        focus_target: skip
+        focus_order: [skip]
+        escape_remote_action_id: companion.visual.escape
+      visual_running:
+        opportunity_kind: visual
+        segment: visual
+        control_ids: [take_with_me, done_early, skip]
+        control_remote_actions: {take_with_me: companion.take_with_me, done_early: companion.visual.done_early, skip: companion.visual.skip}
+        focus_target: take_with_me
+        focus_order: [take_with_me, done_early, skip]
+        escape_remote_action_id: companion.visual.escape
+      movement_offered:
+        opportunity_kind: movement
+        segment: none
+        control_ids: [already_moved, change_position, skip]
+        control_remote_actions: {already_moved: companion.movement.already_moved, change_position: companion.movement.position_changed_offered, skip: companion.movement.skip_offered}
+        focus_target: already_moved
+        focus_order: [already_moved, change_position, skip]
+        escape_remote_action_id: companion.movement.escape_offered
+      movement_running:
+        opportunity_kind: movement
+        segment: movement
+        control_ids: [take_with_me, done_early, already_moved, change_position, skip]
+        control_remote_actions: {take_with_me: companion.take_with_me, done_early: companion.movement.done_early, already_moved: companion.movement.already_moved, change_position: companion.movement.position_changed_running, skip: companion.movement.skip_running}
+        focus_target: take_with_me
+        focus_order: [take_with_me, done_early, already_moved, change_position, skip]
+        escape_remote_action_id: companion.movement.escape_running
+      position_offered:
+        opportunity_kind: position
+        segment: none
+        control_ids: [change_position, skip]
+        control_remote_actions: {change_position: companion.position.changed, skip: companion.position.skip}
+        focus_target: change_position
+        focus_order: [change_position, skip]
+        escape_remote_action_id: companion.position.skip
+      recovery_offered:
+        opportunity_kind: recovery
+        segment: none
+        control_ids: [skip]
+        control_remote_actions: {skip: companion.recovery.skip_offered}
+        focus_target: skip
+        focus_order: [skip]
+        escape_remote_action_id: companion.recovery.escape_offered
+      recovery_running:
+        opportunity_kind: recovery
+        segment: recovery
+        control_ids: [take_with_me, done_early, skip]
+        control_remote_actions: {take_with_me: companion.take_with_me, done_early: companion.recovery.done_early, skip: companion.recovery.skip_running}
+        focus_target: take_with_me
+        focus_order: [take_with_me, done_early, skip]
+        escape_remote_action_id: companion.recovery.escape_running
+      merged_visual_running:
+        opportunity_kind: merged
+        segment: visual
+        control_ids: [take_with_me, done_early, skip]
+        control_remote_actions: {take_with_me: companion.take_with_me, done_early: companion.merged.visual_done_early, skip: companion.merged.escape_during_visual}
+        focus_target: take_with_me
+        focus_order: [take_with_me, done_early, skip]
+        escape_remote_action_id: companion.merged.escape_during_visual
+      merged_movement_offered:
+        opportunity_kind: merged
+        segment: movement
+        control_ids: [already_moved, change_position, visual_only, skip]
+        control_remote_actions: {already_moved: companion.merged.movement_already_moved, change_position: companion.merged.movement_position_changed, visual_only: companion.merged.visual_only, skip: companion.merged.movement_skip}
+        focus_target: already_moved
+        focus_order: [already_moved, change_position, visual_only, skip]
+        escape_remote_action_id: companion.merged.escape_during_movement
+      merged_movement_running:
+        opportunity_kind: merged
+        segment: movement
+        control_ids: [take_with_me, done_early, already_moved, change_position, skip]
+        control_remote_actions: {take_with_me: companion.take_with_me, done_early: companion.merged.movement_done_early, already_moved: companion.merged.movement_already_moved, change_position: companion.merged.movement_position_changed, skip: companion.merged.movement_skip}
+        focus_target: take_with_me
+        focus_order: [take_with_me, done_early, already_moved, change_position, skip]
+        escape_remote_action_id: companion.merged.escape_during_movement
     states:
       live:
         visible_status: Ready on this device
@@ -1779,13 +1981,23 @@ companion_contract:
         cancellation: escape_never_cancels_or_finishes_the_authoritative_timer
       offline:
         visible_status: Device offline. Keep using this Mac.
-        voiceover_announcement: Device offline. No action was applied. Retry or close.
+        voiceover_announcement: Device offline. No companion operation is pending. Retry or close.
         control_ids: [retry, close]
         enabled_rule: retry_and_close_enabled
         focus_target: retry
         focus_order: [retry, close]
         keyboard: {return_space: activate_focused_enabled_control, escape_command_period: close}
         cancellation: close_dismisses_status_and_the_mac_timer_remains_authoritative
+      offline_terminal_ack_unknown:
+        visible_status_template: Connection lost. Checking whether “%{selected_action_label}” was received; do not repeat.
+        voiceover_template: Connection lost. Checking whether %{selected_action_label} was received. Do not repeat the action. Check status or close.
+        preserved_provenance: [selected_action_id, selected_action_label, action_id_digest, origin_phase_and_segment, acknowledgement_unknown]
+        control_ids: [check_status, close]
+        enabled_rule: check_status_revalidates_without_repeating_action_and_close_is_enabled
+        focus_target: check_status
+        focus_order: [check_status, close]
+        keyboard: {return_space: check_status, escape_command_period: close}
+        cancellation: close_dismisses_status_without_cancelling_or_repeating_the_pending_action
       expired:
         visible_status: Session expired. Reconnect to continue.
         voiceover_announcement: Session expired. Timer controls are unavailable. Retry or close.
@@ -1815,13 +2027,23 @@ companion_contract:
         cancellation: close_dismisses_status_but_does_not_cancel_or_repeat_the_submitted_action
       revalidating:
         visible_status: Reconnecting…
-        voiceover_announcement: Reconnecting. No action has been applied yet. Cancel reconnect or close.
+        voiceover_announcement: Reconnecting. No companion operation is pending. Cancel reconnect or close.
         control_ids: [cancel_revalidation, close]
         enabled_rule: cancel_revalidation_and_close_enabled
         focus_target: cancel_revalidation
         focus_order: [cancel_revalidation, close]
         keyboard: {return_space: activate_focused_enabled_control, escape_command_period: cancel_revalidation}
         cancellation: cancel_revalidation_only_then_show_the_current_authoritative_device
+      revalidating_terminal_ack_unknown:
+        visible_status_template: Checking whether “%{selected_action_label}” was received; do not repeat.
+        voiceover_template: Checking whether %{selected_action_label} was received. Do not repeat the action. Cancel reconnect or close.
+        preserved_provenance: [selected_action_id, selected_action_label, action_id_digest, origin_phase_and_segment, acknowledgement_unknown]
+        control_ids: [cancel_revalidation, close]
+        enabled_rule: cancel_revalidation_and_close_enabled_neither_repeats_the_action
+        focus_target: cancel_revalidation
+        focus_order: [cancel_revalidation, close]
+        keyboard: {return_space: cancel_revalidation, escape_command_period: cancel_revalidation}
+        cancellation: cancel_only_the_status_check_then_show_current_authoritative_state_without_repeating
       rejected_no_op:
         visible_status: That action no longer applies. Showing the current timer.
         voiceover_announcement: Action not applied. Showing the current timer. Close.
@@ -1853,6 +2075,11 @@ companion_contract:
       Every control ID resolves in control_catalog; every focus target is enabled in that state;
       focus order contains exactly the available controls; no disabled trigger receives focus.
       State transitions announce once and never silently apply or discard an action.
+    live_phase_parity_rule: >-
+      The live projection selects exactly one registered phase row. Its controls and focus order
+      are exact, every control action and Escape action is a registered remote wrapper, every
+      action group equals the closed required remote-ID set, and Just the visual one exists only
+      for merged_movement_offered. No generic union action is inferred at runtime.
   sensor_free_fallback: >-
     Every state remains usable without HealthKit, motion, location, camera, or another sensor.
     The authoritative Mac/current-device timer and ordinary manual terminal controls remain the
@@ -1863,10 +2090,11 @@ timer_recovery_user_projection:
     title: timer_recovery.title
     due_body: timer_recovery.due.body
     due_voiceover: timer_recovery.due.voiceover
-    due_menu_status: timer_recovery.due.menu_status
     not_due_body: timer_recovery.not_due.body
     not_due_voiceover: timer_recovery.not_due.voiceover
     actual_phase_menu_status: timer_recovery.actual_phase.menu_status
+    paused_menu_status: timer_recovery.paused.menu_status
+    held_menu_status: timer_recovery.held.menu_status
     close_action: timer_recovery.close
   exact_copy:
     title: Timer couldn’t be restored
@@ -1874,16 +2102,27 @@ timer_recovery_user_projection:
     due:
       body: No finish was recorded. This schedule is still due.
       voiceover: Timer could not be restored. No finish was recorded. The schedule is still due.
-      menu_status: Still due · timer not restored
     not_due_or_manual_early:
       body: No finish was recorded. The timer was not restored, and this schedule was not reset.
       voiceover: Timer could not be restored. No finish was recorded. This schedule was not reset.
-      menu_status_template: "%{actual_schedule_status} · timer not restored"
+    menu_status_by_projected_evidence:
+      active_due: Still due · timer not restored
+      active_not_due_template: "%{actual_schedule_status} · timer not restored"
+      paused_due_template: "Paused: %{pause_reason} · timer not restored"
+      paused_not_due_template: "Paused: %{pause_reason} · timer not restored"
+      held_due_template: "Held: %{qualified_hold_reason} · timer not restored"
+      held_not_due_template: "Held: %{qualified_hold_reason} · timer not restored"
+    reason_rule: >-
+      Pause reason is the exact user-selected pause reason. Held reason names its provenance and
+      qualification, such as Calendar event, Focus mode, selected app, or qualified inference;
+      stale or missing evidence is unknown and never receives confident meeting or deep-focus copy.
   phase_selection_rule: >-
     Read the retained preterminal schedule snapshot after settling any independent component.
-    Use due copy only when that affected schedule is actually soft-due, heads-up, held-due, or
-    overdue. For an accumulating or manually opened early ritual, use not-due copy and format the
-    menu with the actual current schedule phase; never label a not-due schedule still due.
+    Select body and VoiceOver due/not-due copy from the actual retained schedule threshold. Select
+    menu status independently from the full evidence reduction: Paused always remains Paused with
+    its selected reason and Held always remains Held with its qualified evidence reason, whether
+    due or not due. Active due may say Still due; an accumulating or manually opened early ritual
+    uses not-due copy and its actual phase. The failed deadline never invents due state.
   interaction:
     initial_focus: close_action
     keyboard: {close: [return, escape, command_period]}

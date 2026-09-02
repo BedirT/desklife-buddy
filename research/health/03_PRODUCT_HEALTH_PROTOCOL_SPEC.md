@@ -447,8 +447,10 @@ begins after that fence; only fence + grace permits a new OpportunityID. The sur
 couldn’t be restored,” then uses the retained schedule phase: an actually due schedule says “No
 finish was recorded. This schedule is still due,” while an accumulating or manually opened early
 schedule says “No finish was recorded. The timer was not restored, and this schedule was not
-reset.” The menu projects the actual retained phase. Old-generation actions get an explicit
-expired/current-state receipt. A
+reset.” Body due status and menu evidence status are independent: Paused always stays
+“Paused: [selected reason] · timer not restored” and Held stays “Held: [qualified evidence
+reason] · timer not restored,” whether due or not due. Missing/stale hold evidence is unknown, not
+a meeting or deep-focus claim. Old-generation actions get an explicit current-state receipt. A
 companion transfer requires a bounded monotonic handshake and subtracts its full uncertainty;
 without acknowledgment the sender remains authoritative. Portable wall values are display and
 audit metadata only. Sleep, lock, callback suspension, relaunch, clock changes, or handoff cannot
@@ -474,7 +476,10 @@ retuning. Legacy `custom` and v2 `custom_v2` are distinct persisted identifiers 
 contract version and migration state. The v2 custom payload preserves v1 field names, units,
 ordering, and values; acceptance changes only its version/identifier/migration tags. Offer a
 successor explicitly; migrate only after acceptance. The high-frequency preset becomes an exact
-`custom_v2` snapshot rather than being coerced into a different built-in. This
+`custom_v2` snapshot rather than being coerced into a different built-in. The storage domain accepts
+every legal positive finite v1 value unchanged, including a 5-second visual duration and `[30]`
+movement-duration option. The 10–60-second visual and 120/300 movement bounds govern only newly
+created or edited v2 values; migration never clamps, rejects, or silently retunes. This
 supersedes §5 for new selections without rewriting the historical modes.
 
 ### 17.4 Action effects
@@ -536,30 +541,41 @@ identity. Hold may begin before due without an OpportunityID. One complete confl
 same-key rank registry covers every authoritative nonterminal transition. One winner per record is
 chosen, then all compatible disjoint-record winners apply before full evidence reduction. This
 preserves both lock and long-idle evidence at exactly 300 seconds and allows simultaneous clears.
+Begin and matching clear for one Pause, Hold DecisionID, unavailable episode, long-idle episode,
+working-hours record, or restart DecisionID use identical key kind and identity bytes; operation,
+rank, transition, ActionID, and arrival are excluded. Restart/undo cannot rotate a cycle while a
+running or Paused/Held-suspended ritual exists; it waits for neutral revalidation after resolution.
 Offline intents remain operational-only until renewed and revalidated.
 Terminal candidates require a causally acknowledged projection lease of at most 90 monotonic
 seconds. Every closure settles admitted same-generation candidates, commits a signed high-water
 projection fence, revokes leases, discards raw buffers, then allows successors. GlobalStateID,
-coordinator generation, revisions, and high-water acknowledgement persist for restart safety.
+coordinator generation, revisions, and contiguous-disposition high water persist for restart safety.
 Epoch loss fences the old generation rather than waiting for an unverifiable old monotonic expiry;
-later old-generation actions receive an honest expired/current-state receipt and never a product
-fact. A duplicate ActionID replays a compact known acknowledgement without applying effects again;
-after its receipt expires, high water says already received and settled, while an unseen stale
-action says expired before acceptance. Terminal conflicts use a fixed
+later old-generation actions receive an honest current-state receipt and never a product fact. A
+duplicate ActionID replays a compact known acknowledgement without applying effects again. The
+receipt remains until the device returns a verified acknowledgement-of-ack for the outcome-delivery
+token or 90 seconds elapse; ACK creation and projection/generation fences do not erase it. After
+expiry, duplicate and unseen actions say **too old to verify** and show current state. High water
+means only contiguous disposition and never proves receipt. Per-device generation is gap-free;
+counter 11 waits in a Class-0 sparse window until 10 is disposed. Terminal conflicts use a fixed
 fact-claim rank and stable identifiers, never wall time, remaining duration, segment duration, or
 arrival order. Both reductions are commutative, associative, and idempotent.
 
 Portable IDs use versioned canonical bytes: normalized UUIDs, NFC UTF-8 strings, big-endian
-integers, typed optionals/unions/structs, and canonically byte-sorted sets/maps. The signed fence
-registers `cadence.timing-runtime-v2.projection-fence.v1` version 1, exact ordered typed schema, SHA-256 digest bytes, Ed25519 signing
-input, pinned-key verification, and previous-digest chain. Unknown or mutated domain, version, type,
-order, digest, or signature fails closed. Wall time, locale, process hashes, and pointer addresses
+integers, typed optionals/unions/structs, and canonically byte-sorted counted sets/maps. The signed
+fence registers `cadence.timing-runtime-v2.projection-fence.v1` version 1, exact uint widths, uint8
+optional/union tags, uint16 enum vocabularies, explicit collection cardinalities, nested opportunity
+context, ordered typed schema, SHA-256 digest bytes, Ed25519 signing input, pinned-key verification,
+and previous-digest chain. Unknown or mutated domain, version, type, width, tag, cardinality, order,
+digest, or signature fails closed. Wall time, locale, process hashes, and pointer addresses
 are excluded. A terminal fact ID uses OpportunityID, the canonical terminal slot, and fixed
 registered component scope, so it is invariant across candidate winners.
 
 Before a terminal projection, retain all four clocks' cycle ID, accumulated time, due state,
 eligibility, phase, and enablement, including the latent manual position cycle, plus recovery/session state, evidence, decisions, deadlines, and component
-facts. The required scope is the union of every eligible candidate effect, including cross-clock
+facts. A global evidence commit fences the old running-opportunity revision, creates a successor,
+and rebases the exact phase, segment, accepted deadline or suspended remaining duration, and
+snapshot without reset or wall extension. The required terminal scope is the union of every eligible candidate effect, including cross-clock
 and affected-nonparticipant effects. Offered actions project from their action checkpoint after
 offer-time accrual; running actions may restore only the acceptance snapshot. If a late
 candidate replaces a provisional winner, restore that snapshot, apply the new winner once,
@@ -574,13 +590,22 @@ path and visual successor effect; recovery produces neither and preserves due sc
 Done advances to the movement offer rather than closing the parent. A component already
 acknowledged at the successor revision is final, and a later movement-phase Escape retains it.
 
+The companion live registry binds exact controls, focus, normalized remote IDs, and Escape to each
+visual, movement, position, recovery, and merged phase/segment. Closed action groups include every
+remote ID, including `companion.visual.skip`; `Just the visual one` exists only in merged movement
+offered. Neutral offline/revalidating states say no operation is pending. If a terminal ACK is
+unknown, provenance for the selected action remains attached and the exact status says the
+connection was lost, it is checking whether that named action was received, and **do not repeat**.
+Checking status or reconnecting never resends the action.
+
 The ten §10 product facts remain closed. Operational records, sensor observations, fused
 assessments, scheduling decisions, corrections, and retained companion continuity are separate
-ledgers. Raw terminal/companion candidate envelopes, losers, duplicates, post-fence rejects, and
-compact lost-ack receipts are Class 0 memory-only for at most 90 seconds, erased at acknowledgement/
-settlement/fence, and never exported, analyzed, or assigned a durable record identity. A compact
-receipt contains no raw payload and only the ActionID digest, counter, outcome, successor revisions,
-and acknowledgement code needed for exactly-once replay. The
+ledgers. Raw terminal/companion candidate envelopes, losers, duplicates, post-fence rejects,
+out-of-order sparse counters, and compact lost-ack receipts are Class 0 memory-only for at most 90
+seconds and never exported, analyzed, or assigned a durable record identity. A compact receipt is
+erased early only after verified acknowledgement-of-ack, not merely ACK generation or a fence. It
+contains no raw payload and only the ActionID digest, counter, outcome, successor revisions,
+outcome ACK, and delivery token needed for exactly-once replay. The
 legacy `event_schema.json` is now explicitly a read-only v1 envelope whose mappings project to
 the ten facts; its broader record kinds never enlarge the product-fact vocabulary. No timer,
 idle, sensor, camera, motion, HealthKit, companion, or model observation is a completion fact or

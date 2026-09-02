@@ -129,12 +129,29 @@ assert(
   "Adaptive must initially change only delivery and bounded holds",
 )
 custom_v2 = protocol.dig("preset_contract_v2", "presets", "custom_v2")
-assert(custom_v2.fetch("payload_schema_version") == 2, "custom_v2 payload schema drifted")
+custom_storage = custom_v2.fetch("storage_compatibility_domain")
+custom_authoring = custom_v2.fetch("new_authoring_constraints")
+assert(
+  custom_v2.fetch("payload_schema_version") == 2 &&
+    custom_storage.fetch("numeric_values").include?("every_positive_finite_v1_value") &&
+    custom_storage.fetch("migration_rule").include?("never_silently_retune_reject_or_coerce") &&
+    custom_authoring.fetch("visual_duration_range_seconds") == [10, 60] &&
+    custom_authoring.fetch("movement_duration_options_seconds") == [120, 300] &&
+    custom_authoring.fetch("applies_to").include?("newly_created_or_user_edited"),
+  "custom_v2 must separate legacy-compatible storage from safer new-authoring bounds",
+)
 legacy_custom = protocol.dig("preset_contract_v2", "legacy_identifier_disposition", "custom")
+extreme_custom = legacy_custom.fetch("extreme_payload_fixture")
 assert(
   legacy_custom.fetch("suggested_successor") == "custom_v2" &&
-    legacy_custom.fetch("payload_compatibility").include?("exact v1 custom timing fields") &&
-    legacy_custom.fetch("payload_compatibility").include?("does not reinterpret timing"),
+    legacy_custom.fetch("payload_compatibility").include?("every legal positive finite v1") &&
+    legacy_custom.fetch("payload_compatibility").include?("does not reinterpret") &&
+    extreme_custom.fetch("visual_duration_seconds") == 5 &&
+    extreme_custom.fetch("movement_duration_options_seconds") == [30] &&
+    extreme_custom.fetch("expected_migrated_values") == {
+      "visual_duration_seconds" => 5,
+      "movement_duration_options_seconds" => [30],
+    },
   "legacy custom migration must preserve its exact payload",
 )
 assert(
@@ -651,17 +668,20 @@ assert(
     candidate_lifecycle.fetch("persistence") == "prohibited" &&
     candidate_lifecycle.fetch("stable_record_identity") == "none" &&
     candidate_lifecycle.dig("compact_replay_receipt", "maximum_retention_seconds") == 90 &&
+    candidate_lifecycle.dig("compact_replay_receipt", "discard_when").include?("acknowledgement_of_ack") &&
+    candidate_lifecycle.dig("compact_replay_receipt", "never_discard_for").include?("projection_revision_fence") &&
     candidate_lifecycle.dig("compact_replay_receipt", "prohibited").include?("raw_payload") &&
     protocol.dig("candidate_data_lifecycle_v2", "maximum_retention_seconds") == 90 &&
     protocol.dig("candidate_data_lifecycle_v2", "persistence") == false &&
-    protocol.dig("candidate_data_lifecycle_v2", "compact_replay_receipt", "raw_payload") == false,
+    protocol.dig("candidate_data_lifecycle_v2", "compact_replay_receipt", "raw_payload") == false &&
+    protocol.dig("candidate_data_lifecycle_v2", "compact_replay_receipt", "projection_or_generation_fence_does_not_erase") == true,
   "raw candidate lifecycle must be Class 0, memory-only, bounded, and unexported",
 )
 companion = runtime.fetch("companion_contract")
 companion_registry = companion.fetch("state_registry")
 control_catalog = companion_registry.fetch("control_catalog")
 companion_states = companion_registry.fetch("states")
-expected_companion_states = %w[live offline expired transfer_pending terminal_action_pending revalidating rejected_no_op already_ended transfer_failed]
+expected_companion_states = %w[live offline offline_terminal_ack_unknown expired transfer_pending terminal_action_pending revalidating revalidating_terminal_ack_unknown rejected_no_op already_ended transfer_failed]
 assert(companion_states.keys == expected_companion_states, "companion state registry is incomplete or reordered")
 expected_companion_states.each do |state|
   projection = companion_states.fetch(state)
@@ -679,9 +699,13 @@ end
 assert(
   companion_states.dig("live", "control_ids").include?("take_with_me") &&
     companion_states.dig("offline", "control_ids") == %w[retry close] &&
+    companion_states.dig("offline_terminal_ack_unknown", "control_ids") == %w[check_status close] &&
+    companion_states.dig("offline_terminal_ack_unknown", "visible_status_template").include?("do not repeat") &&
+    companion_states.dig("offline_terminal_ack_unknown", "preserved_provenance").include?("selected_action_id") &&
     companion_states.dig("expired", "control_ids") == %w[retry close] &&
     companion_states.dig("transfer_failed", "control_ids") == %w[retry close] &&
     companion_states.dig("terminal_action_pending", "visible_status_template").include?("selected_action_label") &&
+    companion_states.dig("revalidating_terminal_ack_unknown", "voiceover_template").include?("Do not repeat") &&
     !companion_states.dig("terminal_action_pending", "visible_status_template").include?("Sending timer") &&
     companion_registry.fetch("parity_rule").include?("no disabled trigger receives focus") &&
     companion.fetch("live_scope_rule").include?("coordinator generation") &&
@@ -710,14 +734,63 @@ assert(
   !valid_remote_registry?(no_product_fact_mutation, transition_by_id, resolved_ids),
   "companion registry mutation to a no-product-fact transition must fail",
 )
+action_groups = companion_registry.fetch("action_groups_closed_remote_ids")
+live_phases = companion_registry.fetch("live_phase_registry")
+expected_action_groups = {
+  "done_early" => %w[companion.visual.done_early companion.movement.done_early companion.recovery.done_early companion.merged.visual_done_early companion.merged.movement_done_early],
+  "already_moved" => %w[companion.movement.already_moved companion.merged.movement_already_moved],
+  "change_position" => %w[companion.movement.position_changed_offered companion.movement.position_changed_running companion.position.changed companion.merged.movement_position_changed],
+  "visual_only" => %w[companion.merged.visual_only],
+  "skip" => %w[companion.visual.skip companion.movement.skip_offered companion.movement.skip_running companion.position.skip companion.recovery.skip_offered companion.recovery.skip_running companion.merged.escape_during_visual companion.merged.movement_skip],
+}
+expected_live_phases = %w[visual_offered visual_running movement_offered movement_running position_offered recovery_offered recovery_running merged_visual_running merged_movement_offered merged_movement_running]
+def valid_live_phase_registry?(live_phases, expected_phases, controls, action_groups, remote_registry)
+  return false unless live_phases.keys == expected_phases
+  live_phases.all? do |phase, row|
+    row.fetch("control_ids") == row.fetch("focus_order") &&
+      row.fetch("control_ids").include?(row.fetch("focus_target")) &&
+      row.fetch("control_remote_actions").keys == row.fetch("control_ids") &&
+      row.fetch("control_ids").all? { |id| controls.key?(id) } &&
+      row.fetch("control_remote_actions").all? do |control_id, action_id|
+        if control_id == "take_with_me"
+          action_id == "companion.take_with_me"
+        else
+          group = controls.fetch(control_id).fetch("action_group")
+          action_groups.fetch(group).include?(action_id) && remote_registry.key?(action_id)
+        end
+      end &&
+      remote_registry.key?(row.fetch("escape_remote_action_id")) &&
+      (phase == "merged_movement_offered") == row.fetch("control_ids").include?("visual_only")
+  end
+end
+assert(action_groups == expected_action_groups, "companion action groups must equal the closed required remote-ID registry")
+assert(
+  valid_live_phase_registry?(live_phases, expected_live_phases, control_catalog, action_groups, remote_registry),
+  "companion live controls/focus/actions must be exact for every phase and segment",
+)
+covered_remote_ids = (action_groups.values.flatten + live_phases.values.map { |row| row.fetch("escape_remote_action_id") }).uniq.sort
+assert(
+  covered_remote_ids == remote_registry.keys.sort,
+  "phase controls/action groups/Escape must exhaustively cover every normalized remote action ID",
+)
+deleted_visual_skip_groups = Marshal.load(Marshal.dump(action_groups))
+deleted_visual_skip_groups["skip"].delete("companion.visual.skip")
+assert(
+  deleted_visual_skip_groups != expected_action_groups,
+  "deleting companion.visual.skip from the required action group must fail parity",
+)
 timer_projection = runtime.fetch("timer_recovery_user_projection")
+recovery_menu = timer_projection.dig("exact_copy", "menu_status_by_projected_evidence")
 assert(
   timer_projection.dig("exact_copy", "title") == "Timer couldn’t be restored" &&
     timer_projection.dig("exact_copy", "due", "body") == "No finish was recorded. This schedule is still due." &&
-    timer_projection.dig("exact_copy", "due", "menu_status") == "Still due · timer not restored" &&
     timer_projection.dig("exact_copy", "not_due_or_manual_early", "body").include?("schedule was not reset") &&
-    timer_projection.dig("exact_copy", "not_due_or_manual_early", "menu_status_template").include?("actual_schedule_status") &&
-    timer_projection.fetch("phase_selection_rule").include?("Use due copy only when") &&
+    recovery_menu.fetch("active_due") == "Still due · timer not restored" &&
+    recovery_menu.fetch("paused_due_template") == recovery_menu.fetch("paused_not_due_template") &&
+    recovery_menu.fetch("held_due_template") == recovery_menu.fetch("held_not_due_template") &&
+    recovery_menu.fetch("paused_due_template").include?("pause_reason") &&
+    recovery_menu.fetch("held_due_template").include?("qualified_hold_reason") &&
+    timer_projection.fetch("phase_selection_rule").include?("menu status independently") &&
     timer_projection.dig("interaction", "initial_focus") == "close_action" &&
     timer_projection.dig("interaction", "quiet_transition").include?("60_second_grace"),
   "timer recovery user projection must condition due copy on the retained schedule phase",
@@ -812,6 +885,26 @@ assert(
     nonterminal.fetch("order_coverage_rule").include?("exactly the union"),
   "authoritative nonterminal rank and conflict-key registry must be total and match resolver membership",
 )
+matching_evidence_pairs = [
+  %w[pause.start pause.resume],
+  %w[hold.begin hold.release],
+  %w[hold.begin hold.correction_release],
+  %w[system.unavailable system.available],
+  %w[system.unavailable system.available_after_extended_unavailable],
+  %w[system.long_idle_began system.returned_from_long_idle],
+  %w[sensor.strong_movement_restart schedule_restart.undo],
+]
+assert(
+  matching_evidence_pairs.all? do |begin_id, clear_id|
+    begin_key = conflict_keys.fetch(begin_id)
+    clear_key = conflict_keys.fetch(clear_id)
+    begin_key.is_a?(Hash) &&
+      begin_key == clear_key &&
+      begin_key.keys.sort == %w[identity_fields kind] &&
+      !begin_key.fetch("identity_fields").any? { |field| %w[operation rank transition_id action_id].include?(field) }
+  end,
+  "matching evidence begin/clear actions must share identical conflict-key kind and identity bytes",
+)
 assert(
   coordinator.fetch("lease_maximum_seconds") == 90 &&
     coordinator.fetch("rule").include?("before any product fact, deadline, phase, or clock effect") &&
@@ -823,6 +916,10 @@ atomic_running = coordinator.fetch("atomic_global_running_commit")
 assert(
   %w[pause.start pause.resume hold.begin hold.release hold.correction_release working_hours.exit working_hours.enter system.unavailable system.available].all? { |id| atomic_running.fetch("applies_to").include?(id) } &&
     atomic_running.fetch("order").include?("advance_and_fence_the_old_opportunity_revision") &&
+    atomic_running.fetch("order").include?("create_the_successor_opportunity_revision_for_the_same_opportunity_and_projection_epoch") &&
+    atomic_running.fetch("order").include?("rebase_the_exact_phase_segment_accepted_deadline_remaining_duration_and_retained_snapshot_onto_the_successor_revision") &&
+    atomic_running.fetch("rebase_rule").include?("never preserves the old opportunity revision") &&
+    atomic_running.fetch("rebase_rule").include?("without replay, reset, or wall-time extension") &&
     atomic_running.fetch("order").include?("reject_every_uncommitted_candidate_for_the_old_revision_with_a_current_state_receipt") &&
     atomic_running.fetch("order").include?("acknowledge_global_and_opportunity_successor_revisions_together") &&
     atomic_running.fetch("reverse_arrival_rule").include?("Watch terminal action") &&
@@ -834,25 +931,51 @@ replay = runtime.dig("action_contract", "action_id_replay_contract")
 replay_receipts = replay.fetch("user_receipts")
 assert(
   replay.fetch("maximum_receipt_seconds") == 90 &&
+    replay.fetch("retention_rule").include?("delivery_acknowledgement_of_ack") &&
+    replay.fetch("delivery_protocol").last.include?("never_erases_the_receipt") &&
     replay.fetch("exact_duplicate_while_receipt_present").include?("replay_original_outcome") &&
     replay.fetch("exact_duplicate_while_receipt_present").include?("without_reapplying") &&
-    replay.fetch("duplicate_after_receipt_expiry_at_or_below_committed_high_water").include?("already_received_and_settled") &&
-    replay.fetch("unseen_stale_action_above_high_water_or_from_fenced_generation").include?("expired_before_acceptance") &&
+    replay.fetch("duplicate_or_unseen_after_receipt_expiry").include?("too_old_to_verify") &&
     replay_receipts.fetch("exact_duplicate") == "Action already received. Showing the recorded result." &&
-    replay_receipts.fetch("settled_high_water") == "Action already received and settled. Showing the current timer." &&
-    replay_receipts.fetch("unseen_stale") == "That action expired before it could be accepted. Showing the current timer." &&
-    replay.fetch("lost_ack_trace").last.include?("counts_remain_one") &&
+    replay_receipts.fetch("uncertainty_safe") == "That action is too old to verify. Showing the current timer." &&
+    replay.fetch("lost_ack_trace").include?("effect_fact_notification_and_haptic_counts_remain_one") &&
+    replay.fetch("lost_ack_trace").last.include?("acknowledges_receipt_of_the_outcome") &&
     replay.fetch("prohibited_copy") == "no_change_was_recorded",
-  "ActionID retry must replay a known ack or project truthful settled/expired state exactly once",
+  "ActionID retry receipt must survive until acknowledgement-of-ack or expiry and remain uncertainty-safe",
+)
+counter_contract = runtime.dig("action_contract", "device_counter_contract")
+assert(
+  counter_contract.fetch("generated_sequence").include?("strict_contiguous_gap_free") &&
+    counter_contract.fetch("persisted_high_water_meaning").include?("contiguous_coordinator_disposition_not_a_received_claim") &&
+    counter_contract.fetch("advance_rule").include?("Never leap over a hole") &&
+    counter_contract.dig("sparse_pending_window", "maximum_retention_seconds") == 90 &&
+    counter_contract.dig("sparse_pending_window", "class") == "class_0_ephemeral" &&
+    counter_contract.dig("counter_11_before_10_trace", "first_result").include?("high_water_remains_9") &&
+    counter_contract.dig("counter_11_before_10_trace", "second_result").include?("high_water_becomes_11") &&
+    counter_contract.dig("gap_expiry_trace", "later_counter_10_receipt") == "That action is too old to verify. Showing the current timer.",
+  "per-device counters must remain contiguous across out-of-order delivery and uncertainty-safe expiry",
 )
 exact_300 = nonterminal.dig("conflict_key_reduction", "exact_300_collision_trace")
 dual_clear = nonterminal.dig("conflict_key_reduction", "release_composition_trace")
+same_record = nonterminal.dig("conflict_key_reduction", "same_record_competition_trace")
 assert(
   exact_300.fetch("committed_winners") == %w[system.unavailable system.long_idle_began] &&
     exact_300.fetch("result").include?("both_evidence_records_are_set") &&
     dual_clear.fetch("committed_winners") == %w[pause.resume system.available] &&
-    dual_clear.fetch("result").include?("both_named_records_clear"),
+    dual_clear.fetch("result").include?("both_named_records_clear") &&
+    same_record.fetch("candidate_count_for_key") == 2 &&
+    same_record.fetch("winner_by_registered_same_key_rank") == "pause.start",
   "conflict-key reduction must compose disjoint set and clear evidence at the exact 300-second edge",
+)
+restart_safety = nonterminal.fetch("schedule_restart_safety")
+assert(
+  restart_safety.fetch("applies_to") == %w[sensor.strong_movement_restart schedule_restart.undo] &&
+    restart_safety.fetch("guard").include?("paused_or_held_suspended_overlay") &&
+    restart_safety.fetch("blocked_disposition").include?("Do not rotate, restore, or mutate") &&
+    %w[sensor.strong_movement_restart schedule_restart.undo].all? do |id|
+      guards.fetch(id).fetch("required_payload").include?("no_unresolved_running_ritual_including_suspended_paused_or_held_overlay")
+    end,
+  "schedule restart and undo must not mutate cycles under a running or suspended ritual snapshot",
 )
 evidence_reduction = runtime.dig("presentation_states", "evidence_reduction")
 assert(
@@ -913,37 +1036,53 @@ assert(
     fence.fetch("closure_coverage_selector") == "every_action_contract_transition_whose_terminal_field_is_true" &&
     all_closure_guards_are_opportunity_scoped &&
     fence.fetch("persisted_coordinator_state_requires").include?("coordinator_generation") &&
-    fence.fetch("persisted_coordinator_state_requires").include?("committed_action_counter_high_water_by_paired_device") &&
+    fence.fetch("persisted_coordinator_state_requires").include?("contiguous_action_disposition_high_water_by_paired_device") &&
     fence.fetch("persisted_coordinator_state_requires").include?("last_committed_fence_digest_bytes") &&
     fence.fetch("signed_fence_requires").include?("ed25519_signature_from_installation_local_coordinator_key") &&
     fence.fetch("every_opportunity_closure_order").last == "then_allow_successor_cycle_or_opportunity_eligibility" &&
     fence.fetch("coordinator_epoch_loss_order").include?("reject_every_later_arriving_old_generation_action_as_operational_no_op") &&
+    fence.fetch("old_generation_receipt") == "action_too_old_to_verify_show_current_projected_state" &&
     fence.fetch("bounded_rule").include?("never waits for an old monotonic expiry"),
   "closure and epoch-loss fences must be persisted, signed, high-water, and bounded",
 )
 signed_fence = fence.fetch("signed_fence_portable_encoding")
 expected_fence_fields = [
   {"name" => "domain_literal", "type" => "string"},
-  {"name" => "schema_version", "type" => "unsigned_uint64"},
+  {"name" => "schema_version", "type" => "unsigned_uint16"},
   {"name" => "global_state_id", "type" => "uuid"},
   {"name" => "global_state_revision", "type" => "unsigned_uint64"},
   {"name" => "closing_coordinator_generation", "type" => "unsigned_uint64"},
   {"name" => "successor_coordinator_generation", "type" => "unsigned_uint64"},
-  {"name" => "opportunity_context", "type" => "optional_struct_opportunity_id_uuid_projection_epoch_uuid"},
-  {"name" => "admitted_action_counter_high_water_by_device", "type" => "map_uuid_to_unsigned_uint64"},
-  {"name" => "selected_outcome", "type" => "tagged_union_projection_revision_uint64_or_operational_disposition_enum"},
-  {"name" => "fence_reason", "type" => "enum"},
-  {"name" => "previous_fence_digest", "type" => "optional_32_byte_string"},
+  {"name" => "opportunity_context", "type" => "optional_opportunity_context_v1"},
+  {"name" => "contiguous_action_disposition_high_water_by_device", "type" => "counted_map_uuid_to_unsigned_uint64"},
+  {"name" => "selected_outcome", "type" => "selected_outcome_union_v1"},
+  {"name" => "fence_reason", "type" => "fence_reason_enum_uint16"},
+  {"name" => "previous_fence_digest", "type" => "optional_fixed_32_bytes"},
 ]
 def valid_signed_fence_contract?(contract, expected_fields)
+  nested = contract.fetch("exact_nested_types", {})
+  enums = contract.fetch("enum_vocabularies", {})
   contract.fetch("domain_literal", nil) == "cadence.timing-runtime-v2.projection-fence.v1" &&
     contract.fetch("schema_version", nil) == 1 &&
     contract.fetch("canonical_bytes_version", nil) == "cadence_contract_bytes_v1" &&
     contract.fetch("ordered_typed_fields", nil) == expected_fields &&
+    nested.dig("optional_opportunity_context_v1", "presence_tag") == "unsigned_uint8_0_absent_1_present" &&
+    nested.dig("optional_opportunity_context_v1", "present_fields_in_order") == [
+      {"name" => "opportunity_id", "type" => "uuid_16_bytes"},
+      {"name" => "projection_epoch_id", "type" => "uuid_16_bytes"},
+      {"name" => "opportunity_revision", "type" => "unsigned_uint64"},
+    ] &&
+    nested.dig("counted_map_uuid_to_unsigned_uint64", "cardinality") == "unsigned_uint32_big_endian_entry_count" &&
+    nested.dig("selected_outcome_union_v1", "tag_width") == "unsigned_uint8" &&
+    nested.dig("selected_outcome_union_v1", "variants", 1, "payload") == "unsigned_uint64_big_endian" &&
+    nested.dig("selected_outcome_union_v1", "variants", 2, "payload") == "operational_disposition_enum_uint16" &&
+    nested.dig("optional_fixed_32_bytes", "present_payload") == "exactly_32_unencoded_bytes_without_a_length_prefix" &&
+    enums.fetch("fence_reason_enum_uint16", {}).values == [1, 2, 3, 4, 5] &&
+    enums.fetch("operational_disposition_enum_uint16", {}).values == [1, 2, 3, 4, 5] &&
     contract.fetch("digest", "").include?("32_raw_bytes") &&
     contract.fetch("signing_input", "").include?("32_digest_bytes") &&
     contract.fetch("signature", "").start_with?("ed25519") &&
-    contract.fetch("verification_order", []).include?("reject_unknown_domain_schema_version_type_or_union_tag") &&
+    contract.fetch("verification_order", []).include?("reject_unknown_domain_schema_version_type_width_enum_value_union_tag_or_collection_cardinality") &&
     contract.fetch("storage_rule", "").include?("exactly_32_unencoded_bytes")
 end
 assert(valid_signed_fence_contract?(signed_fence, expected_fence_fields), "signed fence canonical bytes are incomplete or nonportable")
@@ -953,11 +1092,20 @@ version_mutation = Marshal.load(Marshal.dump(signed_fence))
 version_mutation["schema_version"] = 2
 order_mutation = Marshal.load(Marshal.dump(signed_fence))
 order_mutation["ordered_typed_fields"][2], order_mutation["ordered_typed_fields"][3] = order_mutation["ordered_typed_fields"][3], order_mutation["ordered_typed_fields"][2]
+width_mutation = Marshal.load(Marshal.dump(signed_fence))
+width_mutation["exact_nested_types"]["selected_outcome_union_v1"]["tag_width"] = "unsigned_uint16"
+tag_mutation = Marshal.load(Marshal.dump(signed_fence))
+tag_mutation["exact_nested_types"]["selected_outcome_union_v1"]["variants"][1]["payload"] = "unsigned_uint32_big_endian"
+cardinality_mutation = Marshal.load(Marshal.dump(signed_fence))
+cardinality_mutation["exact_nested_types"]["counted_map_uuid_to_unsigned_uint64"]["cardinality"] = "none"
 assert(
   !valid_signed_fence_contract?(domain_mutation, expected_fence_fields) &&
     !valid_signed_fence_contract?(version_mutation, expected_fence_fields) &&
-    !valid_signed_fence_contract?(order_mutation, expected_fence_fields),
-  "signed fence domain/version/field-order mutations must fail",
+    !valid_signed_fence_contract?(order_mutation, expected_fence_fields) &&
+    !valid_signed_fence_contract?(width_mutation, expected_fence_fields) &&
+    !valid_signed_fence_contract?(tag_mutation, expected_fence_fields) &&
+    !valid_signed_fence_contract?(cardinality_mutation, expected_fence_fields),
+  "signed fence domain/version/field-order/width/tag/cardinality mutations must fail",
 )
 assert(
   terminal.fetch("originated_after_known_closure") == "operational_expired_before_acceptance_show_current_projected_state" &&
@@ -1012,7 +1160,10 @@ assert(
     encoding.dig("scalar_encoding", "byte_string").include?("unmodified_bytes") &&
     encoding.dig("scalar_encoding", "tagged_union").include?("registered_variant_tag") &&
     encoding.dig("scalar_encoding", "struct").include?("exact_registered_schema_order") &&
+    encoding.dig("collection_encoding", "list").include?("uint32_big_endian_count") &&
+    encoding.dig("collection_encoding", "set").include?("uint32_big_endian_cardinality") &&
     encoding.dig("collection_encoding", "set").include?("sorted_unsigned_lexicographically") &&
+    encoding.dig("collection_encoding", "map").include?("uint32_big_endian_entry_count") &&
     encoding.fetch("prohibited_inputs") == %w[wall_time localized_copy process_hash_seed pointer_address] &&
     identifier_contract.fetch("wire_text") == "lowercase_hyphenated_rfc4122" &&
     identifier_contract.fetch("deterministic_identifier_rule").include?("explicit domain literal"),
@@ -1084,6 +1235,15 @@ assert(!interaction.include?("wall deadline reconstructs remaining"), "prose sti
 ].each do |name|
   assert(copy.include?(name), "canonical preset copy is missing #{name}")
 end
+assert(
+  [product_model, interaction, health, flows, copy].all? do |document|
+    normalized = document.gsub(/\s+/, " ")
+    normalized.include?("positive finite v1") &&
+      normalized.include?("5-second") || normalized.include?("visual 5 s")
+  end &&
+    [product_model, interaction, health, flows, copy].all? { |document| document.include?("new") && document.include?("edit") },
+  "legacy Custom storage compatibility and safer new-authoring bounds are not reconciled",
+)
 [
   "Held · selected busy time until 3:00",
   "Held · Focus you selected",
@@ -1139,19 +1299,22 @@ assert(
   "Sending timer…",
   "Sending “%@”…",
   "Reconnecting…",
+  "Connection lost. Checking whether “%@” was received; do not repeat.",
   "That action no longer applies. Showing the current timer.",
   "Ended on another device.",
   "Couldn’t transfer. The timer is still running on this Mac.",
-  "Retry · Close · Cancel transfer · Cancel reconnect",
+  "Retry · Check status · Close · Cancel transfer · Cancel reconnect",
 ].each do |phrase|
   assert(copy.include?(phrase), "companion copy missing #{phrase}")
 end
 assert(
   expected_companion_states.all? { |state| accessibility.include?(state.tr("_", "-")) } &&
-    flows.include?("duplicate with compact receipt") &&
-    flows.include?("expired before acceptance") &&
+  flows.include?("duplicate with compact receipt") &&
+    flows.include?("too old to verify") &&
     screens.include?("Cancel transfer") && screens.include?("Cancel reconnect") &&
     screens.include?("selected action") &&
+    accessibility.include?("Do not repeat") &&
+    health.include?("companion.visual.skip") &&
     interaction.include?("matching generation") && interaction.include?("projection epoch") &&
     interaction.include?("opportunity revision") && interaction.include?("segment") &&
     !copy.include?("No change was recorded"),
@@ -1163,6 +1326,8 @@ assert(
   "Still due · timer not restored",
   "No finish was recorded. The timer was not restored, and this schedule was not reset.",
   "%@ · timer not restored",
+  "Paused: %@ · timer not restored",
+  "Held: %@ · timer not restored",
 ].each do |phrase|
   assert(
     copy.gsub(/\s+/, " ").include?(phrase),
@@ -1172,7 +1337,8 @@ end
 assert(
   [screens, interaction, accessibility, health].all? do |document|
     normalized = document.gsub(/\s+/, " ")
-    normalized.include?("schedule was not reset") && normalized.include?("still due")
+    normalized.include?("schedule was not reset") && normalized.include?("still due") &&
+      normalized.include?("Paused") && normalized.include?("Held")
   end,
   "conditional due/not-due timer recovery copy is not reconciled across governing documents",
 )
@@ -1192,17 +1358,21 @@ assert(
     interaction.include?("Pause resume plus") && interaction.include?("lock") && interaction.include?("exactly 300 seconds") &&
     health.include?("all compatible disjoint-record winners") &&
     product_model.include?("Hold may begin before due") &&
-    interaction.include?("reverse-arriving Watch terminal"),
+    interaction.include?("reverse-arriving Watch terminal") &&
+    [product_model, interaction, health, decisions].all? { |document| document.gsub(/\s+/, " ").include?("identity bytes") } &&
+    [product_model, interaction, health].all? { |document| document.include?("Paused/Held-suspended") || document.include?("Paused/Held suspended") },
   "conflict-key evidence composition, pre-due Held, and atomic running fence are not canonical across prose",
 )
 assert(
   [interaction, health, decisions].all? { |document| document.include?("cadence.timing-runtime-v2.projection-fence.v1") || document.include?("registered domain/version") } &&
-    interaction.include?("mutated domain, version, type, order, digest, or signature fails closed"),
+    interaction.include?("mutated domain, version, type, width, tag, cardinality, order, digest, or signature fails closed"),
   "portable signed-fence contract is missing from canonical prose",
 )
 assert(
   [product_model, interaction, health, flows, privacy].all? { |document| document.include?("compact") } &&
     replay_receipts.values.all? { |receipt| copy.include?(receipt) } &&
+    [product_model, interaction, health, flows, privacy].all? { |document| document.include?("acknowledgement-of-ack") } &&
+    [product_model, interaction, health, flows, privacy].all? { |document| document.include?("too old to verify") } &&
     !copy.include?("No change was recorded"),
   "ActionID lost-ack replay and truthful stale receipts are not reconciled",
 )

@@ -234,8 +234,9 @@ SE-02 → Calm / Balanced / Frequent reset / Adaptive / Custom (`custom_v2`)
   Legacy Balanced remains 20/25/30 visual and 50/60/70 movement; migration copy names the
     successor "Balanced (current v2 schedule)" at 20/25/27 and 50/55/70. Normal display is Balanced.
   Legacy custom accepted for migration:
-    → preserve every v1 field, unit, ordering, and value; change only contract version,
-      identifier to custom_v2, and migration state
+    → preserve every legal positive finite v1 field, unit, ordering, and value, including
+      visual 5 s and movement [30]; change only contract version, identifier, and migration state
+    → apply safer v2 authoring bounds only when the person creates or edits a v2 value
   Adaptive starts at the current Balanced v2 contract and initially changes only delivery within the due window
     and bounded automatic holds, never reminder frequency or a health conclusion
   Very frequent (SE-03) or effectively disabled (SE-04):
@@ -279,12 +280,20 @@ Accepted visual or movement ritual → Take with me
   │           → winner materializes the exact local product fact/effect/successor phase
   │       → other devices show Already ended / Ended on another device
   │       → losing/duplicate raw candidates erase from memory at settlement/fence
-  ├ connectivity lost → Offline · Retry / Close · Keep using this Mac
-  ├ lease elapsed → Expired · Retry / Close → Revalidating · Cancel reconnect / Close
+  ├ connectivity lost with no operation pending → Offline · Retry / Close · Keep using this Mac
+  ├ connectivity lost while terminal ACK unknown
+  │   → “Connection lost. Checking whether [selected action] was received; do not repeat.”
+  │   → Check status / Close; selected action provenance remains; never resend
+  ├ lease elapsed → Expired · Retry / Close → neutral Revalidating · Cancel reconnect / Close
+  ├ terminal ACK check → Revalidating terminal ACK unknown · Cancel reconnect / Close
+  │   → “Checking whether [selected action] was received; do not repeat.”
   │   → Live or Rejected, no-op · Close
-  ├ old generation / fenced unseen action → expired before acceptance; show current timer · Close
-  ├ duplicate with compact receipt → replay recorded acknowledgement; no second effect
-  ├ duplicate after receipt expiry below high water → already received and settled; show current timer
+  ├ duplicate with compact receipt before acknowledgement-of-ack/90 s
+  │   → replay recorded acknowledgement; no second effect
+  │   → device confirms receipt of outcome → receipt may erase
+  ├ duplicate/unseen action after receipt expiry → too old to verify; show current timer
+  ├ counter 11 arrives before 10 → hold 11 in Class-0 sparse window; high water stays 9
+  │   → 10 arrives → dispose 10 then 11 in order; high water becomes 11
   └ no acknowledgement → Transfer failed · Retry / Close; Mac deadline remains valid
 ```
 
@@ -294,17 +303,21 @@ schedule. Same-generation candidates settle, the old projection epoch is signed/
 60-second grace begins; only fence + grace permits re-offer. The recovery projection says no finish
 was recorded, then says **still due** only if the retained schedule is due. An accumulating/manual-
 early schedule instead says the timer was not restored and the schedule was not reset, while the
-menu keeps its actual phase. Offline intent cannot affect state until a coordinator
-renews its lease and revalidates generation/phase/revision. Duplicate, unknown, settled,
+menu keeps its actual phase. A Paused menu remains **Paused: [selected reason] · timer not
+restored** and Held remains **Held: [qualified evidence reason] · timer not restored**, whether
+the retained schedule is due or not due. Offline intent cannot affect state until a coordinator
+renews its lease and revalidates generation/phase/revision. Duplicate, unknown,
 post-lease, old-generation, or mismatched-cycle actions get explicit current-state receipts, never
 silence or an inaccurate zero-change claim. Raw candidates and payload-free compact replay
-receipts are memory-only for at most 90 seconds and are not history/export data. A sensed movement observation
+receipts and sparse counter entries are memory-only for at most 90 seconds and are not history/export data. A sensed movement observation
 may support a separate user-approved schedule restart; it cannot masquerade as the timer or a
 user declaration.
 
 Keyboard/focus comes from one state registry. Return/Space activates the focused enabled control.
-Live focuses Take with me or the first present phase control. Offline/expired/transfer-failed focus
-Retry; transfer-pending focuses Cancel transfer; revalidating focuses Cancel reconnect; terminal-
+Live selects one exact phase/segment row; it exposes only that row's registered remote actions and
+focus order, and `Just the visual one` exists only in merged movement offered. Neutral
+offline/expired/transfer-failed focus Retry; offline-terminal-ACK-unknown focuses Check status;
+transfer-pending focuses Cancel transfer; both revalidating states focus Cancel reconnect; terminal-
 pending/rejected/already-ended focus Close. Focus order is exactly the available control IDs, never
 a status placeholder or disabled trigger. Escape cancels only an uncommitted transfer/revalidation;
 otherwise it dismisses status without cancelling or finishing. Every transition has visible copy

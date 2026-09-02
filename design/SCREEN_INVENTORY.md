@@ -174,9 +174,9 @@ covered by previews and snapshots.
 | ED-16 | Full-screen app, menu bar hidden | Nothing becomes unreachable | todo |
 | ED-17 | Very long working session, no input | Passive-reading undercount `[OQ-04]` — honest handling | todo |
 | ED-18 | First launch after an update changed defaults | Say what changed; don't silently re-tune | todo |
-| ED-19 | Accepted timer cannot restore its monotonic epoch/anchor | Close unusable ritual; “Timer couldn’t be restored”; no finish recorded; retained due phase says still due, otherwise schedule not reset + actual phase; signed fence then 60 s quiet grace | canonical contract; runtime todo |
-| ED-20 | Companion timer projection lifecycle | Complete live/offline/expired/transfer-pending/terminal-action-pending/revalidating/rejected-no-op/already-ended/transfer-failed registry; never silently ineffective | canonical contract; runtime todo |
-| ED-21 | Coordinator restarts with an in-flight old-generation action | Persisted high-water fence reports unseen stale action expired/current state, or known retry already settled; no repeated effect; successor remains blocked until disposition/fence commit | canonical contract; runtime todo |
+| ED-19 | Accepted timer cannot restore its monotonic epoch/anchor | Close unusable ritual; “Timer couldn’t be restored”; no finish recorded; retained due body may say still due, while menu independently preserves actual Paused/Held reason or ordinary phase; signed fence then 60 s quiet grace | canonical contract; runtime todo |
+| ED-20 | Companion timer projection lifecycle | Complete live/neutral-offline/offline-terminal-ACK-unknown/expired/transfer-pending/terminal-action-pending/neutral-revalidating/revalidating-terminal-ACK-unknown/rejected-no-op/already-ended/transfer-failed registry; never silently ineffective | canonical contract; runtime todo |
+| ED-21 | Coordinator restarts with an in-flight old-generation action | Known retry replays while compact receipt survives acknowledgement-of-ack; after 90 s duplicate/unseen actions are too old to verify and show current state; no repeated effect; successor remains blocked until disposition/fence commit | canonical contract; runtime todo |
 
 ## J. Cross-cutting appearance variants
 
@@ -489,22 +489,28 @@ Multi-display        — Feature content is one centered ordinary window. Center
 ```
 Keyboard path        — Return/Space activates the focused enabled control. Offline, expired, and
                        transfer-failed expose Retry/Close; transfer-pending exposes Cancel transfer;
-                       revalidating exposes Cancel reconnect/Close; terminal-pending exposes Close.
-Initial focus        — Live: Take with me or first present phase terminal control. Offline/expired/
-                       transfer-failed: Retry. Transfer pending: Cancel transfer. Revalidating:
-                       Cancel reconnect. Terminal pending/rejected/already-ended: Close.
+                       neutral revalidating exposes Cancel reconnect/Close; offline-terminal-ACK-
+                       unknown exposes Check status/Close; revalidating-terminal-ACK-unknown exposes
+                       Cancel reconnect/Close; terminal-pending exposes Close.
+Initial focus        — Live: exact phase row's Take with me or first terminal control. Neutral
+                       offline/expired/transfer-failed: Retry. Offline-terminal-ACK-unknown: Check
+                       status. Transfer pending: Cancel transfer. Both revalidating states: Cancel
+                       reconnect. Terminal pending/rejected/already-ended: Close.
 Focus order          — Exactly the state's machine-registered enabled control IDs. Unavailable
-                       phase controls are absent; no disabled trigger is focusable.
+                       phase controls are absent; no disabled trigger is focusable. `Just the
+                       visual one` appears only in merged movement offered.
 Escape               — Cancels only an uncommitted transfer/revalidation where registered;
                        otherwise dismisses status without cancelling, repeating, or finishing.
 VoiceOver names      — Take with me names the action. Terminal controls retain their ordinary
                        semantic names and append no sensor/body implication.
-VoiceOver values     — Announces exactly one of live, offline, expired, transfer-pending,
-                       terminal-action-pending, revalidating, rejected-no-op, already-ended, or
-                       transfer-failed using CP-VO19–26/28. Terminal pending names the selected action.
+VoiceOver values     — Announces exactly one registered neutral/pending condition. Terminal pending
+                       names the selected action. Unknown-ACK states preserve that provenance and
+                       say “Checking whether [action] was received. Do not repeat”; Check status or
+                       reconnect never resends it. Neutral states say no operation is pending.
 Visible states       — “Ready on this device” · “Device offline. Keep using this Mac.” ·
                        “Session expired. Reconnect to continue.” · “Sending timer…” ·
-                       “Sending ‘[selected action]’…” · “Reconnecting…” · “That action no longer
+                       “Sending ‘[selected action]’…” · “Reconnecting…” · “Connection lost.
+                       Checking whether ‘[selected action]’ was received; do not repeat.” · “That action no longer
                        applies. Showing the current timer.” ·
                        “Ended on another device.” · “Couldn’t transfer. The timer is still running
                        on this Mac.”
@@ -532,13 +538,16 @@ Visible copy         — “Timer couldn’t be restored.” Due: “No finish w
                        is still due.” Not due/manual early: “No finish was recorded. The timer was
                        not restored, and this schedule was not reset.”
 VoiceOver names      — Announces the matching due or not-due CP-VO27/29 once, then focuses Close.
-VoiceOver values     — Due menu: “Still due · timer not restored.” Otherwise: “[actual ordinary
-                       schedule status] · timer not restored.” No countdown.
+VoiceOver values     — Active due: “Still due · timer not restored.” Paused: “Paused: [selected
+                       reason] · timer not restored.” Held: “Held: [qualified evidence reason] ·
+                       timer not restored.” Those evidence states remain visible whether due or not
+                       due. Otherwise: “[actual ordinary schedule status] · timer not restored.”
 Text scaling         — Title/body/actions stack and wrap without clipping.
 High contrast        — Status and focus use text, traits, and outlines.
 Reduced motion       — Immediate close to quiet menu state; no entrance/exit animation gate.
 Meaning w/o color    — “still due” appears only when true; otherwise “schedule was not reset” and
-                       the actual phase carry the state. “Not restored” is explicit in both.
+                       the actual phase carry the state. Paused/Held and qualified reason are never
+                       replaced by due color or wording. “Not restored” is explicit in every branch.
 Alternative movement — No body behavior or completion is inferred.
 Multi-display        — One key recovery status; closing restores the prior app once and leaves
                        the actual menu projection reachable on every display topology.

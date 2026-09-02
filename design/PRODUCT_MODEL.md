@@ -137,12 +137,17 @@ affected nonparticipants, segment, and payload. Position may be affected from a 
 opportunity without joining its participant identity, including while reminders are off through
 its always-present manual cycle. Effect-bearing nonterminal commands require a coordinator lease
 and atomic acknowledgement before exposing any effect. Opportunity commands use OpportunityID +
-revision; Pause/system/schedule commands use stable GlobalStateID + global revision. No global
-command invents an OpportunityID. One complete registered causal/precedence rank covers every
-authoritative nonterminal transition; offline intent is inert until renewed and revalidated.
+revision; Pause/Held/system/schedule evidence commands use stable GlobalStateID + global revision.
+When one affects a running ritual, expected opportunity context atomically compares and fences its
+old revision without becoming the command identity. Hold may begin before due while accumulating
+and no OpportunityID exists. One complete conflict-key and same-key rank registry covers every
+authoritative nonterminal transition; the coordinator applies compatible winners from disjoint
+evidence keys before reducing full state. Offline intent is inert until renewed and revalidated.
 
 Escape is always equivalent to the least-committal exit. It is never a trap and never asks
-"are you sure". `ActionID` makes retries idempotent. An action originated after its actor knew the
+"are you sure". `ActionID` makes retries idempotent: a compact live receipt replays the original
+acknowledgement without effects, high water reports an expired receipt as already settled, and an
+unseen stale action reports expired before acceptance while showing current state. An action originated after its actor knew the
 opportunity closed is a rejected no-op with honest feedback. A valid candidate originated before
 that actor learned of provisional closure still reconciles only inside the same live, unfenced
 coordinator generation and projection epoch. Terminal order uses fact-claim rank and stable
@@ -158,10 +163,12 @@ actions are rejected no-ops rather than remaining indefinitely valid. The termin
 bytes encode OpportunityID, terminal slot, and fixed registered component scope, never a candidate
 participant subset.
 
-Merged visual timer/Done and parent Escape from the same revision share one cross-slot arbiter.
-Escape preempts a same-revision component; otherwise Done ranks before timer completion. Exactly
-one fact path and visual successor effect wins. A visual component already acknowledged at the
-successor revision remains final when a later movement-phase Escape closes the parent.
+Merged visual timer/Done, parent Escape, and timer-recovery closure from the same revision share one
+derived cross-slot arbiter after remote actions normalize to concrete local transitions. Escape
+preempts, then Done, operational recovery, and timer. Exactly one result/fact path and at most one
+visual successor effect wins; recovery has neither. Remote Done advances to the movement offer. A
+visual component already acknowledged at the successor revision remains final when a later
+movement-phase Escape closes the parent.
 
 ## 6. Paused and Held
 
@@ -176,6 +183,13 @@ and clock effect explicit:
 Every hold carries provenance, source capability, observation/expiry, qualification, and an
 automatic-correction action when applicable. Missing, stale, unavailable, or conflicting evidence
 is unknown and cannot create a hold, an away pause, or a body/activity claim.
+
+Evidence commands compose by record identity, not one global winner. At one frontier, Pause resume
+and system available both clear; Pause start and system unavailable both set; lock and long-idle at
+exactly 300 seconds both commit, so `likelyNaturalInterruption` is not discarded. Same-record
+begin/clear intents alone compete, then the full current evidence set determines Paused, Held,
+running, or corridor. A running-affecting global commit fences the old opportunity projection before
+preserving it, so an old Watch terminal cannot arrive in reverse order and finish it.
 
 Explicit manual pause outranks the remaining Paused reasons in the machine-defined order, and
 every Paused reason outranks a hold. Timed pause persists across relaunch; “until I resume” is
@@ -218,15 +232,19 @@ It may never combine them into a grade or interpret them as health outcomes.
 `likelyNaturalInterruption`
 
 Operational events, observations, assessments, scheduling decisions, corrections, and retained
-companion state use separate ledgers. Raw companion/terminal candidates, losers, duplicates, and
-old-generation rejection envelopes are Class 0: memory-only for at most 90 seconds, erased at
-settlement/fence, and never persisted, exported, or given a durable record identity. A sensor observation may support a `scheduling_decision`; it cannot
+companion state use separate ledgers. Raw companion/terminal candidates, losers, duplicates,
+old-generation rejection envelopes, and compact lost-ack receipts are Class 0: memory-only for at
+most 90 seconds, erased at acknowledgement/settlement/fence, and never exported or given a durable
+record identity. A compact receipt has no raw payload and only replays the original outcome once. A sensor observation may support a `scheduling_decision`; it cannot
 be encoded as `timerFinished`, `userDeclaredCompleted`, or `userDeclaredAlreadyMoved`.
 
-Companion controls project eight explicit conditions: live, offline, expired, pending,
-revalidating, rejected-no-op, already-ended, and transfer-failed. “Any device” applies only to a
-live exact-generation lease. Every other state disables ineffective controls, says whether the Mac
-timer remains authoritative, announces the result, and offers Retry/Close. No sensor is required.
+Companion controls project nine explicit conditions: live, offline, expired, transfer pending,
+terminal-action pending, revalidating, rejected-no-op, already-ended, and transfer-failed. “Any
+device” applies only to a live exact-generation lease. The machine registry defines each state's
+available control IDs, exact labels, focus/order, VoiceOver, keyboard, Escape, and cancellation.
+Unavailable controls are absent from focus. Transfer pending can cancel only the transfer; terminal
+pending names the selected action and cannot cancel or repeat it. Offline, expired, and transfer
+failed offer enabled Retry and Close. No sensor is required.
 
 ## 9. Adaptation — what the app may and may not learn
 

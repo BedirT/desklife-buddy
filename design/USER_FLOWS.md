@@ -267,37 +267,49 @@ typed and disclosed before their owning features retain or export them.
 
 ```
 Accepted visual or movement ritual → Take with me
-  → Mac shows live/offline availability; Take with me is enabled only while live
+  → Mac shows registered live/offline availability; Take with me is enabled only while live
   → Mac sends GlobalStateID + generation + OpportunityID + projection epoch + independent
     ClockCycleIDs + absolute deadline + ActionID
-  ├ companion acknowledges bounded monotonic handoff + ≤90 s exact-generation lease → Live
-  │   ├ terminal action → Pending → causal acknowledgement
-  │   └ same-generation action set reconciles by deterministic key, never arrival order
-  │       → winner materializes one terminal product fact and clock effect
+  ├ companion starts handoff → Transfer pending · “Sending timer…” · Cancel transfer
+  │   └ acknowledges bounded monotonic handoff + ≤90 s exact-generation lease → Live
+  │       ├ terminal action → normalize wrapper to exact local transition
+  │       │   → Terminal action pending · “Sending ‘[selected action]’…” · Close
+  │       │   → causal acknowledgement; submitted action cannot be cancelled or repeated
+  │       └ same-generation concrete action set reconciles by its named resolver
+  │           → winner materializes the exact local product fact/effect/successor phase
   │       → other devices show Already ended / Ended on another device
   │       → losing/duplicate raw candidates erase from memory at settlement/fence
-  ├ connectivity lost → Offline; controls disabled; Keep using this Mac
-  ├ lease elapsed → Expired → Revalidating → Live or Rejected, no-op
-  ├ old generation / fenced projection → Rejected, no-op; No change was recorded
-  └ no acknowledgement → Transfer failed; Retry or keep using Mac; Mac deadline remains valid
+  ├ connectivity lost → Offline · Retry / Close · Keep using this Mac
+  ├ lease elapsed → Expired · Retry / Close → Revalidating · Cancel reconnect / Close
+  │   → Live or Rejected, no-op · Close
+  ├ old generation / fenced unseen action → expired before acceptance; show current timer · Close
+  ├ duplicate with compact receipt → replay recorded acknowledgement; no second effect
+  ├ duplicate after receipt expiry below high water → already received and settled; show current timer
+  └ no acknowledgement → Transfer failed · Retry / Close; Mac deadline remains valid
 ```
 
 Sleep, lock, relaunch, and connectivity loss never extend the accepted duration. If the monotonic
 epoch/anchor cannot be resumed, the ritual closes operationally with no `timerFinished` or fresh
 schedule. Same-generation candidates settle, the old projection epoch is signed/fenced, then the
 60-second grace begins; only fence + grace permits re-offer. The recovery projection says no finish
-was recorded and the schedule is still due. Offline intent cannot affect state until a coordinator
+was recorded, then says **still due** only if the retained schedule is due. An accumulating/manual-
+early schedule instead says the timer was not restored and the schedule was not reset, while the
+menu keeps its actual phase. Offline intent cannot affect state until a coordinator
 renews its lease and revalidates generation/phase/revision. Duplicate, unknown, settled,
-post-lease, old-generation, or mismatched-cycle actions are explicit rejected no-ops, never silent.
-Raw candidates are memory-only for at most 90 seconds and are not history/export data. A sensed movement observation
+post-lease, old-generation, or mismatched-cycle actions get explicit current-state receipts, never
+silence or an inaccurate zero-change claim. Raw candidates and payload-free compact replay
+receipts are memory-only for at most 90 seconds and are not history/export data. A sensed movement observation
 may support a separate user-approved schedule restart; it cannot masquerade as the timer or a
 user declaration.
 
-Keyboard/focus: Take with me receives focus when live and uses Return/Space. Pending and
-revalidating disable terminal controls; Escape/Command-period closes only companion status and
-returns to the authoritative timer. When a trigger becomes unavailable, focus moves to Retry or
-Close. Every transition has visible copy and one VoiceOver announcement. The fallback requires no
-HealthKit, motion, location, camera, or other sensor data.
+Keyboard/focus comes from one state registry. Return/Space activates the focused enabled control.
+Live focuses Take with me or the first present phase control. Offline/expired/transfer-failed focus
+Retry; transfer-pending focuses Cancel transfer; revalidating focuses Cancel reconnect; terminal-
+pending/rejected/already-ended focus Close. Focus order is exactly the available control IDs, never
+a status placeholder or disabled trigger. Escape cancels only an uncommitted transfer/revalidation;
+otherwise it dismisses status without cancelling or finishing. Every transition has visible copy
+and one VoiceOver announcement. The fallback requires no HealthKit, motion, location, camera, or
+other sensor data.
 
 ---
 

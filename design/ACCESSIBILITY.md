@@ -121,20 +121,26 @@ before anything else.
 
 ### ED-20/21 — Companion timer projection
 
-1. **Keyboard path** — Live Take with me and terminal controls use Return/Space. Retry/Close
-   replaces an unavailable action. Escape/Command-period dismisses status only, never the timer.
-2. **Initial focus** — Take with me when live; Retry when expired or transfer failed; Close when
-   rejected-no-op or already ended. Pending/revalidating retains a non-action status focus.
-3. **Focus order** — status → enabled terminal controls → Retry/Close. Disabled controls are
-   announced disabled and leave the actionable tab order.
+1. **Keyboard path** — Return/Space activates the focused enabled control. Offline, expired, and
+   transfer-failed expose **Retry** and **Close**. Transfer-pending exposes **Cancel transfer**;
+   revalidating exposes **Cancel reconnect** and **Close**; terminal-action-pending exposes
+   **Close** because a submitted action cannot be cancelled.
+2. **Initial focus** — Live uses Take with me when available, otherwise the first present normalized
+   terminal control. Offline/expired/transfer-failed focus Retry. Transfer-pending focuses Cancel
+   transfer; revalidating focuses Cancel reconnect; terminal-pending, rejected, and already-ended
+   focus Close. No absent or disabled trigger receives focus.
+3. **Focus order** — exactly the enabled control IDs registered for that state. Status is read but
+   not a fake focus stop. Unavailable phase-specific controls are absent, not disabled.
 4. **Escape** — returns to the authoritative timer without applying a companion action.
 5. **VoiceOver names** — semantic action names, never device appearance or sensor language.
 6. **VoiceOver values** — exactly one registered announcement for live, offline, expired,
-   pending, revalidating, rejected-no-op, already-ended, or transfer-failed. No silent no-op.
+   transfer-pending, terminal-action-pending, revalidating, rejected-no-op, already-ended, or
+   transfer-failed. Terminal pending names the selected action, never “Sending timer.” No silent no-op.
 7. **Text scaling** — state and recovery copy wrap above a vertical action group.
 8. **Increase Contrast** — labels, traits, focus rings, and boundaries distinguish every state.
 9. **Reduce Motion** — immediate state replacement; no spinner or transfer animation required.
-10. **Meaning without color** — each state has explicit text and control enabled/disabled traits.
+10. **Meaning without color** — each state has explicit text and enabled action labels; no pending
+    or failure meaning depends on color or a disabled trigger.
 11. **Alternative movement** — sensor-free manual controls remain on the authoritative device;
     Watch/iPhone ownership, motion, location, HealthKit, walking, and standing are not required.
 12. **Multi-display** — the Mac key panel remains reachable until acknowledged handoff; failure
@@ -147,15 +153,18 @@ before anything else.
 2. **Initial focus** — Close, or Retry when it is the only recovery action.
 3. **Focus order** — recovery status → Retry when present → Close.
 4. **Escape** — closes the unusable ritual without recording skip, completion, or timer finish.
-5. **VoiceOver names** — “Timer could not be restored. No finish was recorded. The schedule is
-   still due.” Announced once before Close receives focus.
-6. **VoiceOver values** — menu status is “Still due · timer not restored”; no countdown chatter.
+5. **VoiceOver names** — due: “Timer could not be restored. No finish was recorded. The schedule
+   is still due.” Not due/manual early: “Timer could not be restored. No finish was recorded. This
+   schedule was not reset.” The retained phase selects the string before Close receives focus.
+6. **VoiceOver values** — a due menu says “Still due · timer not restored.” Otherwise it reads the
+   ordinary actual retained schedule status followed by “timer not restored”; no countdown chatter.
 7. **Text scaling** — title, body, and actions wrap in one vertical group.
 8. **Increase Contrast** — explicit boundary and focus ring.
 9. **Reduce Motion** — immediate quiet transition, no entrance/exit gate.
-10. **Meaning without color** — “still due” and “not restored” carry the complete state.
+10. **Meaning without color** — “still due” appears only when true; otherwise “schedule was not
+    reset” plus the actual menu phase carries the state. “Not restored” is always explicit.
 11. **Alternative movement** — no body state or completion is inferred.
-12. **Multi-display** — one key recovery status, one focus restoration, menu due state reachable.
+12. **Multi-display** — one key recovery status, one focus restoration, actual menu phase reachable.
 
 ### MB-01…MB-05 — Menu bar glyph
 

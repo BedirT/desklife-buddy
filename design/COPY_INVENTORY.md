@@ -121,12 +121,18 @@ CP-HU13, never a hold. Each string is valid only when driven by its matching san
 | CP-BR56 | Session expired. Reconnect to continue. | Class A expired-lease state; no action is accepted until revalidation | Approved — D-033 companion state contract 2026-09-01 |
 | CP-BR57 | Sending timer… | Class A pending transfer state; no success claim before acknowledgement | Approved — D-033 companion state contract 2026-09-01 |
 | CP-BR58 | Reconnecting… | Class A revalidation state; controls remain disabled until acknowledgement | Approved — D-033 companion state contract 2026-09-01 |
-| CP-BR59 | That action no longer applies. No change was recorded. | Class A old-generation/fenced action receipt; rejected no-op, never silent and never a product fact | Approved — D-033 companion state contract 2026-09-01 |
+| CP-BR59 | That action no longer applies. Showing the current timer. | Class A stale/fenced action receipt; states the current projection without falsely denying a previously committed change | Approved — D-033 companion state contract 2026-09-01 |
 | CP-BR60 | Ended on another device. | Class A already-ended status, valid only after causal acknowledgement | Approved — D-033 companion state contract 2026-09-01 |
 | CP-BR61 | Couldn’t transfer. The timer is still running on this Mac. | Class A failed-transfer boundary; prevents a false handoff claim | Approved — D-033 companion state contract 2026-09-01 |
 | CP-BR62 | Timer couldn’t be restored | Class A operational recovery title; states capability failure, not timer completion | Approved — D-033 timer-recovery contract 2026-09-01 |
 | CP-BR63 | No finish was recorded. This schedule is still due. | Class A exact fact/schedule boundary; no `timerFinished` or fresh cycle exists | Approved — D-033 timer-recovery contract 2026-09-01 |
 | CP-BR64 | Close · Retry | Class A recovery controls; Retry appears only when fence/storage recovery can be attempted | Approved — D-033 operational recovery contract 2026-09-01 |
+| CP-BR65 | Sending “%@”… | Class A terminal-action-pending format; `%@` is the exact selected visible action label, never “timer” | Approved — D-033 companion state contract 2026-09-01 |
+| CP-BR66 | Retry · Close · Cancel transfer · Cancel reconnect | Class A exact companion recovery controls. Each appears only in its registered enabled state and is never a disabled focus target | Approved — D-033 companion state contract 2026-09-01 |
+| CP-BR67 | Action already received. Showing the recorded result. | Class A compact-receipt retry; replays the original acknowledgement and applies no second effect | Approved — D-033 ActionID replay contract 2026-09-01 |
+| CP-BR68 | Action already received and settled. Showing the current timer. | Class A high-water receipt after compact receipt expiry; does not invent the unavailable original outcome | Approved — D-033 ActionID replay contract 2026-09-01 |
+| CP-BR69 | That action expired before it could be accepted. Showing the current timer. | Class A previously unseen stale/fenced action receipt; distinct from a known retry | Approved — D-033 ActionID replay contract 2026-09-01 |
+| CP-BR70 | No finish was recorded. The timer was not restored, and this schedule was not reset. | Class A not-due/manual-early recovery boundary; used only when the retained schedule snapshot is not due | Approved — D-033 conditional recovery contract 2026-09-01 |
 
 ---
 
@@ -400,14 +406,16 @@ Spoken strings are user-facing copy and follow the same claims discipline.
 | CP-VO17 | "Start five minutes, Return or 5." / "Start two minutes, Q or 2." | A | Movement-offered actions; accepting either creates the timer and selected duration. |
 | CP-VO18 | "Five minutes selected." / "Two minutes selected." | A | Movement-running value; exactly reflects the accepted duration. |
 | CP-VO19 | "Timer controls are live on this device." | A | Live exact-generation companion state; actions are enabled only in this state. |
-| CP-VO20 | "Device offline. No action was applied." | A | Offline receipt; no silent companion action. |
-| CP-VO21 | "Session expired. Timer controls are unavailable." | A | Expired lease; requires revalidation. |
-| CP-VO22 | "Sending timer. Keep this Mac open." | A | Pending handoff; Mac authority remains explicit until acknowledgement. |
-| CP-VO23 | "Reconnecting. No action has been applied yet." | A | Revalidation state without premature success. |
-| CP-VO24 | "Action not applied. The timer session changed or already ended." | A | Old-generation/fenced rejected-no-op receipt; never a fact. |
-| CP-VO25 | "This timer already ended on another device." | A | Causally acknowledged already-ended state. |
-| CP-VO26 | "Transfer failed. The timer is still running on this Mac." | A | Failed-transfer boundary. |
+| CP-VO20 | "Device offline. No action was applied. Retry or close." | A | Offline state and exact enabled recovery controls; no silent companion action. |
+| CP-VO21 | "Session expired. Timer controls are unavailable. Retry or close." | A | Expired lease and exact enabled recovery controls. |
+| CP-VO22 | "Sending timer. Cancel transfer is available." | A | Transfer-pending handoff; Mac authority remains explicit until acknowledgement. |
+| CP-VO23 | "Reconnecting. No action has been applied yet. Cancel reconnect or close." | A | Revalidation state without premature success. |
+| CP-VO24 | "Action not applied. Showing the current timer. Close." | A | Stale/fenced rejected-no-op receipt; never a fact or a claim that no earlier change occurred. |
+| CP-VO25 | "This timer already ended on another device. Close." | A | Causally acknowledged already-ended state and enabled Close. |
+| CP-VO26 | "Transfer failed. The timer is still running on this Mac. Retry or close." | A | Failed-transfer boundary and exact enabled recovery controls. |
 | CP-VO27 | "Timer could not be restored. No finish was recorded. The schedule is still due." | A | Operational recovery; explicitly excludes `timerFinished` and a fresh schedule. |
+| CP-VO28 | "Sending %@. The submitted action cannot be cancelled." | A | Terminal-action-pending format; `%@` is the exact selected visible action label. |
+| CP-VO29 | "Timer could not be restored. No finish was recorded. This schedule was not reset." | A | Operational recovery for a retained not-due/manual-early schedule; does not call it due. |
 
 Cadence rule (not a string): timers announce at coarse marks only (open, 10 s/1:00, end),
 polite live region — per-second announcement is an accessibility defect (`accessibility.md` §5).
@@ -428,6 +436,7 @@ Strings the review pass found unregistered in the round-2 artboards, plus the D-
 | CP-MB21 | Quiet while the Mac is inactive · Presenting, reminders off · Quiet in Focus · Quiet in this app · Snoozed · Waiting for a pause | A | **Current-runtime/v1 projection only.** Canonical v2 Paused/Held reasons use CP-HU22–27 and CP-MB23. |
 | CP-MB23 | Paused while the Mac is inactive · Held · meeting you selected · Held · presenting you selected · Held · likely call · Held · timed task you selected · Held · presentation mode you selected · Held · Focus you selected · Held · selected busy time until %@ · Held · selected app is active · Held · snoozed · Held · waiting for a low-friction moment | A | Canonical v2 reason set. Each source-derived variant requires matching fresh provenance and says no more than that evidence proves. `%@` is a fresh known busy-end time. |
 | CP-MB24 | Still due · timer not restored | A | Operational-only recovery menu state during grace; no countdown, completion mark, or fresh schedule. |
+| CP-MB25 | `%@ · timer not restored` | A | Not-due/manual-early recovery menu format; `%@` is the ordinary actual retained schedule status, never a manufactured due label. |
 | CP-MB22 | `%@ due.` | A | VoiceOver clock-state format; current concrete outputs are `Visual reset due.` and `Movement due.` |
 | CP-HU21 | in 45 s · in 30 s · in 15 s · in 5 s | A | Coarse capsule steps (D-029) — nothing ticks; height is the continuous signal |
 | CP-SE25 | Breaks · Visual resets · Movement · Schedule | A | Settings sidebar group + rows (functional labels) |
@@ -606,7 +615,7 @@ inventory visibly nonactivated.
 | Catalog keys | Exact string or format | Classification and basis | Status |
 |---|---|---|---|
 | `v2.settings.privacy.stored.coordination.title`; `.detail` | `Coordination continuity`; `This Mac keeps the current coordinator generation, high-water acknowledgement, active timer fence, and paired-device public-key fingerprints needed to reject stale actions after relaunch.` | Class A/Class 1 continuity disclosure; no raw action payload, body signal, or health inference | Canonical v2 — D-033; not runtime activated |
-| `v2.settings.privacy.stored.candidates.title`; `.detail` | `Temporary action buffers`; `Raw companion actions, duplicates, losing actions, and rejected stale actions stay in memory for no more than 90 seconds. They are not saved, exported, or used for analytics.` | Class A/Class 0 exact lifecycle and maximum retention | Canonical v2 — D-033; not runtime activated |
+| `v2.settings.privacy.stored.candidates.title`; `.detail`; `.replay_detail` | `Temporary action buffers`; `Raw companion actions, duplicates, losing actions, and rejected stale actions stay in memory for no more than 90 seconds. They are not saved, exported, or used for analytics.`; `A payload-free retry receipt may stay in memory for the same limit so a lost acknowledgement does not apply an action twice.` | Class A/Class 0 exact lifecycle and maximum retention; retry detail discloses compact idempotency state without implying raw payload retention | Canonical v2 — D-033; not runtime activated |
 | `v2.settings.privacy.coordination.report`; `.report_detail` | `Include coordination status in data report`; `The report includes current generation and fence status plus public fingerprints. It never includes raw action buffers or a private signing key.` | Class A export/access boundary; the future report excludes secrets and Class-0 buffers | Canonical v2 — requires owning implementation story |
 | `v2.settings.privacy.reset.coordination` | `Reset app data also deletes local coordination state, paired-device trust, and the private coordinator signing key. History-only deletion keeps them so current timers remain safe.` | Class A deletion boundary; `[07 §10]` | Canonical v2 — requires owning implementation story |
 

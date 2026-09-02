@@ -174,9 +174,9 @@ covered by previews and snapshots.
 | ED-16 | Full-screen app, menu bar hidden | Nothing becomes unreachable | todo |
 | ED-17 | Very long working session, no input | Passive-reading undercount `[OQ-04]` — honest handling | todo |
 | ED-18 | First launch after an update changed defaults | Say what changed; don't silently re-tune | todo |
-| ED-19 | Accepted timer cannot restore its monotonic epoch/anchor | Close unusable ritual; “Timer couldn’t be restored”; no finish recorded; schedule still due; signed fence then 60 s quiet grace; menu retains due status | canonical contract; runtime todo |
-| ED-20 | Companion timer projection lifecycle | Complete live/offline/expired/pending/revalidating/rejected-no-op/already-ended/transfer-failed states; never silently ineffective | canonical contract; runtime todo |
-| ED-21 | Coordinator restarts with an in-flight old-generation action | Persisted high-water fence rejects old action with visible/VoiceOver no-op receipt; successor remains blocked until disposition/fence commit | canonical contract; runtime todo |
+| ED-19 | Accepted timer cannot restore its monotonic epoch/anchor | Close unusable ritual; “Timer couldn’t be restored”; no finish recorded; retained due phase says still due, otherwise schedule not reset + actual phase; signed fence then 60 s quiet grace | canonical contract; runtime todo |
+| ED-20 | Companion timer projection lifecycle | Complete live/offline/expired/transfer-pending/terminal-action-pending/revalidating/rejected-no-op/already-ended/transfer-failed registry; never silently ineffective | canonical contract; runtime todo |
+| ED-21 | Coordinator restarts with an in-flight old-generation action | Persisted high-water fence reports unseen stale action expired/current state, or known retry already settled; no repeated effect; successor remains blocked until disposition/fence commit | canonical contract; runtime todo |
 
 ## J. Cross-cutting appearance variants
 
@@ -487,28 +487,33 @@ Multi-display        — Feature content is one centered ordinary window. Center
 ### K.10 Companion timer controls (ED-20/21)
 
 ```
-Keyboard path        — When live, Take with me and terminal controls use Return/Space.
-                       Retry/Close replaces an unavailable trigger. Escape/Command-period
-                       dismisses companion status only and never ends the authoritative timer.
-Initial focus        — Take with me when live; the pending trigger while acknowledgement is
-                       in flight; Retry for expired/transfer-failed; Close for rejected/already-ended.
-Focus order          — Status → enabled terminal controls → Retry/Close. Disabled controls do
-                       not remain in the actionable tab order.
-Escape               — Returns focus to the authoritative timer surface without applying an action.
+Keyboard path        — Return/Space activates the focused enabled control. Offline, expired, and
+                       transfer-failed expose Retry/Close; transfer-pending exposes Cancel transfer;
+                       revalidating exposes Cancel reconnect/Close; terminal-pending exposes Close.
+Initial focus        — Live: Take with me or first present phase terminal control. Offline/expired/
+                       transfer-failed: Retry. Transfer pending: Cancel transfer. Revalidating:
+                       Cancel reconnect. Terminal pending/rejected/already-ended: Close.
+Focus order          — Exactly the state's machine-registered enabled control IDs. Unavailable
+                       phase controls are absent; no disabled trigger is focusable.
+Escape               — Cancels only an uncommitted transfer/revalidation where registered;
+                       otherwise dismisses status without cancelling, repeating, or finishing.
 VoiceOver names      — Take with me names the action. Terminal controls retain their ordinary
                        semantic names and append no sensor/body implication.
-VoiceOver values     — Announces exactly one of live, offline, expired, pending, revalidating,
-                       rejected-no-op, already-ended, or transfer-failed using CP-VO19–26.
+VoiceOver values     — Announces exactly one of live, offline, expired, transfer-pending,
+                       terminal-action-pending, revalidating, rejected-no-op, already-ended, or
+                       transfer-failed using CP-VO19–26/28. Terminal pending names the selected action.
 Visible states       — “Ready on this device” · “Device offline. Keep using this Mac.” ·
                        “Session expired. Reconnect to continue.” · “Sending timer…” ·
-                       “Reconnecting…” · “That action no longer applies. No change was recorded.” ·
+                       “Sending ‘[selected action]’…” · “Reconnecting…” · “That action no longer
+                       applies. Showing the current timer.” ·
                        “Ended on another device.” · “Couldn’t transfer. The timer is still running
                        on this Mac.”
 Text scaling         — Status and recovery copy wrap above a vertical action row; no truncation.
 High contrast        — Enabled, disabled, pending, and failure states use labels/traits/outlines,
                        never color alone.
 Reduced motion       — State replacement is immediate; no transfer spinner is required.
-Meaning w/o color    — Every state is named and every disabled control exposes disabled state.
+Meaning w/o color    — Every state and enabled recovery action is named; absent controls are not
+                       represented by color or a disabled focus target.
 Alternative movement — No sensor, HealthKit, location, standing, or walking requirement. Manual
                        controls on the authoritative device remain the equal fallback.
 Multi-display        — The Mac's active timer panel remains reachable until transfer acknowledgement;
@@ -523,18 +528,20 @@ Keyboard path        — Close is immediately reachable with Return, Escape, or 
 Initial focus        — Close (or Retry when that is the only recovery action).
 Focus order          — Recovery status → Retry when present → Close.
 Escape               — Closes the unusable ritual; records no skipped/completed/timer fact.
-Visible copy         — “Timer couldn’t be restored” · “No finish was recorded. This schedule
-                       is still due.”
-VoiceOver names      — “Timer could not be restored. No finish was recorded. The schedule is
-                       still due.” Announced once, then focus lands on Close.
-VoiceOver values     — Menu reads “Still due · timer not restored” during grace; no countdown.
+Visible copy         — “Timer couldn’t be restored.” Due: “No finish was recorded. This schedule
+                       is still due.” Not due/manual early: “No finish was recorded. The timer was
+                       not restored, and this schedule was not reset.”
+VoiceOver names      — Announces the matching due or not-due CP-VO27/29 once, then focuses Close.
+VoiceOver values     — Due menu: “Still due · timer not restored.” Otherwise: “[actual ordinary
+                       schedule status] · timer not restored.” No countdown.
 Text scaling         — Title/body/actions stack and wrap without clipping.
 High contrast        — Status and focus use text, traits, and outlines.
 Reduced motion       — Immediate close to quiet menu state; no entrance/exit animation gate.
-Meaning w/o color    — “still due” and “not restored” carry the state without color.
+Meaning w/o color    — “still due” appears only when true; otherwise “schedule was not reset” and
+                       the actual phase carry the state. “Not restored” is explicit in both.
 Alternative movement — No body behavior or completion is inferred.
 Multi-display        — One key recovery status; closing restores the prior app once and leaves
-                       the due menu projection reachable on every display topology.
+                       the actual menu projection reachable on every display topology.
 ```
 
 ## Coverage summary

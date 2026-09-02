@@ -203,6 +203,13 @@ candidate_data_lifecycle_v2:
   persistence: false
   export: false
   analytics: false
+  compact_replay_receipt:
+    memory_only: true
+    raw_payload: false
+    maximum_retention_seconds: 90
+    discard_at_ack_fence_or_limit: true
+    export: false
+    purpose: action_id_lost_ack_idempotency_only
 boundary_predicates:
   deadline_reached: elapsed_seconds_greater_than_or_equal_to_deadline_seconds
   recent_input_eligible: seconds_since_input_less_than_or_equal_to_60

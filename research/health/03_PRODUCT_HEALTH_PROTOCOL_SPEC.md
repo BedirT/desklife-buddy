@@ -444,8 +444,11 @@ or discontinuous epoch is unknown and closes through operational-only
 affected due cycle, settle only admitted candidates from the same live generation, then atomically
 commit the operational disposition and signed high-water projection fence. The 60-second grace
 begins after that fence; only fence + grace permits a new OpportunityID. The surface says “Timer
-couldn’t be restored” and “No finish was recorded. This schedule is still due”; the menu keeps the
-due state visible. Old-generation actions are rejected no-ops with an explicit receipt. A
+couldn’t be restored,” then uses the retained schedule phase: an actually due schedule says “No
+finish was recorded. This schedule is still due,” while an accumulating or manually opened early
+schedule says “No finish was recorded. The timer was not restored, and this schedule was not
+reset.” The menu projects the actual retained phase. Old-generation actions get an explicit
+expired/current-state receipt. A
 companion transfer requires a bounded monotonic handshake and subtracts its full uncertainty;
 without acknowledgment the sender remains authoritative. Portable wall values are display and
 audit metadata only. Sleep, lock, callback suspension, relaunch, clock changes, or handoff cannot
@@ -526,24 +529,33 @@ the cycle without enabling accrual, due state, or prompts. An action originated 
 is a rejected no-op with an explicit operational receipt. A candidate originated before provisional
 closure remains eligible only while its exact coordinator generation and projection epoch are live
 and unfenced. Effect-bearing nonterminal commands require a live coordinator lease and atomically
-commit/ack before exposing effects. Opportunity commands use OpportunityID + revision; global,
-system, and schedule commands use stable GlobalStateID + global revision, never an invented
-OpportunityID. One complete causal/precedence rank covers every authoritative nonterminal
-transition; offline intents remain operational-only until renewed and revalidated.
+commit/ack before exposing effects. Opportunity commands use OpportunityID + revision; global
+Pause/Held/system/schedule evidence commands use stable GlobalStateID + global revision. Expected
+opportunity metadata is an atomic compare-and-fence only when a running ritual exists, never global
+identity. Hold may begin before due without an OpportunityID. One complete conflict-key and
+same-key rank registry covers every authoritative nonterminal transition. One winner per record is
+chosen, then all compatible disjoint-record winners apply before full evidence reduction. This
+preserves both lock and long-idle evidence at exactly 300 seconds and allows simultaneous clears.
+Offline intents remain operational-only until renewed and revalidated.
 Terminal candidates require a causally acknowledged projection lease of at most 90 monotonic
 seconds. Every closure settles admitted same-generation candidates, commits a signed high-water
 projection fence, revokes leases, discards raw buffers, then allows successors. GlobalStateID,
 coordinator generation, revisions, and high-water acknowledgement persist for restart safety.
 Epoch loss fences the old generation rather than waiting for an unverifiable old monotonic expiry;
-later old-generation actions receive an honest rejected-no-op receipt and never a product fact.
-Terminal conflicts use a fixed
+later old-generation actions receive an honest expired/current-state receipt and never a product
+fact. A duplicate ActionID replays a compact known acknowledgement without applying effects again;
+after its receipt expires, high water says already received and settled, while an unseen stale
+action says expired before acceptance. Terminal conflicts use a fixed
 fact-claim rank and stable identifiers, never wall time, remaining duration, segment duration, or
 arrival order. Both reductions are commutative, associative, and idempotent.
 
 Portable IDs use versioned canonical bytes: normalized UUIDs, NFC UTF-8 strings, big-endian
-integers, canonically byte-sorted sets/maps, and SHA-256 lowercase hex. Wall time, locale, process
-hashes, and pointer addresses are excluded. A terminal fact ID uses OpportunityID, the canonical
-terminal slot, and fixed registered component scope, so it is invariant across candidate winners.
+integers, typed optionals/unions/structs, and canonically byte-sorted sets/maps. The signed fence
+registers `cadence.timing-runtime-v2.projection-fence.v1` version 1, exact ordered typed schema, SHA-256 digest bytes, Ed25519 signing
+input, pinned-key verification, and previous-digest chain. Unknown or mutated domain, version, type,
+order, digest, or signature fails closed. Wall time, locale, process hashes, and pointer addresses
+are excluded. A terminal fact ID uses OpportunityID, the canonical terminal slot, and fixed
+registered component scope, so it is invariant across candidate winners.
 
 Before a terminal projection, retain all four clocks' cycle ID, accumulated time, due state,
 eligibility, phase, and enablement, including the latent manual position cycle, plus recovery/session state, evidence, decisions, deadlines, and component
@@ -555,17 +567,20 @@ preserve already-final independent merged-segment effects, discard only causal d
 losing branch, and replay retained idempotent post-terminal inputs. The same deterministic fact ID
 is updated; no second fact, announcement, haptic, or notification is emitted.
 
-Merged visual timer/Done and parent Escape from the same generation/revision/segment enter one
-cross-slot arbiter. Escape preempts same-revision component completion; otherwise Done ranks before
-timer completion. One causal winner produces at most one visual successor effect. A component
-already acknowledged at the successor revision is final, and a later movement-phase Escape retains
-it.
+Every derived merged-visual exit enters one cross-slot arbiter after companion wrappers normalize
+to concrete local transitions: parent Escape, Done, timer recovery, and timer finish. Escape
+preempts, then Done, operational recovery, and timer. One causal winner produces at most one fact
+path and visual successor effect; recovery produces neither and preserves due schedules. Remote
+Done advances to the movement offer rather than closing the parent. A component already
+acknowledged at the successor revision is final, and a later movement-phase Escape retains it.
 
 The ten §10 product facts remain closed. Operational records, sensor observations, fused
 assessments, scheduling decisions, corrections, and retained companion continuity are separate
-ledgers. Raw terminal/companion candidate envelopes, losers, duplicates, and post-fence rejects are
-Class 0 memory-only for at most 90 seconds, erased at settlement/fence, and never persisted,
-exported, analyzed, or assigned a durable record identity. The
+ledgers. Raw terminal/companion candidate envelopes, losers, duplicates, post-fence rejects, and
+compact lost-ack receipts are Class 0 memory-only for at most 90 seconds, erased at acknowledgement/
+settlement/fence, and never exported, analyzed, or assigned a durable record identity. A compact
+receipt contains no raw payload and only the ActionID digest, counter, outcome, successor revisions,
+and acknowledgement code needed for exactly-once replay. The
 legacy `event_schema.json` is now explicitly a read-only v1 envelope whose mappings project to
 the ten facts; its broader record kinds never enlarge the product-fact vocabulary. No timer,
 idle, sensor, camera, motion, HealthKit, companion, or model observation is a completion fact or

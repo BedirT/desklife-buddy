@@ -799,3 +799,31 @@ provenance, health values, fact vocabulary, or non-activation boundary.
 - Companion live/offline/expired/pending/revalidating/rejected-no-op/already-ended/transfer-failed
   states have explicit copy and accessible fallback. Raw candidates/losers/duplicates/rejections
   are Class 0, memory-only for at most 90 seconds, then erased without persistence/export.
+
+#### D-033 evidence, replay, and companion-registry repair addendum — 2026-09-01
+
+This append-only repair supersedes the prior addenda's one-winner nonterminal shorthand, generic
+companion `pending` state, opaque companion-terminal wrapper, unconditional due recovery copy, and
+“duplicate no-op” wording. Approval provenance, health values, closed facts, and non-activation are
+unchanged.
+
+- Nonterminal commands reduce by registered conflict-key. One same-key winner is selected, but all
+  compatible winners for disjoint evidence records apply atomically before full Paused/Held
+  reduction. Pause/system set and clear pairs therefore compose, and lock never discards a
+  simultaneous long-idle edge at exactly 300 seconds.
+- Pause, Held, working-hours, and system commands keep GlobalStateID identity. If one affects a
+  running ritual, expected opportunity context atomically compares and fences the old projection
+  revision before suspension/resume. Hold can begin while accumulating without an OpportunityID.
+- A duplicate ActionID replays its original compact acknowledgement without reapplying effects.
+  The Class-0 receipt is memory-only, payload-free, and bounded to 90 seconds. After it is erased,
+  high water reports already settled; an unseen stale action reports expired before acceptance.
+- The signed projection fence uses one registered domain/version, ordered typed
+  `cadence_contract_bytes_v1` schema, SHA-256 digest bytes, Ed25519 signing/verification input, and
+  previous-digest chain. Unknown or mutated bytes fail closed.
+- Companion transport wrappers normalize through a closed registry to an exact concrete local
+  transition before validation. Merged visual Done advances to movement offer. Every concrete
+  exit from merged visual running, including timer recovery, shares the derived cross-slot arbiter.
+- Companion projection distinguishes transfer pending from terminal-action pending and registers
+  each state's controls, labels, focus/order, VoiceOver, keyboard, Escape, and cancellation.
+  Recovery copy says “still due” only when the retained schedule is actually due; otherwise it
+  says the timer was not restored and the schedule was not reset while showing the actual phase.

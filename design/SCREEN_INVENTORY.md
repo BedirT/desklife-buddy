@@ -175,7 +175,7 @@ covered by previews and snapshots.
 | ED-17 | Very long working session, no input | Passive-reading undercount `[OQ-04]` — honest handling | todo |
 | ED-18 | First launch after an update changed defaults | Say what changed; don't silently re-tune | todo |
 | ED-19 | Accepted timer cannot restore its monotonic epoch/anchor | Close unusable ritual; “Timer couldn’t be restored”; no finish recorded; retained due body may say still due, while menu independently preserves actual Paused/Held reason or ordinary phase; signed fence then 60 s quiet grace | canonical contract; runtime todo |
-| ED-20 | Companion timer projection lifecycle | Complete live/neutral-offline/offline-terminal-ACK-unknown/expired/transfer-pending/terminal-action-pending/neutral-revalidating/revalidating-terminal-ACK-unknown/rejected-no-op/already-ended/transfer-failed registry; never silently ineffective | canonical contract; runtime todo |
+| ED-20 | Companion timer projection lifecycle | Complete live/neutral-offline/offline-terminal-ACK-unknown/offline-nonterminal-ACK-unknown/expired/transfer-pending/terminal-action-pending/nonterminal-action-pending/neutral-revalidating/revalidating-terminal-ACK-unknown/revalidating-nonterminal-ACK-unknown/rejected-no-op/already-ended/transfer-failed registry; never silently ineffective | canonical contract; runtime todo |
 | ED-21 | Coordinator restarts with an in-flight old-generation action | Known retry replays while compact receipt survives acknowledgement-of-ack; after 90 s duplicate/unseen actions are too old to verify and show current state; no repeated effect; successor remains blocked until disposition/fence commit | canonical contract; runtime todo |
 
 ## J. Cross-cutting appearance variants
@@ -490,13 +490,14 @@ Multi-display        — Feature content is one centered ordinary window. Center
 Keyboard path        — Return/Space activates the focused enabled control. Offline, expired, and
                        transfer-failed expose Retry/Close; transfer-pending exposes Cancel transfer;
                        neutral revalidating exposes Cancel reconnect/Close; offline-terminal-ACK-
-                       unknown exposes Check status/Close; revalidating-terminal-ACK-unknown exposes
-                       Cancel reconnect/Close; terminal-pending exposes Close.
-Initial focus        — Live: exact phase row's Take with me or first available control. Merged
-                       movement offered focuses Start 5 minutes. Neutral
+                       unknown and offline-nonterminal-ACK-unknown expose Check status/Close;
+                       revalidating terminal/nonterminal-ACK-unknown expose Cancel reconnect/Close;
+                       terminal/nonterminal-pending expose Close.
+Initial focus        — Live uses the exact phase row's registered target: transferable running
+                       rows focus Take with me; merged movement offered focuses Start 5 minutes. Neutral
                        offline/expired/transfer-failed: Retry. Offline-terminal-ACK-unknown: Check
-                       status. Transfer pending: Cancel transfer. Both revalidating states: Cancel
-                       reconnect. Terminal pending/rejected/already-ended: Close.
+                       status; offline-nonterminal-ACK-unknown also: Check status. Transfer pending: Cancel transfer. All revalidating states: Cancel
+                       reconnect. Terminal/nonterminal pending/rejected/already-ended: Close.
 Focus order          — Exactly the state's machine-registered enabled control IDs. Unavailable
                        phase controls are absent; no disabled trigger is focusable. `Just the
                        visual one` appears only in merged movement offered. That row is Start 5
@@ -505,16 +506,20 @@ Focus order          — Exactly the state's machine-registered enabled control 
 Escape               — Escape and Command-period always dismiss the companion status projection
                        only. It never emits Skip/terminal action or cancels transfer/revalidation;
                        named Cancel controls remain available where registered.
-VoiceOver names      — Take with me names the action. Terminal controls retain their ordinary
+VoiceOver names      — Take with me names the action and “Send to [paired name]” identifies its
+                       exact selected receiver. Terminal and Start controls retain their ordinary
                        semantic names and append no sensor/body implication.
 VoiceOver values     — Announces exactly one registered neutral/pending condition. Terminal pending
-                       names the selected action. Unknown-ACK states preserve that provenance and
-                       say “Checking whether [action] was received. Do not repeat”; Check status or
+                       names the selected action. Nonterminal pending says “Starting [Start 5/2]”
+                       without claiming a running timer. Unknown-ACK states preserve provenance:
+                       terminal says “received” and Start says “started”; both say “Do not repeat.” Check status or
                        reconnect never resends it. Neutral states say no operation is pending.
 Visible states       — “Ready on this device” · “Device offline. Keep using this Mac.” ·
                        “Session expired. Reconnect to continue.” · “Sending timer…” ·
-                       “Sending ‘[selected action]’…” · “Reconnecting…” · “Connection lost.
-                       Checking whether ‘[selected action]’ was received; do not repeat.” · “That action no longer
+                       “Sending ‘[selected action]’…” · “Starting ‘[selected Start]’…” ·
+                       “Reconnecting…” · “Connection lost. Checking whether ‘[selected action]’
+                       was received; do not repeat.” · “Connection lost. Checking whether
+                       ‘[selected Start]’ started; do not repeat.” · “That action no longer
                        applies. Showing the current timer.” ·
                        “Ended on another device.” · “Couldn’t transfer. The timer is still running
                        on this Mac.”
@@ -529,6 +534,14 @@ Alternative movement — No sensor, HealthKit, location, standing, or walking re
 Multi-display        — The Mac's active timer panel remains reachable until transfer acknowledgement;
                        a failed/disconnected companion never strands the key panel.
 ```
+
+The signed Take-with-me request binds the selected receiver DeviceID plus verification-key ID/epoch.
+Ordinary rotation keeps the prior public key only through the bounded live window; new pairing fences
+the old peer and shows its rejected-no-op receipt. Start 5/2 uses the nonterminal pending path and
+enters `merged_movement_running` only after signed acknowledgement. The raw action outbox may replay
+only in the same local monotonic epoch with an available anchor and elapsed time under 90 seconds;
+otherwise it is erased without resend/replacement and the current-state uncertainty receipt appears.
+That receipt announces CP-VO39 exactly once, then focuses Close; it never says “Action not applied.”
 
 ### K.11 Timer recovery unavailable (ED-19)
 
@@ -546,6 +559,8 @@ VoiceOver values     — Active due: “Still due · timer not restored.” Manu
                        [selected reason] · timer not restored.” Other Paused reasons use the
                        registered working-hours/system/qualified-away/accepted-ritual reason without
                        a selected reason; hidden system detail is “Paused · timer not restored.”
+                       Overlap uses one deterministic subtype precedence: manual, locked, inactive,
+                       sleeping, unavailable, accepted ritual, confirmed away, outside hours, hidden.
                        Held: “Held: [qualified evidence reason] ·
                        timer not restored.” Those evidence states remain visible whether due or not
                        due. Otherwise: “[actual ordinary schedule status] · timer not restored.”
@@ -558,6 +573,42 @@ Meaning w/o color    — “still due” appears only when true; otherwise “sc
 Alternative movement — No body behavior or completion is inferred.
 Multi-display        — One key recovery status; closing restores the prior app once and leaves
                        the actual menu projection reachable on every display topology.
+```
+
+### K.12 Restart Undo stale receipt
+
+```
+Keyboard path        — Return, Escape, or Command-period closes; stale Undo is absent.
+Initial focus        — Close.
+Focus order          — Receipt → Close.
+Escape               — Dismisses only the receipt; current schedule remains unchanged.
+VoiceOver names      — “Close, button.”
+VoiceOver values     — Once: “That restart can no longer be undone. Your current schedule was not
+                       changed. Close.”
+Text scaling         — Receipt and Close stack and wrap.
+High contrast        — Text, boundary, and focus ring carry state.
+Reduced motion       — Immediate replacement; no travel or spinner.
+Meaning w/o color    — Rejection and unchanged-current-schedule result are explicit text.
+Alternative movement — No movement, completion, or sensor inference.
+Multi-display        — One receipt and one stable Close focus on the active key panel.
+```
+
+### K.13 Custom v2 partial edit
+
+```
+Keyboard path        — Tab reaches each scalar field, each atomic duration group, Save, and Cancel.
+Initial focus        — First selected field, otherwise first field.
+Focus order          — Visual fields → movement fields → duration groups → Save → Cancel.
+Escape               — Cancels without rewriting stored values.
+VoiceOver names      — Every field names clock and unit; each duration array is one named group.
+VoiceOver values     — Every untouched migrated value reads exactly. Validation names only a dirty
+                       field/group or necessary ordering peer and focuses the first invalid one.
+Text scaling         — Labels, values, and inline errors stack without horizontal scrolling.
+High contrast        — Invalid text/icon/outline and focus ring do not rely on color.
+Reduced motion       — Error and focus changes are immediate.
+Meaning w/o color    — Every error is written and programmatically associated with its control.
+Alternative movement — Duration choices are authored preferences, not capability claims.
+Multi-display        — One Settings window owns the edit and focus restoration.
 ```
 
 ## Coverage summary

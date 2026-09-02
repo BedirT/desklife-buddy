@@ -488,7 +488,9 @@ every legal positive finite v1 value unchanged. The complete v1 payload is `kind
 positive finite seconds, each window is soft ≤ target ≤ latest, and array order is preserved. The
 retained extreme fixture includes a 5-second visual window (5/5/5) with `[5, 7]` and movement 30/60/90 with
 `[30, 300, 45]`; migration differs only in version/identifier/state metadata. The 10–60-second visual and 120/300 movement bounds govern only newly
-created or edited v2 values; migration never clamps, rejects, or silently retunes. This
+created or dirty v2 fields/groups. Migrated scalar and duration-array groups begin untouched;
+only the edited item plus necessary ordering neighbors validate as new authoring. Unrelated edits
+never clamp, reject, sort, or rewrite untouched legacy `5` or `[30]`. Migration never silently retunes. This
 supersedes §5 for new selections without rewriting the historical modes.
 
 ### 17.4 Action effects
@@ -554,9 +556,12 @@ Begin and matching clear for one Pause, Hold DecisionID, unavailable episode, lo
 working-hours record, or restart DecisionID use identical key kind and identity bytes; operation,
 rank, transition, ActionID, and arrival are excluded. Restart/undo cannot rotate a cycle while a
 running or Paused/Held-suspended ritual exists; it waits for neutral revalidation after resolution.
-Undo binds the exact unchanged post-restart four-clock revision vector and snapshot digest. Any
-later terminal, ritual, cycle, recovery, or schedule mutation makes it stale; it cannot erase a
-later fact or restore only part of a snapshot.
+Undo binds post-restart cycle IDs, their structural revision vector, and
+terminal/ritual/restart/rotation frontiers.
+Ordinary eligible accrual, due progression, and Paused/Held evidence revisions do not stale it;
+Undo restores the predecision values plus eligible same-epoch monotonic deltas. A later terminal
+fact, ritual acceptance, restart, or cycle rotation rejects it with the registered stale receipt,
+without erasing any later fact or effect or partially restoring a snapshot.
 Offline intents remain operational-only until renewed and revalidated.
 Terminal candidates require a causally acknowledged projection lease of at most 90 monotonic
 seconds. Every closure settles admitted same-generation candidates, commits a signed high-water
@@ -570,8 +575,13 @@ token or 90 seconds elapse; ACK creation and projection/generation fences do not
 expiry, duplicate and unseen actions say **too old to verify** and show current state. High water
 means only contiguous disposition and never proves receipt. Per-device generation is gap-free
 because counter, ActionID, and a minimized encrypted crash-replay outbox entry commit atomically
-before send. Relaunch resends the same envelope or finishes the same acknowledgement-of-ack; the
-outbox is excluded from backup/history/export/logs and erases at acknowledgement-of-ack or 90 seconds.
+before send. Relaunch resends only in the same local monotonic epoch with an available anchor and
+elapsed strictly less than 90 seconds. Epoch mismatch or `elapsed >= 90` erases without resend or
+replacement and shows too-old/current state. The exact signed `outcome_ack_bytes_v1` is atomically
+persisted with outcome revision, coordinator expiry, token, binding, and local receive epoch/ticks
+in minimized `outcome_ack_pending` before the original action outbox may erase. Same-epoch relaunch
+may finish acknowledgement-of-ack without replay; transmission ends the pending record and has no
+recursive acknowledgement. Both records are excluded from backup/history/export/logs.
 Thus a sender crash cannot strand a reserved hole;
 counter 11 waits in a Class-0 sparse window until 10 is disposed. Terminal conflicts use a fixed
 fact-claim rank and stable identifiers, never wall time, remaining duration, segment duration, or
@@ -589,6 +599,13 @@ digest, or signature fails closed. Wall time, locale, process hashes, and pointe
 are excluded. A public-key fingerprint is derived display metadata only and never verifies a fence.
 A terminal fact ID uses OpportunityID, the canonical terminal slot, and fixed
 registered component scope, so it is invariant across candidate winners.
+
+One executable `timing_runtime_exact_bytes_v1` engine interprets the machine-registered segment,
+fence, outcome-ACK, and ACK-of-ACK schemas; prose is not a second encoder. Every width, field order,
+optional/union/enum name-to-tag mapping, and collection frame/order is explicit. Global-evidence
+fences bind predecessor and successor opportunity revisions and require selected projection result
+to equal the successor. Executable known vectors reject semantic reorder, name/tag/width change,
+map-order/framing error, swapped revisions, and trailing bytes.
 
 Before a terminal projection, retain all four clocks' cycle ID, accumulated time, due state,
 eligibility, phase, and enablement, including the latent manual position cycle, plus recovery/session state, evidence, decisions, deadlines, and component
@@ -609,6 +626,14 @@ path and visual successor effect; recovery produces neither and preserves due sc
 Done advances to the movement offer rather than closing the parent. A component already
 acknowledged at the successor revision is final, and a later movement-phase Escape retains it.
 
+Merged acceptance derives and persists a portable visual segment ID from OpportunityID plus the
+registered visual slot/version before running projection. The winning visual exit derives the
+movement ID before movement offered. Every device, rebase, handoff, exit, and action uses those
+same IDs. For one opportunity revision, a cross-resolver opportunity-action frontier settles
+fact-bearing Start against authoritative local Skip/Escape and handoff against terminal controls.
+The signed lease cutoff and causal acknowledgements define its admitted set; arrival order does not.
+Before settlement, only pending UI appears and no fact, deadline, transfer, haptic, or effect exists.
+
 The companion live registry binds exact controls, focus, and normalized remote IDs to each
 visual, movement, position, recovery, and merged phase/segment. Closed action groups include every
 remote ID, including `companion.visual.skip`; `Just the visual one` exists only in merged movement
@@ -617,13 +642,20 @@ already-moved, position, visual-only, and explicit Skip. Escape and Command-peri
 status only in every state; it never generates Skip, terminal action, or cancellation. Named Cancel
 controls alone cancel an uncommitted operation. `companion.take_with_me_request` normalizes to the
 concrete nonterminal `companion.take_with_me`, emits no product fact, and writes only operational and
-companion ledgers. Neutral offline/revalidating states say no operation is pending. If a terminal ACK is
+companion ledgers. It and its acceptance bind the exact selected receiver DeviceID, local label,
+key ID, and key epoch. Only that peer can accept. Retired public keys and only an already-bound
+non-exportable Keychain signing handle live through their bounded referenced window; replacement
+pairing fences the old peer, erases its pending transport record, and shows visible rejection.
+Neutral offline/revalidating states say no operation is pending. If a terminal ACK is
 unknown, provenance for the selected action remains attached and the exact status says the
 connection was lost, it is checking whether that named action was received, and **do not repeat**.
-Checking status or reconnecting never resends the action. Early compact-receipt erasure requires the
+Start 5/2 uses a distinct nonterminal pending/unknown/revalidation path that retains its selected
+duration and exact `merged_movement_running` target; its original committed outcome alone records
+`breakStarted`. Checking status or reconnecting never resends either class. Early compact-receipt erasure requires the
 exact signed `cadence.timing-runtime-v2.ack-of-ack.v1` envelope bound to generation, paired device,
 ActionID digest, counter, outcome revision, 32-byte delivery token, outcome digest, and monotonic
-expiry, verified with the persisted paired-device 32-byte Ed25519 public key.
+expiry, verified with the persisted paired-device 32-byte Ed25519 public key selected by DeviceID,
+key ID, and epoch. Its replay binding hashes the exact complete signed outcome-ACK bytes.
 
 The ten §10 product facts remain closed. Operational records, sensor observations, fused
 assessments, scheduling decisions, corrections, and retained companion continuity are separate
@@ -633,9 +665,12 @@ seconds and never exported, analyzed, or assigned a durable record identity. A c
 erased early only after verified acknowledgement-of-ack, not merely ACK generation or a fence. It
 contains no raw payload and only the ActionID digest, counter, outcome, successor revisions,
 outcome ACK, and delivery token needed for exactly-once replay. The
-sole raw-envelope persistence exception is the minimized encrypted sender crash-replay outbox,
+sole raw-action-envelope persistence exception is the minimized encrypted sender crash-replay outbox,
 which exists locally for at most 90 seconds, is excluded from backup/history/export/logs, and is
-erased at valid acknowledgement-of-ack or expiry. The
+usable only in the same epoch before 90 seconds. `outcome_ack_pending` is a second minimized
+transport record but contains no action payload; it follows the same epoch/age exclusions. The
+ordinary-rotation exception retains only a reference to an already-bound non-exportable old
+private-key Keychain handle through that same-epoch window; re-pair/reset erases it immediately. The
 legacy `event_schema.json` is now explicitly a read-only v1 envelope whose mappings project to
 the ten facts; its broader record kinds never enlarge the product-fact vocabulary. No timer,
 idle, sensor, camera, motion, HealthKit, companion, or model observation is a completion fact or

@@ -125,14 +125,16 @@ before anything else.
    transfer-failed expose **Retry** and **Close**. Transfer-pending exposes **Cancel transfer**;
    neutral revalidating exposes **Cancel reconnect** and **Close**; offline-terminal-ack-unknown
    exposes **Check status** and **Close**; revalidating-terminal-ack-unknown exposes **Cancel
-   reconnect** and **Close**; terminal-action-pending exposes **Close** because a submitted action
-   cannot be cancelled.
-2. **Initial focus** — Live uses the exact phase/segment registry: Take with me when present,
-   otherwise that row's first available control. Merged movement offered focuses **Start 5 minutes**;
+   reconnect** and **Close**; terminal-action-pending and nonterminal-action-pending expose **Close**
+   because a submitted action cannot be cancelled. Offline-nonterminal-ack-unknown exposes **Check
+   status** and **Close**; revalidating-nonterminal-ack-unknown exposes **Cancel reconnect** and
+   **Close**.
+2. **Initial focus** — Live uses the exact phase/segment row's registered focus target. Running
+   transferable rows focus Take with me; merged movement offered instead focuses **Start 5 minutes**;
    Neutral offline/expired/transfer-failed focus Retry;
-   offline-terminal-ack-unknown focuses Check status. Transfer-pending focuses Cancel transfer;
-   both revalidating states focus Cancel reconnect; terminal-pending, rejected, and already-ended
-   focus Close. No absent or disabled trigger receives focus. `Just the visual one` exists only in
+   both offline terminal/nonterminal-ack-unknown states focus Check status. Transfer-pending focuses Cancel transfer;
+   all three revalidating states focus Cancel reconnect; terminal/nonterminal pending, rejected,
+   and already-ended focus Close. No absent or disabled trigger receives focus. `Just the visual one` exists only in
    merged movement offered.
 3. **Focus order** — exactly the enabled control IDs registered for that state. Status is read but
    not a fake focus stop. Unavailable phase-specific controls are absent, not disabled. Merged
@@ -143,12 +145,16 @@ before anything else.
    require their named enabled controls.
 5. **VoiceOver names** — semantic action names, never device appearance or sensor language.
 6. **VoiceOver values** — exactly one registered announcement for live, neutral offline,
-   offline-terminal-ack-unknown, expired, transfer-pending, terminal-action-pending, neutral
-   revalidating, revalidating-terminal-ack-unknown, rejected-no-op, already-ended, or
+   offline-terminal-ack-unknown, offline-nonterminal-ack-unknown, expired, transfer-pending,
+   terminal-action-pending, nonterminal-action-pending, neutral revalidating,
+   revalidating-terminal-ack-unknown, revalidating-nonterminal-ack-unknown, rejected-no-op, already-ended, or
    transfer-failed. Terminal pending names the selected action, never “Sending timer.” Unknown ACK
-   states preserve and name that action: “Checking whether [action] was received. Do not repeat.”
+   states preserve and name that action: terminal actions say “received”; Start actions say
+   “started.” Both say “Do not repeat.”
    Check status/reconnect never resends it. Neutral states explicitly say no companion operation is
-   pending. No silent no-op.
+   pending. Epoch/age uncertainty announces CP-VO39 exactly once: “That action is too old to
+   verify. Showing the current timer. Close.” It never reuses the rejected-no-op announcement or
+   claims whether the action was applied. No silent no-op.
 7. **Text scaling** — state and recovery copy wrap above a vertical action group.
 8. **Increase Contrast** — labels, traits, focus rings, and boundaries distinguish every state.
 9. **Reduce Motion** — immediate state replacement; no spinner or transfer animation required.
@@ -157,7 +163,8 @@ before anything else.
 11. **Alternative movement** — sensor-free manual controls remain on the authoritative device;
     Watch/iPhone ownership, motion, location, HealthKit, walking, and standing are not required.
 12. **Multi-display** — the Mac key panel remains reachable until acknowledged handoff; failure
-    returns focus without stranding a panel.
+    returns focus without stranding a panel. Take with me exposes “Send to [paired name]” and its
+    VoiceOver name before activation; that label binds the exact receiver, not device appearance.
 
 ### ED-19 — Timer recovery unavailable
 
@@ -173,7 +180,9 @@ before anything else.
    “Paused: [selected reason] · timer not restored.” Outside-hours, inactive, lock, sleep,
    unavailable, qualified-away, and accepted-ritual pauses use their registered evidence-qualified
    reason without requiring a selected reason; intentionally hidden system detail says “Paused ·
-   timer not restored.” Held always says “Held: [fresh,
+   timer not restored.” When reasons overlap, manual, locked, inactive, sleeping, unavailable,
+   accepted-ritual, confirmed-away, outside-hours, then hidden-system precedence selects one stable
+   qualified projection. Held always says “Held: [fresh,
    provenance-qualified reason] · timer not restored,” whether due or not due. Other not-due state
    reads the ordinary retained schedule status plus “timer not restored”; no countdown chatter.
 7. **Text scaling** — title, body, and actions wrap in one vertical group.
@@ -184,6 +193,38 @@ before anything else.
     remain visible independent of due body copy. “Not restored” is always explicit.
 11. **Alternative movement** — no body state or completion is inferred.
 12. **Multi-display** — one key recovery status, one focus restoration, actual menu phase reachable.
+
+### Restart Undo — stale receipt
+
+1. **Keyboard path** — Close works with Return, Escape, and Command-period; no stale Undo control remains.
+2. **Initial focus** — Close.
+3. **Focus order** — message → Close.
+4. **Escape** — dismisses only this receipt and does not change the schedule.
+5. **VoiceOver names** — “Close, button.”
+6. **VoiceOver values** — announces CP-VO37 exactly once: “That restart can no longer be undone.
+   Your current schedule was not changed. Close.”
+7. **Text scaling** — message and Close stack and wrap without clipping.
+8. **Increase Contrast** — explicit boundary and focus ring.
+9. **Reduce Motion** — immediate replacement with no travel or spinner.
+10. **Meaning without color** — the rejection and unchanged-current-schedule result are written.
+11. **Alternative movement** — no movement, completion, or sensor claim appears.
+12. **Multi-display** — one receipt and one stable Close focus on the active key panel.
+
+### Settings Custom v2 — partial edit
+
+1. **Keyboard path** — Tab reaches every editable field/group, its inline error, Save, and Cancel.
+2. **Initial focus** — the first user-selected field, otherwise the first field.
+3. **Focus order** — timing fields in visual then movement order → duration groups → Save → Cancel.
+4. **Escape** — cancels the edit without changing stored values.
+5. **VoiceOver names** — each field names its unit and clock; arrays are one named editable group.
+6. **VoiceOver values** — untouched migrated values are read exactly; validation names only the dirty
+   field/group or necessary ordering peer, then focuses the first invalid dirty control.
+7. **Text scaling** — labels, values, and inline errors stack without horizontal scrolling.
+8. **Increase Contrast** — focus and invalid state use outline, icon, and text, not color alone.
+9. **Reduce Motion** — error/focus changes are immediate.
+10. **Meaning without color** — invalid state is written and associated with the control.
+11. **Alternative movement** — movement duration choices remain user-authored, not capability claims.
+12. **Multi-display** — one Settings window owns the edit and restores focus after validation.
 
 ### MB-01…MB-05 — Menu bar glyph
 

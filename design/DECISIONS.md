@@ -887,3 +887,44 @@ non-activation boundary remain unchanged.
 - Timer recovery registers manual, working-hours, inactive, locked, sleeping, unavailable,
   qualified-away, accepted-ritual, and intentionally hidden system Pause projections. Only manual
   Pause requires a selected reason; hidden system detail uses neutral `Paused · timer not restored`.
+
+#### D-033 eighth contract-repair addendum — 2026-09-01
+
+This append-only repair makes crash provenance, merged segment identity, cross-resolver arbitration,
+partial Custom editing, and recovery evidence executable without changing the approved health
+purpose, facts, cadence values, permission boundary, or non-activation. It refines earlier mechanics
+where they were incomplete; it does not rewrite their approval provenance.
+The seventh addendum's unconditional “Relaunch resends the same action” and “exact unchanged
+post-decision ... revision vector” sentences remain historical trace only. They are superseded by
+the same-epoch/anchor/age gate and structural-vector-plus-eligible-delta Undo rules below.
+
+- Sender outbox replay is allowed only in the same local monotonic epoch, with a usable anchor and
+  elapsed time under 90 seconds. Epoch mismatch, missing anchor, corruption, or expiry erases the
+  raw action without resend or replacement and shows the uncertainty-safe current projection.
+- Deterministic versioned segment IDs are created before merged visual and movement segment guards
+  consume them. A shared opportunity-action frontier settles Start 5/2 versus Skip/Escape and
+  Take-with-me versus terminal actions independent of arrival order before effects are exposed.
+- `outcome_ack_bytes_v1` and `outcome_ack_pending` bind the signed result, outcome revision,
+  coordinator expiry, selected receiver, delivery token, and key ID/epoch. A same-epoch relaunch may
+  finish ACK-of-ACK; no recursive acknowledgement is created.
+- Remote Start is a fact-bearing nonterminal operation with pending, unknown-ACK, revalidation, and
+  acknowledged `merged_movement_running` states. Every remote target is checked for exact source and
+  target phase, opportunity kind, segment, participant/affected cycles, resolver, slot, fact, and
+  effects before commit.
+- Restart Undo remains eligible across ordinary accrual and restores the predecision value plus
+  eligible monotonic deltas. A later terminal, ritual, restart, or cycle rotation
+  makes it stale and receives the registered unchanged-current-schedule receipt with stable focus.
+- Custom partial edits validate only dirty scalar fields or atomic duration groups plus necessary
+  ordering closure. Untouched legal positive finite v1 values remain byte-for-byte exact even when
+  outside safer new-authoring bounds.
+- Global signed fences carry distinct predecessor and successor opportunity revisions plus the
+  coordinator signing-key ID/epoch. One executable exact-byte authority defines widths, tags,
+  ordering, collection framing, digests, signatures, and fixed executable vectors for segment IDs,
+  fences, outcome ACKs, and acknowledgement-of-ack envelopes.
+- Take-with-me binds one selected receiver DeviceID and verification-key ID/epoch. Ordinary rotation
+  keeps an old verification key and only an already-bound non-exportable Keychain signing handle
+  through the bounded window; new pairing fences the old peer, erases its pending transport record,
+  and yields a visible rejected-no-op receipt.
+- Timer recovery binds exact fresh evidence record ID/revision/generation and snapshot digest.
+  Overlapping system reasons use deterministic subtype precedence, and weak evidence never becomes
+  “Walk completed,” movement completion, or another body claim.

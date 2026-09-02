@@ -236,13 +236,20 @@ SE-02 → Calm / Balanced / Frequent reset / Adaptive / Custom (`custom_v2`)
   Legacy custom accepted for migration:
     → preserve every legal positive finite v1 field, unit, ordering, and value, including
       visual 5 s and movement [30]; change only contract version, identifier, and migration state
-    → apply safer v2 authoring bounds only when the person creates or edits a v2 value
+    → migrated scalar fields and duration-array groups begin untouched
+    → apply safer v2 bounds only to a newly created or dirty field/group plus necessary ordering
+      neighbors; unrelated edits never clamp/reject untouched visual 5 s or movement [30]
   Adaptive starts at the current Balanced v2 contract and initially changes only delivery within the due window
     and bounded automatic holds, never reminder frequency or a health conclusion
   Very frequent (SE-03) or effectively disabled (SE-04):
     → one neutral note about what that means. No warning icon, no block, no shame [03 §5].
 Default changed by an app update (ED-18): first launch after → say what changed and why,
   offer to keep the old value. Never silently re-tune someone's schedule.
+Optional validated schedule restart → Undo remains available across ordinary eligible accrual
+  → Undo restores the predecision values plus that eligible accrual delta
+  → later terminal/ritual/restart/cycle mutation makes Undo stale
+  → announce “That restart can no longer be undone. Your current schedule was not changed.” once;
+    focus Close and preserve every later fact/effect
 ```
 
 ---
@@ -270,12 +277,16 @@ typed and disclosed before their owning features retain or export them.
 Accepted visual or movement ritual → Take with me
   → Mac shows registered live/offline availability; Take with me is enabled only while live
   → Mac sends GlobalStateID + generation + OpportunityID + projection epoch + independent
-    ClockCycleIDs + absolute deadline + ActionID
+    ClockCycleIDs + segment ID + absolute deadline + ActionID + exact selected receiver DeviceID,
+    local device label, key ID, and key epoch
   ├ companion starts handoff → Transfer pending · “Sending timer…” · Cancel transfer
   │   └ acknowledges bounded monotonic handoff + ≤90 s exact-generation lease → Live
   │       ├ terminal action → normalize wrapper to exact local transition
   │       │   → Terminal action pending · “Sending ‘[selected action]’…” · Close
   │       │   → causal acknowledgement; submitted action cannot be cancelled or repeated
+  │       ├ Start 5/2 → Nonterminal action pending · “Starting ‘[selected start]’…” · Close
+  │       │   → signed outcome enters merged movement running and records breakStarted once
+  │       │   → unknown ACK preserves duration/target → Check status; never repeat or resend Start
   │       └ same-generation concrete action set reconciles by its named resolver
   │           → winner materializes the exact local product fact/effect/successor phase
   │       → other devices show Already ended / Ended on another device
@@ -288,6 +299,8 @@ Accepted visual or movement ritual → Take with me
   ├ terminal ACK check → Revalidating terminal ACK unknown · Cancel reconnect / Close
   │   → “Checking whether [selected action] was received; do not repeat.”
   │   → Live or Rejected, no-op · Close
+  ├ nonterminal Start ACK check → Revalidating nonterminal ACK unknown · Cancel reconnect / Close
+  │   → merged movement running or Rejected, no-op; original breakStarted is never replayed
   ├ duplicate with compact receipt before acknowledgement-of-ack/90 s
   │   → replay recorded acknowledgement; no second effect
   │   → device returns the signed generation/device/ActionID/counter/outcome-revision/
@@ -295,11 +308,20 @@ Accepted visual or movement ritual → Take with me
   ├ duplicate/unseen action after receipt expiry → too old to verify; show current timer
   ├ merged movement offered → Start 5 (initial focus, Return/5) / Start 2 (Q/2) /
   │   I already moved / Change position / Just the visual one / explicit Skip
+  │   → Start and authoritative local Skip/Escape enter one fixed-cutoff opportunity-action frontier;
+  │     handoff and terminal action do the same; arrival order never selects the winner
+  │   → before settlement show pending only, with no fact/deadline/transfer/haptic exposed
   ├ Escape or Command-period on any companion status → dismiss projection only; no Skip,
   │   terminal action, transfer cancellation, or revalidation cancellation
   ├ sender crash before atomic counter+ActionID+outbox commit → no reservation
-  ├ sender crash after commit/before or after send → relaunch resends the same envelope/ActionID
-  ├ sender crash after outcome → relaunch completes the same signed acknowledgement-of-ack
+  ├ sender crash after commit/before or after send → only same local monotonic epoch and elapsed
+  │   <90 s may resend the same envelope/ActionID/receiver/key; otherwise erase without resend or replacement
+  ├ signed outcome received → atomically persist exact outcome ACK bytes/revision/expiry/token/
+  │   binding in outcome_ack_pending, then original action outbox may erase
+  ├ sender crash after outcome → same-epoch <90 s relaunch completes acknowledgement-of-ack from
+  │   outcome_ack_pending without reapplying; transmission erases pending, no recursive ACK
+  ├ pairing/key rotates → only exact receiver/key epoch accepts; old key lives through its bounded
+  │   referenced window; a replacement pairing fences old commands with visible rejection
   ├ counter 11 arrives before 10 → hold 11 in Class-0 sparse window; high water stays 9
   │   → 10 arrives → dispose 10 then 11 in order; high water becomes 11
   └ no acknowledgement → Transfer failed · Retry / Close; Mac deadline remains valid
@@ -320,18 +342,26 @@ renews its lease and revalidates generation/phase/revision. Duplicate, unknown,
 post-lease, old-generation, or mismatched-cycle actions get explicit current-state receipts, never
 silence or an inaccurate zero-change claim. Raw candidates and payload-free compact replay
 receipts and sparse counter entries are memory-only for at most 90 seconds and are not history/export
-data. The minimized encrypted sender crash-replay outbox is the only raw-envelope persistence
-exception: it is excluded from backup/history/export/logs and erased by verified acknowledgement-of-
-ack or 90 seconds. A sensed movement observation
-may support a separate user-approved schedule restart; it cannot masquerade as the timer or a
+data. The minimized encrypted sender crash-replay outbox is the only raw-action-envelope persistence
+exception: it is excluded from backup/history/export/logs and erased after the signed outcome is
+atomically moved to `outcome_ack_pending`, at same-epoch `elapsed >= 90`, or on epoch mismatch. The separate minimized outcome-ACK-pending
+record contains no action payload and follows the same epoch/age limits. Only strong, fresh,
+qualified movement evidence that passes validation/permission gates may support a separate
+user-approved schedule restart; weak/stale/ambiguous evidence does nothing and cannot masquerade as the timer or a
 user declaration.
+
+Merged visual acceptance creates the deterministic visual segment ID before running projection;
+the winning visual exit creates the movement ID before movement offered. OpportunityID + registered
+slot/version yield the same IDs on every paired device and through rebase. Every exit, Start,
+handoff, or terminal action consumes the already-projected current segment ID.
 
 Keyboard/focus comes from one state registry. Return/Space activates the focused enabled control.
 Live selects one exact phase/segment row; it exposes only that row's registered remote actions and
 focus order, and `Just the visual one` exists only in merged movement offered. Neutral
 offline/expired/transfer-failed focus Retry; offline-terminal-ACK-unknown focuses Check status;
-transfer-pending focuses Cancel transfer; both revalidating states focus Cancel reconnect; terminal-
-pending/rejected/already-ended focus Close. Focus order is exactly the available control IDs, never
+offline-nonterminal-ACK-unknown also focuses Check status; transfer-pending focuses Cancel transfer;
+terminal/nonterminal ACK revalidating focuses Cancel reconnect; terminal- and nonterminal-pending,
+rejected, and already-ended focus Close. Focus order is exactly the available control IDs, never
 a status placeholder or disabled trigger. Escape and Command-period always dismiss status only;
 the named Cancel transfer/Cancel reconnect controls alone cancel those uncommitted operations. Every transition has visible copy
 and one VoiceOver announcement. The fallback requires no HealthKit, motion, location, camera, or

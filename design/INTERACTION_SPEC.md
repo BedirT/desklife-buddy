@@ -145,8 +145,10 @@ Adaptive starts at the current Balanced v2 contract bounds and may initially cha
 and bounded automatic holds, never frequency or health conclusions. `custom_v2` separates storage
 compatibility from new authoring: storage accepts every legal positive finite v1 value unchanged,
 including a 5-second visual duration or `[30]` movement-duration option, while the 10–60-second
-visual range, 120/300 movement choices, and ordering rule apply only to newly created or edited v2
-values. Legacy IDs and values remain readable and unchanged until explicit migration; a v1
+visual range, 120/300 movement choices, and ordering rule apply only to newly created or dirty v2
+fields or atomic duration-array groups; untouched migrated fields/groups remain exact. An unrelated edit never
+clamps or rejects legacy `5` or `[30]`. Only the edited scalar/group and the necessary
+soft/target/latest ordering neighbors validate as new authoring. Legacy IDs and values remain readable and unchanged until explicit migration; a v1
 `custom` payload is reidentified only after explicit acceptance and is never clamped or rejected.
 
 ## 3. Keyboard and Escape
@@ -235,7 +237,9 @@ photosensitivity safety, not taste (accessibility rule §3).
 
 Never merged, never graded, never rolled into "healthy break achieved." Operational records,
 observations, assessments, scheduling decisions, corrections, and companion actions are separate
-ledgers. Sensor evidence can support a reversible schedule restart but never emits a product fact.
+ledgers. Only strong, fresh, qualified sensor evidence that passes its permission and validation
+gates can support a reversible schedule restart; weak, stale, ambiguous, or missing evidence does
+nothing and never says “Walk completed.” No sensor observation emits a product fact.
 
 ## 7. Paused and Held evaluation
 
@@ -245,6 +249,10 @@ qualified_confirmed_away → outside_working_hours → user_declared_meeting_or_
 user_declared_screen_sharing_or_presentation → inferred_likely_call →
 user_selected_timed_task → explicit_presentation_mode → selected_focus_filter_active →
 selected_calendar_busy_interval → selected_application_active → snooze → low_friction_wait.
+Within overlapping system subtypes the deterministic timer-recovery display order is manual Pause,
+locked, inactive, sleeping, unavailable, accepted ritual, confirmed away, then outside hours.
+The chosen copy binds the exact retained evidence record ID/revision, generation, freshness, and
+preterminal snapshot digest; callback order cannot change “Mac locked” into another subtype.
 
 - `manual_pause`, `system_inactive_or_locked`, outside working hours, qualified confirmed away, and a
   relevant accepted ritual are **Paused**: affected schedule clocks freeze. Meeting,
@@ -359,8 +367,14 @@ owner-approved story, disclosure, fallback, and proof; the core may not imply th
   next counter, ActionID, and minimized encrypted crash-replay resend envelope before exposing the action. A
   crash before that transaction reserves nothing; a crash after it relaunches with the same action;
   a crash after send retries the same ActionID; and a crash after outcome finishes the same signed
-  acknowledgement-of-ack. The outbox is excluded from backup/history/export/logs and erases by
-  acknowledgement-of-ack or 90 seconds. Coordinator high water means
+  acknowledgement-of-ack. Resend occurs only when the local monotonic epoch matches, the anchor is
+  available, and elapsed is strictly less than 90 seconds. Epoch mismatch or `elapsed >= 90`
+  erases without resend/replacement and shows the too-old/current-state receipt. A verified signed
+  outcome is atomically moved into minimized `outcome_ack_pending` with its exact bytes, revision,
+  coordinator expiry, token, binding, and local receive epoch/ticks before the original action
+  outbox may erase. Same-epoch relaunch can finish acknowledgement-of-ack; transmission erases that
+  pending record and requires no recursive ACK. Both records are excluded from
+  backup/history/export/logs. Coordinator high water means
   contiguous **disposition**, not receipt: counter 11 received while high water is 9 waits in a
   Class-0 sparse window until 10 is disposed, then 10 and 11 advance in order. A 90-second hole
   expiry uses the same too-old-to-verify projection and never leaps to a received claim.
@@ -408,6 +422,20 @@ with visible and VoiceOver feedback. The total terminal winner order is product-
 device ID, persistent device counter, then ActionID. It never compares wall time, remaining time,
 or incomparable segment durations.
 
+For one opportunity revision, a signed opportunity-action frontier runs before class-specific
+nonterminal, terminal, or handoff materialization. It admits actions originated before the fixed
+lease cutoff and settles after causal acknowledgements or that cutoff. Start 5/2 competes with the
+authoritative local Skip/Escape; Take with me competes with terminal controls. Both callback arrival
+orders choose the same rank/ActionID winner. Before settlement, only the registered pending state is
+visible: no `breakStarted`, accepted deadline, authority transfer, haptic, clock effect, or success.
+The winner advances the revision once; losers receive current-state operational receipts.
+
+Merged segment IDs are deterministic UUID-v8 projections of exact registered bytes: OpportunityID
+plus visual or movement slot and version. `merged.accept` creates/persists/projects the visual ID
+before visual running. Only the winning visual exit creates the movement ID before movement offered.
+Every device, rebase, handoff, and action guard retains or consumes that same ID; no callback or
+projection invents another.
+
 Every authoritative nonterminal transition is registered exactly once with one scope, conflict-key,
 and same-key rank. At one causal frontier the coordinator chooses one winner per evidence
 record or mutually exclusive intent key, then applies **all compatible winners across disjoint
@@ -427,12 +455,19 @@ same-key winner. Restart and undo additionally require no unresolved running rit
 Paused/Held suspended overlay; otherwise the app queues only a neutral revalidation suggestion and
 rotates no cycle or snapshot.
 
+Restart Undo binds the post-decision cycle IDs and structural terminal/ritual/restart/rotation
+frontiers. Ordinary eligible accrual, due progression, or Paused/Held evidence revisions do not
+stale it. A successful Undo restores each predecision accumulated value plus the eligible monotonic
+delta accrued since restart and commits successor correction revisions. A later terminal fact,
+ritual acceptance, schedule restart, or cycle rotation rejects Undo without partial restore and
+announces: **“That restart can no longer be undone. Your current schedule was not changed.”**
+
 Identifiers use the versioned `cadence_contract_bytes_v1` encoding: UUIDs normalize to 16
 network-order bytes; strings are NFC UTF-8; integers are big-endian; optionals, tagged unions,
 ordered typed structs, lists, sets, and maps have explicit uint32 counts/cardinalities and
 registered byte encodings. Locale, wall time, process
 hashes, and pointer identity are never inputs. A projection fence uses the independent, fully
-self-contained `projection_fence_bytes_v1` encoder and registers the literal
+self-contained `projection_fence_bytes_v1` schema and registers the literal
 `cadence.timing-runtime-v2.projection-fence.v1`, schema version 1 as uint16, exact ordered typed fields,
 uint8 optional/union tags, uint16 enum vocabularies, a counted UUID→uint64 map, an exact nested
 opportunity context, and fixed 32-byte prior digest,
@@ -442,6 +477,14 @@ metadata only, never verification material; a
 mutated domain, version, type, width, tag, cardinality, order, digest, or signature fails closed. A terminal fact ID is
 OpportunityID + canonical terminal slot + the fixed registered component scope, never the
 candidate winner or participant subset.
+
+`timing_runtime_exact_bytes_v1` is the one executable byte encoder for the independently registered
+segment, fence, outcome-ACK, and ACK-of-ACK schemas. The machine contract supplies every ordered
+field, width, optional/union/enum name-to-tag mapping, and collection cardinality/order; prose lists
+are explanatory only. A global-evidence fence signs both predecessor and successor opportunity
+revisions, requires its selected projection result to equal the successor, and binds rebase
+direction. Semantic field reorder, name/tag/width change, unsorted/unframed map, swapped revisions,
+or trailing bytes fails the executable vectors before state changes.
 
 The coordinator retains all four clocks' cycle, accumulated time, due/eligibility/phase and
 enablement, including the disabled reminder position cycle,
@@ -462,16 +505,18 @@ effect applies. Recovery records no fact or fresh cycle. Remote Done early advan
 offer rather than closing the parent. If visual completion was already acknowledged at a successor
 revision, it is final and a later movement-phase Escape retains it.
 
-`Take with me` and companion terminal controls are enabled only for a live paired projection with
+`Take with me` and companion terminal/nonterminal controls are enabled only for a live paired projection with
 matching generation, projection epoch, opportunity revision, and segment. The single registry has
-live, neutral offline, offline-terminal-ack-unknown, expired, **transfer pending**, **terminal action pending**, neutral revalidating,
-revalidating-terminal-ack-unknown,
+live, neutral offline, terminal/nonterminal-ACK-unknown, expired, **transfer pending**, **terminal
+action pending**, **nonterminal action pending**, neutral revalidating, and terminal/nonterminal-ACK revalidation,
 rejected-no-op, already-ended, and transfer-failed states. Each registers its exact control IDs,
 labels, enabled set, focus/order, VoiceOver, keyboard, Escape, and cancellation behavior. Escape
 and Command-period dismiss the companion projection only in every state; named Cancel controls are
 the only way to cancel an uncommitted transfer or status revalidation. Transfer
 pending may cancel only the uncommitted transfer. Terminal action pending names the selected action
-and cannot cancel or repeat the submission; Close/Escape dismisses status only. Offline, expired,
+and cannot cancel or repeat the submission; Start pending similarly retains the selected 5/2 label
+and exact `merged_movement_running` target. Its known outcome emits `breakStarted` once; unknown ACK
+checks status without resend. Close/Escape dismisses status only. Offline, expired,
 and transfer failed expose enabled **Retry** and **Close**, never a disabled trigger. If a terminal
 ACK is unknown, the state preserves the selected action provenance and says **“Connection lost.
 Checking whether [action] was received; do not repeat.”** Check status/revalidation never resends
@@ -481,6 +526,12 @@ movement, position, recovery, and both merged segments; `Just the visual one` ex
 movement offered. That offer has Start 5 (initial focus, Return/5), Start 2 (Q/2), already-moved,
 position, visual-only, and explicit Skip controls. `Take with me` is transported as
 `companion.take_with_me_request` and materializes only the concrete nonterminal handoff action.
+The request and its signed acceptance bind the exact selected receiver DeviceID, local device label,
+key ID, and key epoch; no other paired peer can accept or silently replace it. Ordinary key rotation
+retains an old public verification key and only an already-bound non-exportable Keychain signing
+handle for its bounded referenced window. Re-pairing fences the old peer, erases its pending
+transport record immediately, and gives old commands visible rejected-no-op copy. Raw IDs/keys are never
+spoken; the selected device label is.
 Each action group is a closed remote-ID set. Companion
 wrappers materialize a closed, exact concrete local transition before phase/participant/segment/
 slot/resolver/fact/effect validation. No sensor is needed. Raw payloads and compact replay receipts
@@ -492,7 +543,12 @@ identity, or duplicate side effect.
 The signed acknowledgement-of-ack uses the registered
 `cadence.timing-runtime-v2.ack-of-ack.v1` envelope: exact generation/device, ActionID digest,
 counter, outcome revision, 32-byte delivery token, outcome binding, coordinator-monotonic expiry,
-and Ed25519 signature. Verification uses the persisted paired-device 32-byte public key. A
+key ID/epoch, and Ed25519 signature. It binds the exact complete signed `outcome_ack_bytes_v1`,
+whose independent schema includes domain/version, coordinator monotonic epoch and created/expiry
+ticks, receiver/key epoch, outcome code/revision, token, and signature. The sender persists
+`outcome_ack_pending` before erasing the action outbox so a same-epoch crash can finish ACK-of-ACK
+without reapplying the action. Verification uses the persisted paired-device 32-byte public key
+selected by DeviceID + key ID + epoch. A
 fingerprint is display metadata, never a verification key. Only a valid bound envelope can erase a
 compact receipt before 90 seconds.
 

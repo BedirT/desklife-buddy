@@ -54,15 +54,34 @@ verified with that paired device's persisted actual 32-byte Ed25519 public key. 
 display metadata only. Invalid, replay-mismatched, expired, or duplicate envelopes do not erase a
 live receipt.
 
-The sole raw-envelope persistence exception is the **sender crash-replay outbox**. Before a paired
-device exposes a generated action, it atomically stores the next counter, ActionID, canonical resend
-envelope, local monotonic anchor/epoch, and later the bound outcome token/digest when available. The
-entry is locally encrypted, excluded from backup, history, export, analytics, and logs, and erased
-after a valid signed acknowledgement-of-ack or 90 monotonic seconds, whichever occurs first. It is
-not a product, health, audit, or companion-history fact. Relaunch may resend only the exact same
-ActionID/counter/envelope or finish that acknowledgement; it never allocates a replacement for the
-reserved counter. Corrupt or expired entries are erased and receive uncertainty-safe current-state
-copy, never a claim that the action was or was not received.
+The sole raw-**action**-envelope persistence exception is the **sender crash-replay outbox**. Before
+a paired device exposes a generated action, it atomically stores the next counter, ActionID, exact
+canonical resend envelope, selected receiver DeviceID and verification-key ID/epoch, plus its local
+monotonic anchor/epoch. The entry is locally encrypted, excluded from backup, history, export,
+analytics, and logs. Relaunch may resend only that exact action when the local monotonic epoch still
+matches, its anchor is available, and elapsed monotonic time is **less than 90 seconds**. An epoch
+mismatch, missing anchor, corrupt entry, or `elapsed >= 90 seconds` erases it without transmission,
+does not mint a replacement action, and projects “too old to verify” plus current state. Receiving
+the signed outcome permits erasing this action outbox only after the receiver atomically persists
+the minimized outcome-ACK continuation below. This record is not a product, health, audit, or
+companion-history fact.
+
+`outcome_ack_pending` is a second, minimized Class-0 crash-continuation record, not a raw action
+payload exception. It atomically retains the exact complete signed `outcome_ack_bytes_v1`, outcome
+revision, coordinator expiry ticks, random delivery token and replay binding, local receive
+epoch/ticks, selected receiver DeviceID, and verification-key ID/epoch. Same-epoch relaunch before
+90 seconds may transmit the one bound signed acknowledgement-of-ack without reapplying or
+recreating the action. Transmission permits erasing the sender's pending record; the coordinator's
+compact replay receipt independently survives until it verifies that acknowledgement-of-ack or 90
+seconds. No acknowledgement of the acknowledgement-of-ack is created. Epoch mismatch, missing
+anchor, corrupt binding, re-pair, key mismatch, or `elapsed >= 90 seconds` erases the pending record
+without transmission and uses the same uncertainty-safe projection.
+For an ordinary key rotation, an already-bound pending acknowledgement may retain only a reference
+to the old non-exportable private signing key in the local encrypted Keychain through that record's
+same-epoch window. The handle is not raw key bytes, is unavailable to new commands, is excluded
+from backup/export/logs/analytics, and erases with the pending record. Re-pairing instead fences the
+old peer immediately, erases the handle and pending transport record, and shows the registered
+rejected or uncertainty-safe receipt; it never re-signs under the new relationship.
 
 ### Class 1 — Local routine data
 
@@ -265,7 +284,8 @@ Proposed defaults:
 | Raw terminal/companion candidate, losing/duplicate/rejected envelope | memory only; ≤90 seconds and until settlement/fence, whichever comes first |
 | Sparse out-of-order action-counter window | memory only; ≤90 seconds; never persisted/exported; holes dispose without a received claim |
 | Compact ActionID replay receipt without raw payload | memory only; ≤90 seconds and until verified acknowledgement-of-ack, whichever comes first; ACK/fence creation does not erase it |
-| Sender crash-replay outbox | locally encrypted persistent Class 0; ≤90 seconds or valid signed acknowledgement-of-ack, whichever comes first; exact counter/ActionID/resend envelope only; excluded from backup/history/export/logs/analytics |
+| Sender crash-replay outbox | locally encrypted persistent Class 0; exact counter/ActionID/resend envelope/receiver/key binding; resend only in the same monotonic epoch with usable anchor and elapsed <90 seconds; erase after atomic move of a verified outcome into `outcome_ack_pending`, on epoch/anchor failure, or at `elapsed >= 90`; excluded from backup/history/export/logs/analytics |
+| `outcome_ack_pending` | minimized locally encrypted Class 0 without action payload; exact signed outcome-ACK bytes/revision/expiry/token/binding plus receiver/key and local epoch/anchor; an ordinary rotation may retain only its referenced non-exportable old private-key Keychain handle through the same-epoch window; transmit or erase at `elapsed >= 90`, epoch mismatch, or re-pair, whichever comes first; excluded from backup/history/export/logs/analytics |
 | Current coordination continuity and signed fence/high-water state | current state plus the immediately previous fence for at most 90 seconds; compact current generation/high-water persists until reset |
 | Raw opportunity event | 30–90 days locally |
 | Daily aggregate | 12 months locally |
@@ -334,9 +354,19 @@ Future companion principles:
   retained as an audit trail;
 - restart safety retains minimized Class-1 generation/fence/high-water continuity, actual paired
   and installation Ed25519 public keys required for verification, and derived display fingerprints;
-  each Ed25519 private key remains local, non-exportable, and is deleted by reset/unpair;
+  each Ed25519 private key remains local and non-exportable. Ordinary rotation may keep an old
+  Keychain signing handle only for an already-bound Class-0 pending acknowledgement through its
+  same-epoch 90-second window; it erases with that record, and reset/unpair erases it immediately;
 - live/neutral-offline/offline-terminal-ack-unknown/expired/transfer-pending/terminal-action-pending/neutral-revalidating/revalidating-terminal-ack-unknown/rejected-no-op/already-ended/transfer-failed states
   remain usable without HealthKit, motion, location, camera, or another sensor.
+- nonterminal-action-pending, offline-nonterminal-ack-unknown, and
+  revalidating-nonterminal-ack-unknown preserve the selected Start action just as terminal unknown-
+  acknowledgement states preserve their selected action; none silently resends it;
+- every handoff names one selected receiver DeviceID and verification-key ID/epoch. Ordinary key
+  rotation retains the prior public verification key and only a pending-record-bound non-exportable
+  signing handle through the bounded live window. A new
+  pairing fences the old peer immediately; its old command receives a visible rejected-no-op
+  receipt and is never accepted under the new trust relationship.
 
 ## 13. Camera and posture sensing gate
 

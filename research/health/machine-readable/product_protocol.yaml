@@ -151,6 +151,36 @@ preset_contract_v2:
         movement_duration_options_seconds: [120, 300]
         ordering_rule: 0_less_than_soft_due_less_than_or_equal_target_less_than_or_equal_latest
         applies_to: newly_created_or_user_edited_v2_payload_only
+      edit_semantics:
+        dirty_identity: exact_canonical_field_path_or_registered_atomic_group
+        scalar_dirty_paths:
+          - visual.softDueSeconds
+          - visual.targetSeconds
+          - visual.latestPreferredSeconds
+          - movement.softDueSeconds
+          - movement.targetSeconds
+          - movement.latestPreferredSeconds
+        atomic_group_dirty_paths:
+          - visual.durationOptionsSeconds
+          - movement.durationOptionsSeconds
+        validation_rule: >-
+          Apply new-authoring numeric bounds only to dirty scalar fields or every element of a dirty
+          duration group. Validate positivity, finiteness, nonempty duration arrays, and the minimum
+          necessary soft/target/latest ordering closure using exact untouched neighbors. An ordering
+          failure attaches to the edited field; it never clamps or rewrites its untouched neighbor.
+        untouched_rule: >-
+          Every untouched legal migrated value and array element round-trips byte-for-value and in
+          the same order even when outside new-authoring bounds. An unrelated edit never rejects,
+          clamps, sorts, deduplicates, or silently retunes legacy visual 5 seconds or movement [30].
+        new_payload_rule: all_fields_and_both_duration_groups_begin_dirty
+      migration_metadata_contract:
+        preset_contract_version: {type: unsigned_integer, required_value: 2}
+        preset_identifier: {type: stable_ascii_identifier, required_value: custom_v2}
+        migration_state:
+          type: registered_enum
+          allowed_values: [v2_selected, v2_migrated_with_explicit_acceptance]
+        custom_timing_required: true
+        unknown_metadata: rejected_before_save
       safety_note: neutral_non_blocking
   legacy_identifier_disposition:
     rule: >-
@@ -267,10 +297,10 @@ clock_semantics_v2:
     explicit_change_enables_reminders: false
 candidate_data_lifecycle_v2:
   class: class_0_ephemeral
-  memory_only: true
+  memory_only: true_except_the_two_disclosed_bounded_crash_recovery_transport_records_below
   maximum_retention_seconds: 90
   discard_at_settlement_or_fence: true
-  persistence: false
+  persistence: false_except_sender_crash_replay_outbox_and_outcome_ack_pending
   export: false
   analytics: false
   compact_replay_receipt:
@@ -285,10 +315,22 @@ candidate_data_lifecycle_v2:
     class: class_0_crash_replay_only
     local_encrypted_persistence: true
     maximum_retention_seconds: 90
-    fields: [device_id, origin_session_id, counter, action_id, exact_canonical_resend_envelope, monotonic_anchor_and_epoch, optional_outcome_delivery_token_and_binding]
-    discard_at: valid_signed_acknowledgement_of_ack_or_90_monotonic_seconds_whichever_occurs_first
+    fields: [device_id, origin_session_id, counter, action_id, exact_canonical_resend_envelope, monotonic_anchor_and_epoch, selected_receiver_device_id_and_key_id_and_epoch_when_handoff]
+    replay_gate: local_monotonic_epoch_matches_anchor_is_available_and_elapsed_seconds_strictly_less_than_90
+    epoch_mismatch: erase_without_resend_without_replacement_then_show_too_old_to_verify_current_state
+    discard_at: verified_signed_outcome_is_atomically_moved_to_outcome_ack_pending_or_same_epoch_elapsed_greater_than_or_equal_to_90_or_epoch_mismatch
     excluded_from: [backup, history, export, analytics, logs, product_facts, health_records]
-    sole_raw_envelope_persistence_exception: true
+    sole_raw_action_envelope_persistence_exception: true
+  outcome_ack_pending:
+    class: class_0_crash_replay_only
+    local_encrypted_persistence: true
+    maximum_retention_seconds: 90
+    fields: [exact_complete_signed_outcome_ack_bytes_v1, outcome_revision, coordinator_expiry_ticks, delivery_token, outcome_replay_binding_digest, local_receive_monotonic_epoch_and_ticks, receiver_device_id_and_key_id_and_epoch]
+    replay_gate: same_local_monotonic_epoch_and_elapsed_seconds_strictly_less_than_90
+    discard_at: acknowledgement_of_ack_transmitted_or_same_epoch_elapsed_greater_than_or_equal_to_90_or_epoch_mismatch
+    excluded_from: [backup, history, export, analytics, logs, product_facts, health_records]
+    raw_payload: false
+    purpose: finish_acknowledgement_of_ack_after_sender_crash_without_reapplying_the_action
 boundary_predicates:
   deadline_reached: elapsed_seconds_greater_than_or_equal_to_deadline_seconds
   recent_input_eligible: seconds_since_input_less_than_or_equal_to_60

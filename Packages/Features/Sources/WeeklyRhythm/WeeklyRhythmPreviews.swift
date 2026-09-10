@@ -19,6 +19,16 @@ import SwiftUI
     .frame(width: 1000, height: 700)
 }
 
+#Preview("WK-01 · Recorded facts") {
+    WeeklyRhythmView(
+        model: .preview(WeeklyRhythmFixtures.populated),
+        calendar: WeeklyRhythmFixtures.populated.calendar,
+        arrivalPresentation: .settled,
+        factsExpanded: true,
+    )
+    .frame(width: 1000, height: 700)
+}
+
 #Preview("WK-03 · History disabled") {
     WeeklyRhythmView(
         model: .preview(WeeklyRhythmFixtures.historyDisabled),

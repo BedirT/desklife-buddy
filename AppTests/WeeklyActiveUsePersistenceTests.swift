@@ -85,6 +85,27 @@ struct WeeklyActiveUseRuntimeTests {
         #expect(store.runs.first?.durationSeconds == 5)
         #expect(store.runs.first?.endedAt == wallClock)
     }
+
+    @Test("Passive reading is not mislabeled as estimated active input use")
+    func passiveReadingDoesNotCreateActiveUseHistory() async throws {
+        let store = WeeklyActiveUseRuntimeStore()
+        var wallClock = Date(timeIntervalSinceReferenceDate: 1000)
+        let runtime = try ProtocolRuntime(
+            configuration: ProtocolProfiles.configuration(for: .balanced),
+            store: store,
+            now: { wallClock },
+            makeID: { UUID(uuidString: "00000000-0000-4000-8000-000000000001")! },
+        )
+
+        try await runtime.observe(.active(uptimeSeconds: 100, secondsSinceInput: 0))
+        wallClock = wallClock.addingTimeInterval(5)
+        try await runtime.observe(.active(uptimeSeconds: 105, secondsSinceInput: 70))
+
+        #expect(runtime.state.visualClock.accumulatedActiveUseSeconds == 5)
+        #expect(runtime.state.movementClock.accumulatedActiveUseSeconds == 0)
+        #expect(runtime.statusContext.estimatedActiveUseSeconds == 0)
+        #expect(store.runs.isEmpty)
+    }
 }
 
 private final class WeeklyActiveUseRuntimeStore: ProtocolRuntimeStore {

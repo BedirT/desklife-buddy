@@ -21,6 +21,7 @@ enum WeeklyRhythmL10n {
         default: "Open space means no retained active-use run. It is not proof of movement or a break.",
     )
     static let longestRun = string("weekly.longest_run", default: "Longest retained run")
+    static let recordedFacts = string("weekly.recorded_facts", default: "Recorded facts")
     static let timingOnly = string(
         "weekly.longest_run.detail",
         default: "Recorded as timing only. No interpretation is added.",

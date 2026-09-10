@@ -28,6 +28,13 @@
             )
         }
 
+        @Test func recordedFactsExpanded() {
+            assertScreenSnapshot(
+                of: screen(.populated, factsExpanded: true),
+                named: "populated-recorded-facts",
+            )
+        }
+
         @Test func increasedContrast() {
             assertScreenSnapshot(
                 of: screen(.populated, increaseContrast: true),
@@ -49,6 +56,7 @@
             textScale: DSTextScale = .standard,
             increaseContrast: Bool = false,
             reduceMotion: Bool = false,
+            factsExpanded: Bool = false,
         ) -> some View {
             WeeklyRhythmView(
                 model: .preview(state.input),
@@ -56,6 +64,7 @@
                 increaseContrastOverride: increaseContrast,
                 reduceMotionOverride: reduceMotion,
                 arrivalPresentation: .settled,
+                factsExpanded: factsExpanded,
             )
             .environment(\.dsTextScale, textScale)
             .environment(\._colorSchemeContrast, increaseContrast ? .increased : .standard)

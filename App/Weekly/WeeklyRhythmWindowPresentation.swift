@@ -4,6 +4,19 @@ import SettingsFeature
 import SwiftUI
 import WeeklyRhythm
 
+enum WeeklyRhythmWindowAppearance {
+    static let minimumContentSize = NSSize(width: 1000, height: 700)
+
+    static func apply(to window: NSWindow) {
+        window.contentMinSize = minimumContentSize
+        let currentSize = window.contentRect(forFrameRect: window.frame).size
+        window.setContentSize(NSSize(
+            width: max(currentSize.width, minimumContentSize.width),
+            height: max(currentSize.height, minimumContentSize.height),
+        ))
+    }
+}
+
 extension WeeklyRhythmInterval {
     static func currentWeek(
         containing date: Date,
@@ -33,6 +46,7 @@ extension AppDelegate {
         guard runtime != nil, let settingsStore else { return false }
 
         if let window = weeklyRhythmWindowController?.window, window.isVisible {
+            WeeklyRhythmWindowAppearance.apply(to: window)
             appWindowActivationController.present(window: window, sender: nil) {}
             return true
         }
@@ -103,7 +117,7 @@ extension AppDelegate {
             rootView: WeeklyRhythmView(model: model, calendar: calendar),
         )
         window.isReleasedWhenClosed = false
-        window.minSize = NSSize(width: 800, height: 600)
+        WeeklyRhythmWindowAppearance.apply(to: window)
         window.title = AppL10n.weeklyRhythmTitle
         window.center()
         return window

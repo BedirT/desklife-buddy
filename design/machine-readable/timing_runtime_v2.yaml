@@ -1,0 +1,14 @@
+meta:
+  version: 2
+  status: owner_approved_product_hypothesis
+  approved: 2026-08-31
+  research_base: research/health/machine-readable/product_protocol.yaml
+visual_delivery:
+  latest_after_target_seconds: 90
+activity_estimator:
+  low_friction_input_pause_seconds: 5
+  post_interruption_grace_seconds: 60
+  maximum_sample_gap_seconds: 90
+  long_idle_visual_action: restart_without_completion
+  long_idle_movement_action: preserve_without_completion
+  movement_timer_visual_action: restart_without_completion

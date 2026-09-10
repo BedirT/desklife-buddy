@@ -137,6 +137,27 @@ before anything else.
 12. **Multi-display** — the extra appears on the active display's menu bar; behavior when the
     menu bar is hidden in full-screen is ED-16.
 
+### SE-05/06 — Content library browser and card detail
+
+1. **Keyboard path** — Back to Break content → category menu or category rail → card rows →
+   detail actions; every card is a native button.
+2. **Initial focus** — the category control in compact mode; the selected category in wide mode.
+3. **Focus order** — visual reading order, with the card list before detail content.
+4. **Escape** — exits the Settings window through the existing Settings command behavior.
+5. **VoiceOver names** — categories and cards expose their localized names and stable identifiers;
+   the read-only nature is stated in the page copy.
+6. **VoiceOver values** — card duration, instructions, alternative, and source are read in detail
+   order without decorative symbols.
+7. **Text scaling** — largest text uses the compact category/list and full-width detail paths;
+   no horizontal scrolling is required.
+8. **Increase Contrast** — selected category and card gain an explicit violet outline in addition
+   to the selected surface tint.
+9. **Reduce Motion** — no authored motion is required; navigation remains an immediate state change.
+10. **Meaning without color** — selected states use position, labels, and outline in addition to
+    violet.
+11. **Alternative movement** — not applicable; this is a read-only settings reference surface.
+12. **Multi-display** — the Settings window remains a standard movable macOS window.
+
 ---
 
 ## 4. The six personas every screen is walked against
@@ -165,3 +186,74 @@ From `.claude/rules/accessibility.md`. A screen is not `reviewed` until all six 
 | A calm, low-contrast aesthetic drifting below AA | Everywhere | Contrast is a hard gate in `/design-review`, checked before aesthetics |
 | A silent product being unnoticeable | HU-04, ED-16 | DQ-05 |
 | Timer announcements becoming chatter | BR-02, BR-07 | A6, fixed announcement points |
+
+## 6. iPhone and Apple Watch companion requirements
+
+Companions preserve the Mac product's autonomy and declaration model while adapting to touch,
+Lock Screen, Dynamic Island, Smart Stack, and Watch constraints.
+
+### IP-02 and LA-01/03 - active iPhone movement
+
+```text
+Input path           - Touch and Voice Control reach every action. No keyboard keycap is shown
+                       on a touch-only surface. Hardware keyboard Escape dismisses only where
+                       the platform delivers it without shadowing a system command.
+Initial focus        - Instruction heading, then remaining-time value. Focus does not jump on
+                       each timer update.
+Focus order          - Instruction -> remaining time -> Done early -> More actions -> status.
+                       Expanded alternatives read I already moved, Skip, then movement choices.
+VoiceOver names      - Break type and selected instruction are separate headings. Buttons use
+                       their exact visible labels. More actions announces menu state.
+VoiceOver values     - One start announcement, optional coarse milestones, and one resolution
+                       announcement. Never announce every second.
+Text scaling         - System text styles only. At accessibility sizes the layout becomes one
+                       vertical reading column, actions remain at least 44 by 44 points, and
+                       no instruction, status, or declaration clips.
+High contrast        - Semantic edges and text rise independently of peach/violet accents.
+Reduced motion       - No traveling landscape, pulsing timer, or interpolated elapsed line.
+                       State changes use a static replacement or system crossfade.
+Meaning without color - Selected content is named and checked. Waiting, offline, and ended
+                       states use text and symbols, never hue alone.
+```
+
+Live Activity regions may expose fewer controls, but they must never merge `Done early`,
+`I already moved`, and `Skip` into one ambiguous action. If a region cannot fit the secondary
+actions accessibly, it opens the foreground iPhone surface.
+
+### WA-01 - active Watch movement
+
+```text
+Input path           - Digital Crown scrolling, touch, AssistiveTouch, and VoiceOver can reach
+                       the full instruction and every declaration.
+Initial focus        - Instruction heading. The timer is next and never steals focus.
+Focus order          - Instruction -> remaining time -> Done early -> More actions -> status.
+VoiceOver names      - Exact visible action labels with no fitness, goal, ring, or score terms.
+VoiceOver values     - Start, coarse timer milestones if enabled, Waiting to sync when true,
+                       and final resolution. No per-second speech.
+Text scaling         - One-column reflow. Never place declarations in tiny side-by-side targets.
+Haptics              - At most one gentle haptic for an already accepted break. Haptics never
+                       indicate success, verification, urgency, or escalating refusal.
+Reduced motion       - Static hierarchy and system transitions only.
+Meaning without color - Checkmarks, labels, and status text accompany every accent.
+```
+
+### Companion failure and reconciliation states
+
+- `Waiting to sync` is a status, not a blocking alert. It is announced once when it changes.
+- `Ended on another device` removes stale actions and moves focus to the status heading.
+- Handoff failure keeps `Retry` and `Close` reachable and states that the Mac break remains.
+- Watch absence or unreachability is never announced as user failure. iPhone remains complete.
+- Live Activities disabled, iCloud signed out, or private sync declined never reduce access to
+  local companion actions.
+- Continuous deadlines reconcile after suspension. A reopened app announces the current state
+  once rather than replaying missed countdown announcements.
+
+### SE-16 companion settings results
+
+- Enabling sync, turning it off, deleting synced data, and an operation failure each produce one
+  persistence-confirmed result message.
+- Accessibility focus moves to that result once when the operation enters its terminal state. It
+  does not move during loading, retry, or each view update.
+- Successful results provide Dismiss. Failed results provide Retry. Both remain in normal keyboard
+  order after the focused message.
+- Confirmation cancellation returns to the invoking control and announces no success or failure.

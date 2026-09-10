@@ -1,0 +1,4 @@
+interface:
+  display_name: "Owner-Led Product Design"
+  short_description: "Explore grounded visual directions before coding"
+  default_prompt: "Use $owner-led-design to redesign this Cadence surface with me, grounding image-generation directions in current app screenshots before any coding."

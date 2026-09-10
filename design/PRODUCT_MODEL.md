@@ -9,8 +9,8 @@ protocol spec disagree, the protocol spec wins.
 
 ## 1. The one-sentence model
 
-The app watches a single honest signal — *is there recent input on an awake, unlocked Mac* —
-accumulates it into two independent clocks, and when a clock comes due it looks for a
+The app uses two honest, permission-free estimates — *is the Mac session available* and
+*was there recent input* — accumulates them into independent clocks, and when a clock comes due it looks for a
 non-terrible moment to offer an invitation the user can always refuse.
 
 Everything else is consequence.
@@ -23,7 +23,7 @@ This table is the source of most of the design's honesty constraints. Print it o
 |---|---|
 | The Mac is awake, unlocked, session active | Whether a person is in front of it |
 | Seconds since the last keyboard/mouse/scroll event | Whether the user is sitting, standing, or walking |
-| Accumulated *estimated active computer use* | Whether the user looked away, blinked, or rested their eyes |
+| Eligible available-session time and accumulated *estimated active computer use* | Whether anyone is present, looking at the display, or resting their eyes |
 | Which app is frontmost (ephemerally, for exclusion matching only) | What the user is doing in that app |
 | Whether a selected calendar reports busy (if enabled) | Whether a meeting is actually happening, or who is in it |
 | That the user pressed a button | Whether the user did the activity |
@@ -39,7 +39,7 @@ Four independent accumulators. Nothing one clock does completes another.
 
 | Clock | Accumulates | Comes due (balanced) | Cleared by |
 |---|---|---|---|
-| **Visual** | Estimated active computer use | soft 20 min · target 25 · latest 30 | Timer finish, or user declares done |
+| **Visual** | Eligible available-session time below long idle | soft 20 min · target 25 · latest 26.5 | Timer finish, user declares done, or long idle restarts presentation timing without completion |
 | **Movement** | Estimated active computer use | soft 50 min · target 60 · latest 70 | User starts 5-min or 2-min, or declares already moved |
 | **Position** | Time since last position change (optional/manual in MVP) | No hard due point | User records a position change |
 | **Recovery debt** | Repeated movement deferral while active use continues | ~90–120 min with no confirmed movement | Any movement event |
@@ -51,8 +51,8 @@ Frequent movement · Research-informed high frequency · Deep-work aware · Cust
 
 - Visual reset ⟶ does **not** clear movement.
 - Position change ⟶ does **not** clear movement. It is its own event `[01 §3.3]`.
-- Long idle ⟶ resets *presentation timing* only, recorded as `likelyNaturalInterruption`.
-  It never clears movement and never counts as a break `[03 §7.3]`.
+- Long idle ⟶ restarts the visual presentation cycle and begins a return grace, recorded as
+  `likelyNaturalInterruption`. It preserves movement debt and never counts as a break `[03 §7.3]`.
 - Recovery debt ⟶ produces a gentle suggestion, never an alarm, never a "risk" state.
 
 ## 4. Interruption levels
@@ -95,8 +95,8 @@ Per clock:
      │                                        one merged opportunity)
      ▼
   waitingForLowFrictionMoment
-     │  input pause / app switch / busy interval ends /
-     │  presentation mode exits / user opens the menu / latestPreferred reached
+     │  input pause of 5 s / explicit context seam /
+     │  user opens the menu / firm latest reached
      ▼
   breakOffered  (Level 2 panel)
      ├── start ──► running ──► timerFinished ──► (Level 3) ──► completed
@@ -127,7 +127,7 @@ and the status surface must be able to say *why* the app is quiet, in the user's
 | 8 | Snooze | "Snoozed — 7 min" | Continue |
 | 9 | Waiting for a good moment | "Waiting for a pause" | Continue |
 
-On exit from suppression: a grace period, then **at most one merged opportunity**. Never a
+On exit from suppression: a 60-second monotonic grace period, then **at most one merged opportunity**. Never a
 queue of stacked overdue prompts `[03 §8]`.
 
 ## 7. Merge
@@ -196,3 +196,71 @@ Checkable statements. If a design violates one, the design is wrong.
 8. Core function requires no permission, no account, and no network.
 9. Every suppression state can explain itself in the user's words.
 10. Every number shown is either from the protocol or labeled as an estimate.
+
+## 12. Apple companion model
+
+The accepted ecosystem model is **E1 first, with an opt-in private E2 ledger**. The Mac
+remains complete by itself and is the only authority that decides when a Mac-work visual or
+movement opportunity is due. Visual resets stay on the Mac. Only an accepted movement break
+may be continued explicitly to iPhone, and Apple Watch participates through the paired iPhone.
+
+Companions are action surfaces, not new clocks or sensors. They render the exact Mac-authored
+movement opportunity, keep its continuous elapsed deadline while suspended, and return the
+user's declaration. They never infer presence, posture, gaze, movement, or completion. iPhone
+is a complete companion path without Apple Watch, and not owning or wearing a Watch has no
+product penalty.
+
+Every transported opportunity uses one versioned, platform-neutral contract:
+
+```text
+CompanionOpportunityEnvelope
+  schemaVersion
+  opportunityID
+  authorityDevice = mac
+  kind = movement
+  contentID
+  selectedDurationSeconds
+  state = accepted | active | resolved
+  createdAt
+  continuousDeadline
+  latestKnownRevision
+
+CompanionOpportunityAction
+  schemaVersion
+  actionID
+  opportunityID
+  originDevice = mac | iphone | watch
+  action = doneEarly | alreadyMoved | skip | timerExpired
+  authoredAt
+  certainty = userDeclared | timerFact
+  revision
+```
+
+The action-to-event mapping is closed:
+
+| Companion action | Exhaustive product event |
+|---|---|
+| `doneEarly` | `userDeclaredCompleted` |
+| `alreadyMoved` | `userDeclaredAlreadyMoved` |
+| `skip` | `skipped` |
+| `timerExpired` | `timerFinished` |
+
+There is no companion-only completion event and no ambiguous `End early` action. A timer fact
+does not prove movement. Sensor observations, if ever explored separately, cannot resolve an
+opportunity.
+
+The first valid resolution for an `opportunityID` wins. Duplicate, late, stale, and
+out-of-order actions remain auditable reconciled no-ops and never replay an outcome. Remote
+delivery never delays a Mac deadline or opens a late break.
+
+The default mode is standalone and local. Handoff transfers only one explicitly accepted
+activity plus the owner's private-companion-sync enabled state, which prevents iPhone from
+enabling cloud exchange without that preference. Durable reconciliation is a separate, explicit opt-in using the owner's private
+iCloud data. Each device appends locally first, queues while offline or signed out, and replays
+idempotently when available. Turning sync off never disables local timing or companion use,
+keeps existing local and private-cloud records, and stops future exchange. Deleting synced
+companion data removes private-cloud opportunity and action records while local device records
+and Mac opportunity history remain. These boundaries are disclosed before either action.
+
+Companion development uses neutral target and bundle identities while product naming remains
+deferred. This grants no authority to rename the stable Mac target, scheme, or module.

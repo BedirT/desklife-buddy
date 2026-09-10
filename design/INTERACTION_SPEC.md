@@ -104,11 +104,15 @@ one." Level 4 is the
 user-initiated weekly window (patterns, never grades `[03 §10]`) — design pending
 (Phase 3 backlog).
 
-## 2. Timing table (informative — YAML is normative)
+## 2. Timing table
+
+Research-authored targets and movement windows come from `product_protocol.yaml`. The
+owner-approved runtime amendment in `design/machine-readable/timing_runtime_v2.yaml` narrows
+the visual target-to-latest window and defines permission-free delivery seams.
 
 | Parameter | Balanced (default) | Gentle | Frequent movement | Source key |
 |---|---|---|---|---|
-| Visual soft / target / latest | 1200 / 1500 / 1800 s | 1500 / 1800 / 2100 | — | `profiles.*.visual` |
+| Visual soft / target / latest | 1200 / 1500 / 1590 s | 1500 / 1800 / 1890 | 1200 / 1500 / 1590 | research profile + runtime amendment |
 | Visual reset duration | 20 s | 20 | — | `reset_duration_seconds` |
 | Movement soft / target / latest | 3000 / 3600 / 4200 s | 4200 / 4500 / 5400 | 1800 / 2100 / 2400 | `profiles.*.movement` |
 | Movement recommended / quick | 300 / 120 s | 300 / 120 | 300 / 120 | `recommended_duration_seconds`, `quick_option_seconds` |
@@ -116,6 +120,7 @@ user-initiated weekly window (patterns, never grades `[03 §10]`) — design pen
 | Snooze options | 300 / 600 / 900 s | | | `snooze_options_seconds` |
 | Merge window (visual joins movement) | 300 s | | | `merge_window_seconds` |
 | Idle: recent-input window / long-idle reset / wake grace | 60 / 300 / 90 s | | | `activity_estimator.*` |
+| Input-pause release / return grace / maximum sampled gap | 5 / 60 / 90 s | | | runtime amendment |
 | Recovery eligible / latest | 5400 / 7200 s | | | `recovery.*` |
 | Escalations per opportunity | max 1 | | | `max_repeated_escalations_per_opportunity` |
 | Lockout | **never** | | | `lockout_allowed: false` |
@@ -194,9 +199,14 @@ photosensitivity safety, not taste (accessibility rule §3).
 | "Later" (5/10/15) | `snoozed` |
 | Esc on capsule or break | `skipped` |
 | "Not now — bad moment" patterns in Settings | `notAppropriate` |
-| Idle ≥ `long_idle_reset_seconds` (300 s) | `likelyNaturalInterruption` — may reset presentation timing, **never** records movement |
+| Idle ≥ `long_idle_reset_seconds` (300 s) | `likelyNaturalInterruption` — restarts visual presentation timing, preserves movement debt, and **never** records completion |
 
 Never merged, never graded, never rolled into "healthy break achieved."
+
+A movement `timerFinished` event restarts visual presentation timing without emitting a visual
+event or claiming that a visual reset was completed. The clocks and event outcomes remain
+independent; this is a scheduling boundary that prevents a second interruption immediately after
+the user has spent a full movement timer away from their prior screen session (D-042).
 
 ## 7. Suppression evaluation
 
@@ -234,6 +244,12 @@ excluded_application → outside_working_hours → snooze → low_friction_wait.
 | Screen sharing detected via presentation-mode signal user enabled | explicit_presentation_mode hold only if the user set it — no automatic detection is possible without prohibited permissions | `[07]` |
 | System clock change | Recompute schedules from monotonic elapsed time, never wall-clock deltas | ED-03 |
 
+The sleep and lock pause applies to opportunity accrual. Once a break has opened, its selected
+duration remains a continuous elapsed-time deadline. Presentation callbacks pause while macOS is
+asleep or locked, then the first refresh after wake or unlock reconciles the deadline and closes an
+expired break instead of resuming a stale countdown. A completed timer remains only a timer fact;
+it does not verify that movement occurred.
+
 ## 10. Permission degradation (each denied state is designed)
 
 | Permission | Denied / revoked behavior |
@@ -259,3 +275,78 @@ out of scope entirely — no design may imply them.
 - CSV headers and values follow canonical `HistoryExportField` order for the selected subset.
   JSON schema v2 always includes `formatVersion` and ordered `fields` metadata, emits only selected
   record keys, and represents selected nullable values as `null`.
+
+## 12. iPhone and Apple Watch companions
+
+### 12.1 Continuation and authority
+
+- `Continue on iPhone` appears only after the user accepts a movement option. It is an explicit
+  action, never an automatic transfer and never part of a visual reset.
+- The Mac sends one versioned `CompanionOpportunityEnvelope` with the existing
+  `opportunityID`, selected content, selected duration, continuous deadline, and revision.
+  Handoff also carries one Boolean stating whether the owner already enabled private companion
+  sync, so iPhone never enables cloud exchange without the Mac preference.
+- The Mac remains usable throughout continuation. A missing phone, failed Handoff, or delayed
+  remote action never blocks the local break or the Mac's latest boundary.
+- iPhone starts the active companion and local Live Activity in the foreground. No server or
+  remote-push path is required.
+- Apple Watch receives latest state and durable actions through the paired iPhone. It never
+  communicates directly with Mac and never becomes the due-clock authority.
+
+### 12.2 Direction B interaction hierarchy
+
+The accepted companion direction is the editorial-focus composition recorded in
+`design/explorations/apple-companions-2026-08-31/README.md`:
+
+1. One selected movement instruction is the dominant content.
+2. Remaining time is a restrained elapsed line, not a ring, score, streak, or fitness gauge.
+3. `Done early` is the primary declaration.
+4. `I already moved` and `Skip` remain semantically distinct and reachable through a clear
+   native alternatives menu or compact system action region.
+5. Other equal-status movement choices remain reachable through one native menu without
+   shrinking the Mac choice grid onto the device.
+6. Lock Screen, Dynamic Island, Smart Stack, and Watch use the same hierarchy at the smallest
+   platform-appropriate density.
+
+Touch-only surfaces show no keyboard keycaps. System text styles, native materials, and the
+current warm landscape with quiet peach and violet semantic accents are used. Fitness-ring
+framing is prohibited.
+
+### 12.3 Action and timer semantics
+
+| Visible action or transition | Transport action | Product event |
+|---|---|---|
+| `Done early` | `doneEarly` | `userDeclaredCompleted` |
+| `I already moved` | `alreadyMoved` | `userDeclaredAlreadyMoved` |
+| `Skip` | `skip` | `skipped` |
+| Continuous deadline reached | `timerExpired` | `timerFinished` |
+
+There is no separate `End early` action. Actions are written locally before presentation
+closes. The first valid resolution wins on every device. A later resolution closes as
+`Ended on another device` and is retained only as a reconciled no-op. Timer expiry is a timer
+fact, not proof that movement occurred.
+
+### 12.4 Offline, privacy, and failure behavior
+
+- Standalone is the default: no account, network, phone, or Watch is required.
+- Handoff exposes only the accepted opportunity's ID, selected content, duration, deadline,
+  revision, and the owner's private-companion-sync enabled state. It does not transfer
+  background history or private-cloud records.
+- Private iCloud reconciliation is opt-in and separate from Handoff. Payloads contain minimum
+  derived opportunity fields only, use a private custom zone, and never contain raw HealthKit,
+  Motion, AirPods, Calendar, app-title, pointer-path, or location data.
+- An offline or signed-out device keeps its local action in an idempotent queue and says
+  `Waiting to sync` without claiming that Mac received it.
+- If Handoff cannot continue, the phone says `Couldn't continue this break` and the Mac break
+  remains available. If Watch is unreachable, iPhone remains the complete path.
+- If a newer revision or first resolution arrives, stale local controls become read-only and
+  say `Ended on another device`.
+- Disabling sync stops future cloud exchange without changing Mac timing. Disable and delete
+  controls must state which local and private-cloud copies remain before confirmation. Turning
+  sync off keeps local companion records and existing private iCloud records. Deleting synced
+  companion data removes the private iCloud opportunity and action records but leaves local
+  device records and Mac opportunity history unchanged.
+
+No new permission is requested during Mac onboarding. Handoff appears at the moment of
+continuation, Live Activity begins from the foreground iPhone app, Watch installation is
+optional, and iCloud reconciliation has its own explicit opt-in.

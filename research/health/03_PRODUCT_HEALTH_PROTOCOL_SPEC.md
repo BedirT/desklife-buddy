@@ -379,7 +379,7 @@ The protocol implementation is acceptable only when:
 
 ## 17. Owner-approved timing and action amendment — 2026-09-01
 
-**Status:** canonical amendment under D-033. This section preserves the 2026-08-24 research
+**Status:** canonical amendment under D-043. This section preserves the 2026-08-24 research
 snapshot above as provenance while superseding only the timing/action clauses named here. The
 exact machine contract is
 [`design/machine-readable/timing_runtime_v2.yaml`](../../design/machine-readable/timing_runtime_v2.yaml),

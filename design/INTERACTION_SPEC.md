@@ -1,6 +1,6 @@
 # Interaction Specification — Horizon
 
-**Status: canonical lifecycle projection through D-033 (2026-09-01).** Timing values live in
+**Status: canonical lifecycle projection through D-043 (2026-09-01).** Timing values live in
 `research/health/machine-readable/product_protocol.yaml`; identities, action effects, portable
 time, and reconciliation live in `machine-readable/timing_runtime_v2.yaml`. Read those machine
 contracts rather than copying this prose. Motion is the closed vocabulary of D-025 as amended by
@@ -59,7 +59,7 @@ status menu (§1.5).
 
 ### 1.3 Visual reset (Level 2, self-running — D-021)
 - The final field appears immediately with no compositor transition, global tint, blur layer, or
-  entrance-settlement gate (D-032/D-033). The 20 s timer (`duration_seconds: 20`, window per
+  entrance-settlement gate (D-032/D-043). The 20 s timer (`duration_seconds: 20`, window per
   `preset_contract_v2.presets.balanced_v2.visual`) **starts in the same committed open action**
   that records `breakStarted` — no Start
   button. Status line: "Ends on its own." (CP-BR45, D-027 — the pills' printed keycaps
@@ -70,7 +70,7 @@ status menu (§1.5).
   separate post-close projection, never an exit transition. Timer/declaration starts a fresh
   visual cycle; Skip/Escape starts a fresh visual schedule without completion credit.
 - **Every visible control, Return, Esc, and ⌘. works on the first active frame.** There is no
-  declaration guard or animation gate (D-032/D-033).
+  declaration guard or animation gate (D-032/D-043).
 
 ### 1.4 Movement break (Level 2)
 - Same immediate entrance and exit; window per
@@ -151,7 +151,7 @@ Visual `latest` is the research target plus runtime `latest_after_target_seconds
 (D-037). It overrides YAML `latest_preferred_seconds` for visual scheduling; the YAML
 research values are not edited. `scripts/check-canonical-keys.sh` locks every key path and cited value in this table.
 
-### 2.1 V2 contract values (non-activated — D-033)
+### 2.1 V2 contract values (non-activated — D-043)
 
 | Parameter | Calm | Balanced (default, stable ID `balanced_v2`) | Frequent reset | Source key |
 |---|---|---|---|---|
@@ -195,7 +195,7 @@ soft/target/latest ordering neighbors validate as new authoring. Legacy IDs and 
 | Tab / arrows | Full ring, §4 order | Between exits | System |
 
 All break-surface keys (`↩ 1 2 3 Q A P V Esc ⌘.`) and their pointer controls are active on the
-first frame (D-032/D-033). A stale action still fails closed by identity and phase; input safety
+first frame (D-032/D-043). A stale action still fails closed by identity and phase; input safety
 must not be implemented as a time gate.
 
 No custom shortcut shadows a system binding. Every shortcut is visibly printed on its
@@ -235,10 +235,10 @@ in-app static mode). A motion not in this table does not exist.
 | 3 | Reactive glint | Sun glint leans toward pointer movement; body stays fixed | input-driven only | Off; glint centered |
 | 4 | Noticing you | Pointer reaches capsule → glow warms once | 180 ms | Instant |
 | 5 | Touchdown | Sun settles on the tiny horizon, no bounce | 260 ms | Instant rest |
-| 6 | The break appears | The final selected break field appears immediately. The accepted baseline has no entrance animation, intermediate blur layer, global tint, delayed deadline, or delayed controls. Every printed shortcut and pointer control works from the first active frame. A replacement authored transition remains a separate review task. | instant | Same (D-032/D-033) |
+| 6 | The break appears | The final selected break field appears immediately. The accepted baseline has no entrance animation, intermediate blur layer, global tint, delayed deadline, or delayed controls. Every printed shortcut and pointer control works from the first active frame. A replacement authored transition remains a separate review task. | instant | Same (D-032/D-043) |
 | 7 | Numerals | Deliberately **not** animated; tabular in place | — | Same |
 | 8 | Horizon fills | 1px line fills left→right | break-length, linear | Quiet stepped updates |
-| 9 | The day ends | Field closes immediately and restores the previous application. An allowed completion capsule is a separate post-close projection, not an exit transition. | instant | Same (D-032/D-033) |
+| 9 | The day ends | Field closes immediately and restores the previous application. An allowed completion capsule is a separate post-close projection, not an exit transition. | instant | Same (D-032/D-043) |
 | 10 | Everything else | System-owned motion (menus, windows) | system | system |
 
 Never: loops · pulses · shimmer · parallax · animated backgrounds · anything that
@@ -261,7 +261,6 @@ photosensitivity safety, not taste (accessibility rule §3).
 | "Later" (5/10/15) | `snoozed` |
 | Esc on capsule or break | `skipped` |
 | "Not now — bad moment" patterns in Settings | `notAppropriate` |
-| Input idle reaches `long_idle_reset_seconds` (300 s), or same-epoch lock/sleep/system-unavailable duration reaches 300 s | `likelyNaturalInterruption` once; visual cycle restarts only at return, movement need is preserved, **never** records movement |
 
 Never merged, never graded, never rolled into "healthy break achieved." Operational records,
 observations, assessments, scheduling decisions, corrections, and companion actions are separate
@@ -323,15 +322,15 @@ preterminal snapshot digest; callback order cannot change “Mac locked” into 
 
 | Change | Behavior | Source |
 |---|---|---|
-| Sleep / lock / inactive / unavailable | Schedule clocks are Paused. Retain same-epoch unavailable start. If a running deadline remains comparable, resume or finish it; if not, use `timerRecoveryUnavailable`. A proven unavailable interval ≥300 s with no unresolved ritual gets the same visual courtesy as long idle plus 60 s grace; movement/position/recovery need stays intact | YAML `activity_estimator`, D-033 |
+| Sleep / lock / inactive / unavailable | Schedule clocks are Paused. Retain same-epoch unavailable start. If a running deadline remains comparable, resume or finish it; if not, use `timerRecoveryUnavailable`. A proven unavailable interval ≥300 s with no unresolved ritual gets the same visual courtesy as long idle plus 60 s grace; movement/position/recovery need stays intact | YAML `activity_estimator`, D-043 |
 | Input idle >60 s and <300 s | Visual and optional/manual position timing continue for passive-reading honesty; movement/recovery estimates freeze; no fact | timing runtime v2 |
-| Long idle reaches 300 s | Record `likelyNaturalInterruption` once and freeze. At return, begin a fresh visual cycle, preserve movement need, and apply 60 s grace | `[03 §17.1]`, D-033 |
+| Long idle reaches 300 s | Record `likelyNaturalInterruption` once and freeze. At return, begin a fresh visual cycle, preserve movement need, and apply 60 s grace | `[03 §17.1]`, D-043 |
 | Working hours end / begin | Freeze all schedule clocks outside the selected window; establish a new baseline and use a 60 s quiet corridor on re-entry | timing runtime v2 |
 | Explicit pause resumes | Establish a new baseline, add zero catch-up time, and use a 90 s quiet corridor | timing runtime v2 |
 | Non-finite/backward sample or gap >15 s | Add zero elapsed time and establish a new local monotonic baseline; record only operational gap evidence | timing runtime v2 |
 | Spaces / Stage Manager switch | Break panels join the active Space; controls remain reachable | ED-11 |
 | Screen sharing detected via presentation-mode signal user enabled | explicit_presentation_mode hold only if the user set it — no automatic detection is possible without prohibited permissions | `[07]` |
-| System clock change or monotonic-epoch loss | Schedule clocks ignore wall deltas. An unavailable accepted epoch/anchor closes through operational-only `timerRecoveryUnavailable`: no `timerFinished`, completion, or fresh schedule. The coordinator settles admitted same-generation candidates, commits the disposition plus signed high-water projection fence, then starts 60 s grace. Successors remain blocked until fence + grace. Old-generation actions are rejected no-ops with honest feedback. Wall metadata is display/exchange/audit only. | D-033 |
+| System clock change or monotonic-epoch loss | Schedule clocks ignore wall deltas. An unavailable accepted epoch/anchor closes through operational-only `timerRecoveryUnavailable`: no `timerFinished`, completion, or fresh schedule. The coordinator settles admitted same-generation candidates, commits the disposition plus signed high-water projection fence, then starts 60 s grace. Successors remain blocked until fence + grace. Old-generation actions are rejected no-ops with honest feedback. Wall metadata is display/exchange/audit only. | D-043 |
 
 The recovery surface always says **“Timer couldn’t be restored.”** It selects the remaining copy
 from the retained schedule snapshot. A due schedule says **“No finish was recorded. This schedule
@@ -391,7 +390,7 @@ owner-approved story, disclosure, fallback, and proof; the core may not imply th
   JSON schema v2 always includes `formatVersion` and ordered `fields` metadata, emits only selected
   record keys, and represents selected nullable values as `null`.
 
-## 12. Identity, portable time, and terminal reconciliation (D-033)
+## 12. Identity, portable time, and terminal reconciliation (D-043)
 
 - `ClockCycleID` identifies one independent visual, movement, position, or recovery schedule. It
   survives due, heads-up, Held, snooze, running, relaunch, and cross-device projection. Only a

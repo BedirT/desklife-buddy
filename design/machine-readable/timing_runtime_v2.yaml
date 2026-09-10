@@ -2,7 +2,7 @@ meta:
   contract: timing-runtime-v2
   version: 2.0
   status: canonical_not_runtime_activated
-  decision: D-033
+  decision: D-043
   health_values: ../../research/health/machine-readable/product_protocol.yaml
   product_fact_schema: ../../research/health/machine-readable/event_schema.json
   intended_purpose: >-

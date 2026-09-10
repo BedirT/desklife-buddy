@@ -449,7 +449,7 @@ notification permission.
 the then-approved "After this meeting" copy when Calendar was enabled `[03 §4.1, §9]`, "Presenting for
 1 hour" `[03 §9]`). Esc waves the capsule off for the cycle.
 
-**Legacy D-022 hold copy, superseded by D-033.** "On hold · busy until 3:00" — driven only by the protocol's sanctioned
+**Legacy D-022 hold copy, superseded by D-043.** "On hold · busy until 3:00" — driven only by the protocol's sanctioned
 suppression sources `[03 §8, §9]`: manual pause, working hours, optional Calendar busy,
 Focus filter, user-named meeting apps. The MVP never promises automatic meeting detection
 `[03 §9]` and never inspects other apps `[03 §9, 07 §3]`.
@@ -682,7 +682,7 @@ Return no longer has the former 800 ms declaration delay. This owner decision su
 break-specific motion and keyboard-arming bullets in D-029. A replacement animation must be
 reviewed as a separate change and must preserve the accepted first-frame input and Dock behavior.
 
-### D-033: Canonical permission-free timing and action semantics
+### D-043: Canonical permission-free timing and action semantics
 
 **Date:** 2026-09-01 · **Tag:** Owner decision · **Status:** Accepted
 
@@ -751,7 +751,7 @@ presentation state cannot be confused with the user's explicit **Paused** state.
 decision does not claim current runtime conformance; `CURRENT_STATE_CONFORMANCE.md` retains
 those implementation and copy-projection gaps.
 
-#### D-033 contract-repair addendum — 2026-09-01
+#### D-043 contract-repair addendum — 2026-09-01
 
 This addendum supersedes only the ambiguous recovery, concurrency, participant, and display-name
 phrasing above; the approval provenance and non-activation boundary remain unchanged.
@@ -774,10 +774,10 @@ phrasing above; the approval provenance and non-activation boundary remain uncha
 - The stable preset ID remains `balanced_v2`; its ordinary user-facing display name is **Balanced**.
   Migration UI may distinguish **legacy Balanced** from **Balanced (current v2 schedule)**.
 
-#### D-033 generation, companion, and cross-slot repair addendum — 2026-09-01
+#### D-043 generation, companion, and cross-slot repair addendum — 2026-09-01
 
 This append-only repair supersedes only the prior addendum's unqualified “permits after 60
-seconds,” “live coordinator lease,” and “valid late” shorthand. It does not change D-033 approval
+seconds,” “live coordinator lease,” and “valid late” shorthand. It does not change D-043 approval
 provenance, health values, fact vocabulary, or non-activation boundary.
 
 - Opportunity-scoped leases use OpportunityID + revision. Global/system/schedule commands use
@@ -800,7 +800,7 @@ provenance, health values, fact vocabulary, or non-activation boundary.
   states have explicit copy and accessible fallback. Raw candidates/losers/duplicates/rejections
   are Class 0, memory-only for at most 90 seconds, then erased without persistence/export.
 
-#### D-033 evidence, replay, and companion-registry repair addendum — 2026-09-01
+#### D-043 evidence, replay, and companion-registry repair addendum — 2026-09-01
 
 This append-only repair supersedes the prior addenda's one-winner nonterminal shorthand, generic
 companion `pending` state, opaque companion-terminal wrapper, unconditional due recovery copy, and
@@ -828,7 +828,7 @@ unchanged.
   Recovery copy says “still due” only when the retained schedule is actually due; otherwise it
   says the timer was not restored and the schedule was not reset while showing the actual phase.
 
-#### D-033 sixth contract-repair addendum — 2026-09-01
+#### D-043 sixth contract-repair addendum — 2026-09-01
 
 This append-only repair refines identity and delivery mechanics without changing the approved
 health purpose, facts, cadence values, permission boundary, or non-activation:
@@ -853,7 +853,7 @@ sentence is retained only as historical trace and is superseded by the uncertain
   and qualified reason. `custom_v2` storage preserves every legal positive finite v1 payload;
   safer new-authoring bounds apply only after creation or edit.
 
-#### D-033 seventh contract-repair addendum — 2026-09-01
+#### D-043 seventh contract-repair addendum — 2026-09-01
 
 This append-only repair supersedes the sixth addendum only where it left sender crash recovery,
 companion Escape, fence verification keys, Custom payload shape, Undo freshness, and non-manual
@@ -888,7 +888,7 @@ non-activation boundary remain unchanged.
   qualified-away, accepted-ritual, and intentionally hidden system Pause projections. Only manual
   Pause requires a selected reason; hidden system detail uses neutral `Paused · timer not restored`.
 
-#### D-033 eighth contract-repair addendum — 2026-09-01
+#### D-043 eighth contract-repair addendum — 2026-09-01
 
 This append-only repair makes crash provenance, merged segment identity, cross-resolver arbitration,
 partial Custom editing, and recovery evidence executable without changing the approved health
@@ -929,7 +929,7 @@ the same-epoch/anchor/age gate and structural-vector-plus-eligible-delta Undo ru
   Overlapping system reasons use deterministic subtype precedence, and weak evidence never becomes
   “Walk completed,” movement completion, or another body claim.
 
-### D-043: Settings uses a solid two-tone window shell with an inset content well
+### D-033: Settings uses a solid two-tone window shell with an inset content well
 
 **Date:** 2026-08-30 · **Tag:** Owner decision · **Status:** Accepted
 
@@ -948,11 +948,6 @@ tokens. Liquid Glass remains available for transient or floating surfaces elsewh
 This decision supersedes the Settings-specific Liquid Glass rail direction in
 `docs/plans/2026-08-28-settings-clarity-pass.md`. It does not supersede D-018's colorful glyph
 tiles.
-
-**ID note (2026-09-10):** this entry was documented as D-033 on 2026-09-10, after D-033 had
-been minted 2026-09-01 for the canonical timing/action semantics above (AUTHORITY traceability
-record plus eight review cycles). To keep decision IDs unique, the Settings shell moves to
-D-043; timing keeps D-033.
 
 ### D-035: Content library uses a responsive category browser and drill-in detail
 
@@ -984,8 +979,7 @@ independent-clock explanation remain intact.
 Timing and Delivery follow as sections inside one continuous, aligned native form instead of
 competing cards or columns. Advanced schedules moves below that form as a tertiary disclosure.
 The duplicate inline evidence link is removed because the same destination remains persistently
-available in the anchored Help navigation. This page uses the accepted D-043 solid shell and does
-not add glass, decorative gradients, analytics, scores, or another navigation rail.
+available in the anchored Help navigation. This page uses the accepted D-033 solid shell and does
 
 ### D-036: Content library follows the owner's icon-led reference composition
 

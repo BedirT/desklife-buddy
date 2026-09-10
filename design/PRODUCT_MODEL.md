@@ -211,7 +211,7 @@ movement-phase Escape closes the parent.
 
 ## 6. Paused and Held
 
-The old umbrella word “suppressed” hid two materially different states. D-033 makes the reason
+The old umbrella word “suppressed” hid two materially different states. D-043 makes the reason
 and clock effect explicit:
 
 | State | Reasons | Clock effect | Visible rule |

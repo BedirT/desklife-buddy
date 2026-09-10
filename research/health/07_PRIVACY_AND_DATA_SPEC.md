@@ -28,7 +28,7 @@ Requirements:
 - no analytics;
 - no server transmission.
 
-For D-033 coordination, raw candidate buffers are strictly memory-only and minimized to fields
+For D-043 coordination, raw candidate buffers are strictly memory-only and minimized to fields
 needed for the current reduction. They have no durable record identity; ActionID is only transient
 protocol correlation and is erased with the buffer. Discard occurs at settlement, generation or
 projection fence, or **90 seconds**, whichever comes first. These buffers never enter an
@@ -310,7 +310,7 @@ Users need:
 - clear synced data if sync is later added;
 - confirmation of what remains after deletion.
 
-When D-033 coordination is implemented, the local data report must include current generation,
+When D-043 coordination is implemented, the local data report must include current generation,
 global revision, fence/high-water status, and paired public-key fingerprints in a human-readable
 form. It must exclude raw candidate buffers, sender crash-replay outbox contents, actual public-key
 bytes, and every private signing key. **Delete

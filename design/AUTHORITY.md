@@ -83,8 +83,8 @@ recorded status, or supersession chain. Story #19 closed the known quarantine on
 | D-020a opening | D-019 amended by D-020a | Nonexistent D-020 reference removed |
 | `SCREEN_INVENTORY.md` Horizon, capsule, and keyboard routes | D-016; D-022/D-023; D-029 | D-013…D-025 range and D-018 capsule mislabels removed |
 | `COPY_INVENTORY.md` eye-character rejection | D-019 amended by D-020a | Closed resting eyes distinguished from prohibited gaze-like motion |
-| `INTERACTION_SPEC.md` entrance, exit, countdown start, and key arming | D-032 clarified by D-033 | Superseded sky transition/guard removed; D-031 mis-citation removed |
-| `SCREEN_INVENTORY.md` break accessibility blocks | D-032 clarified by D-033 | First-frame inputs and immediate reduced-motion equivalent reconciled |
+| `INTERACTION_SPEC.md` entrance, exit, countdown start, and key arming | D-032 clarified by D-043 | Superseded sky transition/guard removed; D-031 mis-citation removed |
+| `SCREEN_INVENTORY.md` break accessibility blocks | D-032 clarified by D-043 | First-frame inputs and immediate reduced-motion equivalent reconciled |
 
 The protocol consistency check fails if a quarantined citation pattern is reintroduced. The
 historical decision text remains append-only; corrected source references do not rewrite why a
@@ -93,7 +93,7 @@ decision was made.
 ### D-032 reconciliation boundary
 
 Accepted D-032 names only D-029's break entrance, break exit, and keyboard-arming clauses as
-superseded. D-033 completed that canonical reconciliation without erasing unrelated D-029
+superseded. D-043 completed that canonical reconciliation without erasing unrelated D-029
 capsule, coarse-countdown, focus, or accessibility clauses. The final field, accepted deadline,
 focus, every printed declaration shortcut and pointer control appear together; exit is immediate
 with no compositor transition or global tint.
@@ -152,7 +152,7 @@ stop-and-reconcile rule rather than whichever file is closest.
 - **Superseded**: retained for provenance and explicitly points to its replacement.
 
 The owner-approved Calm Ensemble review remains **historical intake** except for the exact
-permission-free timing/action/identity/ledger clauses promoted by D-033 and protocol §17. Its
+permission-free timing/action/identity/ledger clauses promoted by D-043 and protocol §17. Its
 other sensing, permission, privacy, companion, learning, and Labs directions do not override the
 claims register, privacy spec, decision log, machine contracts, or shipped behavior by themselves.
 
@@ -180,11 +180,11 @@ A pull request must link the record and name any deliberately deferred field. A
 follow-up issue is not permission to ship through an unresolved safety, privacy,
 claims, migration, or accessibility field.
 
-### D-033 traceability record
+### D-043 traceability record
 
-| Field | D-033 record |
+| Field | D-043 record |
 |---|---|
-| Decision | D-033, Accepted from the owner's 2026-09-01 approval of the complete historical review and explicit implementation direction. It clarifies D-032's supersession of D-029's break entrance/exit/key-arming clauses and supersedes only D-022's visible `On hold` label with `Held`; D-022's capsule placement, behavior, and sanctioned sources remain active. No unrelated decision is superseded. |
+| Decision | D-043, Accepted from the owner's 2026-09-01 approval of the complete historical review and explicit implementation direction. It clarifies D-032's supersession of D-029's break entrance/exit/key-arming clauses and supersedes only D-022's visible `On hold` label with `Held`; D-022's capsule placement, behavior, and sanctioned sources remain active. No unrelated decision is superseded. |
 | Intended purpose and claim | Private general-wellness scheduling for visual resets, movement opportunities, position variety, and optional recovery. `[C033]` estimated use only; `[C034]` no movement verification; no diagnosis, treatment, prevention, posture, gaze, symptom-improvement, or outcome claim. |
 | Normative prose | `research/health/03_PRODUCT_HEALTH_PROTOCOL_SPEC.md` §17; `PRODUCT_MODEL.md` §§3, 5–8; `INTERACTION_SPEC.md` §§1–9; `USER_FLOWS.md` F-01–F-14. |
 | Machine contract | `machine-readable/timing_runtime_v2.yaml` version 2.0; `product_protocol.yaml.preset_contract_v2`; legacy-read-only mapping in `event_schema.json.x_contract_status`. |
@@ -193,7 +193,7 @@ claims, migration, or accessibility field.
 | Permission | None for this permission-free contract. No entitlement or permission is added. Optional sensor restart remains disabled until its separate permission/claims/privacy/validation story; refusal cannot alter the core. |
 | Data lifecycle | No runtime data change in this story. Ten product facts remain distinct. Operational, observation, assessment, decision, correction, and retained companion continuity remain separate future stores. Received raw candidate/losing/duplicate/rejection and sparse out-of-order buffers plus payload-free compact replay receipts are Class 0, memory-only ≤90 s, never exported/persisted as history, and never product facts. The sole raw-action-envelope persistence exception is the locally encrypted sender crash-replay outbox: same local monotonic epoch, usable anchor, and elapsed <90 s are all required for exact resend; otherwise erase without resend or replacement. A second minimized `outcome_ack_pending` record retains exact signed outcome-ACK bytes and receiver/key binding only to finish ACK-of-ACK after a same-epoch crash. Ordinary rotation may retain only its already-bound non-exportable old private-key Keychain handle through that window; re-pair/reset erases it. Replay receipt erasure requires verified signed acknowledgement-of-ack or expiry; ACK/fence creation is insufficient. Persistent contiguous-disposition high water retains no raw payload and never proves receipt. |
 | Fallback | Honest schedules based on estimated active computer use; awake/active/unlocked coarse sampling, recent input only as movement-clock accrual eligibility, passive-reading visual accrual, zero gap catch-up, exact `elapsed >= deadline` edges, and no gaze/body/position/sensor-completion inference. Unknown accepted timing is operational-only `timerRecoveryUnavailable`: settle admitted same-generation candidates, commit no timer/completion/fresh-cycle fact, preserve due schedules, sign/fence the old projection epoch, then begin 60 s grace. The neutral projection says the timer could not be restored and no finish was recorded; due body copy appears only for an actually due retained schedule, while the menu independently preserves actual Paused/Held reason plus `timer not restored` or the ordinary phase. Manual, locked, inactive, sleeping, unavailable, accepted-ritual, confirmed-away, outside-hours, and hidden-system subtypes have deterministic precedence. |
-| Accessibility | D-032/D-033 first-frame Escape/⌘./Return/5/2/1–3/Q/A/P/**V**/S and pointer controls; movement offered/running distinction, initial focus/order, VoiceOver timer-not-started/selected-duration states, complete merged companion movement offer with Start 5 initial focus, projection-only companion Escape/⌘., phase-specific live controls plus neutral and terminal/nonterminal-ACK-unknown offline/revalidating states, expired/transfer-pending/terminal-action-pending/nonterminal-action-pending/rejected/already-ended/failed states with exact enabled controls, selected-receiver naming, provenance-preserving do-not-repeat copy, stale-Undo one-announcement/stable-focus receipt, exhaustive evidence-bound non-manual/hidden-system Paused timer-recovery copy, immediate static equivalent, and existing focus restore, contrast, text-size, equal movement, and multi-display obligations remain. Runtime conflict stays declared. |
+| Accessibility | D-032/D-043 first-frame Escape/⌘./Return/5/2/1–3/Q/A/P/**V**/S and pointer controls; movement offered/running distinction, initial focus/order, VoiceOver timer-not-started/selected-duration states, complete merged companion movement offer with Start 5 initial focus, projection-only companion Escape/⌘., phase-specific live controls plus neutral and terminal/nonterminal-ACK-unknown offline/revalidating states, expired/transfer-pending/terminal-action-pending/nonterminal-action-pending/rejected/already-ended/failed states with exact enabled controls, selected-receiver naming, provenance-preserving do-not-repeat copy, stale-Undo one-announcement/stable-focus receipt, exhaustive evidence-bound non-manual/hidden-system Paused timer-recovery copy, immediate static equivalent, and existing focus restore, contrast, text-size, equal movement, and multi-display obligations remain. Runtime conflict stays declared. |
 | Verification | Machine parity/citation/link checks plus lint, Domain, and Features in Story #19. Runtime stories require RED characterization, retained v1 fixtures, focused reducers, snapshots, real app/device proof, and exact-head gates. |
 | Compatibility | V2 presets use new IDs including `custom_v2`; all shipped raw values decode unchanged. `custom_v2` storage accepts every legal positive finite legacy payload; partial editing validates only dirty fields/atomic duration groups plus necessary ordering closure, so untouched legacy values remain exact. No historical identity is invented. Schedule clocks never wall-catch-up. Actions originated after known closure and unknown/mismatched actions fail closed; already-originated valid-late candidates reconcile only in the same live unfenced generation. Duplicate ActionID retries replay a known compact acknowledgement without effects until acknowledgement-of-ack/expiry, then use uncertainty-safe too-old-to-verify current-state copy. Old-generation actions show current state. Restart Undo preserves eligible accrual deltas and becomes stale only after a structural terminal/ritual/restart/cycle mutation. `event_schema.json` v1 remains decode-only. |
 
@@ -286,7 +286,7 @@ through the compatibility rules above.
 ## Generated and executable consistency
 
 `GeneratedProtocolProfiles.swift` is generated from the legacy-compatible `profiles` section of
-`product_protocol.yaml` by `scripts/generate-protocol-configuration.sh`. D-033 deliberately adds
+`product_protocol.yaml` by `scripts/generate-protocol-configuration.sh`. D-043 deliberately adds
 the canonical-not-runtime-activated `preset_contract_v2`; Story #19 must prove that this addition
 does **not** change generated Swift. The later runtime migration story must add v2 decoding,
 retained v1 fixtures, explicit user migration, and regenerated executable values together before

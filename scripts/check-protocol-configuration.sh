@@ -77,7 +77,7 @@ expected_v2_presets = {
 }
 
 assert(runtime.dig("meta", "version") == 2.0, "timing runtime version must be 2.0")
-assert(runtime.dig("meta", "decision") == "D-033", "timing runtime must cite D-033")
+assert(runtime.dig("meta", "decision") == "D-043", "timing runtime must cite D-043")
 runtime_health_path = Pathname.new(runtime_path).dirname.join(runtime.dig("meta", "health_values")).cleanpath
 runtime_fact_path = Pathname.new(runtime_path).dirname.join(runtime.dig("meta", "product_fact_schema")).cleanpath
 assert(runtime_health_path == Pathname.new(protocol_path).cleanpath, "runtime health-values pointer drifted")
@@ -1967,7 +1967,7 @@ assert(
 assert(
   interaction.include?("operational-only `timerRecoveryUnavailable`") &&
     health.include?("operational-only") && health.include?("`timerRecoveryUnavailable`") &&
-    decisions.include?("D-033 contract-repair addendum") &&
+    decisions.include?("D-043 contract-repair addendum") &&
     conformance.include?("conditional unknown-timer projection"),
   "unknown timer recovery is not reconciled across governing prose",
 )

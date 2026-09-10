@@ -10,7 +10,7 @@ exists) · `reviewed` (passed all three review skills) · `canonical` (in `rende
 Every entry marked `designed` or beyond must have: light + dark renders, an accessibility
 annotation block (`ACCESSIBILITY.md` §2), and its copy registered in `COPY_INVENTORY.md`.
 
-Phase: **2 → 3 — direction chosen (Horizon, D-016), refined by D-017–D-029 and D-032–D-033; consolidation done, canonical renders next.**
+Phase: **2 → 3 — direction chosen (Horizon, D-016), refined by D-017–D-029 and D-032–D-043; consolidation done, canonical renders next.**
 Round-2 artboards live in `explorations/round-2/`; annotation blocks for the four core
 surfaces are in §K below.
 
@@ -64,9 +64,9 @@ the invoking `/usr/bin/swift` process has not been granted Accessibility permiss
 | BR-02 | Visual reset — running | Self-running (D-021); round-2 `Visual.dc.html` + `VisualLight.dc.html` | explored |
 | BR-03 | Visual reset — final seconds | Blink prompt state | todo |
 | BR-04 | Visual reset — text-only / static mode | Reduced-motion + migraine presentation | todo |
-| BR-05 | Movement — offered | Distinct final-field state: choose 5 or 2 minutes; no countdown, `breakStarted`, or Done early before acceptance (D-033) | explored |
+| BR-05 | Movement — offered | Distinct final-field state: choose 5 or 2 minutes; no countdown, `breakStarted`, or Done early before acceptance (D-043) | explored |
 | BR-06 | Movement — activity choice | Three equal chips + position-change tertiary (D-024); round-2 `Movement.dc.html` | explored |
-| BR-07 | Movement — running | Begins only after explicit 5/2-minute acceptance; selected duration, countdown, Done early, and one guidance sentence (D-024/D-033); round-2 `Movement.dc.html` | explored |
+| BR-07 | Movement — running | Begins only after explicit 5/2-minute acceptance; selected duration, countdown, Done early, and one guidance sentence (D-024/D-043); round-2 `Movement.dc.html` | explored |
 | BR-08 | Movement — user-declared completion | Completion is declared, never verified | todo |
 | BR-09 | Merged break | Visual segment → movement, one surface `[03 §6.3]` | explored |
 | BR-10 | Merged — "visual only" chosen | Movement stays due; must say so | explored |
@@ -190,7 +190,7 @@ additionally: **Increase Contrast** · **Reduce Transparency** · **largest text
 
 Format per `.claude/rules/accessibility.md` §1. These blocks cover the implemented and drawn
 core surfaces; every further screen gets its block before it can be marked `designed`.
-Cross-cutting rule (D-032/D-033): the final field, accepted deadline, focus, every printed
+Cross-cutting rule (D-032/D-043): the final field, accepted deadline, focus, every printed
 declaration key (↩, 1–3, Q, A, P), Esc/⌘., and every pointer control are active on the first
 frame. There is no declaration guard or entrance-settlement gate.
 

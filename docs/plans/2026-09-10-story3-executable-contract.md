@@ -1,6 +1,6 @@
 # Story 3: executable permission-free core contract — plan
 
-Status: in-progress
+Status: done (PR #29 open; merge left to root/integration)
 Intake/escalation status: clear
 
 ## Outcome

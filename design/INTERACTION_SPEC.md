@@ -207,13 +207,13 @@ photosensitivity safety, not taste (accessibility rule §3).
 | Capsule or notification shown | `promptPresented` |
 | Break surface opens (self-running) | `breakStarted` |
 | Timer runs out | `timerFinished` |
+| "Done early" | `userDeclaredCompleted` |
 | Idle ≥ `long_idle_reset_seconds` (300 s) | `likelyNaturalInterruption` — restarts visual presentation timing, preserves accumulated movement seconds (the deferral count and session suppressions rotate), and **never** records completion |
 | "I already moved" | `userDeclaredAlreadyMoved` |
 | "Change position instead" | `positionChanged` |
 | "Later" (5/10/15) | `snoozed` |
 | Esc on capsule or break | `skipped` |
 | "Not now — bad moment" patterns in Settings | `notAppropriate` |
-| Idle ≥ `long_idle_reset_seconds` (300 s) | `likelyNaturalInterruption` — restarts visual presentation timing, preserves movement debt, and **never** records completion |
 
 Never merged, never graded, never rolled into "healthy break achieved."
 

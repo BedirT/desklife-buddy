@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="ceramic" x1="164" y1="0" x2="860" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#b76804"/>
+      <stop offset="0.42" stop-color="#df9219"/>
+      <stop offset="0.7" stop-color="#df7750"/>
+      <stop offset="1" stop-color="#ae414d"/>
+    </linearGradient>
+    <linearGradient id="highlight" x1="176" y1="0" x2="846" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffe3a8"/>
+      <stop offset="0.55" stop-color="#ffe0b2"/>
+      <stop offset="1" stop-color="#ffd2bd"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#ceramic)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M164 684 H860" stroke-width="42"/>
+    <path d="M176 684 C232 530 406 518 526 684 C580 684 570 350 692 350 C814 350 798 684 846 684" stroke-width="58"/>
+  </g>
+  <g fill="none" stroke="url(#highlight)" stroke-linecap="round" stroke-linejoin="round" opacity="0.72">
+    <path d="M193 666 C252 548 398 545 502 670" stroke-width="10"/>
+    <path d="M548 667 C598 641 590 374 692 374 C793 374 779 644 824 668" stroke-width="10"/>
+  </g>
+</svg>

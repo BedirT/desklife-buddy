@@ -41,9 +41,7 @@ public struct PreferenceMovementChoiceButton: View {
 
                 Spacer(minLength: DSSpacing.xs)
 
-                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(selected ? Color.dsAccent : Color.dsTextSecondary)
-                    .accessibilityHidden(true)
+                DSSelectionIndicator(selected: selected)
             }
             .padding(DSSpacing.lg)
             .frame(maxWidth: .infinity, minHeight: textScale == .largest ? nil : 104, alignment: .topLeading)

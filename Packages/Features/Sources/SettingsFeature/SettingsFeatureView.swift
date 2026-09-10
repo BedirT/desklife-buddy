@@ -14,6 +14,7 @@ public struct SettingsFeatureView: View {
     private let loadsAutomatically: Bool
     private let increaseContrastOverride: Bool?
     private let deterministicSplitLayout: Bool
+    private let focusedSidebarSectionOverride: SettingsSection?
     private let excludedApplicationPresentations: [SettingsExcludedApplicationPresentation]
     private let excludedApplicationPicker: SettingsExcludedApplicationPicker?
     private let integrationsRuntime: SettingsIntegrationsRuntime
@@ -25,6 +26,7 @@ public struct SettingsFeatureView: View {
         loadsAutomatically: Bool = true,
         increaseContrastOverride: Bool? = nil,
         deterministicSplitLayout: Bool = false,
+        focusedSidebarSectionOverride: SettingsSection? = nil,
         excludedApplicationPresentations: [SettingsExcludedApplicationPresentation] = [],
         excludedApplicationPicker: SettingsExcludedApplicationPicker? = nil,
         integrationsRuntime: SettingsIntegrationsRuntime = .unavailable,
@@ -35,6 +37,7 @@ public struct SettingsFeatureView: View {
         self.loadsAutomatically = loadsAutomatically
         self.increaseContrastOverride = increaseContrastOverride
         self.deterministicSplitLayout = deterministicSplitLayout
+        self.focusedSidebarSectionOverride = focusedSidebarSectionOverride
         self.excludedApplicationPresentations = excludedApplicationPresentations
         self.excludedApplicationPicker = excludedApplicationPicker
         self.integrationsRuntime = integrationsRuntime
@@ -63,7 +66,10 @@ public struct SettingsFeatureView: View {
             }
         }
         .frame(minWidth: 780, minHeight: 560)
-        .background(Color.dsBackground)
+        .background {
+            SettingsCanvasBackground()
+                .ignoresSafeArea()
+        }
         .task {
             if loadsAutomatically, model.phase == .loading {
                 await model.load()
@@ -72,6 +78,7 @@ public struct SettingsFeatureView: View {
         .onExitCommand {
             handleExitCommand()
         }
+        .defaultFocus($focusedSidebarSection, model.selectedSection)
         .onChange(of: showsPrivacyModal) { _, isPresented in
             if isPresented {
                 privacyFocusRestoreTarget = privacyModalOrigin
@@ -91,51 +98,72 @@ public struct SettingsFeatureView: View {
                 }
             }
         }
-        .accessibilityIdentifier("settings.window")
     }
 
     private var sidebar: some View {
-        VStack(alignment: .leading, spacing: DSSpacing.lg) {
-            Text(SettingsFeatureL10n.navigationTitle)
-                .font(textScale == .largest ? DSTypography.largeTitle : DSTypography.title)
-                .foregroundStyle(Color.dsTextPrimary)
-                .padding(.horizontal, DSSpacing.sm)
+        sidebarContent
+            .accessibilityElement(children: .contain)
+    }
 
-            SettingsSidebarGroup(
-                title: SettingsFeatureL10n.scheduleAndBreaks,
-                sections: [.schedule, .breakContent, .contextAndExclusions],
-                model: model,
-                focusedSection: $focusedSidebarSection,
-            )
+    private var sidebarContent: some View {
+        ViewThatFits(in: .vertical) {
+            VStack(alignment: .leading, spacing: sidebarGroupSpacing) {
+                primarySidebarGroups
+                Spacer(minLength: sidebarGroupSpacing)
+                helpSidebarGroup
+            }
+            .padding(.vertical, sidebarVerticalPadding)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
-            SettingsSidebarGroup(
-                title: SettingsFeatureL10n.personalize,
-                sections: [.accessibility, .privacyAndData, .integrations],
-                model: model,
-                focusedSection: $focusedSidebarSection,
-            )
-
-            Spacer(minLength: DSSpacing.lg)
-
-            SettingsSidebarGroup(
-                title: SettingsFeatureL10n.learnAndSupport,
-                sections: [.whyTheseDefaults, .safetyAndSupport],
-                model: model,
-                focusedSection: $focusedSidebarSection,
-            )
+            ScrollView {
+                VStack(alignment: .leading, spacing: sidebarGroupSpacing) {
+                    primarySidebarGroups
+                    helpSidebarGroup
+                }
+                .padding(.vertical, sidebarVerticalPadding)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+            }
         }
-        .padding(DSSpacing.lg)
         .frame(maxHeight: .infinity, alignment: .topLeading)
-        .glassEffect()
-        .accessibilityIdentifier("settings.sidebar")
+    }
+
+    @ViewBuilder private var primarySidebarGroups: some View {
+        SettingsSidebarGroup(
+            title: SettingsFeatureL10n.breaks,
+            sections: [.schedule, .breakContent, .contextAndExclusions],
+            model: model,
+            focusedSection: $focusedSidebarSection,
+            focusedSectionOverride: focusedSidebarSectionOverride,
+        )
+        SettingsSidebarGroup(
+            title: SettingsFeatureL10n.app,
+            sections: [.accessibility, .integrations],
+            model: model,
+            focusedSection: $focusedSidebarSection,
+            focusedSectionOverride: focusedSidebarSectionOverride,
+        )
+        SettingsSidebarGroup(
+            title: SettingsFeatureL10n.dataAndPrivacy,
+            sections: [.privacyAndData],
+            model: model,
+            focusedSection: $focusedSidebarSection,
+            focusedSectionOverride: focusedSidebarSectionOverride,
+        )
+    }
+
+    private var helpSidebarGroup: some View {
+        SettingsSidebarGroup(
+            title: SettingsFeatureL10n.help,
+            sections: [.whyTheseDefaults, .safetyAndSupport],
+            model: model,
+            focusedSection: $focusedSidebarSection,
+            focusedSectionOverride: focusedSidebarSectionOverride,
+        )
     }
 
     private var detail: some View {
         VStack(alignment: .leading, spacing: DSSpacing.lg) {
-            Text(SettingsFeatureL10n.title(for: model.selectedSection))
-                .font(DSTypography.largeTitle)
-                .foregroundStyle(Color.dsTextPrimary)
-                .accessibilityIdentifier("settings.detail.title")
+            detailHeader
 
             Group {
                 switch model.phase {
@@ -218,26 +246,63 @@ public struct SettingsFeatureView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .padding(SettingsPageLayout.contentInset(for: textScale))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(Color.dsContentCanvas, in: detailShape)
+        .accessibilityElement(children: .contain)
+    }
+}
+
+private extension SettingsFeatureView {
+    @ViewBuilder
+    var detailHeader: some View {
+        if model.isContentLibraryPresented, model.selectedSection == .breakContent {
+            GeometryReader { geometry in
+                Text(detailTitle)
+                    .font(DSTypography.largeTitle)
+                    .foregroundStyle(Color.dsTextPrimary)
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: .infinity,
+                        alignment: geometry.size.width < SettingsContentLibraryLayout.wideMinimumWidth
+                            ? .center
+                            : .leading,
+                    )
+                    .accessibilityIdentifier("settings.detail.title")
+            }
+            .frame(height: 31)
+        } else {
+            Text(detailTitle)
+                .font(DSTypography.largeTitle)
+                .foregroundStyle(Color.dsTextPrimary)
+                .accessibilityIdentifier("settings.detail.title")
+        }
     }
 
-    private var increaseContrast: Bool {
+    var increaseContrast: Bool {
         increaseContrastOverride ?? (systemContrast == .increased)
     }
 
-    private var showsPrivacyModal: Bool {
+    var detailTitle: String {
+        if model.selectedSection == .breakContent, model.isContentLibraryPresented {
+            return SettingsFeatureL10n.contentLibrary
+        }
+        return SettingsFeatureL10n.title(for: model.selectedSection)
+    }
+
+    var showsPrivacyModal: Bool {
         model.selectedSection == .privacyAndData
             && (model.isExportDisclosurePresented || model.pendingDestructiveOperation != nil)
     }
 
-    private var privacyModalOrigin: SettingsPrivacyFocusTarget? {
+    var privacyModalOrigin: SettingsPrivacyFocusTarget? {
         SettingsPrivacyFocusTarget.restoreTarget(
             exportDisclosurePresented: model.isExportDisclosurePresented,
             destructiveOperation: model.pendingDestructiveOperation,
         )
     }
 
-    private func handleExitCommand() {
+    func handleExitCommand() {
         guard showsPrivacyModal else {
             dismiss()
             return
@@ -250,65 +315,78 @@ public struct SettingsFeatureView: View {
         }
     }
 
-    private var sidebarWidth: CGFloat {
+    var sidebarWidth: CGFloat {
         if textScale == .largest {
-            return 280
+            return 252
         }
-        return deterministicSplitLayout ? 236 : 240
+        return deterministicSplitLayout ? 212 : 216
+    }
+
+    var sidebarVerticalPadding: CGFloat { DSSpacing.lg }
+    var sidebarGroupSpacing: CGFloat { textScale == .largest ? DSSpacing.lg : DSSpacing.md }
+
+    var detailShape: ConcentricRectangle {
+        ConcentricRectangle(
+            corners: .concentric(minimum: .fixed(DSRadius.lg)),
+            isUniform: true,
+        )
     }
 }
 
 private struct SettingsSidebarGroup: View {
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     @Environment(\.dsTextScale) private var textScale
     let title: String
     let sections: [SettingsSection]
     @Bindable var model: SettingsFeatureModel
     let focusedSection: FocusState<SettingsSection?>.Binding
+    let focusedSectionOverride: SettingsSection?
 
     var body: some View {
         VStack(alignment: .leading, spacing: DSSpacing.xs) {
             Text(title)
                 .font(DSTypography.caption.weight(.semibold))
                 .foregroundStyle(Color.dsTextSecondary)
-                .padding(.horizontal, DSSpacing.sm)
+                .padding(.horizontal, DSSpacing.xs)
+                .padding(.bottom, DSSpacing.xs)
 
             ForEach(sections) { section in
                 Button {
                     model.selectedSection = section
                 } label: {
                     HStack(spacing: DSSpacing.sm) {
-                        RoundedRectangle(cornerRadius: DSRadius.sm, style: .continuous)
+                        sidebarTileShape
                             .fill(section.tileGradient)
-                            .frame(width: DSSpacing.xxl, height: DSSpacing.xxl)
+                            .frame(width: tileSize, height: tileSize)
                             .overlay {
                                 Image(systemName: section.systemImage)
                                     .font(DSTypography.caption.weight(.semibold))
                                     .foregroundStyle(Color.dsStaticText)
                                     .accessibilityHidden(true)
                             }
-
                         Text(SettingsFeatureL10n.title(for: section))
-                            .font(textScale == .largest ? DSTypography.headline : DSTypography.body)
+                            .font(textScale == .largest ? DSTypography.headline : DSTypography.subtext)
                             .foregroundStyle(Color.dsTextPrimary)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
                             .layoutPriority(1)
-
-                        Spacer(minLength: DSSpacing.xs)
-
-                        Image(systemName: "checkmark")
-                            .font(DSTypography.caption.weight(.bold))
-                            .foregroundStyle(Color.dsAccent)
-                            .opacity(model.selectedSection == section ? 1 : 0)
-                            .accessibilityHidden(true)
+                        Spacer(minLength: 0)
                     }
-                    .padding(.horizontal, DSSpacing.sm)
-                    .padding(.vertical, DSSpacing.xs)
+                    .padding(DSSpacing.sm)
                     .background(
-                        model.selectedSection == section ? Color.dsAccent.opacity(0.12) : Color.clear,
-                        in: RoundedRectangle(cornerRadius: DSRadius.md, style: .continuous),
+                        model.selectedSection == section ? Color.dsSurfaceSecondary.opacity(0.78) : Color.clear,
+                        in: sidebarControlShape,
                     )
-                    .contentShape(RoundedRectangle(cornerRadius: DSRadius.md, style: .continuous))
+                    .overlay {
+                        if focusedSection.wrappedValue == section || focusedSectionOverride == section {
+                            sidebarControlShape.stroke(
+                                Color.dsAccent,
+                                lineWidth: colorSchemeContrast == .increased ? 2 : 1,
+                            )
+                        }
+                    }
+                    .contentShape(sidebarControlShape)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .buttonStyle(.plain)
                 .focused(focusedSection, equals: section)
@@ -327,35 +405,25 @@ private struct SettingsSidebarGroup: View {
                 .accessibilityIdentifier("settings.sidebar.\(section.rawValue)")
             }
         }
-    }
-}
-
-private extension SettingsSection {
-    var systemImage: String {
-        switch self {
-        case .schedule: "clock"
-        case .breakContent: "figure.walk"
-        case .contextAndExclusions: "moon"
-        case .accessibility: "accessibility"
-        case .privacyAndData: "hand.raised"
-        case .integrations: "puzzlepiece.extension"
-        case .whyTheseDefaults: "info.circle"
-        case .safetyAndSupport: "cross.case"
-        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    var tileGradient: LinearGradient {
-        let colors: [Color] = switch self {
-        case .schedule: [.dsMovementSeatedTileTop, .dsMovementSeatedTileBottom]
-        case .breakContent: [.dsMovementWalkTileTop, .dsMovementWalkTileBottom]
-        case .contextAndExclusions: [.dsMovementSmallSpaceTileTop, .dsMovementSmallSpaceTileBottom]
-        case .accessibility: [.dsMovementSeatedTileTop, .dsMovementSmallSpaceTileBottom]
-        case .privacyAndData: [.dsPositive, .dsAccent]
-        case .integrations: [.dsMovementWalkTileTop, .dsMovementSmallSpaceTileBottom]
-        case .whyTheseDefaults: [.dsWarning, .dsMovementWalkTileBottom]
-        case .safetyAndSupport: [.dsDanger, .dsMovementSmallSpaceTileBottom]
-        }
-        return LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
+    private var sidebarControlShape: ConcentricRectangle {
+        ConcentricRectangle(
+            corners: .concentric(minimum: .fixed(DSRadius.lg)),
+            isUniform: true,
+        )
+    }
+
+    private var sidebarTileShape: ConcentricRectangle {
+        ConcentricRectangle(
+            corners: .concentric(minimum: .fixed(DSSpacing.sm)),
+            isUniform: true,
+        )
+    }
+
+    private var tileSize: CGFloat {
+        textScale == .largest ? DSSpacing.xxl : DSSpacing.xl
     }
 }
 

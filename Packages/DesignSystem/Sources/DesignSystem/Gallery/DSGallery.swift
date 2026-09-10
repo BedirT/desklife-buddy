@@ -30,6 +30,8 @@ public struct DSGallery: View {
 
         private let colors: [(String, Color)] = [
             ("background", .dsBackground),
+            ("windowChrome", .dsWindowChrome),
+            ("contentCanvas", .dsContentCanvas),
             ("surface", .dsSurface),
             ("surfaceSecondary", .dsSurfaceSecondary),
             ("textPrimary", .dsTextPrimary),

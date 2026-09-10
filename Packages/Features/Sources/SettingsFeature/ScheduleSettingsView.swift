@@ -5,6 +5,7 @@ import SwiftUI
 
 struct ScheduleSettingsView: View {
     @Environment(\.dsTextScale) private var textScale
+    @AccessibilityFocusState private var operationFeedbackFocused: Bool
     @Bindable var model: SettingsFeatureModel
     let increaseContrast: Bool
 
@@ -13,28 +14,34 @@ struct ScheduleSettingsView: View {
             if model.operationState != .idle {
                 SettingsOperationFeedback(model: model)
                     .padding(DSSpacing.md)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         Color.dsSurface,
                         in: RoundedRectangle(cornerRadius: DSRadius.md, style: .continuous),
                     )
                     .padding(.bottom, DSSpacing.md)
-                    .accessibilityIdentifier("settings.schedule.applyState")
+                    .accessibilityElement(children: .contain)
+                    .accessibilityFocused($operationFeedbackFocused)
             }
 
             ScrollView {
                 VStack(alignment: .leading, spacing: sectionSpacing) {
                     rhythmSection
-                    timingAndDeliverySection
-                    whyTheseNumbersButton
+                    scheduleForm
+                    advancedScheduleSection
                 }
-                .padding(contentPadding)
+                .padding(.bottom, contentPadding)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .allowsHitTesting(model.controlsEnabled)
         }
         .font(textScale == .largest ? DSTypography.title : DSTypography.body)
-        .background(Color.dsBackground)
-        .accessibilityIdentifier("settings.schedule")
+        .onChange(of: model.operationState) { _, operationState in
+            operationFeedbackFocused = switch operationState {
+            case .temporarilyBusy, .failed: true
+            case .idle, .applying: false
+            }
+        }
     }
 
     private var rhythmSection: some View {
@@ -50,79 +57,62 @@ struct ScheduleSettingsView: View {
                 .font(secondaryFont)
                 .foregroundStyle(Color.dsTextSecondary)
                 .fixedSize(horizontal: false, vertical: true)
-
-            DisclosureGroup(
-                SettingsFeatureL10n.advanced,
-                isExpanded: Binding(
-                    get: { model.isAdvancedScheduleExpanded },
-                    set: { expanded in
-                        if model.controlsEnabled {
-                            model.isAdvancedScheduleExpanded = expanded
-                        }
-                    },
-                ),
-            ) {
-                VStack(alignment: .leading, spacing: DSSpacing.md) {
-                    AdvancedProfileChoiceButton(
-                        profile: .researchInformedHighFrequency,
-                        title: SettingsFeatureL10n.highFrequency,
-                        model: model,
-                    )
-
-                    Button {
-                        model.beginCustomEditing()
-                    } label: {
-                        HStack(spacing: DSSpacing.sm) {
-                            Image(systemName: "slider.horizontal.3")
-                                .foregroundStyle(Color.dsTextSecondary)
-                                .accessibilityHidden(true)
-                            Text(SettingsFeatureL10n.custom)
-                            Spacer(minLength: DSSpacing.md)
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(Color.dsAccent)
-                                .opacity(model.selectedProfileID == .custom ? 1 : 0)
-                                .accessibilityHidden(true)
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("settings.schedule.profile.custom")
-                    .accessibilityAddTraits(model.selectedProfileID == .custom ? .isSelected : [])
-
-                    if model.isCustomEditing {
-                        customEditor
-                    }
-                }
-                .padding(.top, DSSpacing.md)
-            }
-            .padding(DSSpacing.lg)
-            .background(
-                Color.dsSurface,
-                in: RoundedRectangle(cornerRadius: DSRadius.md, style: .continuous),
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: DSRadius.md, style: .continuous)
-                    .stroke(Color.dsSeparator, lineWidth: increaseContrast ? 2 : 1)
-            }
-            .accessibilityIdentifier("settings.schedule.moreOptions")
         }
     }
 
-    private var timingAndDeliverySection: some View {
-        Group {
-            if textScale == .largest {
-                VStack(alignment: .leading, spacing: DSSpacing.xl) {
-                    timingColumn
-                    deliveryColumn
-                }
-            } else {
-                HStack(alignment: .top, spacing: DSSpacing.xxl) {
-                    timingColumn
-                    deliveryColumn
-                }
-            }
+    private var scheduleForm: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            formSectionTitle(SettingsFeatureL10n.timing)
+
+            formValueRow(
+                SettingsFeatureL10n.visualReset,
+                summary: model.visualTimingSummary,
+                identifier: "settings.schedule.visualTiming",
+            )
+
+            Divider()
+
+            formValueRow(
+                SettingsFeatureL10n.movement,
+                summary: model.movementTimingSummary,
+                identifier: "settings.schedule.movementTiming",
+            )
+
+            Divider()
+                .padding(.vertical, DSSpacing.sm)
+
+            formSectionTitle(SettingsFeatureL10n.delivery)
+
+            formToggleRow(
+                SettingsFeatureL10n.headsUp,
+                summary: model.headsUpSummary,
+                isOn: Binding(
+                    get: { model.preferences?.schedule.headsUpEnabled ?? false },
+                    set: { enabled in Task { await model.setHeadsUpEnabled(enabled) } },
+                ),
+                identifier: "settings.schedule.headsUpEnabled",
+            )
+
+            Divider()
+
+            formToggleRow(
+                SettingsFeatureL10n.waitForLowFriction,
+                summary: nil,
+                isOn: Binding(
+                    get: { model.preferences?.context.waitsForLowFrictionMoment ?? false },
+                    set: { enabled in Task { await model.setWaitsForLowFrictionMoment(enabled) } },
+                ),
+                identifier: "settings.schedule.waitsForLowFrictionMoment",
+            )
+
+            Text(SettingsFeatureL10n.estimatorExplanation)
+                .font(secondaryFont)
+                .foregroundStyle(Color.dsTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, DSSpacing.sm)
+                .accessibilityIdentifier("settings.schedule.activityEstimatorExplanation")
         }
-        .padding(textScale == .largest ? DSSpacing.xl : DSSpacing.lg)
+        .padding(formPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             Color.dsSurface,
@@ -132,90 +122,61 @@ struct ScheduleSettingsView: View {
             RoundedRectangle(cornerRadius: DSRadius.lg, style: .continuous)
                 .stroke(Color.dsSeparator, lineWidth: increaseContrast ? 2 : 1)
         }
-        .accessibilityIdentifier("settings.schedule.preferences")
     }
 
-    private var timingColumn: some View {
-        VStack(alignment: .leading, spacing: DSSpacing.md) {
-            Text(SettingsFeatureL10n.timing)
-                .font(textScale == .largest ? DSTypography.title : DSTypography.headline)
-                .foregroundStyle(Color.dsTextPrimary)
-
-            timingRow(
-                SettingsFeatureL10n.visualReset,
-                summary: model.visualTimingSummary,
-                identifier: "settings.schedule.visualTiming",
-            )
-
-            timingRow(
-                SettingsFeatureL10n.movement,
-                summary: model.movementTimingSummary,
-                identifier: "settings.schedule.movementTiming",
-            )
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var deliveryColumn: some View {
-        VStack(alignment: .leading, spacing: DSSpacing.md) {
-            Text(SettingsFeatureL10n.delivery)
-                .font(textScale == .largest ? DSTypography.title : DSTypography.headline)
-                .foregroundStyle(Color.dsTextPrimary)
-
-            Toggle(
-                isOn: Binding(
-                    get: { model.preferences?.schedule.headsUpEnabled ?? false },
-                    set: { enabled in Task { await model.setHeadsUpEnabled(enabled) } },
-                ),
-            ) {
-                VStack(alignment: .leading, spacing: DSSpacing.xs) {
-                    Text(SettingsFeatureL10n.headsUp)
-                    if let headsUpSummary = model.headsUpSummary {
-                        Text(headsUpSummary)
-                            .font(secondaryFont)
-                            .foregroundStyle(Color.dsTextSecondary)
+    private var advancedScheduleSection: some View {
+        DisclosureGroup(
+            isExpanded: Binding(
+                get: { model.isAdvancedScheduleExpanded },
+                set: { expanded in
+                    if model.controlsEnabled {
+                        model.isAdvancedScheduleExpanded = expanded
                     }
+                },
+            ),
+        ) {
+            VStack(alignment: .leading, spacing: DSSpacing.md) {
+                AdvancedProfileChoiceButton(
+                    profile: .researchInformedHighFrequency,
+                    title: SettingsFeatureL10n.highFrequency,
+                    model: model,
+                )
+
+                Button {
+                    model.beginCustomEditing()
+                } label: {
+                    HStack(spacing: DSSpacing.sm) {
+                        Image(systemName: "slider.horizontal.3")
+                            .foregroundStyle(Color.dsTextSecondary)
+                            .accessibilityHidden(true)
+                        Text(SettingsFeatureL10n.custom)
+                        Spacer(minLength: DSSpacing.md)
+                        DSSelectionIndicator(selected: model.selectedProfileID == .custom)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("settings.schedule.profile.custom")
+                .accessibilityAddTraits(model.selectedProfileID == .custom ? .isSelected : [])
+
+                if model.isCustomEditing {
+                    customEditor
                 }
             }
-            .accessibilityIdentifier("settings.schedule.headsUpEnabled")
-
-            Toggle(
-                SettingsFeatureL10n.waitForLowFriction,
-                isOn: Binding(
-                    get: { model.preferences?.context.waitsForLowFrictionMoment ?? false },
-                    set: { enabled in Task { await model.setWaitsForLowFrictionMoment(enabled) } },
-                ),
-            )
-            .accessibilityIdentifier("settings.schedule.waitsForLowFrictionMoment")
-
-            Toggle(
-                SettingsFeatureL10n.workingHoursOnly,
-                isOn: Binding(
-                    get: { model.preferences?.schedule.workingHoursOnly ?? false },
-                    set: { enabled in Task { await model.setWorkingHoursOnly(enabled) } },
-                ),
-            )
-            .accessibilityIdentifier("settings.schedule.workingHoursOnly")
-
-            Text(SettingsFeatureL10n.estimatorExplanation)
-                .font(secondaryFont)
-                .foregroundStyle(Color.dsTextSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityIdentifier("settings.schedule.activityEstimatorExplanation")
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var whyTheseNumbersButton: some View {
-        Button {
-            if model.controlsEnabled {
-                model.selectedSection = .whyTheseDefaults
-            }
+            .padding(.top, DSSpacing.md)
         } label: {
-            Label(SettingsFeatureL10n.whyTheseNumbers, systemImage: "info.circle")
+            Text(SettingsFeatureL10n.advanced)
+                .accessibilityIdentifier("settings.schedule.moreOptions")
         }
-        .buttonStyle(.link)
-        .accessibilityIdentifier("settings.schedule.whyTheseNumbers")
+        .padding(DSSpacing.lg)
+        .background(
+            Color.dsSurface,
+            in: RoundedRectangle(cornerRadius: DSRadius.md, style: .continuous),
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: DSRadius.md, style: .continuous)
+                .stroke(Color.dsSeparator, lineWidth: increaseContrast ? 2 : 1)
+        }
     }
 
     private func sectionTitle(_ title: String) -> some View {
@@ -224,17 +185,71 @@ struct ScheduleSettingsView: View {
             .foregroundStyle(Color.dsTextSecondary)
     }
 
-    private func timingRow(_ title: String, summary: String?, identifier: String) -> some View {
-        LabeledContent(title) {
+    private func formSectionTitle(_ title: String) -> some View {
+        Text(title)
+            .font(textScale == .largest ? DSTypography.title : DSTypography.headline)
+            .foregroundStyle(Color.dsTextPrimary)
+            .padding(.bottom, DSSpacing.sm)
+    }
+
+    private func formValueRow(_ title: String, summary: String?, identifier: String) -> some View {
+        formRowLabel(title, summary: summary)
+            .padding(.vertical, formRowVerticalPadding)
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier(identifier)
+    }
+
+    private func formToggleRow(
+        _ title: String,
+        summary: String?,
+        isOn: Binding<Bool>,
+        identifier: String,
+    ) -> some View {
+        Toggle(isOn: isOn) {
+            formRowLabel(title, summary: summary)
+        }
+        .toggleStyle(.switch)
+        .tint(Color.dsAccent)
+        .padding(.vertical, formRowVerticalPadding)
+        .accessibilityIdentifier(identifier)
+    }
+
+    @ViewBuilder
+    private func formRowLabel(_ title: String, summary: String?) -> some View {
+        if textScale == .largest {
+            formRowStack(title, summary: summary)
+        } else {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .firstTextBaseline, spacing: DSSpacing.lg) {
+                    Text(title)
+                        .foregroundStyle(Color.dsTextPrimary)
+                        .layoutPriority(1)
+                    Spacer(minLength: DSSpacing.md)
+                    if let summary {
+                        Text(summary)
+                            .font(secondaryFont)
+                            .foregroundStyle(Color.dsTextSecondary)
+                            .multilineTextAlignment(.trailing)
+                            .fixedSize(horizontal: true, vertical: false)
+                    }
+                }
+
+                formRowStack(title, summary: summary)
+            }
+        }
+    }
+
+    private func formRowStack(_ title: String, summary: String?) -> some View {
+        VStack(alignment: .leading, spacing: DSSpacing.xs) {
+            Text(title)
+                .foregroundStyle(Color.dsTextPrimary)
             if let summary {
                 Text(summary)
+                    .font(secondaryFont)
                     .foregroundStyle(Color.dsTextSecondary)
-                    .multilineTextAlignment(.trailing)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier(identifier)
     }
 
     var secondaryFont: Font {
@@ -242,11 +257,19 @@ struct ScheduleSettingsView: View {
     }
 
     private var contentPadding: CGFloat {
-        textScale == .largest ? DSSpacing.xl : DSSpacing.lg
+        SettingsPageLayout.contentInset(for: textScale)
     }
 
     private var sectionSpacing: CGFloat {
-        textScale == .largest ? DSSpacing.xxl : DSSpacing.xl
+        SettingsPageLayout.sectionGap(for: textScale)
+    }
+
+    private var formPadding: CGFloat {
+        textScale == .largest ? DSSpacing.xl : DSSpacing.md
+    }
+
+    private var formRowVerticalPadding: CGFloat {
+        textScale == .largest ? DSSpacing.sm : DSSpacing.xs
     }
 }
 
@@ -259,8 +282,15 @@ private struct SettingsOperationFeedback: View {
         case .idle:
             EmptyView()
         case .applying:
-            ProgressView(SettingsFeatureL10n.applying)
-                .accessibilityIdentifier("settings.schedule.applyState.applying")
+            HStack(spacing: DSSpacing.sm) {
+                ProgressView()
+                    .controlSize(.small)
+                    .accessibilityHidden(true)
+                Text(SettingsFeatureL10n.applying)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(SettingsFeatureL10n.applying)
+            .accessibilityIdentifier("settings.schedule.applyState.applying")
         case .temporarilyBusy:
             retryRow(
                 SettingsFeatureL10n.temporarilyBusy,
@@ -279,6 +309,7 @@ private struct SettingsOperationFeedback: View {
             Text(message)
                 .foregroundStyle(Color.dsTextSecondary)
                 .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier(identifier)
             Spacer(minLength: DSSpacing.md)
             Button(SettingsFeatureL10n.retry) {
                 Task { await model.retryLastChange() }
@@ -286,7 +317,6 @@ private struct SettingsOperationFeedback: View {
             .disabled(!model.canRetryLastChange)
             .accessibilityIdentifier("settings.schedule.applyState.retry")
         }
-        .accessibilityIdentifier(identifier)
     }
 }
 
@@ -296,4 +326,13 @@ private struct SettingsOperationFeedback: View {
         increaseContrast: false,
     )
     .frame(width: 780, height: 560)
+}
+
+#Preview("Schedule compact window") {
+    SettingsFeatureView(
+        model: .preview(.balanced),
+        loadsAutomatically: false,
+        deterministicSplitLayout: true,
+    )
+    .frame(width: 780, height: 592)
 }

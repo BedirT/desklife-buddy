@@ -83,8 +83,8 @@ public enum SettingsSection: String, CaseIterable, Identifiable, Sendable {
     case breakContent
     case contextAndExclusions
     case accessibility
-    case privacyAndData
     case integrations
+    case privacyAndData
     case whyTheseDefaults
     case safetyAndSupport
     public var id: Self { self }

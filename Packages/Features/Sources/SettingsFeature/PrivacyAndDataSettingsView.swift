@@ -3,10 +3,26 @@ import Domain
 import SwiftUI
 
 struct PrivacyAndDataSettingsView: View {
-    @Environment(\.dsTextScale) private var textScale
+    @Environment(\.dsTextScale) var textScale
     @Bindable var model: SettingsFeatureModel
     let increaseContrast: Bool
     let focusedControl: FocusState<SettingsPrivacyFocusTarget?>.Binding
+    @State var showsStoredDetails: Bool
+    @State var showsDataControls: Bool
+
+    init(
+        model: SettingsFeatureModel,
+        increaseContrast: Bool,
+        focusedControl: FocusState<SettingsPrivacyFocusTarget?>.Binding,
+        initiallyShowsStoredDetails: Bool = false,
+        initiallyShowsDataControls: Bool = false,
+    ) {
+        self.model = model
+        self.increaseContrast = increaseContrast
+        self.focusedControl = focusedControl
+        _showsStoredDetails = State(initialValue: initiallyShowsStoredDetails)
+        _showsDataControls = State(initialValue: initiallyShowsDataControls)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -20,96 +36,41 @@ struct PrivacyAndDataSettingsView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: sectionSpacing) {
-                    storedDataCard
+                    localStorageSummary
                     historyCard
-                    dataControlsCard
+                    storedDetailsDisclosure
+                    dataControlsDisclosure
                 }
-                .padding(contentPadding)
+                .padding(.vertical, contentPadding)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .font(textScale == .largest ? DSTypography.title : DSTypography.body)
-        .background(Color.dsBackground)
         .accessibilityIdentifier("settings.privacy")
     }
 
-    private var storedDataCard: some View {
-        outlinedCard {
-            VStack(alignment: .leading, spacing: DSSpacing.md) {
-                sectionHeader(
-                    title: SettingsPrivacyL10n.storedOnThisMac,
-                    detail: SettingsPrivacyL10n.storedDetail,
-                    systemImage: "internaldrive",
-                )
+    private var localStorageSummary: some View {
+        DSCard {
+            HStack(alignment: .top, spacing: SettingsPageLayout.rowGap) {
+                Image(systemName: "lock.shield")
+                    .font(DSTypography.title)
+                    .foregroundStyle(Color.dsAccent)
+                    .frame(width: SettingsPageLayout.rowIconWidth)
+                    .accessibilityHidden(true)
 
-                Group {
-                    if textScale == .largest {
-                        VStack(alignment: .leading, spacing: DSSpacing.lg) {
-                            storedDataRows
-                        }
-                    } else {
-                        HStack(alignment: .top, spacing: DSSpacing.md) {
-                            storedDataRows
-                        }
-                    }
+                VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                    Text(SettingsPrivacyL10n.storedOnThisMac)
+                        .font(sectionTitleFont)
+                        .foregroundStyle(Color.dsTextPrimary)
+                    Text(SettingsPrivacyL10n.localStorageSummary)
+                        .font(secondaryFont)
+                        .foregroundStyle(Color.dsTextSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-
-                Text(SettingsPrivacyL10n.storedBoundary)
-                    .font(secondaryFont)
-                    .foregroundStyle(Color.dsTextSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .accessibilityIdentifier("settings.privacy.storedData")
-    }
-
-    @ViewBuilder
-    private var storedDataRows: some View {
-        if containsAnyStoredData([
-            .settingsAndPreferences,
-            .excludedApplicationBundleIdentifiers,
-            .integrationSelections,
-            .onboardingCompletionMarker,
-            .notificationAuthorizationMetadata,
-        ]) {
-            SettingsPrivacyStoredDataRow(
-                title: SettingsPrivacyL10n.preferencesTitle,
-                detail: SettingsPrivacyL10n.preferencesDetail,
-                systemImage: "slider.horizontal.3",
-                textScale: textScale,
-            )
-            .frame(maxWidth: .infinity, alignment: .topLeading)
-        }
-
-        if containsAnyStoredData([.runtimeRecoveryState]) {
-            SettingsPrivacyStoredDataRow(
-                title: SettingsPrivacyL10n.timingTitle,
-                detail: SettingsPrivacyL10n.timingDetail,
-                systemImage: "clock",
-                textScale: textScale,
-            )
-            .frame(maxWidth: .infinity, alignment: .topLeading)
-        }
-
-        if containsAnyStoredData([.opportunityHistory]) {
-            SettingsPrivacyStoredDataRow(
-                title: SettingsPrivacyL10n.opportunityHistoryTitle,
-                detail: SettingsPrivacyL10n.opportunityHistoryDetail,
-                systemImage: "list.bullet.rectangle",
-                textScale: textScale,
-            )
-            .frame(maxWidth: .infinity, alignment: .topLeading)
-        }
-
-        if containsAnyStoredData([.estimatedActiveUseHistory]) {
-            SettingsPrivacyStoredDataRow(
-                title: SettingsPrivacyL10n.estimatedActiveUseHistoryTitle,
-                detail: SettingsPrivacyL10n.estimatedActiveUseHistoryDetail,
-                systemImage: "chart.bar.xaxis",
-                textScale: textScale,
-            )
-            .frame(maxWidth: .infinity, alignment: .topLeading)
-        }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("settings.privacy.localSummary")
     }
 
     private var historyCard: some View {
@@ -121,17 +82,7 @@ struct PrivacyAndDataSettingsView: View {
                     systemImage: "clock.arrow.circlepath",
                 )
 
-                Group {
-                    if textScale == .largest {
-                        VStack(spacing: DSSpacing.sm) { retentionChoices }
-                    } else {
-                        HStack(spacing: DSSpacing.sm) { retentionChoices }
-                    }
-                }
-                .disabled(!model.controlsEnabled)
-                .accessibilityElement(children: .contain)
-                .accessibilityLabel(SettingsPrivacyL10n.historyTitle)
-
+                retentionRow
                 Divider().overlay(Color.dsSeparator)
 
                 if model.hasRetainedHistory {
@@ -144,26 +95,54 @@ struct PrivacyAndDataSettingsView: View {
         .accessibilityIdentifier("settings.privacy.history")
     }
 
-    @ViewBuilder
-    private var retentionChoices: some View {
-        ForEach(SettingsPrivacyRetentionChoice.allCases) { choice in
-            SettingsPrivacyRetentionButton(
-                choice: choice,
-                selected: model.historyRetention == choice.policy,
-                increaseContrast: increaseContrast,
-            ) {
-                Task { await model.setHistoryRetention(choice.policy) }
+    private var retentionRow: some View {
+        HStack(alignment: .center, spacing: SettingsPageLayout.rowGap) {
+            Color.clear
+                .frame(width: SettingsPageLayout.rowIconWidth)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                Text(SettingsPrivacyL10n.keepHistoryFor)
+                    .foregroundStyle(Color.dsTextPrimary)
+                Text(retentionSelection.wrappedValue.detail)
+                    .font(secondaryFont)
+                    .foregroundStyle(Color.dsTextSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Picker(SettingsPrivacyL10n.keepHistoryFor, selection: retentionSelection) {
+                ForEach(SettingsPrivacyRetentionChoice.allCases) { choice in
+                    Text(choice.title).tag(choice)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .allowsHitTesting(model.controlsEnabled)
+            .frame(minWidth: SettingsPageLayout.trailingControlWidth)
+            .accessibilityIdentifier("settings.privacy.retention.picker")
         }
     }
 
+    private var retentionSelection: Binding<SettingsPrivacyRetentionChoice> {
+        Binding(
+            get: {
+                SettingsPrivacyRetentionChoice.allCases.first {
+                    $0.policy == model.historyRetention
+                } ?? .thirtyDays
+            },
+            set: { choice in
+                Task { await model.setHistoryRetention(choice.policy) }
+            },
+        )
+    }
+
     private var exportRow: some View {
-        HStack(alignment: .center, spacing: DSSpacing.md) {
+        HStack(alignment: .center, spacing: SettingsPageLayout.rowGap) {
             Image(systemName: "square.and.arrow.up")
                 .font(DSTypography.headline)
                 .foregroundStyle(Color.dsTextSecondary)
-                .frame(width: DSSpacing.xl)
+                .frame(width: SettingsPageLayout.rowIconWidth)
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: DSSpacing.xs) {
@@ -191,17 +170,17 @@ struct PrivacyAndDataSettingsView: View {
             }
             .buttonStyle(.plain)
             .focused(focusedControl, equals: .reviewExport)
-            .disabled(!model.controlsEnabled)
+            .allowsHitTesting(model.controlsEnabled)
             .accessibilityIdentifier("settings.privacy.export.review")
         }
     }
 
     private var noHistoryRow: some View {
-        HStack(alignment: .top, spacing: DSSpacing.md) {
+        HStack(alignment: .top, spacing: SettingsPageLayout.rowGap) {
             Image(systemName: "tray")
                 .font(DSTypography.headline)
                 .foregroundStyle(Color.dsTextSecondary)
-                .frame(width: DSSpacing.xl)
+                .frame(width: SettingsPageLayout.rowIconWidth)
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: DSSpacing.xs) {
@@ -216,80 +195,15 @@ struct PrivacyAndDataSettingsView: View {
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("settings.privacy.history.empty")
     }
-
-    private var dataControlsCard: some View {
-        DSCard {
-            VStack(alignment: .leading, spacing: DSSpacing.md) {
-                sectionHeader(
-                    title: SettingsPrivacyL10n.dataControls,
-                    detail: SettingsPrivacyL10n.dataControlsDetail,
-                    systemImage: "trash",
-                )
-
-                VStack(spacing: DSSpacing.md) {
-                    dataControlRows
-                }
-            }
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: DSRadius.lg, style: .continuous)
-                .stroke(
-                    Color.dsDanger.opacity(
-                        increaseContrast
-                            ? SettingsPrivacyLayoutMetrics.dangerOutlineContrastOpacity
-                            : SettingsPrivacyLayoutMetrics.dangerOutlineOpacity,
-                    ),
-                    lineWidth: increaseContrast
-                        ? SettingsPrivacyLayoutMetrics.contrastOutlineWidth
-                        : SettingsPrivacyLayoutMetrics.standardOutlineWidth,
-                )
-        }
-        .accessibilityIdentifier("settings.privacy.dataControls")
-    }
-
-    @ViewBuilder
-    private var dataControlRows: some View {
-        SettingsPrivacyDataControlRow(
-            title: SettingsPrivacyL10n.deleteHistory,
-            detail: SettingsPrivacyL10n.deleteHistoryDetail,
-            actionTitle: SettingsPrivacyL10n.deleteHistoryAction,
-            systemImage: "trash",
-            enabled: model.hasRetainedHistory && model.controlsEnabled,
-            textScale: textScale,
-            increaseContrast: increaseContrast,
-            identifier: "settings.privacy.delete.request",
-            focusedControl: focusedControl,
-            focusTarget: .requestDeleteHistory,
-        ) {
-            model.requestDeleteHistoryConfirmation()
-        }
-
-        Divider().overlay(Color.dsSeparator)
-
-        SettingsPrivacyDataControlRow(
-            title: SettingsPrivacyL10n.resetAll,
-            detail: SettingsPrivacyL10n.resetAllDetail,
-            actionTitle: SettingsPrivacyL10n.resetAllAction,
-            systemImage: "arrow.counterclockwise",
-            enabled: model.controlsEnabled,
-            textScale: textScale,
-            increaseContrast: increaseContrast,
-            identifier: "settings.privacy.reset.request",
-            focusedControl: focusedControl,
-            focusTarget: .requestResetAll,
-        ) {
-            model.requestResetAllConfirmation()
-        }
-    }
 }
 
-private extension PrivacyAndDataSettingsView {
+extension PrivacyAndDataSettingsView {
     private func sectionHeader(title: String, detail: String, systemImage: String) -> some View {
-        HStack(alignment: .top, spacing: DSSpacing.sm) {
+        HStack(alignment: .top, spacing: SettingsPageLayout.rowGap) {
             Image(systemName: systemImage)
                 .font(DSTypography.headline)
                 .foregroundStyle(Color.dsAccent)
-                .frame(width: DSSpacing.xl)
+                .frame(width: SettingsPageLayout.rowIconWidth)
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: DSSpacing.xs) {
@@ -317,10 +231,6 @@ private extension PrivacyAndDataSettingsView {
             }
     }
 
-    private func containsAnyStoredData(_ ids: Set<SettingsStoredDataID>) -> Bool {
-        model.storedDataSummary.contains { ids.contains($0.id) }
-    }
-
     private var noHistoryDetail: String {
         model.historyRetention == .keepNothing
             ? SettingsPrivacyL10n.noHistoryKeepNothing
@@ -337,21 +247,46 @@ private extension PrivacyAndDataSettingsView {
         }
     }
 
-    private var sectionTitleFont: Font {
+    var sectionTitleFont: Font {
         textScale == .largest ? DSTypography.title : DSTypography.headline
     }
 
-    private var secondaryFont: Font {
+    var secondaryFont: Font {
         textScale == .largest ? DSTypography.body : DSTypography.subtext
     }
 
-    private var contentPadding: CGFloat { textScale == .largest ? DSSpacing.xl : DSSpacing.lg }
-    private var sectionSpacing: CGFloat { textScale == .largest ? DSSpacing.xxl : DSSpacing.md }
+    private var contentPadding: CGFloat { SettingsPageLayout.contentInset(for: textScale) }
+    private var sectionSpacing: CGFloat { SettingsPageLayout.sectionGap(for: textScale) }
 }
 
-#Preview("Privacy & data, transparency ledger") {
+private struct SettingsPrivacyPreviewHost: View {
+    @FocusState private var focusedControl: SettingsPrivacyFocusTarget?
+    let storedDetailsExpanded: Bool
+    let dataControlsExpanded: Bool
+
+    var body: some View {
+        PrivacyAndDataSettingsView(
+            model: .preview(.privacyDefault),
+            increaseContrast: false,
+            focusedControl: $focusedControl,
+            initiallyShowsStoredDetails: storedDetailsExpanded,
+            initiallyShowsDataControls: dataControlsExpanded,
+        )
+        .frame(width: 740, height: 700)
+    }
+}
+
+#Preview("Privacy & data, calm overview") {
     SettingsFeatureView(model: .preview(.privacyDefault), loadsAutomatically: false)
         .frame(width: 1000, height: 700)
+}
+
+#Preview("Privacy & data, stored details") {
+    SettingsPrivacyPreviewHost(storedDetailsExpanded: true, dataControlsExpanded: false)
+}
+
+#Preview("Privacy & data, data controls") {
+    SettingsPrivacyPreviewHost(storedDetailsExpanded: false, dataControlsExpanded: true)
 }
 
 #Preview("Privacy & data, no retained history") {

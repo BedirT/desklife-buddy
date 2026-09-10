@@ -15,6 +15,8 @@
             colorScheme: ColorScheme = .light,
             increaseContrast: Bool = false,
             textScale: DSTextScale = .standard,
+            width: CGFloat = 1000,
+            height: CGFloat = 700,
         ) -> some View {
             SettingsFeatureView(
                 model: .preview(state),
@@ -24,7 +26,7 @@
                 integrationsRuntime: runtime,
                 evidenceTopic: evidenceTopic,
             )
-            .frame(width: 1000, height: 700)
+            .frame(width: width, height: height)
             .environment(\._colorSchemeContrast, increaseContrast ? .increased : .standard)
             .environment(\.colorScheme, colorScheme)
             .environment(\.dsTextScale, textScale)
@@ -92,6 +94,14 @@
 
         @Test func evidenceVisualResetsLight() {
             assertScreenSnapshot(of: screen(.evidenceVisualResets))
+        }
+
+        @Test func evidenceCompactWindow() {
+            assertScreenSnapshot(of: screen(
+                .evidenceVisualResets,
+                width: 780,
+                height: 592,
+            ))
         }
 
         @Test func evidenceStandingAndMovingDark() {

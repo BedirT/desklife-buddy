@@ -23,13 +23,12 @@ struct ContextAndExclusionsSettingsView: View {
                     excludedApplicationsSection
                     returnBehaviorFooter
                 }
-                .padding(contentPadding)
+                .padding(.vertical, contentPadding)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .allowsHitTesting(model.controlsEnabled)
         }
         .font(textScale == .largest ? DSTypography.title : DSTypography.body)
-        .background(Color.dsBackground)
         .accessibilityIdentifier("settings.context")
     }
 
@@ -48,11 +47,14 @@ struct ContextAndExclusionsSettingsView: View {
                             detail: SettingsContextL10n.presentationModeDetail,
                             systemImage: "rectangle.inset.filled.and.person.filled",
                         ),
-                        isOn: model.preferences?.context.presentationModeSuppressionEnabled ?? false,
+                        isOn: Binding(
+                            get: { model.preferences?.context.presentationModeSuppressionEnabled ?? false },
+                            set: { enabled in
+                                Task { await model.setPresentationModeSuppressionEnabled(enabled) }
+                            },
+                        ),
                         identifier: "settings.context.presentationMode",
-                    ) { enabled in
-                        await model.setPresentationModeSuppressionEnabled(enabled)
-                    }
+                    )
 
                     Divider().overlay(Color.dsSeparator)
 
@@ -62,11 +64,12 @@ struct ContextAndExclusionsSettingsView: View {
                             detail: SettingsContextL10n.lowFrictionDetail,
                             systemImage: "timer",
                         ),
-                        isOn: model.preferences?.context.waitsForLowFrictionMoment ?? false,
+                        isOn: Binding(
+                            get: { model.preferences?.context.waitsForLowFrictionMoment ?? false },
+                            set: { enabled in Task { await model.setWaitsForLowFrictionMoment(enabled) } },
+                        ),
                         identifier: "settings.context.lowFriction",
-                    ) { enabled in
-                        await model.setWaitsForLowFrictionMoment(enabled)
-                    }
+                    )
 
                     Divider().overlay(Color.dsSeparator)
 
@@ -120,6 +123,7 @@ struct ContextAndExclusionsSettingsView: View {
                         Button(SettingsContextL10n.chooseApp) {
                             chooseApplication(using: applicationPicker)
                         }
+                        .padding(.leading, DSSpacing.xxl + SettingsPageLayout.rowGap)
                         .disabled(isChoosingApplication)
                         .accessibilityIdentifier("settings.context.excludedApps.choose")
                     }
@@ -130,10 +134,11 @@ struct ContextAndExclusionsSettingsView: View {
     }
 
     private var emptyApplications: some View {
-        HStack(alignment: .top, spacing: DSSpacing.md) {
+        HStack(alignment: .top, spacing: SettingsPageLayout.rowGap) {
             Image(systemName: "app.dashed")
                 .font(textScale == .largest ? DSTypography.title : DSTypography.headline)
                 .foregroundStyle(Color.dsTextSecondary)
+                .frame(width: SettingsPageLayout.rowIconWidth)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: DSSpacing.xs) {
                 Text(SettingsContextL10n.noExcludedApps)
@@ -186,16 +191,16 @@ struct ContextAndExclusionsSettingsView: View {
     }
 
     private var returnBehaviorFooter: some View {
-        HStack(alignment: .top, spacing: DSSpacing.sm) {
+        HStack(alignment: .top, spacing: SettingsPageLayout.rowGap) {
             Image(systemName: "arrow.forward.circle")
                 .foregroundStyle(Color.dsTextSecondary)
+                .frame(width: SettingsPageLayout.rowIconWidth)
                 .accessibilityHidden(true)
             Text(SettingsContextL10n.returnBehavior)
                 .font(secondaryFont)
                 .foregroundStyle(Color.dsTextSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, DSSpacing.sm)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("settings.context.returnBehavior")
     }
@@ -222,17 +227,18 @@ struct ContextAndExclusionsSettingsView: View {
 
     private func contextToggle(
         _ copy: ContextRowCopy,
-        isOn: Bool,
+        isOn: Binding<Bool>,
         identifier: String,
-        action: @escaping (Bool) async -> Void,
     ) -> some View {
-        Toggle(
-            isOn: Binding(
-                get: { isOn },
-                set: { enabled in Task { await action(enabled) } },
-            ),
-        ) {
+        HStack(alignment: .center, spacing: SettingsPageLayout.rowGap) {
             contextLabel(title: copy.title, detail: copy.detail, systemImage: copy.systemImage)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Toggle(
+                copy.title,
+                isOn: isOn,
+            )
+            .labelsHidden()
         }
         .accessibilityIdentifier(identifier)
     }
@@ -249,9 +255,9 @@ struct ContextAndExclusionsSettingsView: View {
     }
 
     private func contextLabel(title: String, detail: String, systemImage: String) -> some View {
-        HStack(alignment: .top, spacing: DSSpacing.md) {
+        HStack(alignment: .top, spacing: SettingsPageLayout.rowGap) {
             Image(systemName: systemImage)
-                .frame(width: DSSpacing.xl)
+                .frame(width: SettingsPageLayout.rowIconWidth)
                 .foregroundStyle(Color.dsTextSecondary)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: DSSpacing.xs) {
@@ -264,12 +270,14 @@ struct ContextAndExclusionsSettingsView: View {
             }
         }
     }
+}
 
-    private func presentation(for bundleID: String) -> SettingsExcludedApplicationPresentation? {
+private extension ContextAndExclusionsSettingsView {
+    func presentation(for bundleID: String) -> SettingsExcludedApplicationPresentation? {
         (pickedApplications + applicationPresentations).first { $0.bundleID == bundleID }
     }
 
-    private func chooseApplication(using picker: @escaping SettingsExcludedApplicationPicker) {
+    func chooseApplication(using picker: @escaping SettingsExcludedApplicationPicker) {
         guard !isChoosingApplication else { return }
         isChoosingApplication = true
         Task {
@@ -281,15 +289,13 @@ struct ContextAndExclusionsSettingsView: View {
             await model.addExcludedApplicationBundleID(application.bundleID)
         }
     }
-}
 
-private extension ContextAndExclusionsSettingsView {
     var secondaryFont: Font {
         textScale == .largest ? DSTypography.body : DSTypography.subtext
     }
 
-    var contentPadding: CGFloat { textScale == .largest ? DSSpacing.xl : DSSpacing.lg }
-    var sectionSpacing: CGFloat { textScale == .largest ? DSSpacing.xxl : DSSpacing.xl }
+    var contentPadding: CGFloat { SettingsPageLayout.contentInset(for: textScale) }
+    var sectionSpacing: CGFloat { SettingsPageLayout.sectionGap(for: textScale) }
 }
 
 private struct ContextRowCopy {

@@ -7,10 +7,31 @@
 
     @Suite("Settings privacy and data screens", .serialized)
     struct SettingsPrivacySnapshotTests {
+        private struct PrivacyDetailScreen: View {
+            @FocusState private var focusedControl: SettingsPrivacyFocusTarget?
+            let storedDetailsExpanded: Bool
+            let dataControlsExpanded: Bool
+            let textScale: DSTextScale
+
+            var body: some View {
+                PrivacyAndDataSettingsView(
+                    model: .preview(.privacyDefault),
+                    increaseContrast: false,
+                    focusedControl: $focusedControl,
+                    initiallyShowsStoredDetails: storedDetailsExpanded,
+                    initiallyShowsDataControls: dataControlsExpanded,
+                )
+                .frame(width: 740, height: 700)
+                .environment(\.dsTextScale, textScale)
+            }
+        }
+
         private func screen(
             _ state: SettingsFeatureModel.PreviewState,
             increaseContrast: Bool = false,
             textScale: DSTextScale = .standard,
+            width: CGFloat = 1000,
+            height: CGFloat = 700,
         ) -> some View {
             SettingsFeatureView(
                 model: .preview(state),
@@ -18,7 +39,7 @@
                 increaseContrastOverride: increaseContrast,
                 deterministicSplitLayout: true,
             )
-            .frame(width: 1000, height: 700)
+            .frame(width: width, height: height)
             .environment(\._colorSchemeContrast, increaseContrast ? .increased : .standard)
             .environment(\.dsTextScale, textScale)
         }
@@ -33,6 +54,14 @@
 
         @Test func noRetainedHistory() {
             assertScreenSnapshot(of: screen(.privacyNoHistory))
+        }
+
+        @Test func noRetainedHistoryCompactWindow() {
+            assertScreenSnapshot(of: screen(
+                .privacyNoHistory,
+                width: 780,
+                height: 592,
+            ))
         }
 
         @Test func applyingRetention() {
@@ -112,6 +141,34 @@
 
         @Test func increaseContrast() {
             assertScreenSnapshot(of: screen(.privacyDefault, increaseContrast: true))
+        }
+
+        @Test func storedDetailsExpanded() {
+            assertScreenSnapshot(of: PrivacyDetailScreen(
+                storedDetailsExpanded: true,
+                dataControlsExpanded: false,
+                textScale: .standard,
+            ))
+        }
+
+        @Test func storedDetailsExpandedLargestText() {
+            assertScreenSnapshot(of: PrivacyDetailScreen(
+                storedDetailsExpanded: true,
+                dataControlsExpanded: false,
+                textScale: .largest,
+            ))
+        }
+
+        @Test func dataControlsExpanded() {
+            assertScreenSnapshot(of: PrivacyDetailScreen(
+                storedDetailsExpanded: false,
+                dataControlsExpanded: true,
+                textScale: .standard,
+            ))
+        }
+
+        @Test func reduceTransparency() {
+            assertScreenSnapshot(of: screen(.privacyDefault))
         }
     }
 #endif

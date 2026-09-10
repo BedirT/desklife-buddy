@@ -40,10 +40,7 @@ public struct PreferencePresentationChoiceButton: View {
 
                     Spacer(minLength: DSSpacing.sm)
 
-                    Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                        .font(DSTypography.headline)
-                        .foregroundStyle(selected ? Color.dsAccent : Color.dsTextSecondary)
-                        .accessibilityHidden(true)
+                    DSSelectionIndicator(selected: selected)
                 }
 
                 Text(title)

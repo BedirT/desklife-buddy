@@ -232,9 +232,6 @@ private extension StatusItemCoordinator {
         addPauseOrResume(to: rebuilt)
         rebuilt.addItem(.separator())
 
-        let workingHours = actionItem(StatusMenuCopy.workingHoursOnly, action: .toggleWorkingHours)
-        workingHours.state = model.snapshot.workingHoursOnly ? .on : .off
-        rebuilt.addItem(workingHours)
         rebuilt.addItem(actionItem(StatusMenuCopy.weeklyRhythm, action: .openWeeklyRhythm))
         rebuilt.addItem(.separator())
 

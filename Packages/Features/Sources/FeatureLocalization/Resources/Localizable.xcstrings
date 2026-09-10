@@ -4646,7 +4646,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Review exactly what each action removes before continuing."
+            "value": "Reset local data and restore the default schedule."
           }
         }
       }
@@ -4886,7 +4886,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Exports retained opportunity history only. Weekly active-use runs, preferences, and current timing state are not included."
+            "value": "Review the included fields before choosing a destination."
           }
         }
       }
@@ -5206,7 +5206,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose how long Weekly active-use runs and opportunity history stay on this Mac."
+            "value": "Choose what stays on this Mac and manage it here."
           }
         }
       }
@@ -5246,7 +5246,17 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "History retention & export"
+            "value": "History"
+          }
+        }
+      }
+    },
+    "settings.privacy.local_summary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No account or cloud sync. You choose how long history stays here."
           }
         }
       }
@@ -5351,6 +5361,16 @@
         }
       }
     },
+    "settings.privacy.retention.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep history for"
+          }
+        }
+      }
+    },
     "settings.privacy.retention.ninety.detail": {
       "localizations": {
         "en": {
@@ -5447,6 +5467,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "A complete view of the local records this build keeps."
+          }
+        }
+      }
+    },
+    "settings.privacy.stored.disclosure_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See the local records this app keeps."
+          }
+        }
+      }
+    },
+    "settings.privacy.stored.disclosure_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What is stored"
           }
         }
       }
@@ -5696,7 +5736,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Timing is based on estimated active computer use: key and pointer input only. It can't tell whether you are sitting, standing, or looking at the screen."
+            "value": "Visual timing follows an available Mac session. Movement timing estimates active computer use from key and pointer input. Neither can tell whether you are present, sitting, moving, or looking at the screen."
           }
         }
       }
@@ -5867,6 +5907,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Why these defaults?"
+          }
+        }
+      }
+    },
+    "settings.sidebar.app": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App"
+          }
+        }
+      }
+    },
+    "settings.sidebar.breaks": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Breaks"
+          }
+        }
+      }
+    },
+    "settings.sidebar.data_privacy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data & privacy"
+          }
+        }
+      }
+    },
+    "settings.sidebar.help": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Help"
           }
         }
       }

@@ -12,6 +12,7 @@
             colorScheme: ColorScheme = .light,
             increaseContrast: Bool = false,
             textScale: DSTextScale = .standard,
+            size: CGSize = CGSize(width: 1000, height: 700),
         ) -> some View {
             SettingsFeatureView(
                 model: .preview(state),
@@ -19,7 +20,7 @@
                 increaseContrastOverride: increaseContrast,
                 deterministicSplitLayout: true,
             )
-            .frame(width: 1000, height: 700)
+            .frame(width: size.width, height: size.height)
             .environment(\._colorSchemeContrast, increaseContrast ? .increased : .standard)
             .environment(\.colorScheme, colorScheme)
             .environment(\.dsTextScale, textScale)
@@ -43,6 +44,20 @@
 
         @Test func libraryList() {
             assertScreenSnapshot(of: screen(.contentLibrary))
+        }
+
+        @Test func compactLibraryList() {
+            assertScreenSnapshot(of: screen(
+                .contentLibrary,
+                size: CGSize(width: 780, height: 592),
+            ))
+        }
+
+        @Test func compactLibraryDetail() {
+            assertScreenSnapshot(of: screen(
+                .contentLibraryVisualDetail,
+                size: CGSize(width: 780, height: 592),
+            ))
         }
 
         @Test func visualDetail() {

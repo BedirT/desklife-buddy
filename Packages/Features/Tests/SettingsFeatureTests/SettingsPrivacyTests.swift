@@ -118,11 +118,11 @@ struct SettingsPrivacyStateTests {
         #expect(SettingsPrivacyFocusTarget.restorationTarget(
             after: .historyDeletionSucceeded,
             fallback: .requestDeleteHistory,
-        ) == .requestResetAll)
+        ) == .dataControlsDisclosure)
         #expect(SettingsPrivacyFocusTarget.restorationTarget(
             after: .resetSucceeded,
             fallback: .requestResetAll,
-        ) == .requestResetAll)
+        ) == .dataControlsDisclosure)
         #expect(SettingsPrivacyFocusTarget.restorationTarget(
             after: .exportSucceeded(destinationName: "Break History.json"),
             fallback: .reviewExport,
@@ -414,7 +414,7 @@ struct SettingsPrivacyDestructiveTests {
         #expect(SettingsPrivacyFocusTarget.restorationTarget(
             after: model.privacyOperation,
             fallback: modalOrigin,
-        ) == .requestResetAll)
+        ) == .dataControlsDisclosure)
         #expect(
             SettingsPrivacyL10n.historyDeletedAcknowledgement
                 == "History deleted. Your settings and current timers were kept.",

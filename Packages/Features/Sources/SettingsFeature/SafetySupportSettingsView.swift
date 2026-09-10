@@ -35,10 +35,9 @@ struct SafetySupportSettingsView: View {
                     urgent: true,
                 )
             }
-            .padding(contentPadding)
+            .padding(.vertical, contentPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(Color.dsBackground)
         .accessibilityIdentifier("settings.safety")
     }
 
@@ -54,7 +53,7 @@ struct SafetySupportSettingsView: View {
                 Image(systemName: systemImage)
                     .font(textScale == .largest ? DSTypography.title : DSTypography.headline)
                     .foregroundStyle(accent)
-                    .frame(width: DSSpacing.xxl)
+                    .frame(width: SettingsPageLayout.rowIconWidth)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: DSSpacing.sm) {
                     Text(title)
@@ -77,8 +76,8 @@ struct SafetySupportSettingsView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private var contentPadding: CGFloat { textScale == .largest ? DSSpacing.xl : DSSpacing.lg }
-    private var sectionSpacing: CGFloat { textScale == .largest ? DSSpacing.xxl : DSSpacing.xl }
+    private var contentPadding: CGFloat { SettingsPageLayout.contentInset(for: textScale) }
+    private var sectionSpacing: CGFloat { SettingsPageLayout.sectionGap(for: textScale) }
 }
 
 #Preview("Safety & support") {

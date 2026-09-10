@@ -12,6 +12,7 @@ struct SettingsPrivacyAppStartupCompositionTests {
     @Test("The stable Settings client is truthful before startup and uses the retained store afterward")
     func startupRaceAndRetainedStore() async throws {
         let appDelegate = AppDelegate()
+        let store = try SwiftDataProtocolStore(inMemory: true)
         let client = appDelegate.makeSettingsFeatureClient(
             chooseExportDestination: { _, _ in nil },
             writeExportData: { _, _, _ in },
@@ -21,7 +22,7 @@ struct SettingsPrivacyAppStartupCompositionTests {
             _ = try await client.load()
         }
 
-        try await appDelegate.startApplication(arguments: [])
+        try await appDelegate.startApplication(arguments: [], baseStore: store)
 
         #expect(appDelegate.settingsStore != nil)
         let loaded = try await client.load()

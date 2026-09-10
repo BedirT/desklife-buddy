@@ -10,6 +10,18 @@ enum SettingsPrivacyL10n {
         "settings.privacy.stored.detail",
         default: "A complete view of the local records this build keeps.",
     )
+    static let localStorageSummary = string(
+        "settings.privacy.local_summary",
+        default: "No account or cloud sync. You choose how long history stays here.",
+    )
+    static let whatIsStored = string(
+        "settings.privacy.stored.disclosure_title",
+        default: "What is stored",
+    )
+    static let whatIsStoredDetail = string(
+        "settings.privacy.stored.disclosure_detail",
+        default: "See the local records this app keeps.",
+    )
     static let preferencesTitle = string(
         "settings.privacy.stored.preferences.title",
         default: "Preferences & configuration",
@@ -48,11 +60,15 @@ enum SettingsPrivacyL10n {
     )
     static let historyTitle = string(
         "settings.privacy.history.title",
-        default: "History retention & export",
+        default: "History",
     )
     static let historyDetail = string(
         "settings.privacy.history.detail",
-        default: "Choose how long Weekly active-use runs and opportunity history stay on this Mac.",
+        default: "Choose what stays on this Mac and manage it here.",
+    )
+    static let keepHistoryFor = string(
+        "settings.privacy.retention.label",
+        default: "Keep history for",
     )
     static let thirtyDays = string("settings.privacy.retention.thirty.title", default: "30 days")
     static let thirtyDaysDetail = string(
@@ -94,7 +110,7 @@ enum SettingsPrivacyL10n {
     )
     static let exportHistoryDetail = string(
         "settings.privacy.export.detail",
-        default: "Exports retained opportunity history only. Weekly active-use runs, preferences, and current timing state are not included.",
+        default: "Review the included fields before choosing a destination.",
     )
     static let reviewExport = string(
         "settings.privacy.export.review",
@@ -106,7 +122,7 @@ enum SettingsPrivacyL10n {
     )
     static let dataControlsDetail = string(
         "settings.privacy.controls.detail",
-        default: "Review exactly what each action removes before continuing.",
+        default: "Reset local data and restore the default schedule.",
     )
     static let deleteHistory = string(
         "settings.privacy.delete.title",

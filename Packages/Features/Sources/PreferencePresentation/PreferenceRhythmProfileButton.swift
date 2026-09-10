@@ -21,6 +21,8 @@ public enum PreferenceRhythmStage: CaseIterable, Equatable, Identifiable, Sendab
 public struct PreferenceRhythmStageView: View {
     public let stage: PreferenceRhythmStage
 
+    private static var imageCache: [String: CGImage] = [:]
+
     public init(stage: PreferenceRhythmStage) {
         self.stage = stage
     }
@@ -44,6 +46,10 @@ public struct PreferenceRhythmStageView: View {
     }
 
     var cgImage: CGImage? {
+        if let cachedImage = Self.imageCache[stage.resourceName] {
+            return cachedImage
+        }
+
         guard let url = Bundle.module.url(forResource: stage.resourceName, withExtension: "png"),
               let image = NSImage(contentsOf: url)
         else {
@@ -51,7 +57,9 @@ public struct PreferenceRhythmStageView: View {
         }
 
         var rect = CGRect(origin: .zero, size: image.size)
-        return image.cgImage(forProposedRect: &rect, context: nil, hints: nil)
+        let resolvedImage = image.cgImage(forProposedRect: &rect, context: nil, hints: nil)
+        Self.imageCache[stage.resourceName] = resolvedImage
+        return resolvedImage
     }
 }
 
@@ -64,6 +72,9 @@ public struct PreferenceRhythmProfileButton: View {
     public let selected: Bool
     public let increaseContrast: Bool
     public let accessibilityIdentifier: String
+    public let horizontalLayout: Bool
+    public let compactVerticalLayout: Bool
+    public let castsSelectionShadow: Bool
     public let action: () -> Void
 
     public init(
@@ -74,6 +85,9 @@ public struct PreferenceRhythmProfileButton: View {
         selected: Bool,
         increaseContrast: Bool,
         accessibilityIdentifier: String,
+        horizontalLayout: Bool = false,
+        compactVerticalLayout: Bool = false,
+        castsSelectionShadow: Bool = true,
         action: @escaping () -> Void,
     ) {
         self.stage = stage
@@ -83,13 +97,26 @@ public struct PreferenceRhythmProfileButton: View {
         self.selected = selected
         self.increaseContrast = increaseContrast
         self.accessibilityIdentifier = accessibilityIdentifier
+        self.horizontalLayout = horizontalLayout
+        self.compactVerticalLayout = compactVerticalLayout
+        self.castsSelectionShadow = castsSelectionShadow
         self.action = action
     }
 
     public var body: some View {
         Button(action: action) {
             Group {
-                if textScale == .largest {
+                if horizontalLayout {
+                    HStack(spacing: 0) {
+                        PreferenceRhythmStageView(stage: stage)
+                            .frame(
+                                width: DSSpacing.xxl * 4,
+                                height: DSSpacing.xxl * 3,
+                            )
+                        cardCopy
+                            .padding(DSSpacing.md)
+                    }
+                } else if textScale == .largest {
                     HStack(spacing: 0) {
                         PreferenceRhythmStageView(stage: stage)
                             .frame(width: 188)
@@ -99,7 +126,7 @@ public struct PreferenceRhythmProfileButton: View {
                 } else {
                     VStack(alignment: .leading, spacing: 0) {
                         PreferenceRhythmStageView(stage: stage)
-                            .frame(height: 116)
+                            .frame(height: compactVerticalLayout ? DSSpacing.xxl * 3 : 116)
                         cardCopy
                             .padding(.horizontal, DSSpacing.md)
                             .padding(.vertical, DSSpacing.sm)
@@ -126,7 +153,7 @@ public struct PreferenceRhythmProfileButton: View {
                     )
             }
             .shadow(
-                color: selected ? Color.dsAccent.opacity(0.14) : Color.clear,
+                color: selected && castsSelectionShadow ? Color.dsAccent.opacity(0.14) : Color.clear,
                 radius: DSSpacing.sm,
                 y: DSSpacing.xs,
             )
@@ -146,9 +173,7 @@ public struct PreferenceRhythmProfileButton: View {
                     .foregroundStyle(Color.dsTextPrimary)
                     .lineLimit(2)
                 Spacer(minLength: DSSpacing.xs)
-                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(selected ? Color.dsAccent : Color.dsTextSecondary)
-                    .accessibilityHidden(true)
+                DSSelectionIndicator(selected: selected)
             }
 
             if let subtitle {

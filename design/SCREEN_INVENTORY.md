@@ -90,23 +90,23 @@ the invoking `/usr/bin/swift` process has not been granted Accessibility permiss
 
 | ID | Screen / state | Notes | Status |
 |---|---|---|---|
-| WK-01 | Weekly rhythm - populated | Named daypart mosaic plus strictly separated retained facts; production review passed 2026-08-28 | done |
+| WK-01 | Weekly rhythm - populated | Continuous seven-row daypart field with one retained-run inspector and recorded facts on demand; owner selected 2026-08-31 | done |
 | WK-02 | Weekly rhythm - first week / sparse | Literal sparse introduction, no fabricated insight; production review passed 2026-08-28 | done |
 | WK-03 | Weekly rhythm - history disabled | Neutral keep-nothing state with explicit Privacy and Data route; production review passed 2026-08-28 | done |
 | WK-04 | Adjust-schedule affordance | Framed as fit and context, routes explicitly to Schedule; production review passed 2026-08-28 | done |
 | WK-05 | Optional self-report trend | Check-ins remain unauthorized and disabled, so no reachable UI exists | not authorized |
 
-Weekly production review, 2026-08-28: the primary hierarchy is rhythm and gaps, followed by one
-exact longest-run fact and three separated fact families. The selected named mosaic is readable
-without color, stays literal about estimates and empty cells, and adds no score, target, trend, or
-outcome. The ordinary window uses native scrolling and buttons, supports light and dark, largest
-text, Increase Contrast, Reduce Transparency, and Reduce Motion. The one-shot arrival uses the
-shared transition token; Reduce Motion dissolves without travel. Design rubric scores:
-product clarity 5, interruption quality 5, Mac nativeness 4, distinctiveness 5, simplicity 4,
-scientific honesty 5, autonomy 5, accessibility 4, privacy 5, emotional tone 5, visual quality 5,
-and long-term tolerance 5. Verdict: ship. Real keyboard and VoiceOver route inspection remains
-host-blocked by missing Accessibility permission, while identifiers and focused visual states are
-covered by previews and snapshots.
+Weekly production review, 2026-08-31: the primary hierarchy is one continuous weekly time field,
+followed by one exact longest-run fact. Recorded opportunities, explicit choices, and available
+context remain strictly separated but are disclosed only on demand. Every retained segment carries
+its duration label, so the field remains readable without color. Empty space is explicitly neutral.
+The ordinary window uses native scrolling, disclosure, and buttons, supports light and dark,
+largest text, Increase Contrast, and Reduce Motion. The one-shot arrival uses the shared transition
+token; Reduce Motion dissolves without travel. Design rubric scores: product clarity 5,
+interruption quality 5, Mac nativeness 5, distinctiveness 4, simplicity 5, scientific honesty 5,
+autonomy 5, accessibility 4, privacy 5, emotional tone 5, visual quality 5, and long-term tolerance
+5. Verdict: ship. Real keyboard and VoiceOver route inspection remains an App integration proof
+obligation, while identifiers and declared visual states are covered by previews and snapshots.
 
 ## F. Onboarding
 
@@ -125,11 +125,11 @@ covered by previews and snapshots.
 | ID | Screen / state | Notes | Status |
 |---|---|---|---|
 | SE-01 | Settings shell | Window, sections, sizing | todo |
-| SE-02 | Schedule | Profiles + custom; round-2 `Settings.dc.html` | explored |
+| SE-02 | Schedule | Direction A implemented and verified; final owner visual review pending | review |
 | SE-03 | Schedule — custom, very frequent | Neutral note, no shame, no block `[03 §5]` | todo |
 | SE-04 | Schedule — custom, effectively disabled | Same | todo |
-| SE-05 | Break content | Preferences + library browser | todo |
-| SE-06 | Break content — card detail | Instructions, alternative, safety, source | todo |
+| SE-05 | Break content | Preferences + icon-led responsive category browser with raised card rows | designed |
+| SE-06 | Break content — card detail | Full-width drill-in with instructions, alternative, safety, and source | designed |
 | SE-07 | Context & exclusions | Apps, presentation, idle | todo |
 | SE-08 | Accessibility | All access preferences in one place | todo |
 | SE-09 | Privacy & data | What is stored, retention, export, delete | todo |
@@ -202,7 +202,7 @@ Keyboard path        — Appears on its own (self-running, D-021) or via menu "S
                        ↩ and Esc are immediate from the first frame.
 Initial focus        — "Done early" pill: the least destructive primary action (D-021).
 Focus order          — Done early → Skip → (wraps). Two stops, deliberately.
-Escape               — Leaves immediately, mid-animation included → `skipped`. ⌘. same.
+Escape               — Leaves immediately → `skipped`. ⌘. same.
 VoiceOver names      — "Done early, button, Return" · "Skip this reset, button, Escape".
 VoiceOver values     — On open, one polite announcement: "Visual reset. Look at something
                        comfortably far away. Twenty seconds." Countdown announces at
@@ -484,6 +484,35 @@ Multi-display        — Feature content is one centered ordinary window. Center
                        are App-owned Step 5 proof obligations.
 ```
 
+### K.9a Weekly rhythm (WK-01 through WK-04)
+
+```
+Keyboard path        — Tab/Shift-Tab reaches Recorded facts, Review schedule, and any state
+                       recovery action in visual reading order. Space toggles the disclosure.
+Initial focus        — The ordinary window enters without forcing focus into the read-only time
+                       field. History-off and failure states place the recovery action first.
+Focus order          — Recorded facts → Review schedule. History off uses Review history setting;
+                       failure uses Try again. Native scrolling keeps every expanded fact reachable.
+Escape               — The App-owned ordinary window closes immediately. Command-W follows the
+                       same route and restores the previously active application.
+VoiceOver names      — Every retained segment combines full day, named daypart, and estimated
+                       duration. The disclosure and buttons use their visible labels.
+VoiceOver values     — Expanded and collapsed come from the native disclosure. No repeating or
+                       unsolicited announcements exist.
+Text scaling         — The vertical ScrollView keeps the full week reachable. Largest text grows
+                       the day labels and segment heights; fact columns fall back to a vertical stack.
+High contrast        — Duration labels and position remain primary; Increased Contrast doubles
+                       retained-segment and contained-state outlines.
+Reduced motion       — The single arrival transition dissolves without travel. Nothing loops,
+                       pulses, or must finish before the window can be read or closed.
+Meaning w/o color    — Every retained segment contains its duration, is positioned under a named
+                       daypart, and has a complete accessibility label. Color is never the sole cue.
+Alternative movement — Weekly reports retained computer-use and explicit event facts only. It does
+                       not rank or require any movement path.
+Multi-display        — The App-owned ordinary window uses the active display and preserves the same
+                       close, focus-restoration, and display-change contract as Settings.
+```
+
 ### K.10 Companion timer controls (ED-20/21)
 
 ```
@@ -611,6 +640,118 @@ Alternative movement — Duration choices are authored preferences, not capabili
 Multi-display        — One Settings window owns the edit and focus restoration.
 ```
 
+### K.14 iPhone continuation intake (IP-01)
+
+**ID note (2026-09-10):** K.10–K.13 were minted 2026-09-01 for companion timer, recovery,
+Undo, and Custom-v2 blocks with eight review cycles behind them; these iPhone/Live
+Activity blocks (documented later) move to K.14–K.17 to keep IDs unique.
+
+```
+Keyboard path        - Full Keyboard Access reaches Continue, Cancel, then the standard
+                       navigation controls. Return activates Continue only while it is focused.
+Initial focus        - The movement instruction heading, so the imported choice is understood
+                       before either action.
+Focus order          - Instruction and selected duration, Continue, Cancel, then system chrome.
+Escape               - Cancel closes intake without starting or resolving the Mac opportunity.
+VoiceOver names      - "Continue on iPhone"; the accepted movement title and instruction;
+                       selected duration; "Continue, button"; "Cancel, button".
+VoiceOver values     - The source is announced as Mac-authored. No countdown starts and no
+                       automatic-transfer or receipt status is announced before Continue.
+Text scaling         - One-column scrolling keeps the full instruction, duration, Continue, and
+                       Cancel visible through the largest accessibility size.
+High contrast        - System materials and semantic text colors own contrast; both actions keep
+                       visible boundaries and the primary action is not identified by color alone.
+Reduced motion       - Intake has no required travel or looping animation. Presentation uses an
+                       immediate replacement or system dissolve.
+Meaning w/o color    - Source, selected movement, duration, and both actions are named in text.
+Alternative movement - Intake preserves the exact accepted movement. Choosing another movement
+                       remains available after continuation and does not rank one path as better.
+Multi-display        - The intake appears only on the receiving iPhone. The Mac surface stays
+                       available and does not move, hide, or lose its local exit.
+```
+
+### K.15 iPhone continuation failure (IP-07)
+
+```
+Keyboard path        - Full Keyboard Access reaches Retry, Close, then standard navigation.
+Initial focus        - "Couldn't continue this break" after the failure state is installed.
+Focus order          - Failure title and Mac fallback detail, Retry, Close, system chrome.
+Escape               - Close dismisses the failed intake without changing the Mac opportunity.
+VoiceOver names      - "Couldn't continue this break"; "The break is still available on your
+                       Mac"; "Retry, button"; "Close, button".
+VoiceOver values     - The failure is announced once. Retry announces a later confirmed state,
+                       not an optimistic delivery claim.
+Text scaling         - The failure explanation and both actions remain in one vertically
+                       scrolling column with no truncation at the largest size.
+High contrast        - The warning symbol is supplemental. Text and labeled buttons communicate
+                       the complete state with system Increased Contrast behavior.
+Reduced motion       - No shake, repeated pulse, or urgency animation. Retry changes state with
+                       an immediate replacement or system dissolve.
+Meaning w/o color    - Failure, Mac fallback, Retry, and Close are all explicit text.
+Alternative movement - No movement path is blamed or disabled. The unchanged Mac surface retains
+                       its full equal-status movement choices.
+Multi-display        - Failure is local to iPhone. Mac remains open and actionable on its current
+                       display with no companion dependency.
+```
+
+### K.16 Live Activity states (LA-01 through LA-04)
+
+```
+Keyboard path        - Lock Screen and expanded Dynamic Island use platform focus navigation for
+                       Done early, I already moved, and Skip where the region exposes actions.
+Initial focus        - Platform-owned. Opening the expanded region starts with the instruction,
+                       not a destructive or declaration action.
+Focus order          - Instruction and time, Done early, I already moved, Skip. Compact and
+                       minimal regions remain read-only when controls do not fit.
+Escape               - Platform dismissal collapses the system surface without recording an
+                       action. Closing the activity UI does not resolve the opportunity.
+VoiceOver names      - "Movement break"; selected instruction; remaining time; and each visible
+                       declaration by its exact label.
+VoiceOver values     - Remaining time is a time fact. Timer completion says the timer is complete
+                       and never announces movement, success, a goal, or a health outcome.
+Text scaling         - System region negotiation may reduce secondary detail, but never clips or
+                       renames a visible declaration. The full iPhone app remains the complete path.
+High contrast        - System activity materials and semantic foreground styles own contrast;
+                       every actionable symbol has a text label.
+Reduced motion       - No pulsing timer, traveling scene, or custom looping animation. System
+                       transitions remain platform-owned.
+Meaning w/o color    - Instruction, time, and actions are textual. No ring, score, or hue carries
+                       completion or delivery meaning.
+Alternative movement - Compact regions may defer movement switching to the full app, but never
+                       present the current movement as the only valid path.
+Multi-display        - iPhone, Lock Screen, Dynamic Island, and paired Mac projections share one
+                       opportunity identity. The Mac projection is read-only and never due authority.
+```
+
+### K.17 Apple companions settings (SE-16)
+
+```
+Keyboard path        - Standard Settings sidebar navigation enters the page; Tab and Shift-Tab
+                       traverse the sync toggle, disclosures, confirmations, Retry, and Dismiss.
+Initial focus        - The Apple companions page heading after navigation. A completed or failed
+                       operation moves accessibility focus once to its result feedback.
+Focus order          - Summary, availability, private sync toggle and status, data disclosure,
+                       controls disclosure, then visible actions in reading order.
+Escape               - Cancels an open confirmation first. Otherwise standard Settings close
+                       behavior applies without changing sync or deleting data.
+VoiceOver names      - Device and Live Activity statuses combine label and detail; the sync toggle
+                       names private iCloud sync; disclosures announce Expanded or Collapsed.
+VoiceOver values     - Enable, disable, delete, and failure results are announced once after the
+                       client returns. No success is announced before persistence acknowledgement.
+Text scaling         - The vertical ScrollView and ViewThatFits layouts stack every row and action
+                       at the largest size without horizontal scrolling.
+High contrast        - Semantic colors, system toggle state, labeled status rows, and explicit
+                       outlines preserve all controls under Increased Contrast.
+Reduced motion       - No app-owned motion is required. Disclosure state changes may replace
+                       content immediately when Reduce Motion is enabled.
+Meaning w/o color    - Every availability and sync state is written in text; icons and tint are
+                       supplemental; disclosure state has an accessibility value.
+Alternative movement - Settings describes companions as optional continuation surfaces and does
+                       not rank or remove any movement path.
+Multi-display        - This is an ordinary Mac Settings window. It opens on the active display and
+                       does not move an active iPhone or Watch companion surface.
+```
+
 ## Coverage summary
 
 | Area | Entries | Explored | Designed | Canonical |
@@ -624,9 +765,42 @@ Multi-display        — One Settings window owns the edit and focus restoration
 | Settings | 15 | 1 | 0 | 0 |
 | Permissions | 7 | 0 | 0 | 0 |
 | Edge states | 18 | 0 | 0 | 0 |
-| **Total** | **90** | **16** | **0** | **0** |
+| Apple companions | 16 | 7 | 0 | 0 |
+| **Total** | **106** | **23** | **0** | **0** |
 
 `explored` = drawn in `explorations/` (round 1: three ways; round 2: the chosen Horizon
-direction), non-canonical. Nothing advances to `designed` until the light+dark 2x renders
+direction, plus the accepted companion Direction B), non-canonical. Nothing advances to
+`designed` until the light+dark 2x renders
 exist in `renders/`; the three review passes ran on round 2 on 2026-08-25 (findings in
 `DECISIONS.md` / `OPEN_QUESTIONS.md`).
+
+## L. Apple companion surfaces
+
+Direction B is the accepted visual intent. Every listed surface uses the same Mac-authored
+movement `opportunityID`, one dominant instruction, restrained remaining time, and the closed
+declaration vocabulary. iPhone is complete without Apple Watch.
+
+| ID | Surface or state | Required content and behavior | Status |
+|---|---|---|---|
+| IP-01 | iPhone continuation intake | Exact accepted movement, source Mac, selected duration, Continue and Cancel; no automatic start | accepted direction |
+| IP-02 | iPhone active movement | One instruction, remaining time, Done early, native alternatives menu containing I already moved, Skip, and equal-status movement choices | accepted direction |
+| IP-03 | iPhone active, largest text | Same actions and meaning with vertical reflow and no clipped timer or instruction | required |
+| IP-04 | iPhone completed locally | Quiet closure after local persistence; no reward, score, ring, or verified claim | required |
+| IP-05 | iPhone waiting to sync | Local action retained, factual Waiting to sync status, retry automatic and idempotent | required |
+| IP-06 | iPhone ended elsewhere | Read-only Ended on another device state, actions removed, no failure tone | required |
+| IP-07 | iPhone continuation failure | Couldn't continue this break; Mac remains available; Retry and Close | required |
+| LA-01 | Lock Screen Live Activity | Instruction, restrained time, Done early, compact alternatives access | accepted direction |
+| LA-02 | Dynamic Island compact/minimal | Movement identity and time without score or fitness ring | accepted direction |
+| LA-03 | Dynamic Island expanded | One instruction plus the same semantically distinct declarations | accepted direction |
+| LA-04 | Paired Mac projection | Read-only system projection of the iPhone Live Activity; never due authority | required |
+| WA-01 | Watch active movement | Concise instruction, remaining time, Done early, alternatives reachable without tiny side-by-side targets | accepted direction |
+| WA-02 | Watch Smart Stack projection | Compact instruction and time from the paired iPhone Live Activity | accepted direction |
+| WA-03 | Watch offline action | Local durable action queue and Waiting to sync status; iPhone later relays it | required |
+| WA-04 | Watch ended elsewhere | Read-only Ended on another device; no stale action controls | required |
+| SE-16 | Apple companions settings | Standalone status, Handoff explanation, private iCloud opt-in, stored-field disclosure, disable/delete scope | required |
+
+Companion edge states required before release: phone unavailable, Handoff failure, Watch not
+installed, Watch unreachable, Live Activities disabled, iCloud signed out, iCloud temporarily
+unavailable, offline action replay, duplicate action, out-of-order revision, stale resolution,
+first resolution elsewhere, app relaunch during an active deadline, device sleep or suspension,
+Reduce Motion, Increase Contrast, VoiceOver, and largest accessibility text.

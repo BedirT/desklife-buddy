@@ -69,13 +69,6 @@ public struct StatusMenuView: View {
             }
 
             Divider()
-            menuRow(
-                StatusMenuL10n.workingHoursOnly,
-                isChecked: model.snapshot.workingHoursOnly,
-                identifier: "statusMenu.workingHoursOnly",
-            ) {
-                model.send(.toggleWorkingHours)
-            }
             menuRow(StatusMenuL10n.weeklyRhythm, identifier: "statusMenu.weeklyRhythm") {
                 model.send(.openWeeklyRhythm)
             }

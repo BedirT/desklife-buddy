@@ -10,8 +10,9 @@ restate them.
 ## The one paragraph a developer must read
 
 This product's differentiator is that it does not lie about what it knows. The current runtime
-estimates active computer use from coarse input timing; it cannot see sitting, posture, gaze,
-or movement. Current completions are timer facts or user declarations. Every break is
+estimates active computer use from coarse input timing; visual timing accrues eligible
+available-session time through short no-input periods. Neither signal can see sitting,
+posture, gaze, or movement. Current completions are timer facts or user declarations. Every break is
 dismissible with Escape. Nothing escalates. No score, no streak, no health-outcome
 verification. Optional sensing in the approved historical intake does not change those facts
 until its observation, claim, permission, retention, fallback, and verification contracts are

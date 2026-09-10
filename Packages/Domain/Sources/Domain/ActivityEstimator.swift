@@ -44,8 +44,11 @@ public struct ActivitySample: Equatable, Sendable {
 
 /// Reducer output for one observed monotonic interval.
 public struct ActivityAssessment: Equatable, Sendable {
-    public let accumulatedSeconds: TimeInterval
+    public let visualSessionSeconds: TimeInterval
+    public let movementActiveUseSeconds: TimeInterval
     public let didBeginLikelyNaturalInterruption: Bool
+    public let didReturnFromLongIdle: Bool
+    public let isShortInputPause: Bool
 }
 
 /// Stateful coarse estimator that never observes or retains input content.
@@ -54,6 +57,7 @@ public struct ActivityEstimator: Sendable {
     private var previousUptimeSeconds: TimeInterval?
     private var previousSystemAvailable: Bool?
     private var wakeGraceEndsAtUptime: TimeInterval?
+    private var returnGraceEndsAtUptime: TimeInterval?
     private var longIdleWasReported = false
 
     /// Creates an estimator with explicit thresholds from the protocol configuration.
@@ -77,18 +81,20 @@ public struct ActivityEstimator: Sendable {
             previousSystemAvailable = sample.systemAvailable
         }
 
-        let didBeginLongIdle = assessLongIdle(for: sample)
+        let idleTransition = assessLongIdle(for: sample)
 
         guard let previousUptimeSeconds,
               sample.uptimeSeconds >= previousUptimeSeconds
         else {
             wakeGraceEndsAtUptime = nil
-            return noAccumulation(didBeginLongIdle: didBeginLongIdle)
+            returnGraceEndsAtUptime = nil
+            return noAccumulation(didBeginLongIdle: idleTransition.didBegin)
         }
 
         guard sample.systemAvailable else {
             longIdleWasReported = true
             wakeGraceEndsAtUptime = nil
+            returnGraceEndsAtUptime = nil
             return noAccumulation()
         }
 
@@ -96,50 +102,89 @@ public struct ActivityEstimator: Sendable {
             wakeGraceEndsAtUptime = sample.uptimeSeconds + configuration.wakeUnlockGraceSeconds
         }
 
-        guard sample.secondsSinceInput <= configuration.recentInputWindowSeconds else {
-            return noAccumulation(didBeginLongIdle: didBeginLongIdle)
+        if idleTransition.didReturn {
+            returnGraceEndsAtUptime = sample.uptimeSeconds
+                + configuration.postInterruptionGraceSeconds
         }
 
-        let accumulationStart = max(previousUptimeSeconds, wakeGraceEndsAtUptime ?? previousUptimeSeconds)
-        let accumulatedSeconds = max(0, sample.uptimeSeconds - accumulationStart)
+        guard sample.secondsSinceInput < configuration.longIdleResetSeconds else {
+            return noAccumulation(didBeginLongIdle: idleTransition.didBegin)
+        }
+
+        let observedInterval = sample.uptimeSeconds - previousUptimeSeconds
+        guard observedInterval <= configuration.maximumSampleGapSeconds else {
+            return noAccumulation(didReturnFromLongIdle: idleTransition.didReturn)
+        }
+
+        let graceEndsAt = max(
+            wakeGraceEndsAtUptime ?? previousUptimeSeconds,
+            returnGraceEndsAtUptime ?? previousUptimeSeconds,
+        )
+        let accumulationStart = max(previousUptimeSeconds, graceEndsAt)
+        let visualSessionSeconds = max(0, sample.uptimeSeconds - accumulationStart)
         if let wakeGraceEndsAtUptime, sample.uptimeSeconds >= wakeGraceEndsAtUptime {
             self.wakeGraceEndsAtUptime = nil
         }
+        if let returnGraceEndsAtUptime, sample.uptimeSeconds >= returnGraceEndsAtUptime {
+            self.returnGraceEndsAtUptime = nil
+        }
+
+        let isInGrace = visualSessionSeconds == 0 && sample.uptimeSeconds < graceEndsAt
+        let isShortInputPause = !isInGrace
+            && sample.secondsSinceInput >= configuration.lowFrictionInputPauseSeconds
+            && sample.secondsSinceInput < configuration.longIdleResetSeconds
+        let movementActiveUseSeconds = sample.secondsSinceInput
+            <= configuration.recentInputWindowSeconds
+            ? visualSessionSeconds
+            : 0
 
         return ActivityAssessment(
-            accumulatedSeconds: accumulatedSeconds,
-            didBeginLikelyNaturalInterruption: didBeginLongIdle,
+            visualSessionSeconds: visualSessionSeconds,
+            movementActiveUseSeconds: movementActiveUseSeconds,
+            didBeginLikelyNaturalInterruption: idleTransition.didBegin,
+            didReturnFromLongIdle: idleTransition.didReturn,
+            isShortInputPause: isShortInputPause,
         )
     }
 
-    private mutating func assessLongIdle(for sample: ActivitySample) -> Bool {
-        guard sample.systemAvailable else { return false }
+    private mutating func assessLongIdle(
+        for sample: ActivitySample,
+    ) -> (didBegin: Bool, didReturn: Bool) {
+        guard sample.systemAvailable else { return (false, false) }
 
         if sample.secondsSinceInput <= configuration.recentInputWindowSeconds {
+            let didReturn = longIdleWasReported
             longIdleWasReported = false
-            return false
+            return (false, didReturn)
         }
 
         guard sample.secondsSinceInput >= configuration.longIdleResetSeconds,
               !longIdleWasReported
         else {
-            return false
+            return (false, false)
         }
 
         longIdleWasReported = true
-        return true
+        return (true, false)
     }
 
     private mutating func resetMonotonicBaseline() {
         previousUptimeSeconds = nil
         previousSystemAvailable = nil
         wakeGraceEndsAtUptime = nil
+        returnGraceEndsAtUptime = nil
     }
 
-    private func noAccumulation(didBeginLongIdle: Bool = false) -> ActivityAssessment {
+    private func noAccumulation(
+        didBeginLongIdle: Bool = false,
+        didReturnFromLongIdle: Bool = false,
+    ) -> ActivityAssessment {
         ActivityAssessment(
-            accumulatedSeconds: 0,
+            visualSessionSeconds: 0,
+            movementActiveUseSeconds: 0,
             didBeginLikelyNaturalInterruption: didBeginLongIdle,
+            didReturnFromLongIdle: didReturnFromLongIdle,
+            isShortInputPause: false,
         )
     }
 }

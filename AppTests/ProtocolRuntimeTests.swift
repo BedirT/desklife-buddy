@@ -89,6 +89,15 @@ struct ProtocolRuntimeTests {
             sessionActive: true,
             screenLocked: false,
         ))
+        for uptime in stride(from: 100.0, through: 1450.0, by: 90.0) {
+            try await runtime.observe(ActivitySample(
+                uptimeSeconds: uptime,
+                secondsSinceInput: 0,
+                systemAwake: true,
+                sessionActive: true,
+                screenLocked: false,
+            ))
+        }
         try await runtime.observe(ActivitySample(
             uptimeSeconds: 1490,
             secondsSinceInput: 0,
@@ -98,7 +107,7 @@ struct ProtocolRuntimeTests {
         ))
 
         #expect(runtime.state.visualClock.accumulatedActiveUseSeconds == 1480)
-        #expect(store.commits.count == 2)
+        #expect(store.commits.count == 18)
         #expect(store.commits.last?.events.isEmpty == true)
         #expect(runtime.statusContext.liveHeadsUp == .visual)
 

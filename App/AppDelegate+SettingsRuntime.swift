@@ -4,6 +4,15 @@ import Foundation
 import Onboarding
 
 extension AppDelegate {
+    #if DEBUG
+        static func runtimeIDFactory(
+            for verificationMode: HeadsUpVerificationMode?,
+        ) -> () -> UUID {
+            guard verificationMode?.usesInjectedSnapshot == true else { return UUID.init }
+            return { HeadsUpVerificationRoute.deliveryID }
+        }
+    #endif
+
     typealias OnboardingRuntimeStarter = (
         SwiftDataProtocolStore,
         [String],
@@ -76,14 +85,24 @@ extension AppDelegate {
         guard runtime == nil else { return }
         let store = runtimeStore(base: baseStore, arguments: arguments)
         let headsUpPolicy = Self.verificationHeadsUpPolicy(arguments: arguments)
+        let configurationOverride: ProtocolConfiguration? = if arguments.contains(
+            "--verify-automatic-visual",
+        ) {
+            try await Self.automaticVisualVerificationConfiguration(
+                from: (baseStore.loadResolvedPreferences()).configuration,
+            )
+        } else {
+            nil
+        }
         let prepared = try await prepareRuntime(
             baseStore: baseStore,
             runtimeStore: store,
             headsUpPolicy: headsUpPolicy,
+            configurationOverride: configurationOverride,
         )
         settingsStore = baseStore
         install(
-            configuration: prepared.resolved.configuration,
+            configuration: prepared.runtime.configuration,
             runtime: prepared.runtime,
             headsUpPolicy: headsUpPolicy,
         )
@@ -237,6 +256,7 @@ extension AppDelegate {
         baseStore: SwiftDataSettingsStore,
         runtimeStore: any ProtocolRuntimeStore,
         headsUpPolicy: HeadsUpRuntimePolicy?,
+        configurationOverride: ProtocolConfiguration? = nil,
     ) async throws -> (resolved: ResolvedAppPreferences, runtime: ProtocolRuntime) {
         let resolved = try await baseStore.loadResolvedPreferences()
         return (
@@ -245,6 +265,7 @@ extension AppDelegate {
                 resolved: resolved,
                 store: runtimeStore,
                 headsUpPolicy: headsUpPolicy,
+                configuration: configurationOverride ?? resolved.configuration,
             ),
         )
     }
@@ -269,24 +290,25 @@ extension AppDelegate {
         resolved: ResolvedAppPreferences,
         store: any ProtocolRuntimeStore,
         headsUpPolicy: HeadsUpRuntimePolicy?,
+        configuration: ProtocolConfiguration,
     ) -> ProtocolRuntime {
         guard let headsUpPolicy else {
             return ProtocolRuntime(
-                configuration: resolved.configuration,
+                configuration: configuration,
                 store: store,
                 profileID: resolved.profileID,
                 initialPreferences: resolved.preferences,
             )
         }
         return ProtocolRuntime(
-            configuration: resolved.configuration,
+            configuration: configuration,
             store: store,
             headsUpRuntimePolicy: headsUpPolicy,
             profileID: resolved.profileID,
             initialPreferences: resolved.preferences,
             makeID: {
                 #if DEBUG
-                    HeadsUpVerificationRoute.deliveryID
+                    Self.runtimeIDFactory(for: self.headsUpVerificationMode)()
                 #else
                     UUID()
                 #endif

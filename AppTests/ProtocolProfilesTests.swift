@@ -4,13 +4,13 @@ import Testing
 
 @Suite("Machine-readable protocol profiles")
 struct ProtocolProfilesTests {
-    @Test("Balanced profile matches the normative YAML values")
+    @Test("Balanced profile combines research defaults with the runtime timing amendment")
     func balancedProfile() throws {
         let configuration = try ProtocolProfiles.configuration(for: .balanced)
 
         #expect(configuration.visual.softDueSeconds == 1200)
         #expect(configuration.visual.targetSeconds == 1500)
-        #expect(configuration.visual.latestPreferredSeconds == 1800)
+        #expect(configuration.visual.latestPreferredSeconds == 1590)
         #expect(configuration.visual.durationOptionsSeconds == [20])
         #expect(configuration.movement.softDueSeconds == 3000)
         #expect(configuration.movement.targetSeconds == 3600)
@@ -19,6 +19,9 @@ struct ProtocolProfilesTests {
         #expect(configuration.activityEstimator.recentInputWindowSeconds == 60)
         #expect(configuration.activityEstimator.longIdleResetSeconds == 300)
         #expect(configuration.activityEstimator.wakeUnlockGraceSeconds == 90)
+        #expect(configuration.activityEstimator.lowFrictionInputPauseSeconds == 5)
+        #expect(configuration.activityEstimator.postInterruptionGraceSeconds == 60)
+        #expect(configuration.activityEstimator.maximumSampleGapSeconds == 90)
         #expect(configuration.delivery.mergeWindowSeconds == 300)
         #expect(configuration.delivery.headsUpSecondsBeforeTarget == 45)
         #expect(configuration.delivery.snoozeOptionsSeconds == [300, 600, 900])

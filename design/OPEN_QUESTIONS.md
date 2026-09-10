@@ -20,7 +20,7 @@ answer is labelled as one.
 | OQ-01 | Is ~25 min better than a strict 20? | Never present any interval as optimal. `SE-13` explains the window, not a magic number. No copy anywhere says "the recommended 20 minutes." |
 | OQ-02 | Is hourly 5 min sustainable? | Profiles are presented as fits, not as a ladder from worse to better. "Frequent" must not read as the aspirational tier. |
 | OQ-03 | Does a visible 2 min option cannibalise 5 min? | 5 min is the primary action, 2 min is visible and unapologetic (`[C012]`). Do not style 2 min as a lesser/greyed choice — and do not hide it. Record durations separately (`BR-07`). |
-| OQ-04 | Passive reading is undercounted | The limitation must be stated in `ON-02` and `SE-13`, not buried. Never claim the estimate reflects screen time or attention. |
+| OQ-04 | Passive reading is undercounted | Addressed operationally by D-037: visual timing may continue through short no-input periods while movement remains recent-input based. Never claim screen time, presence, gaze, or attention. |
 | OQ-05 | What idle duration is a natural interruption? | UI must never say a natural interruption *counted*. `likelyNaturalInterruption` reduces nuisance timing only, silently. |
 | OQ-06 | Which moment is least disruptive? | The low-friction wait must be bounded and invisible. No "waiting for a good moment…" UI — that is a second interruption. |
 | OQ-07 | Does merging cause missed visual breaks? | `BR-10` must state plainly when only one clock reset. Merge must never silently close both. |
@@ -30,7 +30,7 @@ answer is labelled as one.
 | OQ-11 | Is symptom tracking worth the sensitivity? | Off by default, controlled fields, no free text. Must never gate any feature or improve any "insight" in a way that pressures opt-in. |
 | OQ-12 | Do seated alternatives feel equal-status? | `D-010`. Equal weight is a *visual* requirement. This is the single most likely place for the design to fail invisibly — flag it for co-design review, do not self-certify. |
 | OQ-13 | Treadmill mode | Out of scope. No UI, no "coming soon." |
-| OQ-14 | Watch companion | Out of scope. No Watch affordance, no implied Watch benefit `[09 §6]`. |
+| OQ-14 | Watch companion | **Direction accepted 2026-08-31.** Optional Apple Watch action surfaces may extend an explicitly accepted movement break through paired iPhone. Watch never affects due timing, scores, access, or completion inference. |
 | OQ-15 | Camera sensing | Out of scope and prohibited for MVP. No camera-shaped placeholder anywhere. |
 
 ---
@@ -113,9 +113,10 @@ text-only mode. BR-10 remains a separate partial-reset explanation after "Just t
 one"; it is not this completion beat.
 
 ### DQ-12 · Branding placeholder scope
-**Working answer:** no logo, no wordmark, no brand color. The menu bar glyph is functional, not
-a logo. If a direction needs a brand color to work, the direction is leaning on branding that
-does not exist yet — flag it rather than inventing one.
+**Closed 2026-08-31 by owner review:** the two-beats-on-one-horizon mark is the app logo and uses
+the warm ceramic Direction A treatment in the Icon Composer app icon. There is still no product
+name or wordmark, and target, scheme, module, bundle identity, signing, and distribution remain
+deferred. See D-041.
 
 ---
 
@@ -342,3 +343,24 @@ is introduced to hide this limitation.
 
 **Settled by:** a documented public macOS lock-state API, or a product-protocol amendment that
 accepts the coarse idle fallback explicitly.
+
+### DQ-22 - Which device owns companion timing and resolution?
+
+**Closed 2026-08-31 by owner review:** the Mac remains the only due-clock authority. iPhone and
+paired Watch render one Mac-authored accepted movement opportunity. The first valid resolution
+wins, duplicate or stale actions reconcile as no-ops, and remote latency never delays Mac timing.
+The exact action mapping is in D-038 and `INTERACTION_SPEC.md` section 13.3.
+
+### DQ-23 - Is durable companion reconciliation allowed to use iCloud?
+
+**Closed 2026-08-31 by owner review:** yes, only as a separate explicit opt-in using a private
+custom CloudKit zone, minimum derived fields, local offline queues, idempotent replay, and clear
+disable and deletion semantics. Standalone Mac behavior and one-time Handoff remain complete
+without iCloud. Production schema promotion remains an owner-controlled release decision.
+
+### DQ-24 - Which companion visual direction is canonical?
+
+**Closed 2026-08-31 by owner review:** Direction B, editorial focus. One instruction dominates,
+time is restrained, alternatives are progressively disclosed but remain semantically distinct,
+and compact system projections avoid fitness rings and scores. Production implementation uses
+native platform regions and accessibility behavior rather than generated device chrome.

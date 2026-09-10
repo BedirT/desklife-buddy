@@ -11,20 +11,65 @@
             _ state: SettingsFeatureModel.PreviewState = .balanced,
             increaseContrast: Bool = false,
             textScale: DSTextScale = .standard,
+            width: CGFloat = 1000,
+            height: CGFloat = 700,
+            focusedSidebarSectionOverride: SettingsSection? = nil,
         ) -> some View {
             SettingsFeatureView(
                 model: .preview(state),
                 loadsAutomatically: false,
                 increaseContrastOverride: increaseContrast,
                 deterministicSplitLayout: true,
+                focusedSidebarSectionOverride: focusedSidebarSectionOverride,
             )
-            .frame(width: 1000, height: 700)
+            .frame(width: width, height: height)
             .environment(\._colorSchemeContrast, increaseContrast ? .increased : .standard)
+            .environment(\.dsTextScale, textScale)
+        }
+
+        private func scheduleComponent(
+            _ state: SettingsFeatureModel.PreviewState,
+            textScale: DSTextScale = .standard,
+            height: CGFloat,
+        ) -> some View {
+            ScheduleSettingsView(
+                model: .preview(state),
+                increaseContrast: false,
+            )
+            .padding(DSSpacing.lg)
+            .frame(width: 460, height: height, alignment: .top)
+            .background(Color.dsContentCanvas)
             .environment(\.dsTextScale, textScale)
         }
 
         @Test func balancedLight() {
             assertScreenSnapshot(of: screen())
+        }
+
+        @Test func compactWindow() {
+            assertScreenSnapshot(of: screen(width: 780, height: 592))
+        }
+
+        @Test func compactWindowLargestText() {
+            assertScreenSnapshot(of: screen(textScale: .largest, width: 780, height: 592))
+        }
+
+        @Test func compactWindowCustomValid() {
+            assertScreenSnapshot(of: screen(.customValid, width: 780, height: 592))
+        }
+
+        @Test func compactExpandedCustomContent() {
+            assertScreenSnapshot(
+                of: scheduleComponent(.customValid, height: 1800),
+                layout: .fixed(width: 460, height: 1800),
+            )
+        }
+
+        @Test func compactLargestTextContent() {
+            assertScreenSnapshot(
+                of: scheduleComponent(.balanced, textScale: .largest, height: 1260),
+                layout: .fixed(width: 460, height: 1260),
+            )
         }
 
         @Test func loading() {
@@ -81,6 +126,19 @@
 
         @Test func increaseContrast() {
             assertScreenSnapshot(of: screen(increaseContrast: true))
+        }
+
+        @Test func focusedSidebar() {
+            assertScreenSnapshot(of: screen(focusedSidebarSectionOverride: .schedule))
+        }
+
+        @Test func focusedSidebarIncreaseContrast() {
+            assertScreenSnapshot(
+                of: screen(
+                    increaseContrast: true,
+                    focusedSidebarSectionOverride: .schedule,
+                ),
+            )
         }
 
         @Test func largestText() {

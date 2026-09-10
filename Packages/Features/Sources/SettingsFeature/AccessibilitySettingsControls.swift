@@ -38,10 +38,11 @@ struct AccessibilityTimerAnnouncementTiles: View {
 
                 Spacer(minLength: DSSpacing.sm)
 
-                Image(systemName: selected ? "checkmark" : "circle")
-                    .font(DSTypography.headline)
-                    .foregroundStyle(selected ? Color.dsAccent : Color.dsTextSecondary)
-                    .accessibilityHidden(true)
+                DSSelectionIndicator(
+                    selected: selected,
+                    selectedSystemImage: "checkmark",
+                    font: DSTypography.headline,
+                )
             }
             .font(DSTypography.headline)
             .foregroundStyle(Color.dsTextPrimary)

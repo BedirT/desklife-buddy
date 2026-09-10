@@ -19,21 +19,24 @@ struct WhyDefaultsSettingsView: View {
             if textScale == .largest {
                 compactDetail
             } else {
-                splitEditorialView
+                ViewThatFits(in: .horizontal) {
+                    splitEditorialView
+                        .frame(minWidth: DSSpacing.xxl * 22)
+                    compactDetail
+                }
             }
         }
-        .background(Color.dsBackground)
         .accessibilityIdentifier("settings.evidence")
     }
 
     private var splitEditorialView: some View {
         HStack(alignment: .top, spacing: DSSpacing.lg) {
             topicIndex
-                .frame(width: 250)
+                .frame(width: DSSpacing.xxl * 7)
             Divider().overlay(Color.dsSeparator)
             topicDetail(selectedTopic)
         }
-        .padding(DSSpacing.lg)
+        .padding(.vertical, SettingsPageLayout.contentInset(for: textScale))
     }
 
     private var compactDetail: some View {
@@ -50,7 +53,7 @@ struct WhyDefaultsSettingsView: View {
 
                 topicDetailContent(selectedTopic)
             }
-            .padding(DSSpacing.xl)
+            .padding(.vertical, SettingsPageLayout.contentInset(for: textScale))
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -83,7 +86,7 @@ struct WhyDefaultsSettingsView: View {
         } label: {
             HStack(alignment: .top, spacing: DSSpacing.sm) {
                 Image(systemName: topic.systemImage)
-                    .frame(width: DSSpacing.xl)
+                    .frame(width: SettingsPageLayout.rowIconWidth)
                     .foregroundStyle(selectedTopic == topic ? Color.dsAccent : Color.dsTextSecondary)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: DSSpacing.xs) {
@@ -165,9 +168,10 @@ struct WhyDefaultsSettingsView: View {
 
     private func editorialBlock(title: String, text: String, systemImage: String) -> some View {
         DSCard {
-            HStack(alignment: .top, spacing: DSSpacing.md) {
+            HStack(alignment: .top, spacing: SettingsPageLayout.rowGap) {
                 Image(systemName: systemImage)
                     .foregroundStyle(Color.dsTextSecondary)
+                    .frame(width: SettingsPageLayout.rowIconWidth)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: DSSpacing.sm) {
                     Text(title)

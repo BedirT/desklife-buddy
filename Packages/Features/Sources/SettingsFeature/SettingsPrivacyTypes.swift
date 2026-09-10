@@ -33,7 +33,7 @@ public struct SettingsStoredDataSummaryItem: Equatable, Identifiable, Sendable {
     }
 }
 
-public enum SettingsPrivacyRetentionChoice: CaseIterable, Equatable, Identifiable, Sendable {
+public enum SettingsPrivacyRetentionChoice: CaseIterable, Equatable, Hashable, Identifiable, Sendable {
     case thirtyDays
     case ninetyDays
     case keepNothing
@@ -109,6 +109,7 @@ public enum SettingsPrivacyOperation: Equatable, Sendable {
 
 enum SettingsPrivacyFocusTarget: Hashable {
     case reviewExport
+    case dataControlsDisclosure
     case requestDeleteHistory
     case requestResetAll
     case cancel
@@ -139,7 +140,7 @@ enum SettingsPrivacyFocusTarget: Hashable {
     ) -> Self? {
         switch operation {
         case .historyDeletionSucceeded, .resetSucceeded:
-            .requestResetAll
+            .dataControlsDisclosure
         case .idle, .exporting, .exportSucceeded, .deletingHistory, .resettingAll,
              .temporarilyBusy, .failed:
             fallback

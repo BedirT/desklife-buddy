@@ -120,11 +120,17 @@ private struct ActivityEstimatorPayload: Codable {
     let recentInputWindowSeconds: TimeInterval
     let longIdleResetSeconds: TimeInterval
     let wakeUnlockGraceSeconds: TimeInterval
+    let lowFrictionInputPauseSeconds: TimeInterval?
+    let postInterruptionGraceSeconds: TimeInterval?
+    let maximumSampleGapSeconds: TimeInterval?
 
     init(value: ActivityEstimatorConfiguration) {
         recentInputWindowSeconds = value.recentInputWindowSeconds
         longIdleResetSeconds = value.longIdleResetSeconds
         wakeUnlockGraceSeconds = value.wakeUnlockGraceSeconds
+        lowFrictionInputPauseSeconds = value.lowFrictionInputPauseSeconds
+        postInterruptionGraceSeconds = value.postInterruptionGraceSeconds
+        maximumSampleGapSeconds = value.maximumSampleGapSeconds
     }
 
     func value() throws -> ActivityEstimatorConfiguration {
@@ -132,6 +138,9 @@ private struct ActivityEstimatorPayload: Codable {
             recentInputWindowSeconds: recentInputWindowSeconds,
             longIdleResetSeconds: longIdleResetSeconds,
             wakeUnlockGraceSeconds: wakeUnlockGraceSeconds,
+            lowFrictionInputPauseSeconds: lowFrictionInputPauseSeconds,
+            postInterruptionGraceSeconds: postInterruptionGraceSeconds ?? 60,
+            maximumSampleGapSeconds: maximumSampleGapSeconds,
         )
     }
 }

@@ -15,11 +15,10 @@ struct IntegrationsSettingsView: View {
                 availableSection
                 unavailableSection
             }
-            .padding(contentPadding)
+            .padding(.vertical, contentPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .font(textScale == .largest ? DSTypography.title : DSTypography.body)
-        .background(Color.dsBackground)
         .allowsHitTesting(model.controlsEnabled)
         .accessibilityIdentifier("settings.integrations")
     }
@@ -54,6 +53,7 @@ struct IntegrationsSettingsView: View {
                 Spacer(minLength: DSSpacing.md)
                 notificationControl
             }
+            .padding(.leading, SettingsPageLayout.rowIconWidth + SettingsPageLayout.rowGap)
         }
         .accessibilityIdentifier("settings.integrations.notifications")
     }
@@ -115,7 +115,10 @@ struct IntegrationsSettingsView: View {
                 Toggle(
                     SettingsIntegrationsL10n.launchAtLogin,
                     isOn: Binding(
-                        get: { runtime.launchAtLogin.isEffectivelyEnabled },
+                        get: {
+                            model.preferences?.integrations.launchAtLoginEnabled
+                                ?? runtime.launchAtLogin.isEffectivelyEnabled
+                        },
                         set: { enabled in
                             Task {
                                 await model.setLaunchAtLoginEnabled(
@@ -151,6 +154,7 @@ struct IntegrationsSettingsView: View {
                     }
                     .accessibilityIdentifier("settings.integrations.launchAtLogin.openLoginItems")
                 }
+                .padding(.leading, SettingsPageLayout.rowIconWidth + SettingsPageLayout.rowGap)
             }
             .accessibilityIdentifier("settings.integrations.launchAtLogin.requiresApproval")
         case .unavailable:
@@ -231,8 +235,8 @@ struct IntegrationsSettingsView: View {
         textScale == .largest ? DSTypography.body : DSTypography.subtext
     }
 
-    private var contentPadding: CGFloat { textScale == .largest ? DSSpacing.xl : DSSpacing.lg }
-    private var sectionSpacing: CGFloat { textScale == .largest ? DSSpacing.xxl : DSSpacing.xl }
+    private var contentPadding: CGFloat { SettingsPageLayout.contentInset(for: textScale) }
+    private var sectionSpacing: CGFloat { SettingsPageLayout.sectionGap(for: textScale) }
 }
 
 private struct IntegrationInformationLabel: View {
@@ -242,9 +246,9 @@ private struct IntegrationInformationLabel: View {
     let systemImage: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: DSSpacing.md) {
+        HStack(alignment: .top, spacing: SettingsPageLayout.rowGap) {
             Image(systemName: systemImage)
-                .frame(width: DSSpacing.xl)
+                .frame(width: SettingsPageLayout.rowIconWidth)
                 .foregroundStyle(Color.dsTextSecondary)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: DSSpacing.xs) {

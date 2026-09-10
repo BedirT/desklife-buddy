@@ -11,6 +11,7 @@ struct HeadsUpVerificationRouteTests {
         #expect(HeadsUpVerificationMode(arguments: ["App", "--verify-heads-up-capsule"]) == .capsule)
         #expect(HeadsUpVerificationMode(arguments: ["App", "--verify-heads-up-notification"]) == .notification)
         #expect(HeadsUpVerificationMode(arguments: ["App", "--verify-heads-up-permission"]) == .permissionPanel)
+        #expect(HeadsUpVerificationMode(arguments: ["App", "--verify-automatic-visual"]) == .automatic)
         #expect(HeadsUpVerificationMode(arguments: [
             "App",
             "--verify-heads-up-capsule",
@@ -56,6 +57,28 @@ struct HeadsUpVerificationRouteTests {
             "App",
             "--verify-heads-up-notification",
         ]) == expected)
+        #expect(AppDelegate.verificationHeadsUpPolicy(arguments: [
+            "App",
+            "--verify-automatic-visual",
+        ]) == expected)
+    }
+
+    @Test("Automatic visual verification keeps production delivery with a short sampled schedule")
+    func automaticVisualConfiguration() throws {
+        let production = try ProtocolProfiles.configuration(for: .balanced)
+        let configuration = try AppDelegate.automaticVisualVerificationConfiguration(
+            from: production,
+        )
+
+        #expect(configuration.visual.softDueSeconds == 5)
+        #expect(configuration.visual.targetSeconds == 10)
+        #expect(configuration.visual.latestPreferredSeconds == 15)
+        #expect(configuration.visual.durationOptionsSeconds == production.visual.durationOptionsSeconds)
+        #expect(configuration.movement == production.movement)
+        #expect(configuration.activityEstimator == production.activityEstimator)
+        #expect(configuration.delivery.headsUpSecondsBeforeTarget == 5)
+        #expect(configuration.delivery.waitForLowFrictionMoment)
+        #expect(configuration.delivery.headsUpDefault)
     }
 
     @Test("Capsule verification uses an ephemeral in-app choice without a system request")
@@ -108,5 +131,16 @@ struct HeadsUpVerificationRouteTests {
     func stableDeliveryID() {
         #expect(HeadsUpVerificationRoute.deliveryID.uuidString.lowercased()
             == "00000000-0000-4000-8000-0000000000c7")
+    }
+
+    @Test("Ordinary and automatic Debug runtimes never reuse the fixed verification identity")
+    func ordinaryRuntimeUsesUniqueIdentities() {
+        let ordinary = AppDelegate.runtimeIDFactory(for: nil)
+        let automatic = AppDelegate.runtimeIDFactory(for: .automatic)
+
+        #expect(ordinary() != ordinary())
+        #expect(automatic() != automatic())
+        #expect(AppDelegate.runtimeIDFactory(for: .capsule)() == HeadsUpVerificationRoute.deliveryID)
+        #expect(AppDelegate.runtimeIDFactory(for: .notification)() == HeadsUpVerificationRoute.deliveryID)
     }
 }

@@ -93,6 +93,9 @@ regardless of how good it looks.
   *estimated active computer use* `[C033]`. Never "you have been sitting for 60 minutes" `[C013]`.
 - **Idle proves nothing.** Long idle may reset presentation timing (`likelyNaturalInterruption`)
   but never records movement `[03 §7.3]`.
+- **Visual timing uses available screen-session eligibility, not gaze.** An awake, active Mac
+  may advance the visual clock through short no-input periods so passive reading is not excluded.
+  This does not prove a person is present, looking at the display, or experiencing strain.
 - **A finished timer is not a health outcome.** Never "movement verified" `[C034]` or
   "eye strain reduced" `[C036]`.
 - **Visual and movement are separate clocks.** A visual reset never completes movement.

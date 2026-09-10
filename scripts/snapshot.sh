@@ -27,6 +27,10 @@ output="$ARTIFACTS/preview-review/$package"
 arguments=(
   test
   --disable-sandbox
+  # Serialized: snapshot captures share one reusable window per process, so
+  # concurrent suites corrupt each other's rasters (proven: full-run-only
+  # failures that vanish with --no-parallel).
+  --no-parallel
   --package-path "$ROOT/Packages/$package"
   -Xswiftc -DSNAPSHOT_TESTS
 )

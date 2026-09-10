@@ -157,6 +157,8 @@ structure, or invisible internals.
 
 ## Routing
 
+- Owner-directed redesign, page-by-page critique, and custom-media exploration →
+  `$owner-led-design`
 - Build/run/debug/drive the real app → `scripts/build.sh`, `scripts/run.sh`,
   `scripts/ui.sh` (shell-first macOS loop; use build-macos-apps skills when
   deeper AppKit/window/debug help is needed)

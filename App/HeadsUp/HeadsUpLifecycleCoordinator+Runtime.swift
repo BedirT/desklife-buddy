@@ -4,12 +4,18 @@ import HeadsUp
 
 extension HeadsUpLifecycleCoordinator {
     func drain() async {
-        await serialTaskTail?.value
-        let tasks = deliveryTasks.values
-        for task in tasks {
-            await task.value
+        while true {
+            let revision = workRevision
+            await serialTaskTail?.value
+            let tasks = deliveryTasks.values
+            for task in tasks {
+                await task.value
+            }
+            await serialTaskTail?.value
+            await Task.yield()
+            guard revision == workRevision else { continue }
+            return
         }
-        await serialTaskTail?.value
     }
 
     #if DEBUG
@@ -67,6 +73,7 @@ extension HeadsUpLifecycleCoordinator {
     }
 
     func enqueue(_ operation: @escaping @MainActor @Sendable () async -> Void) {
+        workRevision += 1
         let predecessor = serialTaskTail
         let task = Task {
             await predecessor?.value

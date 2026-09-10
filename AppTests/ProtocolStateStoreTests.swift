@@ -8,7 +8,7 @@ private final class LegacyProtocolStoreFixture {}
 
 @Suite("Restart-safe protocol state")
 struct ProtocolStateStoreTests {
-    @Test("Both independent counters round-trip into a safe restart grace")
+    @Test("Non-snoozed counters restore ready for the scheduler to recompute")
     func roundTrip() async throws {
         let store = try SwiftDataProtocolStateStore(inMemory: true)
         let state = ProtocolState(
@@ -29,8 +29,8 @@ struct ProtocolStateStoreTests {
         #expect(loaded.profileID == .frequentMovement)
         #expect(loaded.visualClock.accumulatedActiveUseSeconds == 1234)
         #expect(loaded.movementClock.accumulatedActiveUseSeconds == 4321)
-        #expect(loaded.visualClock.phase == .gracedAfterSuppression)
-        #expect(loaded.movementClock.phase == .gracedAfterSuppression)
+        #expect(loaded.visualClock.phase == .accumulating)
+        #expect(loaded.movementClock.phase == .accumulating)
     }
 }
 
@@ -579,7 +579,7 @@ extension ProtocolStateStoreTests {
         #expect(restored.visualClock == OpportunityClockState(
             cycleID: 1,
             accumulatedActiveUseSeconds: 0,
-            phase: .gracedAfterSuppression,
+            phase: .accumulating,
         ))
     }
 

@@ -15,6 +15,7 @@ fi
 
 mise_exec swiftlint --quiet
 "$ROOT/scripts/check-protocol-configuration.sh"
+"$ROOT/scripts/check-canonical-keys.sh"
 "$ROOT/scripts/check-previews.sh"
 "$ROOT/scripts/check-localization.sh"
 "$ROOT/scripts/check-motion-contract.sh"

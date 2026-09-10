@@ -1,4 +1,3 @@
-import AppKit
 import DesignSystem
 import Domain
 import SwiftUI
@@ -12,24 +11,21 @@ enum WeeklyRhythmArrivalPresentation {
 
 public struct WeeklyRhythmView: View {
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     @Environment(\.dsTextScale) private var textScale
     @State private var model: WeeklyRhythmModel
     @State private var hasArrived: Bool
+    @State private var factsExpanded = false
 
     private let calendar: Calendar
     private let increaseContrastOverride: Bool?
     private let reduceMotionOverride: Bool?
     private let arrivalPresentation: WeeklyRhythmArrivalPresentation
 
-    public init(
-        model: WeeklyRhythmModel,
-        calendar: Calendar = .autoupdatingCurrent,
-    ) {
+    public init(model: WeeklyRhythmModel, calendar: Calendar = .autoupdatingCurrent) {
         _model = State(initialValue: model)
         _hasArrived = State(initialValue: false)
+        _factsExpanded = State(initialValue: false)
         self.calendar = calendar
         increaseContrastOverride = nil
         reduceMotionOverride = nil
@@ -42,9 +38,11 @@ public struct WeeklyRhythmView: View {
         increaseContrastOverride: Bool? = nil,
         reduceMotionOverride: Bool? = nil,
         arrivalPresentation: WeeklyRhythmArrivalPresentation,
+        factsExpanded: Bool = false,
     ) {
         _model = State(initialValue: model)
         _hasArrived = State(initialValue: arrivalPresentation == .settled)
+        _factsExpanded = State(initialValue: factsExpanded)
         self.calendar = calendar
         self.increaseContrastOverride = increaseContrastOverride
         self.reduceMotionOverride = reduceMotionOverride
@@ -53,22 +51,15 @@ public struct WeeklyRhythmView: View {
 
     public var body: some View {
         ZStack {
-            artwork
-            Color.dsBackground
-                .opacity(colorScheme == .dark ? 0.46 : 0.18)
-                .ignoresSafeArea()
-                .accessibilityHidden(true)
-
+            Color.dsContentCanvas.ignoresSafeArea()
             content
                 .opacity(hasArrived ? 1 : 0)
                 .offset(y: reduceMotion || hasArrived ? 0 : DSSpacing.md)
         }
-        .background(Color.dsBackground)
+        .background(Color.dsContentCanvas)
         .accessibilityIdentifier("weekly.window")
         .task {
-            if model.state == .notLoaded {
-                await model.load()
-            }
+            if model.state == .notLoaded { await model.load() }
         }
         .onAppear {
             guard arrivalPresentation == .animated, !hasArrived else { return }
@@ -96,24 +87,25 @@ public struct WeeklyRhythmView: View {
 
     private func reportView(_ report: WeeklyRhythmReport) -> some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: DSSpacing.md) {
+            VStack(alignment: .leading, spacing: DSSpacing.xl) {
                 header(report)
-
                 switch report.state {
                 case .historyDisabled:
-                    historyDisabled(report)
+                    historyDisabled
                 case .empty:
                     empty(report)
                 case .sparse, .populated:
-                    if report.state == .sparse {
-                        sparseIntroduction
-                    }
-                    rhythmAndLongest(report)
-                    separatedFacts(report)
+                    if report.state == .sparse { sparseIntroduction }
+                    weeklyTimeline(report)
+                    retainedRunInspector(report)
+                    recordedFacts(report)
                     gapAndAdjustment(report)
                 }
             }
-            .padding(DSSpacing.xl)
+            .frame(maxWidth: 1120, alignment: .leading)
+            .padding(.horizontal, DSSpacing.xxl)
+            .padding(.vertical, DSSpacing.xl)
+            .frame(maxWidth: .infinity)
         }
         .scrollIndicators(.automatic)
         .defaultScrollAnchor(.top)
@@ -125,16 +117,11 @@ public struct WeeklyRhythmView: View {
                 Text(WeeklyRhythmL10n.title)
                     .font(primaryTitleFont)
                     .foregroundStyle(Color.dsTextPrimary)
-                Text(WeeklyRhythmL10n.subtitle)
+                Text(intervalLabel(report.interval))
                     .font(primaryBodyFont)
                     .foregroundStyle(Color.dsTextSecondary)
-                Text(intervalLabel(report.interval))
-                    .font(DSTypography.caption)
-                    .foregroundStyle(Color.dsTextSecondary)
             }
-
             Spacer(minLength: DSSpacing.xl)
-
             if report.state != .historyDisabled {
                 VStack(alignment: .trailing, spacing: DSSpacing.xs) {
                     Text(WeeklyRhythmL10n.estimatedDuration(report.estimatedActiveUseSeconds))
@@ -149,172 +136,127 @@ public struct WeeklyRhythmView: View {
                 .accessibilityIdentifier("weekly.estimatedActiveUse")
             }
         }
-        .weeklyGlassSurface(
-            reduceTransparency: reduceTransparency,
-            increasedContrast: increaseContrast,
-        )
     }
 
-    private func rhythmAndLongest(_ report: WeeklyRhythmReport) -> some View {
-        HStack(alignment: .top, spacing: DSSpacing.md) {
-            rhythmMosaic(report)
-                .frame(maxWidth: .infinity)
-            longestRunCard(report)
-                .frame(width: textScale == .largest ? 248 : 216)
-        }
-    }
-
-    private func rhythmMosaic(_ report: WeeklyRhythmReport) -> some View {
-        VStack(alignment: .leading, spacing: DSSpacing.md) {
-            WeeklySectionHeading(
-                title: WeeklyRhythmL10n.rhythmTitle,
-                detail: WeeklyRhythmL10n.rhythmDetail,
-            )
-
-            Grid(horizontalSpacing: DSSpacing.sm, verticalSpacing: DSSpacing.sm) {
-                GridRow {
-                    Color.clear.frame(width: textScale == .largest ? 76 : 56)
-                    ForEach(WeeklyDaypart.allCases, id: \.self) { daypart in
-                        Text(WeeklyRhythmL10n.daypart(daypart))
-                            .font(DSTypography.caption)
-                            .foregroundStyle(Color.dsTextSecondary)
-                            .frame(maxWidth: .infinity)
-                    }
+    private func weeklyTimeline(_ report: WeeklyRhythmReport) -> some View {
+        VStack(alignment: .leading, spacing: DSSpacing.lg) {
+            Text(WeeklyRhythmL10n.rhythmTitle)
+                .font(primaryHeadlineFont)
+                .foregroundStyle(Color.dsTextPrimary)
+            HStack(spacing: 0) {
+                Color.clear.frame(width: dayLabelWidth)
+                ForEach(WeeklyDaypart.allCases, id: \.self) { daypart in
+                    Text(WeeklyRhythmL10n.daypart(daypart))
+                        .font(DSTypography.caption)
+                        .foregroundStyle(Color.dsTextSecondary)
+                        .frame(maxWidth: .infinity)
                 }
-
+            }
+            VStack(spacing: DSSpacing.sm) {
                 ForEach(days(in: report.interval), id: \.self) { day in
-                    GridRow {
+                    HStack(spacing: 0) {
                         Text(dayLabel(day))
                             .font(DSTypography.caption)
                             .foregroundStyle(Color.dsTextPrimary)
-                            .frame(width: textScale == .largest ? 76 : 56, alignment: .leading)
-
-                        ForEach(WeeklyDaypart.allCases, id: \.self) { daypart in
-                            rhythmCell(report, day: day, daypart: daypart)
-                        }
+                            .frame(width: dayLabelWidth, alignment: .leading)
+                        WeeklyTimelineTrack(
+                            facts: facts(for: day, in: report),
+                            fullDayLabel: fullDayLabel(day),
+                            increasedContrast: increaseContrast,
+                        )
+                        .frame(height: textScale == .largest ? 48 : 36)
                     }
                 }
             }
             .accessibilityIdentifier("weekly.rhythm.mosaic")
-        }
-        .weeklyGlassSurface(
-            reduceTransparency: reduceTransparency,
-            increasedContrast: increaseContrast,
-        )
-    }
-
-    private func rhythmCell(
-        _ report: WeeklyRhythmReport,
-        day: Date,
-        daypart: WeeklyDaypart,
-    ) -> some View {
-        let fact = report.daypartFacts.first {
-            calendar.isDate($0.day, inSameDayAs: day) && $0.daypart == daypart
-        }
-        let duration = fact.map {
-            WeeklyRhythmL10n.estimatedDuration($0.estimatedActiveUseSeconds)
-        }
-        return Text(fact.map { compactDuration($0.estimatedActiveUseSeconds) } ?? String())
-            .font(DSTypography.caption.weight(.semibold))
-            .foregroundStyle(fact == nil ? Color.dsTextSecondary : Color.dsTextPrimary)
-            .frame(maxWidth: .infinity, minHeight: textScale == .largest ? 52 : 36)
-            .background(fact == nil ? Color.dsSurfaceSecondary.opacity(0.42) : Color.dsAccent.opacity(0.14))
-            .clipShape(RoundedRectangle(cornerRadius: DSRadius.sm, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: DSRadius.sm, style: .continuous)
-                    .stroke(
-                        fact == nil ? Color.dsSeparator : Color.dsAccent.opacity(0.44),
-                        lineWidth: increaseContrast ? 2 : 1,
-                    )
-            }
-            .accessibilityLabel(WeeklyRhythmL10n.cellAccessibility(
-                day: fullDayLabel(day),
-                daypart: WeeklyRhythmL10n.daypart(daypart),
-                duration: duration,
-            ))
-    }
-
-    private func longestRunCard(_ report: WeeklyRhythmReport) -> some View {
-        VStack(alignment: .leading, spacing: DSSpacing.sm) {
-            Text(WeeklyRhythmL10n.longestRun.uppercased())
-                .font(DSTypography.caption.weight(.semibold))
-                .foregroundStyle(Color.dsTextSecondary)
-
-            if let run = report.longestRun {
-                Text(longestRunHeading(run))
-                    .font(primaryHeadlineFont)
-                    .foregroundStyle(Color.dsTextPrimary)
-                Text(timeRange(run))
-                    .font(DSTypography.subtext)
-                    .foregroundStyle(Color.dsTextSecondary)
-                Text(compactDuration(run.durationSeconds))
-                    .font(primaryTitleFont)
-                    .foregroundStyle(Color.dsTextPrimary)
-                Spacer(minLength: DSSpacing.md)
-                Text(WeeklyRhythmL10n.timingOnly)
-                    .font(DSTypography.caption)
-                    .foregroundStyle(Color.dsTextSecondary)
-            } else {
-                Text(WeeklyRhythmL10n.noFacts)
-                    .font(primaryHeadlineFont)
-                    .foregroundStyle(Color.dsTextPrimary)
-                Spacer(minLength: DSSpacing.md)
-                Text(WeeklyRhythmL10n.timingOnly)
-                    .font(DSTypography.caption)
-                    .foregroundStyle(Color.dsTextSecondary)
-            }
-        }
-        .weeklyGlassSurface(
-            reduceTransparency: reduceTransparency,
-            increasedContrast: increaseContrast,
-        )
-        .accessibilityIdentifier("weekly.longestRun")
-    }
-}
-
-private extension WeeklyRhythmView {
-    private func separatedFacts(_ report: WeeklyRhythmReport) -> some View {
-        HStack(alignment: .top, spacing: DSSpacing.md) {
-            WeeklyFactGroup(
-                title: WeeklyRhythmL10n.opportunityFacts,
-                detail: WeeklyRhythmL10n.opportunityDetail,
-                rows: opportunityRows(report),
-                emptyTitle: WeeklyRhythmL10n.noFacts,
-                reduceTransparency: reduceTransparency,
-                increasedContrast: increaseContrast,
-                identifier: "weekly.facts.opportunities",
-            )
-            WeeklyFactGroup(
-                title: WeeklyRhythmL10n.choiceFacts,
-                detail: WeeklyRhythmL10n.choiceDetail,
-                rows: choiceRows(report),
-                emptyTitle: WeeklyRhythmL10n.noFacts,
-                reduceTransparency: reduceTransparency,
-                increasedContrast: increaseContrast,
-                identifier: "weekly.facts.choices",
-            )
-            WeeklyFactGroup(
-                title: WeeklyRhythmL10n.contextFacts,
-                detail: WeeklyRhythmL10n.contextDetail,
-                rows: contextRows(report),
-                emptyTitle: WeeklyRhythmL10n.noFacts,
-                reduceTransparency: reduceTransparency,
-                increasedContrast: increaseContrast,
-                identifier: "weekly.facts.context",
-            )
-        }
-    }
-
-    private func gapAndAdjustment(_ report: WeeklyRhythmReport) -> some View {
-        HStack(spacing: DSSpacing.md) {
             Label(WeeklyRhythmL10n.gapNote, systemImage: "circle.dashed")
                 .font(DSTypography.caption)
                 .foregroundStyle(Color.dsTextSecondary)
                 .accessibilityIdentifier("weekly.gapExplanation")
+        }
+    }
 
-            Spacer(minLength: DSSpacing.md)
+    @ViewBuilder
+    private func retainedRunInspector(_ report: WeeklyRhythmReport) -> some View {
+        if let run = report.longestRun {
+            HStack(spacing: DSSpacing.lg) {
+                Circle()
+                    .fill(Color.dsAccent)
+                    .frame(width: DSSpacing.md, height: DSSpacing.md)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                    Text(WeeklyRhythmL10n.longestRun)
+                        .font(DSTypography.caption)
+                        .foregroundStyle(Color.dsTextSecondary)
+                    Text(longestRunHeading(run))
+                        .font(primaryHeadlineFont)
+                        .foregroundStyle(Color.dsTextPrimary)
+                    Text(timeRange(run))
+                        .font(DSTypography.subtext)
+                        .foregroundStyle(Color.dsTextSecondary)
+                }
+                Spacer(minLength: DSSpacing.xl)
+                Text(compactDuration(run.durationSeconds))
+                    .font(primaryTitleFont)
+                    .foregroundStyle(Color.dsTextPrimary)
+            }
+            .padding(DSSpacing.lg)
+            .background(Color.dsSurfaceSecondary.opacity(0.46))
+            .clipShape(RoundedRectangle(cornerRadius: DSRadius.md, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: DSRadius.md, style: .continuous)
+                    .stroke(Color.dsSeparator, lineWidth: increaseContrast ? 2 : 1)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("weekly.longestRun")
+        }
+    }
 
-            VStack(alignment: .trailing, spacing: DSSpacing.xs) {
+    private func recordedFacts(_ report: WeeklyRhythmReport) -> some View {
+        DisclosureGroup(isExpanded: $factsExpanded) {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: DSSpacing.xxl) { factColumns(report) }
+                VStack(alignment: .leading, spacing: DSSpacing.xl) { factColumns(report) }
+            }
+            .padding(.top, DSSpacing.lg)
+        } label: {
+            Text(WeeklyRhythmL10n.recordedFacts)
+                .font(primaryHeadlineFont)
+                .foregroundStyle(Color.dsTextPrimary)
+        }
+        .padding(DSSpacing.lg)
+        .background(Color.dsSurfaceSecondary.opacity(0.28))
+        .clipShape(RoundedRectangle(cornerRadius: DSRadius.md, style: .continuous))
+        .accessibilityIdentifier("weekly.recordedFacts")
+    }
+
+    @ViewBuilder
+    private func factColumns(_ report: WeeklyRhythmReport) -> some View {
+        WeeklyFactColumn(
+            title: WeeklyRhythmL10n.opportunityFacts,
+            detail: WeeklyRhythmL10n.opportunityDetail,
+            rows: opportunityRows(report),
+            identifier: "weekly.facts.opportunities",
+        )
+        WeeklyFactColumn(
+            title: WeeklyRhythmL10n.choiceFacts,
+            detail: WeeklyRhythmL10n.choiceDetail,
+            rows: choiceRows(report),
+            identifier: "weekly.facts.choices",
+        )
+        WeeklyFactColumn(
+            title: WeeklyRhythmL10n.contextFacts,
+            detail: WeeklyRhythmL10n.contextDetail,
+            rows: contextRows(report),
+            identifier: "weekly.facts.context",
+        )
+    }
+}
+
+private extension WeeklyRhythmView {
+    func gapAndAdjustment(_ report: WeeklyRhythmReport) -> some View {
+        HStack(spacing: DSSpacing.lg) {
+            VStack(alignment: .leading, spacing: DSSpacing.xs) {
                 Text(WeeklyRhythmL10n.adjustTitle)
                     .font(DSTypography.headline)
                     .foregroundStyle(Color.dsTextPrimary)
@@ -322,32 +264,27 @@ private extension WeeklyRhythmView {
                     .font(DSTypography.caption)
                     .foregroundStyle(Color.dsTextSecondary)
             }
-            Button(WeeklyRhythmL10n.reviewSchedule) {
-                model.openScheduleSettings()
-            }
-            .buttonStyle(.bordered)
-            .accessibilityHint(WeeklyRhythmL10n.adjustDetail)
-            .accessibilityIdentifier("weekly.reviewSchedule")
+            Spacer(minLength: DSSpacing.lg)
+            Button(WeeklyRhythmL10n.reviewSchedule) { model.openScheduleSettings() }
+                .buttonStyle(.bordered)
+                .accessibilityHint(WeeklyRhythmL10n.adjustDetail)
+                .accessibilityIdentifier("weekly.reviewSchedule")
         }
-        .weeklyGlassSurface(
-            reduceTransparency: reduceTransparency,
-            increasedContrast: increaseContrast,
-        )
     }
 
-    private var sparseIntroduction: some View {
-        WeeklySectionHeading(
-            title: WeeklyRhythmL10n.sparseTitle,
-            detail: WeeklyRhythmL10n.sparseDetail,
-        )
-        .weeklyGlassSurface(
-            reduceTransparency: reduceTransparency,
-            increasedContrast: increaseContrast,
-        )
+    var sparseIntroduction: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.xs) {
+            Text(WeeklyRhythmL10n.sparseTitle)
+                .font(primaryHeadlineFont)
+                .foregroundStyle(Color.dsTextPrimary)
+            Text(WeeklyRhythmL10n.sparseDetail)
+                .font(primaryBodyFont)
+                .foregroundStyle(Color.dsTextSecondary)
+        }
         .accessibilityIdentifier("weekly.sparse")
     }
 
-    private func empty(_ report: WeeklyRhythmReport) -> some View {
+    func empty(_ report: WeeklyRhythmReport) -> some View {
         VStack(alignment: .leading, spacing: DSSpacing.lg) {
             Label(WeeklyRhythmL10n.emptyTitle, systemImage: "square.dashed")
                 .font(primaryTitleFont)
@@ -357,14 +294,13 @@ private extension WeeklyRhythmView {
                 .foregroundStyle(Color.dsTextSecondary)
             gapAndAdjustment(report)
         }
-        .weeklyGlassSurface(
-            reduceTransparency: reduceTransparency,
-            increasedContrast: increaseContrast,
-        )
+        .frame(maxWidth: 560, minHeight: 248, alignment: .leading)
+        .quietSurface(increasedContrast: increaseContrast)
+        .frame(maxWidth: .infinity, minHeight: 420)
         .accessibilityIdentifier("weekly.empty")
     }
 
-    private func historyDisabled(_ report: WeeklyRhythmReport) -> some View {
+    var historyDisabled: some View {
         VStack(alignment: .leading, spacing: DSSpacing.lg) {
             Label(WeeklyRhythmL10n.historyDisabledTitle, systemImage: "rectangle.slash")
                 .font(primaryTitleFont)
@@ -372,22 +308,17 @@ private extension WeeklyRhythmView {
             Text(WeeklyRhythmL10n.historyDisabledDetail)
                 .font(primaryBodyFont)
                 .foregroundStyle(Color.dsTextSecondary)
-            Button(WeeklyRhythmL10n.reviewHistory) {
-                model.openHistorySettings()
-            }
-            .buttonStyle(.bordered)
-            .accessibilityIdentifier("weekly.reviewHistory")
+            Button(WeeklyRhythmL10n.reviewHistory) { model.openHistorySettings() }
+                .buttonStyle(.bordered)
+                .accessibilityIdentifier("weekly.reviewHistory")
         }
         .frame(maxWidth: 560, minHeight: 248, alignment: .leading)
-        .weeklyGlassSurface(
-            reduceTransparency: reduceTransparency,
-            increasedContrast: increaseContrast,
-        )
+        .quietSurface(increasedContrast: increaseContrast)
         .frame(maxWidth: .infinity, minHeight: 420)
         .accessibilityIdentifier("weekly.historyDisabled")
     }
 
-    private var failureView: some View {
+    var failureView: some View {
         VStack(spacing: DSSpacing.md) {
             Image(systemName: "exclamationmark.triangle")
                 .font(primaryTitleFont)
@@ -399,69 +330,30 @@ private extension WeeklyRhythmView {
             Text(WeeklyRhythmL10n.loadFailedDetail)
                 .font(primaryBodyFont)
                 .foregroundStyle(Color.dsTextSecondary)
-            Button(WeeklyRhythmL10n.tryAgain) {
-                Task { await model.retry() }
-            }
-            .buttonStyle(.borderedProminent)
-            .accessibilityIdentifier("weekly.retry")
+            Button(WeeklyRhythmL10n.tryAgain) { Task { await model.retry() } }
+                .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("weekly.retry")
         }
         .multilineTextAlignment(.center)
         .accessibilityIdentifier("weekly.failure")
     }
 
-    private func centeredState(@ViewBuilder content: () -> some View) -> some View {
+    func centeredState(@ViewBuilder content: () -> some View) -> some View {
         content()
             .frame(maxWidth: 520, minHeight: 220)
-            .weeklyGlassSurface(
-                reduceTransparency: reduceTransparency,
-                increasedContrast: increaseContrast,
-            )
+            .quietSurface(increasedContrast: increaseContrast)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(DSSpacing.xl)
     }
 
-    @ViewBuilder
-    private var artwork: some View {
-        if let url = Bundle.module.url(forResource: "weekly-rhythm-field", withExtension: "png"),
-           let image = NSImage(contentsOf: url)
-        {
-            GeometryReader { proxy in
-                Image(nsImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: proxy.size.width, height: proxy.size.height)
-                    .clipped()
-                    .accessibilityHidden(true)
-            }
-            .ignoresSafeArea()
-        } else {
-            Color.dsBackground
-                .ignoresSafeArea()
-                .accessibilityHidden(true)
-        }
-    }
+    var increaseContrast: Bool { increaseContrastOverride ?? (colorSchemeContrast == .increased) }
+    var reduceMotion: Bool { reduceMotionOverride ?? systemReduceMotion }
+    var primaryTitleFont: Font { textScale == .largest ? DSTypography.largeTitle : DSTypography.title }
+    var primaryHeadlineFont: Font { textScale == .largest ? DSTypography.title : DSTypography.headline }
+    var primaryBodyFont: Font { textScale == .largest ? DSTypography.headline : DSTypography.body }
+    var dayLabelWidth: CGFloat { textScale == .largest ? 88 : 72 }
 
-    private var increaseContrast: Bool {
-        increaseContrastOverride ?? (colorSchemeContrast == .increased)
-    }
-
-    private var reduceMotion: Bool {
-        reduceMotionOverride ?? systemReduceMotion
-    }
-
-    private var primaryTitleFont: Font {
-        textScale == .largest ? DSTypography.largeTitle : DSTypography.title
-    }
-
-    private var primaryHeadlineFont: Font {
-        textScale == .largest ? DSTypography.title : DSTypography.headline
-    }
-
-    private var primaryBodyFont: Font {
-        textScale == .largest ? DSTypography.headline : DSTypography.body
-    }
-
-    private func days(in interval: WeeklyRhythmInterval) -> [Date] {
+    func days(in interval: WeeklyRhythmInterval) -> [Date] {
         var result: [Date] = []
         var day = interval.startedAt
         while day < interval.endedAt, result.count < 7 {
@@ -472,22 +364,20 @@ private extension WeeklyRhythmView {
         return result
     }
 
-    private func dayLabel(_ date: Date) -> String {
-        dateFormatter("EEE d").string(from: date)
+    func facts(for day: Date, in report: WeeklyRhythmReport) -> [WeeklyDaypartFact] {
+        report.daypartFacts.filter { calendar.isDate($0.day, inSameDayAs: day) }
     }
 
-    private func fullDayLabel(_ date: Date) -> String {
-        dateFormatter("EEEE, MMMM d").string(from: date)
-    }
+    func dayLabel(_ date: Date) -> String { dateFormatter("EEE d").string(from: date) }
+    func fullDayLabel(_ date: Date) -> String { dateFormatter("EEEE, MMMM d").string(from: date) }
 
-    private func intervalLabel(_ interval: WeeklyRhythmInterval) -> String {
+    func intervalLabel(_ interval: WeeklyRhythmInterval) -> String {
         let finalDay = calendar.date(byAdding: .second, value: -1, to: interval.endedAt) ?? interval.endedAt
         return "\(dateFormatter("MMM d").string(from: interval.startedAt))–\(dateFormatter("d").string(from: finalDay))"
     }
 
-    private func longestRunHeading(_ run: EstimatedActiveUseRun) -> String {
-        let hour = calendar.component(.hour, from: run.startedAt)
-        let daypart: WeeklyDaypart = switch hour {
+    func longestRunHeading(_ run: EstimatedActiveUseRun) -> String {
+        let daypart: WeeklyDaypart = switch calendar.component(.hour, from: run.startedAt) {
         case 5 ..< 12: .morning
         case 12 ..< 17: .afternoon
         case 17 ..< 22: .evening
@@ -496,11 +386,11 @@ private extension WeeklyRhythmView {
         return "\(dateFormatter("EEE").string(from: run.startedAt)) \(WeeklyRhythmL10n.daypart(daypart).lowercased())"
     }
 
-    private func timeRange(_ run: EstimatedActiveUseRun) -> String {
+    func timeRange(_ run: EstimatedActiveUseRun) -> String {
         "\(dateFormatter("h:mm a").string(from: run.startedAt))–\(dateFormatter("h:mm a").string(from: run.endedAt))"
     }
 
-    private func compactDuration(_ seconds: TimeInterval) -> String {
+    func compactDuration(_ seconds: TimeInterval) -> String {
         let minutes = max(0, Int(seconds.rounded()) / 60)
         let hours = minutes / 60
         let remainder = minutes % 60
@@ -509,7 +399,7 @@ private extension WeeklyRhythmView {
         return "\(minutes)m"
     }
 
-    private func dateFormatter(_ format: String) -> DateFormatter {
+    func dateFormatter(_ format: String) -> DateFormatter {
         let formatter = DateFormatter()
         formatter.calendar = calendar
         formatter.timeZone = calendar.timeZone
@@ -518,15 +408,13 @@ private extension WeeklyRhythmView {
         return formatter
     }
 
-    private func scheduleLabel(_ schedule: WeeklyScheduleFact) -> String {
-        "\(WeeklyRhythmL10n.scheduleProfile(schedule.profileID)) · \(schedule.workingHoursOnly ? WeeklyRhythmL10n.workingHoursOnly : WeeklyRhythmL10n.allHours)"
+    func scheduleLabel(_ schedule: WeeklyScheduleFact) -> String {
+        WeeklyRhythmL10n.scheduleProfile(schedule.profileID)
     }
 
-    private func opportunityRows(_ report: WeeklyRhythmReport) -> [WeeklyFactRow] {
+    func opportunityRows(_ report: WeeklyRhythmReport) -> [WeeklyFactRow] {
         report.eventFacts.compactMap { fact in
-            guard !Self.choiceKinds.contains(fact.kind), !Self.contextKinds.contains(fact.kind) else {
-                return nil
-            }
+            guard !Self.choiceKinds.contains(fact.kind), !Self.contextKinds.contains(fact.kind) else { return nil }
             return WeeklyFactRow(
                 systemImage: fact.kind == .promptPresented ? "rectangle.inset.filled" : "timer",
                 title: WeeklyRhythmL10n.eventTitle(fact.kind),
@@ -535,7 +423,7 @@ private extension WeeklyRhythmView {
         }
     }
 
-    private func choiceRows(_ report: WeeklyRhythmReport) -> [WeeklyFactRow] {
+    func choiceRows(_ report: WeeklyRhythmReport) -> [WeeklyFactRow] {
         report.choiceFacts.map { fact in
             let count = WeeklyRhythmL10n.countAndOpportunity(fact.count, fact.opportunity)
             let duration = WeeklyRhythmL10n.selectedDuration(fact.selectedDurationSeconds)
@@ -547,7 +435,7 @@ private extension WeeklyRhythmView {
         }
     }
 
-    private func contextRows(_ report: WeeklyRhythmReport) -> [WeeklyFactRow] {
+    func contextRows(_ report: WeeklyRhythmReport) -> [WeeklyFactRow] {
         report.contextFacts.map { fact in
             WeeklyFactRow(
                 systemImage: fact.source == .calendarBusyFree ? "calendar.badge.minus" : "circle.dotted",
@@ -557,34 +445,73 @@ private extension WeeklyRhythmView {
         }
     }
 
-    private static let choiceKinds: Set<OpportunityEventKind> = [
-        .breakStarted,
-        .userDeclaredCompleted,
-        .userDeclaredAlreadyMoved,
-        .positionChanged,
-        .snoozed,
-        .skipped,
-        .notAppropriate,
+    static let choiceKinds: Set<OpportunityEventKind> = [
+        .breakStarted, .userDeclaredCompleted, .userDeclaredAlreadyMoved, .positionChanged,
+        .snoozed, .skipped, .notAppropriate,
     ]
-    private static let contextKinds: Set<OpportunityEventKind> = [
-        .notAppropriate,
-        .likelyNaturalInterruption,
-    ]
+    static let contextKinds: Set<OpportunityEventKind> = [.notAppropriate, .likelyNaturalInterruption]
 }
 
-private struct WeeklySectionHeading: View {
-    let title: String
-    let detail: String
+private struct WeeklyTimelineTrack: View {
+    let facts: [WeeklyDaypartFact]
+    let fullDayLabel: String
+    let increasedContrast: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DSSpacing.xs) {
-            Text(title)
-                .font(DSTypography.headline)
-                .foregroundStyle(Color.dsTextPrimary)
-            Text(detail)
-                .font(DSTypography.caption)
-                .foregroundStyle(Color.dsTextSecondary)
+        GeometryReader { proxy in
+            let quarterWidth = proxy.size.width / CGFloat(WeeklyDaypart.allCases.count)
+            ZStack(alignment: .leading) {
+                Rectangle()
+                    .fill(Color.dsSeparator)
+                    .frame(height: increasedContrast ? 2 : 1)
+                ForEach(1 ..< WeeklyDaypart.allCases.count, id: \.self) { index in
+                    Rectangle()
+                        .fill(Color.dsSeparator)
+                        .frame(width: 1, height: proxy.size.height)
+                        .offset(x: quarterWidth * CGFloat(index))
+                }
+                ForEach(facts, id: \.daypart) { fact in
+                    let availableWidth = max(0, quarterWidth - DSSpacing.lg)
+                    let ratio = min(1, fact.estimatedActiveUseSeconds / daypartSeconds(fact.daypart))
+                    let width = max(DSSpacing.xxl, availableWidth * ratio)
+                    Text(compactDuration(fact.estimatedActiveUseSeconds))
+                        .font(DSTypography.caption.weight(.semibold))
+                        .foregroundStyle(Color.dsTextPrimary)
+                        .frame(width: width, height: proxy.size.height - DSSpacing.sm)
+                        .background(Color.dsAccent.opacity(0.18))
+                        .clipShape(RoundedRectangle(cornerRadius: DSRadius.sm, style: .continuous))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: DSRadius.sm, style: .continuous)
+                                .stroke(Color.dsAccent.opacity(0.58), lineWidth: increasedContrast ? 2 : 1)
+                        }
+                        .offset(
+                            x: quarterWidth * CGFloat(fact.daypart.rawValue) + DSSpacing.sm,
+                            y: DSSpacing.xs,
+                        )
+                        .accessibilityLabel(WeeklyRhythmL10n.cellAccessibility(
+                            day: fullDayLabel,
+                            daypart: WeeklyRhythmL10n.daypart(fact.daypart),
+                            duration: WeeklyRhythmL10n.estimatedDuration(fact.estimatedActiveUseSeconds),
+                        ))
+                }
+            }
         }
+    }
+
+    func daypartSeconds(_ daypart: WeeklyDaypart) -> TimeInterval {
+        switch daypart {
+        case .overnight, .morning: 7 * 60 * 60
+        case .afternoon, .evening: 5 * 60 * 60
+        }
+    }
+
+    func compactDuration(_ seconds: TimeInterval) -> String {
+        let minutes = max(0, Int(seconds.rounded()) / 60)
+        let hours = minutes / 60
+        let remainder = minutes % 60
+        if hours > 0, remainder > 0 { return "\(hours)h \(remainder)m" }
+        if hours > 0 { return "\(hours)h" }
+        return "\(minutes)m"
     }
 }
 
@@ -592,24 +519,23 @@ private struct WeeklyFactRow: Identifiable {
     let systemImage: String
     let title: String
     let detail: String
-
     var id: String { "\(systemImage)|\(title)|\(detail)" }
 }
 
-private struct WeeklyFactGroup: View {
+private struct WeeklyFactColumn: View {
     let title: String
     let detail: String
     let rows: [WeeklyFactRow]
-    let emptyTitle: String
-    let reduceTransparency: Bool
-    let increasedContrast: Bool
     let identifier: String
 
     var body: some View {
         VStack(alignment: .leading, spacing: DSSpacing.md) {
-            WeeklySectionHeading(title: title, detail: detail)
+            VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                Text(title).font(DSTypography.headline).foregroundStyle(Color.dsTextPrimary)
+                Text(detail).font(DSTypography.caption).foregroundStyle(Color.dsTextSecondary)
+            }
             if rows.isEmpty {
-                Text(emptyTitle)
+                Text(WeeklyRhythmL10n.noFacts)
                     .font(DSTypography.caption)
                     .foregroundStyle(Color.dsTextSecondary)
             } else {
@@ -620,61 +546,35 @@ private struct WeeklyFactGroup: View {
                             .frame(width: 20)
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: DSSpacing.xs) {
-                            Text(row.title)
-                                .font(DSTypography.subtext)
-                                .foregroundStyle(Color.dsTextPrimary)
-                            Text(row.detail)
-                                .font(DSTypography.caption)
-                                .foregroundStyle(Color.dsTextSecondary)
+                            Text(row.title).font(DSTypography.subtext).foregroundStyle(Color.dsTextPrimary)
+                            Text(row.detail).font(DSTypography.caption).foregroundStyle(Color.dsTextSecondary)
                         }
                     }
                     .accessibilityElement(children: .combine)
                 }
             }
-            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, minHeight: 132, alignment: .topLeading)
-        .weeklyGlassSurface(
-            reduceTransparency: reduceTransparency,
-            increasedContrast: increasedContrast,
-        )
+        .frame(maxWidth: .infinity, alignment: .topLeading)
         .accessibilityIdentifier(identifier)
     }
 }
 
-private struct WeeklyGlassSurfaceModifier: ViewModifier {
-    let reduceTransparency: Bool
+private struct QuietSurfaceModifier: ViewModifier {
     let increasedContrast: Bool
 
-    @ViewBuilder
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: DSRadius.lg, style: .continuous)
-        if reduceTransparency {
-            content
-                .padding(DSSpacing.lg)
-                .background(Color.dsSurface)
-                .clipShape(shape)
-                .overlay { shape.stroke(Color.dsSeparator, lineWidth: increasedContrast ? 2 : 1) }
-        } else {
-            content
-                .padding(DSSpacing.lg)
-                .background(Color.dsSurface.opacity(0.36))
-                .clipShape(shape)
-                .glassEffect()
-                .overlay { shape.stroke(Color.dsSeparator, lineWidth: increasedContrast ? 2 : 1) }
-        }
+        content
+            .padding(DSSpacing.xl)
+            .background(Color.dsSurfaceSecondary.opacity(0.34))
+            .clipShape(shape)
+            .overlay { shape.stroke(Color.dsSeparator, lineWidth: increasedContrast ? 2 : 1) }
     }
 }
 
 private extension View {
-    func weeklyGlassSurface(
-        reduceTransparency: Bool,
-        increasedContrast: Bool,
-    ) -> some View {
-        modifier(WeeklyGlassSurfaceModifier(
-            reduceTransparency: reduceTransparency,
-            increasedContrast: increasedContrast,
-        ))
+    func quietSurface(increasedContrast: Bool) -> some View {
+        modifier(QuietSurfaceModifier(increasedContrast: increasedContrast))
     }
 }
 

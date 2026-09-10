@@ -12,6 +12,13 @@ enum SettingsFeatureL10n {
         "settings.sidebar.learn_support",
         default: "Learn & support",
     )
+    static let breaks = string("settings.sidebar.breaks", default: "Breaks")
+    static let app = string("settings.sidebar.app", default: "App")
+    static let dataAndPrivacy = string(
+        "settings.sidebar.data_privacy",
+        default: "Data & privacy",
+    )
+    static let help = string("settings.sidebar.help", default: "Help")
     static let schedule = string("settings.section.schedule", default: "Schedule")
     static let breakContent = string("settings.section.break_content", default: "Break content")
     static let contextAndExclusions = string(
@@ -64,7 +71,7 @@ enum SettingsFeatureL10n {
     )
     static let estimatorExplanation = string(
         "settings.schedule.estimator_explanation",
-        default: "Timing is based on estimated active computer use: key and pointer input only. It can't tell whether you are sitting, standing, or looking at the screen.",
+        default: "Visual timing follows an available Mac session. Movement timing estimates active computer use from key and pointer input. Neither can tell whether you are present, sitting, moving, or looking at the screen.",
     )
     static let whyTheseNumbers = string("settings.schedule.why_numbers", default: "Why these numbers?")
     static let visualSoftDue = string("settings.custom.visual.soft_due", default: "Visual start offering after (min)")

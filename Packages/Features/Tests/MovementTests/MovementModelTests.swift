@@ -405,4 +405,19 @@ extension MovementModelTests {
         #expect(model.progress == 0.5)
         #expect(model.remainingSeconds == 120)
     }
+
+    @Test("A refresh after system suspension completes an elapsed movement break")
+    func suspensionElapsedBreakCompletes() throws {
+        let clock = TestClock()
+        var actions: [MovementAction] = []
+        let model = try makeModel(clock: clock, onAction: { actions.append($0) })
+
+        model.open()
+        clock.value = 1200
+        model.refresh()
+
+        #expect(model.remainingSeconds == 0)
+        #expect(model.phase == .finished(.timerFinished))
+        #expect(actions == [.opened, .timerFinished])
+    }
 }

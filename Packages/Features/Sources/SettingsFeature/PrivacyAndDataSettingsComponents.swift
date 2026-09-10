@@ -34,10 +34,10 @@ struct SettingsPrivacyStoredDataRow: View {
     let textScale: DSTextScale
 
     var body: some View {
-        HStack(alignment: .top, spacing: DSSpacing.sm) {
+        HStack(alignment: .top, spacing: SettingsPageLayout.rowGap) {
             Image(systemName: systemImage)
                 .foregroundStyle(Color.dsAccent)
-                .frame(width: DSSpacing.lg)
+                .frame(width: SettingsPageLayout.rowIconWidth)
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: DSSpacing.xs) {
@@ -63,9 +63,7 @@ struct SettingsPrivacyRetentionButton: View {
     var body: some View {
         Button(action: action) {
             HStack(alignment: .top, spacing: DSSpacing.sm) {
-                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(selected ? Color.dsAccent : Color.dsTextSecondary)
-                    .accessibilityHidden(true)
+                DSSelectionIndicator(selected: selected)
 
                 VStack(alignment: .leading, spacing: DSSpacing.xs) {
                     Text(choice.title)
@@ -118,11 +116,11 @@ struct SettingsPrivacyDataControlRow: View {
     let action: () -> Void
 
     var body: some View {
-        HStack(alignment: .center, spacing: DSSpacing.md) {
+        HStack(alignment: .center, spacing: SettingsPageLayout.rowGap) {
             Image(systemName: systemImage)
                 .font(DSTypography.headline)
                 .foregroundStyle(Color.dsTextSecondary)
-                .frame(width: DSSpacing.xl)
+                .frame(width: SettingsPageLayout.rowIconWidth)
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: DSSpacing.xs) {

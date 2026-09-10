@@ -75,6 +75,13 @@ struct SettingsStoreTests {
             screenLocked: false,
         ))
         try await restartedRuntime.observe(ActivitySample(
+            uptimeSeconds: 85,
+            secondsSinceInput: 0,
+            systemAwake: true,
+            sessionActive: true,
+            screenLocked: false,
+        ))
+        try await restartedRuntime.observe(ActivitySample(
             uptimeSeconds: 160,
             secondsSinceInput: 0,
             systemAwake: true,

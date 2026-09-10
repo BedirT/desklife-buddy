@@ -81,7 +81,7 @@ struct MovementLifecycleRuntimeTests {
         }
     }
 
-    @Test("Automatic open and a finished timer do not infer movement completion")
+    @Test("Finished movement timer restarts visual timing without inferring movement")
     func automaticOpenAndTimerDoNotReset() async throws {
         let store = MovementRuntimeStore(state: dueState)
         let runtime = try makeRuntime(store: store)
@@ -92,9 +92,11 @@ struct MovementLifecycleRuntimeTests {
 
         try await runtime.handleMovement(.timerFinished)
 
-        #expect(runtime.state.visualClock.accumulatedActiveUseSeconds == 1500)
+        #expect(runtime.state.visualClock.accumulatedActiveUseSeconds == 0)
         #expect(runtime.state.movementClock.accumulatedActiveUseSeconds == 3600)
-        #expect(store.commits.flatMap(\.events).map(\.kind) == [.breakStarted, .timerFinished])
+        let events = store.commits.flatMap(\.events)
+        #expect(events.map(\.kind) == [.breakStarted, .timerFinished])
+        #expect(events.map(\.opportunity) == [.movement, .movement])
     }
 
     @Test(arguments: [300.0, 120.0])

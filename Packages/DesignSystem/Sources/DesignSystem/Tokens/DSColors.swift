@@ -9,10 +9,20 @@ public extension Color {
 
     /// Screen background.
     static let dsBackground = Color(light: Color(hex: 0xF6F6F8), dark: Color(hex: 0x0E0E11))
+    /// Opaque window chrome behind fixed navigation and other persistent controls.
+    static let dsWindowChrome = Color(light: Color(hex: 0xE9EEF4), dark: Color(hex: 0x111217))
+    /// Opaque inset canvas for primary reading and configuration content.
+    static let dsContentCanvas = Color(light: Color(hex: 0xFBFAF8), dark: Color(hex: 0x1B1B20))
     /// Cards, sheets, grouped content.
     static let dsSurface = Color(light: Color(hex: 0xFFFFFF), dark: Color(hex: 0x1B1B20))
     /// Secondary fills: inputs, secondary buttons, tag backgrounds.
     static let dsSurfaceSecondary = Color(light: Color(hex: 0xECECF1), dark: Color(hex: 0x26262C))
+    /// Raised library rows and category controls.
+    static let dsLibraryRow = Color(light: Color(hex: 0xF0F0F3), dark: Color(hex: 0x26262C))
+    /// Selected library row and category surface.
+    static let dsLibrarySelected = Color(light: Color(hex: 0x5B43D6), dark: Color(hex: 0x5E35A5))
+    /// Subtle control well behind the compact category strip.
+    static let dsLibraryControl = Color(light: Color(hex: 0xF0EFF3), dark: Color(hex: 0x202126))
 
     // MARK: - Content
 

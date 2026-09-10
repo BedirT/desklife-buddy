@@ -25,6 +25,7 @@ This table is the source of most of the design's honesty constraints. Print it o
 | Whether a sanctioned public signal says the Mac is awake and session-active; injected lock state when available | Whether a person is in front of it, or whether an unavailable lock signal means unlocked |
 | Seconds since the last keyboard/mouse/scroll event | Whether the user is sitting, standing, or walking |
 | Separate accumulated scheduling estimates with their exact evidence limits | Whether the user looked away, blinked, moved, or received a health benefit |
+| Eligible available-session time and accumulated *estimated active computer use* | Whether anyone is present, looking at the display, or resting their eyes |
 | Which app is frontmost (ephemerally, for exclusion matching only) | What the user is doing in that app |
 | Whether a selected calendar reports busy (if enabled) | Whether a meeting is actually happening, or who is in it |
 | That the user pressed a button | Whether the user did the activity |
@@ -128,8 +129,8 @@ Per independent `ClockCycleID`, coordinated by one `OpportunityID`:
   headsUpPresented                           (90 s, then at most one merge)
      ▼
   waitingForLowFrictionMoment
-     │  input pause / app switch / busy interval ends /
-     │  presentation mode exits / user opens the menu / latestPreferred reached
+     │  input pause of 5 s / explicit context seam /
+     │  user opens the menu / firm latest reached
      ▼
   breakOffered  (Level 2 panel)
      ├── accept ─► running ──► terminal action ─► fresh cycle per action matrix
@@ -309,6 +310,42 @@ only for an already-bound pending acknowledgement, its non-exportable Keychain s
 through the bounded in-flight window; replacing the pairing fences the old peer, erases its pending
 transport record, and shows a visible rejected receipt rather than accepting it under a new key. No
 sensor is required.
+### 8.1 Stable identities (normative; typed in the Epic 2 identity story)
+
+- `ClockCycleID` — the per-clock monotonic cycle counter. It bumps on every clock
+  reset and never repeats within its clock. Current code carries it as the visual /
+  movement `cycleID` fields and the heads-up cycle IDs.
+- `OpportunityID` — one schedulable opportunity: the authority device (`mac` — the
+  only due-clock authority), the clock (`visual`, `movement`, or the merged pair),
+  and its `ClockCycleID`(s). Current code carries it as `HeadsUpOpportunityID` plus
+  the per-delivery `HeadsUpDeliveryID`.
+- `ActionID` — one user or system action attempt: a stable UUID generated at the
+  origin device, persisted before its surface closes, and replayed idempotently
+  across devices and restarts.
+- `DecisionID` — one terminal resolution of an opportunity: the first valid
+  resolution wins and every later, duplicate, or out-of-order action for the same
+  `OpportunityID` reconciles against it as an audited no-op.
+- Device and session identity — `authorityDevice` is always `mac` for due timing;
+  `originDevice` (`mac` | `iphone` | `watch`) annotates each action; session
+  identity is local and monotonic, never wall-derived, so restores re-anchor
+  without catching up.
+
+Epic 2 introduces these as typed values without renaming, recycling, or reinterpreting
+any shipped raw value (AUTHORITY.md compatibility rules).
+
+### 8.2 Product facts versus ledgers
+
+The ten §8 events are the only product facts. Everything else the system retains is a
+ledger, and ledgers never resolve an opportunity:
+
+- **Operational ledger** — delivery reservations, per-cycle presentation counts,
+  snooze deadlines, suppression evaluations, grace deadlines, and revision counters.
+  Kept only as long as needed to deliver correctly; never exported as outcomes.
+- **Evidence ledger** — retained history and export projections of the ten facts,
+  governed by the retention policy and deletion controls. Aggregates, settings
+  changes, and subjective check-ins are separate local record families, never extra
+  protocol events. The wider `event_schema.json` union is a storage envelope pending
+  research-owner reconciliation (DQ-20); the engine implements exactly the ten facts.
 
 ## 9. Adaptation — what the app may and may not learn
 
@@ -357,3 +394,71 @@ Checkable statements. If a design violates one, the design is wrong.
 8. Core function requires no permission, no account, and no network.
 9. Every Paused or Held state can explain itself in the user's words.
 10. Every number shown is either from the protocol or labeled as an estimate.
+
+## 12. Apple companion model
+
+The accepted ecosystem model is **E1 first, with an opt-in private E2 ledger**. The Mac
+remains complete by itself and is the only authority that decides when a Mac-work visual or
+movement opportunity is due. Visual resets stay on the Mac. Only an accepted movement break
+may be continued explicitly to iPhone, and Apple Watch participates through the paired iPhone.
+
+Companions are action surfaces, not new clocks or sensors. They render the exact Mac-authored
+movement opportunity, keep its continuous elapsed deadline while suspended, and return the
+user's declaration. They never infer presence, posture, gaze, movement, or completion. iPhone
+is a complete companion path without Apple Watch, and not owning or wearing a Watch has no
+product penalty.
+
+Every transported opportunity uses one versioned, platform-neutral contract:
+
+```text
+CompanionOpportunityEnvelope
+  schemaVersion
+  opportunityID
+  authorityDevice = mac
+  kind = movement
+  contentID
+  selectedDurationSeconds
+  state = accepted | active | resolved
+  createdAt
+  continuousDeadline
+  latestKnownRevision
+
+CompanionOpportunityAction
+  schemaVersion
+  actionID
+  opportunityID
+  originDevice = mac | iphone | watch
+  action = doneEarly | alreadyMoved | skip | timerExpired
+  authoredAt
+  certainty = userDeclared | timerFact
+  revision
+```
+
+The action-to-event mapping is closed:
+
+| Companion action | Exhaustive product event |
+|---|---|
+| `doneEarly` | `userDeclaredCompleted` |
+| `alreadyMoved` | `userDeclaredAlreadyMoved` |
+| `skip` | `skipped` |
+| `timerExpired` | `timerFinished` |
+
+There is no companion-only completion event and no ambiguous `End early` action. A timer fact
+does not prove movement. Sensor observations, if ever explored separately, cannot resolve an
+opportunity.
+
+The first valid resolution for an `opportunityID` wins. Duplicate, late, stale, and
+out-of-order actions remain auditable reconciled no-ops and never replay an outcome. Remote
+delivery never delays a Mac deadline or opens a late break.
+
+The default mode is standalone and local. Handoff transfers only one explicitly accepted
+activity plus the owner's private-companion-sync enabled state, which prevents iPhone from
+enabling cloud exchange without that preference. Durable reconciliation is a separate, explicit opt-in using the owner's private
+iCloud data. Each device appends locally first, queues while offline or signed out, and replays
+idempotently when available. Turning sync off never disables local timing or companion use,
+keeps existing local and private-cloud records, and stops future exchange. Deleting synced
+companion data removes private-cloud opportunity and action records while local device records
+and Mac opportunity history remain. These boundaries are disclosed before either action.
+
+Companion development uses neutral target and bundle identities while product naming remains
+deferred. This grants no authority to rename the stable Mac target, scheme, or module.

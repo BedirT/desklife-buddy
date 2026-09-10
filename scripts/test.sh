@@ -21,6 +21,7 @@ run_app() {
     -configuration "$CONFIGURATION" \
     -destination "$DEST" \
     -derivedDataPath "$DERIVED" \
+    CODE_SIGNING_ALLOWED="${CODE_SIGNING_ALLOWED:-NO}" \
     -resultBundlePath "$result" 2>&1 | beautify
   echo "APP TESTS OK: $result"
 }

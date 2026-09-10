@@ -53,7 +53,7 @@ struct ProtocolEngineInvariantTests {
         #expect(engine.movementClock.accumulatedActiveUseSeconds == movementBefore)
     }
 
-    @Test("A long idle episode emits only once and never changes accumulated clocks")
+    @Test("A long idle episode emits once, restarts visual timing, and preserves movement")
     func naturalInterruptionIsDistinct() {
         var engine = ProtocolEngine(configuration: configuration)
         _ = engine.observe(.active(uptimeSeconds: 0, secondsSinceInput: 0))
@@ -64,7 +64,8 @@ struct ProtocolEngineInvariantTests {
 
         #expect(first.events.map(\.kind) == [.likelyNaturalInterruption])
         #expect(second.events.isEmpty)
-        #expect(engine.visualClock.accumulatedActiveUseSeconds == 10)
+        #expect(engine.visualClock.cycleID == 1)
+        #expect(engine.visualClock.accumulatedActiveUseSeconds == 0)
         #expect(engine.movementClock.accumulatedActiveUseSeconds == 10)
     }
 

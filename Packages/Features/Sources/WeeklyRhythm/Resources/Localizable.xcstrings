@@ -55,6 +55,7 @@
     "weekly.history_disabled.title" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Weekly history is off" } } } },
     "weekly.loading" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Reading retained Weekly facts…" } } } },
     "weekly.longest_run" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Longest retained run" } } } },
+    "weekly.recorded_facts" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Recorded facts" } } } },
     "weekly.longest_run.detail" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Recorded as timing only. No interpretation is added." } } } },
     "weekly.no_facts" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No retained facts" } } } },
     "weekly.opportunity.position" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "position change" } } } },

@@ -2760,3 +2760,20 @@ activation:
     - claiming_cross_device_reconciliation_is_shipped
     - claiming_sensor_schedule_restart_is_shipped
     - claiming_d032_is_fully_implemented
+# Reconciliation overlay (2026-09-10 merge of the Story 3 contract branch with
+# origin/main): the two sections below are the LIVE runtime amendment consumed by
+# scripts/support/generate_protocol_configuration.rb to emit
+# App/Protocol/GeneratedProtocolProfiles.swift. They are the former 14-line
+# owner-approved hypothesis stub (origin/main), transplanted verbatim; they are
+# NOT part of the non-activated v2 contract above and must not be read as v2
+# semantics. They stay until the runtime migration story moves generation onto
+# the v2 schema and deletes them here.
+visual_delivery:
+  latest_after_target_seconds: 90
+activity_estimator:
+  low_friction_input_pause_seconds: 5
+  post_interruption_grace_seconds: 60
+  maximum_sample_gap_seconds: 90
+  long_idle_visual_action: restart_without_completion
+  long_idle_movement_action: preserve_without_completion
+  movement_timer_visual_action: restart_without_completion

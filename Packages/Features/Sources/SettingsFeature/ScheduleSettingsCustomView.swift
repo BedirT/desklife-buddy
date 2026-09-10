@@ -24,9 +24,17 @@ private struct CustomScheduleEditor: View {
                         movementFields
                     }
                 } else {
-                    HStack(alignment: .top, spacing: DSSpacing.md) {
-                        visualFields
-                        movementFields
+                    ViewThatFits(in: .horizontal) {
+                        HStack(alignment: .top, spacing: DSSpacing.md) {
+                            visualFields
+                            movementFields
+                        }
+                        .frame(minWidth: 600)
+
+                        VStack(alignment: .leading, spacing: DSSpacing.md) {
+                            visualFields
+                            movementFields
+                        }
                     }
                 }
             }
@@ -41,7 +49,6 @@ private struct CustomScheduleEditor: View {
                 .accessibilityIdentifier("settings.schedule.custom.apply")
             }
         }
-        .accessibilityIdentifier("settings.schedule.custom.editor")
     }
 
     private var visualFields: some View {

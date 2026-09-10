@@ -22,13 +22,12 @@ struct AccessibilitySettingsView: View {
                     movementOrderSection
                     systemAndKeyboardSection
                 }
-                .padding(contentPadding)
+                .padding(.vertical, contentPadding)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .allowsHitTesting(model.controlsEnabled)
         }
         .font(textScale == .largest ? DSTypography.title : DSTypography.body)
-        .background(Color.dsBackground)
         .accessibilityIdentifier("settings.accessibility")
     }
 
@@ -200,7 +199,7 @@ struct AccessibilitySettingsView: View {
     ) -> some View {
         HStack(alignment: .top, spacing: DSSpacing.md) {
             Image(systemName: systemImage)
-                .frame(width: DSSpacing.xl)
+                .frame(width: SettingsPageLayout.rowIconWidth)
                 .foregroundStyle(Color.dsTextSecondary)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: DSSpacing.xs) {
@@ -241,8 +240,8 @@ struct AccessibilitySettingsView: View {
         textScale == .largest ? DSTypography.body : DSTypography.subtext
     }
 
-    private var contentPadding: CGFloat { textScale == .largest ? DSSpacing.xl : DSSpacing.lg }
-    private var sectionSpacing: CGFloat { textScale == .largest ? DSSpacing.xxl : DSSpacing.xl }
+    private var contentPadding: CGFloat { SettingsPageLayout.contentInset(for: textScale) }
+    private var sectionSpacing: CGFloat { SettingsPageLayout.sectionGap(for: textScale) }
 }
 
 private struct AccessibilitySettingsOperationFeedback: View {

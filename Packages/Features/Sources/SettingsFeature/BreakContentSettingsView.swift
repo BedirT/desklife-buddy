@@ -17,8 +17,6 @@ struct BreakContentSettingsView: View {
             }
         }
         .font(textScale == .largest ? DSTypography.title : DSTypography.body)
-        .background(Color.dsBackground)
-        .accessibilityIdentifier("settings.breakContent")
     }
 
     private var preferences: some View {
@@ -34,7 +32,7 @@ struct BreakContentSettingsView: View {
                     contentChoicesSection
                     libraryEntry
                 }
-                .padding(contentPadding)
+                .padding(.vertical, contentPadding)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .allowsHitTesting(model.controlsEnabled)
@@ -93,33 +91,36 @@ struct BreakContentSettingsView: View {
                     settingsToggle(
                         title: SettingsFeatureL10n.quickMovementOption,
                         detail: SettingsFeatureL10n.quickMovementOptionDetail,
-                        isOn: model.breakContentPreferences?.showsQuickMovementOption ?? false,
+                        isOn: Binding(
+                            get: { model.breakContentPreferences?.showsQuickMovementOption ?? false },
+                            set: { enabled in Task { await model.setShowsQuickMovementOption(enabled) } },
+                        ),
                         identifier: "settings.breakContent.quickMovementOption",
-                    ) { enabled in
-                        await model.setShowsQuickMovementOption(enabled)
-                    }
+                    )
 
                     Divider().overlay(Color.dsSeparator)
 
                     settingsToggle(
                         title: SettingsFeatureL10n.breathingContent,
                         detail: SettingsFeatureL10n.breathingContentDetail,
-                        isOn: model.breakContentPreferences?.includesBreathingContent ?? false,
+                        isOn: Binding(
+                            get: { model.breakContentPreferences?.includesBreathingContent ?? false },
+                            set: { enabled in Task { await model.setIncludesBreathingContent(enabled) } },
+                        ),
                         identifier: "settings.breakContent.breathingContent",
-                    ) { enabled in
-                        await model.setIncludesBreathingContent(enabled)
-                    }
+                    )
 
                     Divider().overlay(Color.dsSeparator)
 
                     settingsToggle(
                         title: SettingsFeatureL10n.standingDeskMode,
                         detail: SettingsFeatureL10n.standingDeskModeDetail,
-                        isOn: model.breakContentPreferences?.standingDeskModeEnabled ?? false,
+                        isOn: Binding(
+                            get: { model.breakContentPreferences?.standingDeskModeEnabled ?? false },
+                            set: { enabled in Task { await model.setStandingDeskModeEnabled(enabled) } },
+                        ),
                         identifier: "settings.breakContent.standingDeskMode",
-                    ) { enabled in
-                        await model.setStandingDeskModeEnabled(enabled)
-                    }
+                    )
                 }
             }
             .overlay {
@@ -150,7 +151,6 @@ struct BreakContentSettingsView: View {
             RoundedRectangle(cornerRadius: DSRadius.lg, style: .continuous)
                 .stroke(Color.dsSeparator, lineWidth: increaseContrast ? 2 : 1)
         }
-        .accessibilityIdentifier("settings.breakContent.libraryEntry")
     }
 
     private var libraryEntryCopy: some View {
@@ -175,16 +175,10 @@ struct BreakContentSettingsView: View {
     private func settingsToggle(
         title: String,
         detail: String,
-        isOn: Bool,
+        isOn: Binding<Bool>,
         identifier: String,
-        action: @escaping (Bool) async -> Void,
     ) -> some View {
-        Toggle(
-            isOn: Binding(
-                get: { isOn },
-                set: { enabled in Task { await action(enabled) } },
-            ),
-        ) {
+        Toggle(isOn: isOn) {
             VStack(alignment: .leading, spacing: DSSpacing.xs) {
                 Text(title)
                     .foregroundStyle(Color.dsTextPrimary)
@@ -194,6 +188,7 @@ struct BreakContentSettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .tint(Color.dsAccent)
         .accessibilityIdentifier(identifier)
     }
 
@@ -205,8 +200,8 @@ struct BreakContentSettingsView: View {
         textScale == .largest ? DSTypography.body : DSTypography.subtext
     }
 
-    private var contentPadding: CGFloat { textScale == .largest ? DSSpacing.xl : DSSpacing.lg }
-    private var sectionSpacing: CGFloat { textScale == .largest ? DSSpacing.xxl : DSSpacing.xl }
+    private var contentPadding: CGFloat { SettingsPageLayout.contentInset(for: textScale) }
+    private var sectionSpacing: CGFloat { SettingsPageLayout.sectionGap(for: textScale) }
 }
 
 private struct MovementPreferenceButton: View {

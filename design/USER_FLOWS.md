@@ -65,7 +65,7 @@ HU-01 heads-up (45 s before target)
                           └ run to completion → as above
 ```
 
-- **One escalation maximum per opportunity** `[protocol: max_repeated_escalations_per_opportunity: 1]`.
+- **One escalation maximum per opportunity** `[protocol: opportunity_delivery.max_repeated_escalations_per_opportunity: 1]`.
 - Escape always exits. There is no confirmation on exit.
 - Nothing is verified. `timerFinished` and `userDeclaredCompleted` are recorded distinctly.
 
@@ -207,9 +207,7 @@ Calendar: only from SE-12 → PM-03 states what is read (busy/free) and what is 
   Denied (PM-04) / revoked (PM-05) → feature off, explained once, everything else works.
 Launch at login (PM-06) and Focus Filter (PM-07): opt-in, reversible, honest about
   where the system control lives.
-```
-
-Core function requires **zero** permissions `[protocol: required_for_core: []]`.
+Core function requires **zero** permissions `[protocol: permissions.required_for_core: []]`.
 
 ---
 
@@ -377,3 +375,70 @@ other sensor data.
 4. No flow asks the user to justify a decline.
 5. No flow claims verification of anything the Mac cannot observe.
 6. Every flow that a permission could enable also has a full no-permission path.
+
+---
+
+## F-14 · Continue a movement break on iPhone
+
+```text
+Mac movement option accepted
+  -> Continue on iPhone
+    -> Handoff opens the exact opportunity on iPhone
+      -> one selected instruction + remaining time
+      -> local Live Activity starts
+      -> Dynamic Island and Lock Screen project the same opportunity
+      -> paired Watch may project it through iPhone
+  -> user chooses Done early, I already moved, or Skip on any active surface
+     OR continuous deadline reaches zero
+  -> action is persisted locally before the surface closes
+  -> first valid resolution wins
+  -> optional private sync reconciles the exact opportunity to Mac
+```
+
+No continuation occurs without the user's action. iPhone is complete without Watch. The Mac
+break remains available if Handoff fails, and no remote response delays Mac timing.
+
+## F-15 · Companion offline and delayed delivery
+
+```text
+Companion action occurs while offline, signed out, or counterpart unreachable
+  -> write action to the local idempotent queue
+  -> close the local active presentation honestly
+  -> show Waiting to sync where status remains visible
+  -> reconnect
+  -> replay action with the same actionID and opportunityID
+  -> reducer accepts it only if the opportunity is unresolved
+     -> accepted: all reachable surfaces close
+     -> duplicate, stale, or late: retain as reconciled no-op
+```
+
+The UI never says `Synced` before acknowledgement. A delayed companion action can update the
+exact opportunity history but cannot open a break retroactively or alter the due calculation.
+
+## F-16 · Enable or disable private companion sync
+
+```text
+Settings -> Apple companions -> Private iCloud sync
+  -> plain-language disclosure of fields, private zone, offline queue, and deletion behavior
+  -> explicit opt-in
+  -> available: reconcile pending minimal actions
+  -> unavailable or signed out: local companions keep working; show Waiting for iCloud
+  -> turn off: explain local and private-cloud copies before applying
+  -> delete synced companion data: confirm exact scope, then acknowledge only after deletion
+```
+
+Handoff and local Live Activities do not require this setting. Refusal, unavailability, or
+later revocation affects only durable automatic reconciliation.
+
+## F-17 · Companion resolution elsewhere
+
+```text
+Phone or Watch displays an active opportunity
+  -> first resolution arrives from another device
+  -> stop local deadline presentation
+  -> replace actions with Ended on another device
+  -> retain any later local tap as a no-op, never a second outcome
+```
+
+Timer expiry maps only to `timerFinished`; it never becomes proof of movement. Sensors cannot
+enter any resolution branch.

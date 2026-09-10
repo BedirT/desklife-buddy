@@ -928,3 +928,198 @@ the same-epoch/anchor/age gate and structural-vector-plus-eligible-delta Undo ru
 - Timer recovery binds exact fresh evidence record ID/revision/generation and snapshot digest.
   Overlapping system reasons use deterministic subtype precedence, and weak evidence never becomes
   “Walk completed,” movement completion, or another body claim.
+
+### D-043: Settings uses a solid two-tone window shell with an inset content well
+
+**Date:** 2026-08-30 · **Tag:** Owner decision · **Status:** Accepted
+
+The owner selected the quieter two-tone direction shown in
+`exec-8aa2825a-33fa-4faf-80c7-3ef6fdd2522f.png`. Settings uses an opaque, slightly cool outer
+window surface with the fixed navigation placed directly on it. Help stays anchored at the
+bottom. The detail pages sit inside one inset, opaque, warmer-neutral content well with
+concentric corners and comfortable margins.
+
+The Settings shell uses no Liquid Glass, blur, photographic or gradient background, inner glow,
+or drop shadow. Tonal contrast and geometry define the hierarchy, with at most a semantic
+hairline boundary. Only the content well scrolls; the navigation remains fixed except for the
+existing constrained-height and largest-text fallback. Both surfaces use semantic light and dark
+tokens. Liquid Glass remains available for transient or floating surfaces elsewhere in the app.
+
+This decision supersedes the Settings-specific Liquid Glass rail direction in
+`docs/plans/2026-08-28-settings-clarity-pass.md`. It does not supersede D-018's colorful glyph
+tiles.
+
+**ID note (2026-09-10):** this entry was documented as D-033 on 2026-09-10, after D-033 had
+been minted 2026-09-01 for the canonical timing/action semantics above (AUTHORITY traceability
+record plus eight review cycles). To keep decision IDs unique, the Settings shell moves to
+D-043; timing keeps D-033.
+
+### D-035: Content library uses a responsive category browser and drill-in detail
+
+**Date:** 2026-08-30 · **Tag:** Owner decision · **Status:** Accepted
+
+The owner selected Direction C from
+`design/explorations/settings-content-library-2026-08-30/direction-c-category-browser.png`.
+The library preserves the read-only 22-card taxonomy and authoritative copy, but replaces the
+fixed, squished list/detail split with a category browser. At wide sizes, a fixed category rail,
+card list, and article detail share one aligned content well. At compact sizes, a native category
+menu presents one full-width list; choosing a card drills into a full-width detail view with an
+obvious All cards return action.
+
+The browser uses quiet solid surfaces, violet selection treatment, native controls, and no nested
+card pile or decorative shadow. The navigation rail remains fixed while only the content area can
+scroll. Larger text uses the compact drill-in path so every title, instruction, alternative, and
+source remains readable without horizontal scrolling.
+
+### D-034: Schedule uses compact preset comparison followed by one native form
+
+**Date:** 2026-08-30 · **Tag:** Owner decision · **Status:** Accepted
+
+The owner selected Direction A from
+`design/explorations/settings-schedule-2026-08-30/direction-a-comparison-form.png`. The three
+primary rhythm presets remain equal-rank compact ceramic choices at wide sizes and collapse to
+rows when space or text size requires it. Their existing truthful names, interval summaries, and
+independent-clock explanation remain intact.
+
+Timing and Delivery follow as sections inside one continuous, aligned native form instead of
+competing cards or columns. Advanced schedules moves below that form as a tertiary disclosure.
+The duplicate inline evidence link is removed because the same destination remains persistently
+available in the anchored Help navigation. This page uses the accepted D-043 solid shell and does
+not add glass, decorative gradients, analytics, scores, or another navigation rail.
+
+### D-036: Content library follows the owner's icon-led reference composition
+
+**Date:** 2026-08-30 · **Tag:** Owner decision · **Status:** Accepted
+
+The owner confirmed the grounded reference in
+`/var/folders/w6/rjczqttd7mj08sd095n4llj80000gn/T/codex-clipboard-bac3312e-1593-44d6-b023-ef837f528823.png`
+as the visual target for the Content Library. The category browser therefore uses visible native
+symbols for Visual reset, Two-minute movement, Five-minute movement, Position change, and Optional
+calming. Compact mode presents those symbols in a single category strip above raised content rows.
+Wide mode presents the same symbols with labels in a fixed category rail, followed by the card list
+and an article detail column.
+
+The first Visual reset card is the initial anchor: compact mode shows V01 as the selected violet row,
+while wide mode opens its article detail. Selecting another compact row drills into the full-width
+detail view and keeps the All cards return action. This refines D-035's responsive browser without
+changing the read-only taxonomy or authoritative card copy.
+
+### D-037: Visual timing and movement timing use separate permission-free estimates
+
+**Date:** 2026-08-31 · **Tag:** Owner decision · **Status:** Accepted
+
+The owner approved a versioned operational amendment after the old recent-input-only model failed
+to deliver reliably during passive reading. The immutable health research remains the source for
+default targets, durations, claims, and safety. The product runtime now treats an awake, active Mac
+session below the five-minute long-idle boundary as visual timing eligibility, while movement and
+recovery continue to use recent input as estimated active computer use.
+
+An already-due opportunity releases after five seconds without input, with a firm visual latest 90
+seconds after target. Unexpected sample gaps above 90 seconds add no elapsed time. Long idle restarts
+the visual cycle without recording completion, preserves movement debt, and begins a 60-second
+return grace. Wake and unlock retain their separate 90-second grace. These signals never prove
+presence, gaze, sitting, movement, strain, or any health outcome.
+
+The machine-readable operational values live in
+`design/machine-readable/timing_runtime_v2.yaml`. This decision also approves a later explicit
+iPhone and Apple Watch continuation stage, while the Mac remains complete and authoritative without
+an account, network, or companion.
+
+### D-038: Apple companions use Mac authority with opt-in private reconciliation
+
+**Date:** 2026-08-31 · **Tag:** Owner decision · **Status:** Accepted
+
+The owner accepted ecosystem Model E1 and a narrow, explicitly enabled E2 ledger. The Mac is
+the only authority for Mac visual and movement due clocks, remains complete without another
+device, and keeps visual resets local. An accepted movement break may continue only through an
+explicit Handoff action to iPhone. Apple Watch participates through its paired iPhone and never
+communicates directly with Mac.
+
+Every device renders one Mac-authored, versioned opportunity identity. Companion timers use a
+continuous elapsed deadline, persist actions locally before closing, and reconcile by stable
+action ID. The first valid resolution wins; duplicates, stale revisions, late actions, and
+out-of-order delivery are retained as no-ops. Remote delivery never delays Mac timing.
+
+The companion action mapping is exact: Done early records `userDeclaredCompleted`, I already
+moved records `userDeclaredAlreadyMoved`, Skip records `skipped`, and timer expiry records
+`timerFinished`. There is no separate End early action and no companion-only event. Timer
+expiry and sensor observations never prove movement.
+
+Standalone and Handoff behavior require no account or network. Durable automatic return is a
+separate opt-in using a private iCloud zone, minimum derived opportunity fields, local offline
+queues, idempotent replay, and disclosed disable and deletion semantics. Raw HealthKit, Motion,
+AirPods, Calendar, app-title, pointer-path, and location data are excluded. Production CloudKit
+schema promotion and distribution remain separate owner-controlled decisions.
+
+Handoff carries the accepted opportunity envelope and one Boolean reflecting whether private
+companion sync is already enabled on Mac. That preference bit prevents iPhone from enabling
+cloud exchange independently. Handoff carries no background history or private-cloud records.
+
+Turning private sync off stops future exchange but keeps local records and existing private
+iCloud records. The separate delete action removes private iCloud companion opportunity and
+action records while local device records and Mac opportunity history remain. The UI discloses
+these boundaries before acting and acknowledges deletion only after the cloud result.
+
+### D-039: Apple companions use editorial-focus Direction B and neutral identity
+
+**Date:** 2026-08-31 · **Tag:** Owner decision · **Status:** Accepted
+
+The owner selected Direction B from
+`design/explorations/apple-companions-2026-08-31/direction-b-editorial-focus.png`. Companion
+surfaces lead with one selected instruction, use restrained remaining time, keep Done early
+primary, and progressively disclose I already moved, Skip, and equal-status movement choices.
+System Live Activity and Watch projections preserve this hierarchy at compact scale. Fitness
+rings, scores, streaks, goal framing, and keyboard keycaps on touch-only surfaces are rejected.
+
+iPhone is a complete companion without Watch. Native platform text styles, materials, control
+sizes, accessibility settings, and actual Live Activity regions replace generated concept
+chrome. Development targets, bundle identifiers, capabilities, and CloudKit containers remain
+neutral while product naming is deferred. This does not rename the stable Mac target, scheme,
+or module and does not authorize production distribution.
+
+### D-040: Weekly rhythm uses a continuous week with facts on demand
+
+**Date:** 2026-08-31 · **Tag:** Owner decision · **Status:** Accepted
+
+The owner selected Direction E from
+`design/explorations/weekly-rhythm-2026-08-31/direction-e-continuous-week.png`. Weekly now leads
+with one quiet seven-row time field. The four named dayparts remain visible, while retained
+estimated active-use durations appear as labeled violet segments. Open space stays explicitly
+neutral and never implies movement or a break.
+
+The exact longest retained run remains the only secondary fact shown by default. Recorded
+opportunities, explicit user choices, and available context move behind one native Recorded facts
+disclosure. The ceramic-paper artwork, glass header, mosaic cells, detached longest-run card, and
+three permanently exposed fact panels are removed. The surface uses the same matte solid canvas in
+light and dark, with no score, trend, comparison, target, or unsolicited presentation.
+
+### D-041: The app icon uses the ceramic two-beat mark in Icon Composer
+
+**Date:** 2026-08-31 · **Tag:** Owner decision · **Status:** Accepted
+
+The owner selected Direction A from
+`design/explorations/app-icon-2026-08-31/direction-board.png`. The app icon now carries the
+two-beats-on-one-horizon mark accepted in D-017 as a warm glazed ceramic object over a quiet ivory
+field. The mark keeps one long shallow movement beat, one short tall visual-reset beat, and their
+shared horizon. It introduces no wordmark, product name, mascot, eye, leaf, heart, ring, or score.
+
+`App/AppIcon.icon` is the editable production source. The complete ceramic mark is one unified SVG
+layer so the horizon and both beats remain a continuous object without stacked intersections. The
+background is the only separate visual layer. Apple Icon Composer and the asset compiler preserve
+native icon depth and appearance renditions. The asset catalog retains a legacy 1024-point fallback.
+This closes the logo placeholder while leaving the app name, target, scheme, module, bundle identity,
+signing, and distribution deliberately deferred.
+
+### D-042: A finished movement timer starts a fresh visual presentation cycle
+
+**Date:** 2026-09-01 · **Tag:** Owner decision · **Status:** Accepted
+
+The owner returned from a five-minute walk and received a visual-break interruption three minutes
+later. That sequencing breaks trust: the app saw its full movement timer elapse, yet behaved as if
+the prior visual session had continued uninterrupted.
+
+When a movement timer reaches its deadline, the runtime now restarts visual presentation timing.
+It emits only the existing movement `timerFinished` fact and does not manufacture a visual
+`timerFinished`, visual completion, gaze claim, or movement verification. The movement clock keeps
+its existing honest timer-expiry semantics. Visual and movement outcomes therefore remain distinct,
+while scheduling recognizes the completed break surface as the boundary of the prior visual session.

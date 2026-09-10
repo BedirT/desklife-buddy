@@ -10,32 +10,48 @@ struct PrimaryProfileChoices: View {
     var body: some View {
         Group {
             if textScale == .largest {
-                VStack(spacing: DSSpacing.md) { choices }
+                VStack(spacing: DSSpacing.md) { choices(horizontalLayout: true) }
             } else {
-                HStack(alignment: .top, spacing: DSSpacing.md) { choices }
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .top, spacing: DSSpacing.md) {
+                        choices(horizontalLayout: false, fillsHeight: true)
+                    }
+                    .frame(minWidth: DSSpacing.xxl * 18)
+                    .frame(height: DSSpacing.xxl * 5)
+
+                    VStack(spacing: DSSpacing.md) {
+                        choices(horizontalLayout: true)
+                    }
+                }
             }
         }
     }
 
     @ViewBuilder
-    private var choices: some View {
+    private func choices(horizontalLayout: Bool, fillsHeight: Bool = false) -> some View {
         ProfileChoiceButton(
             profile: .gentle,
             title: SettingsFeatureL10n.gentle,
             model: model,
             increaseContrast: increaseContrast,
+            horizontalLayout: horizontalLayout,
+            fillsHeight: fillsHeight,
         )
         ProfileChoiceButton(
             profile: .balanced,
             title: SettingsFeatureL10n.balanced,
             model: model,
             increaseContrast: increaseContrast,
+            horizontalLayout: horizontalLayout,
+            fillsHeight: fillsHeight,
         )
         ProfileChoiceButton(
             profile: .frequentMovement,
             title: SettingsFeatureL10n.frequentMovement,
             model: model,
             increaseContrast: increaseContrast,
+            horizontalLayout: horizontalLayout,
+            fillsHeight: fillsHeight,
         )
     }
 }
@@ -45,6 +61,8 @@ private struct ProfileChoiceButton: View {
     let title: String
     @Bindable var model: SettingsFeatureModel
     let increaseContrast: Bool
+    let horizontalLayout: Bool
+    let fillsHeight: Bool
 
     private var selected: Bool { model.selectedScheduleChoice == profile }
 
@@ -57,9 +75,13 @@ private struct ProfileChoiceButton: View {
             selected: selected,
             increaseContrast: increaseContrast,
             accessibilityIdentifier: "settings.schedule.profile.\(profile.rawValue)",
+            horizontalLayout: horizontalLayout,
+            compactVerticalLayout: !horizontalLayout,
+            castsSelectionShadow: false,
         ) {
             Task { await model.selectProfile(profile) }
         }
+        .frame(maxHeight: fillsHeight ? .infinity : nil)
     }
 
     private var subtitle: String? {
@@ -96,10 +118,7 @@ struct AdvancedProfileChoiceButton: View {
                     }
                 }
                 Spacer(minLength: DSSpacing.sm)
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(Color.dsAccent)
-                    .opacity(selected ? 1 : 0)
-                    .accessibilityHidden(true)
+                DSSelectionIndicator(selected: selected)
             }
             .contentShape(Rectangle())
         }

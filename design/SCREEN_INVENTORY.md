@@ -10,7 +10,7 @@ exists) · `reviewed` (passed all three review skills) · `canonical` (in `rende
 Every entry marked `designed` or beyond must have: light + dark renders, an accessibility
 annotation block (`ACCESSIBILITY.md` §2), and its copy registered in `COPY_INVENTORY.md`.
 
-Phase: **2 → 3 — direction chosen (Horizon, D-013…D-025), consolidation done, canonical renders next.**
+Phase: **2 → 3 — direction chosen (Horizon, D-016), consolidation done, canonical renders next.**
 Round-2 artboards live in `explorations/round-2/`; annotation blocks for the four core
 surfaces are in §K below.
 
@@ -53,7 +53,7 @@ the invoking `/usr/bin/swift` process has not been granted Accessibility permiss
 | HU-01 | Visual heads-up — notification | Start now · In 5 minutes · More options | explored |
 | HU-02 | Movement heads-up — notification | Same three actions | todo |
 | HU-03 | Merged heads-up | One notice, not two | todo |
-| HU-04 | In-app heads-up panel | Notch capsule, first-class (D-018, D-023); round-2 `HeadsUp.dc.html` | explored |
+| HU-04 | In-app heads-up panel | Notch capsule, first-class (D-022, D-023); round-2 `HeadsUp.dc.html` | explored |
 | HU-05 | "More options" expansion | Snooze set + not appropriate | todo |
 
 ## C. Break surfaces (Level 2)
@@ -187,18 +187,19 @@ additionally: **Increase Contrast** · **Reduce Transparency** · **largest text
 
 Format per `.claude/rules/accessibility.md` §1. These blocks cover the implemented and drawn
 core surfaces; every further screen gets its block before it can be marked `designed`.
-Cross-cutting rule (D-029): declaration keys (↩, 1–3, Q, A, P) arm ~800 ms after a break
-surface opens; Esc and ⌘. are exempt and always immediate.
+Cross-cutting rule (D-032): the break field appears and closes immediately — no
+compositor transition, intermediate blur, or global tint. Every break key (↩, 1–3,
+Q, A, P) works from the first active frame; Esc and ⌘. are always immediate.
 
 ### K.1 Visual reset — running (BR-02, `Visual.dc.html`)
 
 ```
 Keyboard path        — Appears on its own (self-running, D-021) or via menu "Start visual
                        reset"; operated entirely with ↩ / Esc / Tab. No pointer needed.
-                       ↩ arms ~800 ms after open; Esc is immediate from the first frame.
+                       ↩ works from the first active frame (D-032); Esc is immediate.
 Initial focus        — "Done early" pill: the least destructive primary action (D-021).
 Focus order          — Done early → Skip → (wraps). Two stops, deliberately.
-Escape               — Leaves immediately, mid-animation included → `skipped`. ⌘. same.
+Escape               — Leaves immediately → `skipped`. ⌘. same.
 VoiceOver names      — "Done early, button, Return" · "Skip this reset, button, Escape".
 VoiceOver values     — On open, one polite announcement: "Visual reset. Look at something
                        comfortably far away. Twenty seconds." Countdown announces at
@@ -209,9 +210,10 @@ Text scaling         — Display line wraps to 3 lines at +35%; ground stack has
 High contrast        — Pills gain `rgba(255,255,255,0.42)` borders; ink one tier up;
                        horizon track raised a tier; the field is already opaque (D-026) —
                        IC changes ink and edges, not a dim level (DESIGN_SYSTEM §4).
-Reduced motion       — Sky rise → 400 ms crossfade with the brightness ramp (D-029);
-                       horizon fill → stepped; sun static; end: crossfade out, no capsule
-                       re-present. In-app static mode: flat field (no image), no motion.
+Reduced motion       — No entrance or exit transition: same immediate presentation as
+                       standard (D-032); horizon fill → stepped; sun static; end:
+                       immediate close, no capsule re-present. In-app static mode:
+                       flat field (no image), no motion.
 Meaning w/o color    — Break type is named by the eyebrow ("Visual reset"); progress is
                        the horizon line's length (position, not hue); pills are labeled.
 Alternative movement — n/a for the eyes-only reset; footnote offers "closing your eyes
@@ -229,8 +231,8 @@ Keyboard path        — Appears on its own or via menu "Start movement"; 1/2/3 
                        movement choice, Q two-minutes, ↩ done early, A already-moved,
                        P change-position, Esc leaves — every key printed on its control.
                        In the merged segment, "Just the visual one" precedes Skip in the
-                       same Tab path. Declaration keys arm ~800 ms; Esc immediate. No
-                       pointer is needed.
+                       same Tab path. Every key works from the first active frame
+                       (D-032); Esc immediate. No pointer is needed.
 Initial focus        — "Done early" pill (same position as BR-02 — predictability rule).
 Focus order          — Walk or wheel → Small space → Seated → 2 minutes instead →
                        Done early → I already moved → [Just the visual one, merged only] →
@@ -268,7 +270,7 @@ Keyboard path        — No global shortcut (D-029: none ship by default). Durin
                        (CP-MB15) — the keyboard route with the same choices; reached via
                        system status-item navigation (⌃F8). The notification path's
                        actions are the second route. The capsule is additional, never
-                       the only surface (D-018).
+                       the only surface (D-029).
 Initial focus        — None. The capsule never steals focus (non-activating).
 Focus order          — When tabbed into (system status-item navigation): Now → Later →
                        out. Hover reveals the same two exits.

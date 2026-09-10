@@ -38,7 +38,7 @@ Install → launch → ON-01 What this is
                                         most of the time.
     → suppression check (PRODUCT_MODEL §6)
         suppressed → ⤳ hold, accumulate per policy, do not queue duplicates
-        clear      → wait for a low-friction moment (max: latest_preferred 30 min)
+        clear      → wait for a low-friction moment (max: visual target + 90 s runtime; movement latest per profile)
     → F-03
 ```
 
@@ -50,20 +50,20 @@ If a direction cannot make MB-01→MB-02 legible and calm, the direction fails.
 ## F-03 · Visual reset
 
 ```
-HU-01 heads-up (45 s before target)
-  ├ Start now          → BR-01 → BR-02 (≈20 s) → BR-03 blink cue → timerFinished
-  │                      → AK-02 (nothing shown) ✕  clock resets
+  ├ Start now          → BR-02 opens running (≈20 s, D-021) → timerFinished
+  │                      → AK-01 (Reduce Motion / static / text-only: AK-02, nothing shown) ✕  clock resets
+  │                      ("I already looked away" → userDeclaredCompleted ✕)
   ├ In 5 minutes       → snoozed(300) → return to F-02 ✕
   ├ More options       → HU-05 → BR-13 [5·10·15 min | after meeting | pause 1 hr |
   │                                     not appropriate]
-  └ ignored            → at target: BR-01 appears
+  └ ignored            → at target: BR-02 opens running
                           ├ Escape / click away → skipped ✕   (never blocked, never re-shown
                           │                                    for this opportunity)
                           ├ "I already looked away" → userDeclaredCompleted ✕
                           └ run to completion → as above
 ```
 
-- **One escalation maximum per opportunity** `[protocol: max_repeated_escalations_per_opportunity: 1]`.
+- **One escalation maximum per opportunity** `[protocol: opportunity_delivery.max_repeated_escalations_per_opportunity: 1]`.
 - Escape always exits. There is no confirmation on exit.
 - Nothing is verified. `timerFinished` and `userDeclaredCompleted` are recorded distinctly.
 
@@ -73,20 +73,24 @@ HU-01 heads-up (45 s before target)
 
 ```
 HU-02 heads-up
-  → BR-05 offered  [Start 5 minutes (primary) | 2 minutes | Choose activity | Not now]
-      ├ Choose activity → BR-06  four equal options:
-      │     walk/wheel [L01] · seated active [M02] · small space [L03] · position change [P01]
+  → BR-07 opens running (D-021) with the guidance sentence, three equal choice chips,
+     2-minute pill, Done early, I already moved, Skip, and Change position instead
+     [Not now → BR-13 snooze sheet]
+      ├ Chips select the activity in place (BR-06 content swaps the guidance sentence):
+      │     Walk or wheel · Small space · Seated (equal thirds) + tertiary Change position
+      │     instead — equal semantic rank, quieter visual tier (D-027)
       │     └ position change chosen → F-05 (does NOT reset the movement clock)
-      ├ Start 5 min / 2 min → BR-07 running → BR-08 "Done" → userDeclaredCompleted ✕
+      ├ 5 min / 2 min selected → countdown runs → BR-08 "Done" → userDeclaredCompleted ✕
       │     └ user leaves the Mac entirely → timer continues → on return, BR-08
       ├ "I already moved" → userDeclaredAlreadyMoved ✕  (no follow-up question)
       └ Not now → BR-13 snooze sheet
 ```
 
-- The movement clock resets **only** on `userDeclaredCompleted` /
-  `userDeclaredAlreadyMoved` for a movement activity.
+- The movement clock resets on an accepted 5/2-minute start (new cycle, debt cleared),
+  on `Done early`, and on `I already moved`. A skip counts one deferral and resets the
+  clock keeping the debt.
 - Idle never resets it. A `likelyNaturalInterruption` is recorded and **does not count**
-  `[protocol: likely_natural_interruption.counts_as_movement: false]`.
+  `[protocol: completion_semantics.likely_natural_interruption.counts_as_movement: false]`.
 - A finished movement timer starts a fresh visual presentation cycle without recording a visual
   completion, so returning from the break cannot trigger a visual reset moments later (D-042).
 - Safety line is present on every running movement screen `[C040]`.
@@ -173,9 +177,7 @@ Calendar: only from SE-12 → PM-03 states what is read (busy/free) and what is 
   Denied (PM-04) / revoked (PM-05) → feature off, explained once, everything else works.
 Launch at login (PM-06) and Focus Filter (PM-07): opt-in, reversible, honest about
   where the system control lives.
-```
-
-Core function requires **zero** permissions `[protocol: required_for_core: []]`.
+Core function requires **zero** permissions `[protocol: permissions.required_for_core: []]`.
 
 ---
 

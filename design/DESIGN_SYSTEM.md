@@ -6,7 +6,7 @@ Values are authoritative for implementing the Horizon direction; they graduate t
 Sources: the round-2 artboards (every value below appears there), D-012–D-029, and the
 platform rules in `.claude/rules/macos-design.md`.
 
-The organizing idea (D-013): **a break is a place, not a dialog.** Sky holds the
+The organizing idea (D-016): **a break is a place, not a dialog.** Sky holds the
 instruction, ground holds the controls, the horizon between them is the progress
 indicator. Everything below serves that.
 
@@ -43,7 +43,7 @@ production preference control that supplies this environment belongs to the Sett
 
 ## 2. Color
 
-Two atmospheres of one landscape (D-014): **dusk** (visual reset — far, cool, vast) and
+Two atmospheres of one landscape (D-016): **dusk** (visual reset — far, cool, vast) and
 **late-golden** (movement — near, warm, energetic). Recognition of break type comes from
 color temperature at a peripheral glance, never from reading.
 

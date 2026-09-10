@@ -33,26 +33,23 @@ locks that parity. No behavior changes; no Swift edits.
   D-037, companions D-038/D-039, AUTHORITY/CONFORMANCE audit) resolves every
   choice below. Research-owner items (DQ-19 capsule-Esc mapping, DQ-20 schema
   union) keep their labeled interim readings; they are not re-asked.
-
-## Steps
-
 - [x] 1. Claim and plan: branch `agent/issue-19-story3-contract` at exact base
       `26ddd583` (= `origin/main`), owned paths listed below, this plan file —
       done = branch exists, `WATCHDOG.yml` untouched, plan committed first.
-- [ ] 2. Canonical citation repair (AUTHORITY repair table): DESIGN_SYSTEM
+- [x] 2. Canonical citation repair (AUTHORITY repair table): DESIGN_SYSTEM
       D-013/D-014→D-016; DECISIONS D-026 bullet + D-020a opening; SCREEN_INVENTORY
       phase line, HU-04, K-block guards/transitions, K.3 route cite;
       COPY_INVENTORY D-019/D-020a; INTERACTION_SPEC D-029→D-032 header/moments,
       D-031→D-032 cites — done = `scripts/lint.sh` green · gating: repair-table
       rows re-verified by re-read.
-- [ ] 3. Prose↔machine parity: fix drifted YAML key citations (`delivery.*`,
+- [x] 3. Prose↔machine parity: fix drifted YAML key citations (`delivery.*`,
       `reset_duration_seconds`, `quick_option_seconds`,
       `position_change_resets_movement_clock`, `suppression.precedence`,
       unparented `recovery.*`/delivery keys), visual-latest 1800→target+90
       layered contract, PRODUCT_MODEL preset list, USER_FLOWS F-02/F-03/F-04
       staleness — done = new `scripts/check-canonical-keys.sh` green (seen red
       first) + `check-protocol-configuration.sh` green.
-- [ ] 4. Freeze new contract: schedule/preset/legacy-migration table; full
+- [x] 4. Freeze new contract: schedule/preset/legacy-migration table; full
       action matrix (clock × fact/ledger × visible state × stale behavior ×
       recovery); ClockCycleID/OpportunityID/ActionID/DecisionID +
       device/session identity; portable wall + monotonic re-anchor +
@@ -73,8 +70,19 @@ locks that parity. No behavior changes; no Swift edits.
   `design/USER_FLOWS.md`, `design/SCREEN_INVENTORY.md`, `design/COPY_INVENTORY.md`,
   `design/DESIGN_SYSTEM.md`, `design/DECISIONS.md` (citation-only),
   `scripts/check-canonical-keys.sh` (new), `scripts/lint.sh` (wire-in),
-  this plan. Collision declaration: none — no other writer on these paths;
-  Epic 2 zones untouched (implementation alignment explicitly deferred).
+  this plan. Collision declaration: none — no other writer on these paths; Epic 2
+  zones untouched (implementation alignment explicitly deferred).
+- 2026-09-10: Adversarial agent review found three true defects, all fixed:
+  matrix invalid-record row narrowed to the two cases `isValidRecord` actually
+  rejects (broader kind×opportunity validation deferred to Epic 2);
+  position-accumulator reset dropped (`reset(.positionChange)` is a no-op —
+  F-05 state is product-model, not engine); idle row + §6 table now split
+  movement debt precisely (accumulated seconds preserved; deferral count and
+  session suppressions rotate per `rotateSessionScopedState`).
+- 2026-09-10: `check-canonical-keys` extended past paths to cited values,
+  recovery-absence outside Balanced, and exact precedence order after reviewer
+  note. The lock caught a wrong expectation during authoring
+  (frequent-visual research latest is 1800, not 2100) — corrected to YAML truth.
 - 2026-09-10: Gates: `scripts/lint.sh` (incl. protocol-configuration,
   localization, motion-contract, new canonical-keys checks),
   `scripts/test.sh Domain` safety, claims-review + accessibility-review skills,

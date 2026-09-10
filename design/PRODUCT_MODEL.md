@@ -39,13 +39,20 @@ Four independent accumulators. Nothing one clock does completes another.
 
 | Clock | Accumulates | Comes due (balanced) | Cleared by |
 |---|---|---|---|
-| **Visual** | Eligible available-session time below long idle | soft 20 min · target 25 · latest 26.5 | Timer finish, user declares done, or long idle restarts presentation timing without completion |
+| **Visual** | Eligible available-session time below long idle | soft 20 min · target 25 · latest 26.5 (target + 90 s runtime, D-037) | Timer finish, user declares done, or long idle restarts presentation timing without completion |
 | **Movement** | Estimated active computer use | soft 50 min · target 60 · latest 70 | User starts 5-min or 2-min, or declares already moved |
 | **Position** | Time since last position change (optional/manual in MVP) | No hard due point | User records a position change |
-| **Recovery debt** | Repeated movement deferral while active use continues | ~90–120 min with no confirmed movement | Any movement event |
+| **Recovery debt** | Repeated movement deferral while active use continues | ~90–120 min with no confirmed movement | Accepted movement start, Done early, or Already moved (a skip keeps the debt and counts one deferral) |
 
-Values from `machine-readable/product_protocol.yaml`. Profiles: Gentle · Balanced (default) ·
-Frequent movement · Research-informed high frequency · Deep-work aware · Custom.
+Values from `research/health/machine-readable/product_protocol.yaml`, layered with
+`design/machine-readable/timing_runtime_v2.yaml` (D-037). Built-in profile IDs —
+`gentle` · `balanced` (default) · `frequent_movement` ·
+`research_informed_high_frequency` — plus `custom`. Visual `latest` is the research
+target plus runtime 90 s in every profile and overrides YAML `latest_preferred_seconds`
+for visual scheduling; the YAML research values are not edited. There is no
+`deep_work_aware` or `adaptive` cadence preset: focus protection is a delivery policy
+usable with any cadence, and no Adaptive schedule contract exists in any canonical
+artifact. Both are deferred, not frozen.
 
 **Non-negotiable relationships:**
 
@@ -148,6 +155,43 @@ It may never combine them into a grade.
 `promptPresented` · `breakStarted` · `timerFinished` · `userDeclaredCompleted` ·
 `userDeclaredAlreadyMoved` · `positionChanged` · `snoozed` · `skipped` · `notAppropriate` ·
 `likelyNaturalInterruption`
+
+### 8.1 Stable identities (normative; typed in the Epic 2 identity story)
+
+- `ClockCycleID` — the per-clock monotonic cycle counter. It bumps on every clock
+  reset and never repeats within its clock. Current code carries it as the visual /
+  movement `cycleID` fields and the heads-up cycle IDs.
+- `OpportunityID` — one schedulable opportunity: the authority device (`mac` — the
+  only due-clock authority), the clock (`visual`, `movement`, or the merged pair),
+  and its `ClockCycleID`(s). Current code carries it as `HeadsUpOpportunityID` plus
+  the per-delivery `HeadsUpDeliveryID`.
+- `ActionID` — one user or system action attempt: a stable UUID generated at the
+  origin device, persisted before its surface closes, and replayed idempotently
+  across devices and restarts.
+- `DecisionID` — one terminal resolution of an opportunity: the first valid
+  resolution wins and every later, duplicate, or out-of-order action for the same
+  `OpportunityID` reconciles against it as an audited no-op.
+- Device and session identity — `authorityDevice` is always `mac` for due timing;
+  `originDevice` (`mac` | `iphone` | `watch`) annotates each action; session
+  identity is local and monotonic, never wall-derived, so restores re-anchor
+  without catching up.
+
+Epic 2 introduces these as typed values without renaming, recycling, or reinterpreting
+any shipped raw value (AUTHORITY.md compatibility rules).
+
+### 8.2 Product facts versus ledgers
+
+The ten §8 events are the only product facts. Everything else the system retains is a
+ledger, and ledgers never resolve an opportunity:
+
+- **Operational ledger** — delivery reservations, per-cycle presentation counts,
+  snooze deadlines, suppression evaluations, grace deadlines, and revision counters.
+  Kept only as long as needed to deliver correctly; never exported as outcomes.
+- **Evidence ledger** — retained history and export projections of the ten facts,
+  governed by the retention policy and deletion controls. Aggregates, settings
+  changes, and subjective check-ins are separate local record families, never extra
+  protocol events. The wider `event_schema.json` union is a storage envelope pending
+  research-owner reconciliation (DQ-20); the engine implements exactly the ten facts.
 
 ## 9. Adaptation — what the app may and may not learn
 

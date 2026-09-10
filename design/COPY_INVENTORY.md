@@ -68,7 +68,7 @@ any count of missed breaks, any numeric countdown (`D-004`).
 |---|---|---|---|
 | CP-HU01 | Visual reset in a moment | neutral UI | draft |
 | CP-HU02 | Time to move, when you're ready | neutral UI; autonomy framing `[C037]` | draft |
-| CP-HU03 | Start now | Class A explicit route; opens the exact visual, movement, or merged break, whose successful surface opening separately owns `breakStarted` | approved — Heads-Up claims review 2026-08-26 |
+| CP-HU03 | Start now | Class A route. Visual/merged visual opens running and records `breakStarted`; standalone movement opens offered with no timer/fact until 5 or 2 minutes is accepted. | approved — lifecycle clarification 2026-09-01 |
 | CP-HU04 | In 5 minutes | Class A exact duration action; maps only to the configured 300-second `snoozed` fact for the live scope | approved — Heads-Up claims review 2026-08-26 |
 | CP-HU05 | More options | Class A neutral route label; shown only during an actionable heads-up and opens BR-13 without recording a fact | approved — BreakFlow claims review 2026-08-26 |
 | CP-HU06 | Both are due. One break covers them | describes merge, asserts nothing `[03 §6.3]`; merged scope only, with visual and movement facts/clocks still independent | approved — BreakFlow claims review 2026-08-26 |
@@ -115,6 +115,35 @@ CP-HU13, never a hold. Each string is valid only when driven by its matching san
 | CP-BR50 | Pause for 1 hour | Class A; combines the existing pause action and exact duration `[03 §16]` | approved — neutral UI consolidation 2026-08-26 |
 | CP-BR51 | Choose `%d` minutes away | Class A VoiceOver action name; describes selection only while recovery semantics remain gated | draft — presentation-only pending recovery action semantics |
 | CP-BR52 | Snooze for `%d` minutes | Class A VoiceOver action name; maps to the configured typed snooze duration `[03 §4.1–4.2]` | approved — BreakFlow claims review 2026-08-26 |
+| CP-BR53 | Take with me | Class A companion handoff action; enabled only for a live paired capability and exact generation/lease | Approved — D-043 companion state contract 2026-09-01 |
+| CP-BR54 | Ready on this device | Class A live exact-generation projection status; only that phase row's registered controls are enabled | Approved — D-043 companion state contract 2026-09-01 |
+| CP-BR55 | Device offline. Keep using this Mac. | Class A offline state; companion actions are disabled and the Mac remains authoritative | Approved — D-043 companion state contract 2026-09-01 |
+| CP-BR56 | Session expired. Reconnect to continue. | Class A expired-lease state; no action is accepted until revalidation | Approved — D-043 companion state contract 2026-09-01 |
+| CP-BR57 | Sending timer… | Class A pending transfer state; no success claim before acknowledgement | Approved — D-043 companion state contract 2026-09-01 |
+| CP-BR58 | Reconnecting… | Class A revalidation state; controls remain disabled until acknowledgement | Approved — D-043 companion state contract 2026-09-01 |
+| CP-BR59 | That action no longer applies. Showing the current timer. | Class A stale/fenced action receipt; states the current projection without falsely denying a previously committed change | Approved — D-043 companion state contract 2026-09-01 |
+| CP-BR60 | Ended on another device. | Class A already-ended status, valid only after causal acknowledgement | Approved — D-043 companion state contract 2026-09-01 |
+| CP-BR61 | Couldn’t transfer. The timer is still running on this Mac. | Class A failed-transfer boundary; prevents a false handoff claim | Approved — D-043 companion state contract 2026-09-01 |
+| CP-BR62 | Timer couldn’t be restored | Class A operational recovery title; states capability failure, not timer completion | Approved — D-043 timer-recovery contract 2026-09-01 |
+| CP-BR63 | No finish was recorded. This schedule is still due. | Class A exact fact/schedule boundary; no `timerFinished` or fresh cycle exists | Approved — D-043 timer-recovery contract 2026-09-01 |
+| CP-BR64 | Close · Retry | Class A recovery controls; Retry appears only when fence/storage recovery can be attempted | Approved — D-043 operational recovery contract 2026-09-01 |
+| CP-BR65 | Sending “%@”… | Class A terminal-action-pending format; `%@` is the exact selected visible action label, never “timer” | Approved — D-043 companion state contract 2026-09-01 |
+| CP-BR66 | Retry · Check status · Close · Cancel transfer · Cancel reconnect | Class A exact companion recovery controls. Each appears only in its registered enabled state and is never a disabled focus target | Approved — D-043 companion state contract 2026-09-01 |
+| CP-BR67 | Action already received. Showing the recorded result. | Class A compact-receipt retry; replays the original acknowledgement and applies no second effect | Approved — D-043 ActionID replay contract 2026-09-01 |
+| CP-BR68 | That action is too old to verify. Showing the current timer. | Class A uncertainty-safe receipt after compact receipt expiry; contiguous-disposition high water does not prove delivery or rejection | Approved — D-043 ActionID replay contract 2026-09-01 |
+| CP-BR69 | Connection lost. Checking whether “%@” was received; do not repeat. | Class A offline terminal-ACK-unknown format; `%@` is the selected action label and status revalidation never resends it | Approved — D-043 companion provenance contract 2026-09-01 |
+| CP-BR70 | No finish was recorded. The timer was not restored, and this schedule was not reset. | Class A not-due/manual-early recovery boundary; used only when the retained schedule snapshot is not due | Approved — D-043 conditional recovery contract 2026-09-01 |
+| CP-BR71 | Check status | Class A revalidates a pending terminal or nonterminal acknowledgement without repeating the selected action | Approved — D-043 companion provenance contract 2026-09-01 |
+| CP-BR72 | Device offline. No companion operation is pending. Retry or close. | Class A neutral offline state; never used when terminal acknowledgement is unknown | Approved — D-043 companion provenance contract 2026-09-01 |
+| CP-BR73 | Reconnecting. No companion operation is pending. Cancel reconnect or close. | Class A neutral revalidation state; never erases pending-operation provenance | Approved — D-043 companion provenance contract 2026-09-01 |
+| CP-BR74 | Start 5 minutes · Start 2 minutes · I already moved · Change position · Just the visual one · Skip | Class A exact merged companion movement-offered order; Start 5 is initial focus and Just the visual one exists only here | Approved — D-043 companion phase parity 2026-09-01 |
+| CP-BR75 | Paused · timer not restored | Class A timer-recovery menu state when a fresh system pause exists but its detail is intentionally hidden; no selected reason is required | Approved — D-043 recovery reason registry 2026-09-01 |
+| CP-BR76 | Paused: Outside working hours · timer not restored · Paused: Mac inactive · timer not restored · Paused: Mac locked · timer not restored · Paused: Mac sleeping · timer not restored · Paused: Mac unavailable · timer not restored · Paused: Confirmed away · timer not restored · Paused: Break in progress · timer not restored | Class A exact non-manual timer-recovery reason variants. Each requires its matching fresh qualified evidence and never requires or invents a selected reason | Approved — D-043 recovery reason registry 2026-09-01 |
+| CP-BR77 | Starting “%@”… | Class A nonterminal-action-pending format; `%@` is the exact selected Start label and no running timer is claimed before signed acknowledgement | Approved — D-043 companion provenance contract 2026-09-01 |
+| CP-BR78 | Connection lost. Checking whether “%@” started; do not repeat. | Class A offline nonterminal-ACK-unknown format; preserves the selected Start provenance without claiming it ran or resending it | Approved — D-043 companion provenance contract 2026-09-01 |
+| CP-BR79 | Checking whether “%@” started; do not repeat. | Class A revalidating nonterminal-ACK-unknown format; status checking never resends the selected Start action | Approved — D-043 companion provenance contract 2026-09-01 |
+| CP-BR80 | That restart can no longer be undone. Your current schedule was not changed. | Class A stale-Undo receipt; rejects only the obsolete Undo and states that the current schedule projection is preserved | Approved — D-043 Undo contract 2026-09-01 |
+| CP-BR81 | Send to: %@ | Class A handoff receiver label; `%@` is the locally paired display name for the exact selected receiver DeviceID and key epoch | Approved — D-043 receiver-binding contract 2026-09-01 |
 
 ---
 
@@ -309,14 +338,15 @@ The heads-up chip (D-019, DQ-10). Registered per `.claude/rules/health-and-claim
 | CP-HU11 | in about 45 seconds | Class A — "about" keeps the estimate honest; never a per-second countdown (`accessibility.md` §5) | Approved |
 | CP-HU12 | in about 10 seconds | Same basis as CP-HU11 | Approved |
 | CP-HU13 | now, or whenever suits | Class A + autonomy framing `[C037]`, `[01 §4]`. The clause after the comma is load-bearing — do not shorten to "now" | Approved |
-| CP-HU14 | Now | Class A action label — starts the break (`breakStarted`) | Approved |
+| CP-HU14 | Now | Class A action label. Visual/merged visual starts and records `breakStarted`; standalone movement opens the offered field and records no product fact yet. | Approved — lifecycle clarification 2026-09-01 |
 | CP-HU15 | Later | Class A action label — records `snoozed`. Deliberately not "Dismiss" (which would read as skip) and not "Snooze 5 min" (menu carries the durations) | Approved |
 
 **Rejected during heads-up design:**
 
 - "Get ready" — instructs and implies obligation.
 - "Your eyes need a break" — claims knowledge of the user's body `[C013]`-class failure.
-- Any eye character or eye iconography on the chip — implies gaze sensing; see D-019 as amended by D-020a (closed eyes and bounded expression are allowed on aesthetic grounds elsewhere; the chip itself keeps no eye iconography).
+- Open eyes, blinking, or gaze-like eye motion on the chip — implies sensing the character does
+  not perform. D-020a permits the closed resting eyes and bounded expression that amend D-019.
 
 ### Break surface — self-running countdown (added 2026-08-25, D-021)
 
@@ -332,9 +362,15 @@ The heads-up chip (D-019, DQ-10). Registered per `.claude/rules/health-and-claim
 |---|---|---|---|
 | CP-HU16 | Visual reset · in 45 s | A | Presentation timing `[03 §4.1]` |
 | CP-HU17 | Later ▸ → 5 min · 10 min · 15 min | A | Snooze options verbatim `[03 §4.1]` |
-| CP-HU18 | After this meeting | A | Only shown for a bounded actual Calendar busy-end deadline `[03 §4.1, §9]`; reused by BR-13 |
+| CP-HU18 | After this meeting | A | **Legacy current-runtime copy only.** It may remain only when the person explicitly declared an actual meeting; Calendar busy evidence alone cannot support "meeting." Superseded for the v2 Calendar path by CP-HU22. |
 | CP-HU19 | Presenting for 1 hour | A | Protocol-sanctioned mode `[03 §9]` |
-| CP-HU20 | On hold · busy until 3:00 | A | Calendar busy suppression; shows source honestly `[03 §8]` |
+| CP-HU20 | On hold · busy until 3:00 | A | **Legacy current-runtime copy only.** D-043 supersedes future `On hold` with `Held`; "busy" alone does not identify evidence provenance. |
+| CP-HU22 | Held · selected busy time until 3:00 | A | Canonical v2 Calendar hold. Says only that a user-selected Calendar busy interval is fresh and bounded; never calls it a meeting. |
+| CP-HU23 | After this busy time | A | Canonical v2 bounded Calendar deferral. Available only for a fresh selected busy interval with a known end. |
+| CP-HU24 | Held · Focus you selected | A | Canonical v2 selected-Focus hold; never calls Focus deep work. |
+| CP-HU25 | Held · selected app is active | A | Canonical v2 selected-app hold; never infers the task or productivity. |
+| CP-HU26 | Held · likely call | A | Canonical v2 qualified inference; shown only while fresh enabled evidence meets its rule. `likely` is load-bearing. |
+| CP-HU27 | Held · meeting you selected | A | Canonical v2 explicit user-declared meeting hold; unavailable for Calendar busy evidence alone. |
 
 Rejected in this pass: "Focus mode detected" (implies sensing beyond honest sources);
 "Break enforced" (lockout framing, `[03 §16]`); "We'll hold your calls" (capability lie).
@@ -365,9 +401,9 @@ Spoken strings are user-facing copy and follow the same claims discipline.
 |---|---|---|---|
 | CP-VO01 | "Visual reset. Look at something comfortably far away. Twenty seconds." | A | `[V01]`, `[C004]`; instruction + factual duration |
 | CP-VO02 | "Finished." (timer end) · "Skipped." (Esc) | A | Event vocabulary `[03 §10]` — never "completed successfully" `[C034]` |
-| CP-VO03 | "Movement opportunity. Move in a way that works for you. Five minutes." | A | `[C010]`, `[C047]`; matches the eyebrow terminology |
+| CP-VO03 | "Movement opportunity. Choose five or two minutes. Timer not started." | A | Canonical movement-offered announcement; no duration is accepted and no countdown exists yet. |
 | CP-VO04 | "Cadence: visual reset in 45 seconds. Now, button. Later, menu button." | A | Factual; "Cadence" is a placeholder name (D-001) |
-| CP-VO05 | "On hold: busy until 3:00." / "Paused: busy until 3:00." | A | Honest suppression reason (`07`); never "smart pause" |
+| CP-VO05 | "On hold: busy until 3:00." / "Paused: busy until 3:00." | A | **Legacy current-runtime copy only.** Neither form is canonical v2; D-043 uses `Held` plus qualified evidence. |
 | CP-VO06 | "Visual reset in about 12 minutes. Movement in about 31 minutes. Estimated active computer use, 48 minutes." | A | "about" keeps estimate-level precision; "estimated" never dropped `[C033]` |
 | CP-VO07 | "10 seconds remaining." (coarse timer announcement) · "Done early." (declaration exit) | A | Factual timer milestone + `userDeclaredCompleted`; neither is a health outcome `[03 §10]`, `[C034]` |
 | CP-VO08 | "Visual reset. Look at something comfortably far away. %d seconds." | A | Dynamic fallback when protocol configuration changes the timer; `%d` must equal the actual configured duration. Instruction + factual duration only `[V01]`, `[C004]` |
@@ -378,6 +414,30 @@ Spoken strings are user-facing copy and follow the same claims discipline.
 | CP-VO13 | "Snoozed for %d minutes." | A | Persistence-confirmed selected deferral duration; `%d` equals the retained duration |
 | CP-VO14 | "Paused for 1 hour." | A | Persistence-confirmed manual pause duration; no health or outcome claim |
 | CP-VO15 | "Noted for this session." | A | Confirms only the session-scoped choice; no permanent preference or health claim |
+| CP-VO16 | "Held: selected busy time until 3:00." / "Held: Focus you selected." / "Held: selected app is active." / "Held: likely call." / "Held: meeting you selected." | A | Canonical v2 qualified hold announcements. Each variant requires matching fresh provenance; stale, missing, conflicting, or unqualified evidence is unknown and produces none of these strings. |
+| CP-VO17 | "Start five minutes, Return or 5." / "Start two minutes, Q or 2." | A | Movement-offered actions; accepting either creates the timer and selected duration. |
+| CP-VO18 | "Five minutes selected." / "Two minutes selected." | A | Movement-running value; exactly reflects the accepted duration. |
+| CP-VO19 | "Timer controls are live on this device." | A | Live exact-generation companion state; only the selected phase row's registered terminal, nonterminal, or handoff controls are enabled. |
+| CP-VO20 | "Device offline. No companion operation is pending. Retry or close." | A | Neutral offline state only; pending terminal acknowledgement uses CP-VO30. |
+| CP-VO21 | "Session expired. Timer controls are unavailable. Retry or close." | A | Expired lease and exact enabled recovery controls. |
+| CP-VO22 | "Sending timer. Cancel transfer is available." | A | Transfer-pending handoff; Mac authority remains explicit until acknowledgement. |
+| CP-VO23 | "Reconnecting. No companion operation is pending. Cancel reconnect or close." | A | Neutral revalidation state without premature success or erased provenance. |
+| CP-VO24 | "Action not applied. Showing the current timer. Close." | A | Stale/fenced rejected-no-op receipt; never a fact or a claim that no earlier change occurred. |
+| CP-VO25 | "This timer already ended on another device. Close." | A | Causally acknowledged already-ended state and enabled Close. |
+| CP-VO26 | "Transfer failed. The timer is still running on this Mac. Retry or close." | A | Failed-transfer boundary and exact enabled recovery controls. |
+| CP-VO27 | "Timer could not be restored. No finish was recorded. The schedule is still due." | A | Operational recovery; explicitly excludes `timerFinished` and a fresh schedule. |
+| CP-VO28 | "Sending %@. The submitted action cannot be cancelled." | A | Terminal-action-pending format; `%@` is the exact selected visible action label. |
+| CP-VO29 | "Timer could not be restored. No finish was recorded. This schedule was not reset." | A | Operational recovery for a retained not-due/manual-early schedule; does not call it due. |
+| CP-VO30 | "Connection lost. Checking whether %@ was received. Do not repeat the action. Check status or close." | A | Offline terminal-ACK-unknown state; names the selected action and prevents duplicate submission. |
+| CP-VO31 | "Checking whether %@ was received. Do not repeat the action. Cancel reconnect or close." | A | Revalidating terminal-ACK-unknown state; checking never resends the action. |
+| CP-VO32 | "Start 5 minutes. Begins a five minute movement timer." / "Start 2 minutes. Begins a two minute movement timer." | A | Merged companion offered controls before a timer starts; Return/5 and Q/2 mirror the Mac first frame. |
+| CP-VO33 | "Paused. Timer not restored." / "Paused: Outside working hours. Timer not restored." / "Paused: Mac inactive. Timer not restored." / "Paused: Mac locked. Timer not restored." / "Paused: Mac sleeping. Timer not restored." / "Paused: Mac unavailable. Timer not restored." / "Paused: Confirmed away. Timer not restored." / "Paused: Break in progress. Timer not restored." | A | Neutral hidden-system and exact non-manual timer-recovery variants; selected Pause reason is required only for manual pause. |
+| CP-VO34 | "Starting %@. Waiting for this device to confirm." | A | Nonterminal-action-pending announcement; `%@` is Start 5 minutes or Start 2 minutes and no timer start is claimed yet. |
+| CP-VO35 | "Connection lost. Checking whether %@ started. Do not repeat the action. Check status or close." | A | Offline nonterminal-ACK-unknown announcement; preserves the selected Start provenance. |
+| CP-VO36 | "Checking whether %@ started. Do not repeat the action. Cancel reconnect or close." | A | Revalidating nonterminal-ACK-unknown announcement; revalidation never resends the Start action. |
+| CP-VO37 | "That restart can no longer be undone. Your current schedule was not changed. Close." | A | One stale-Undo announcement followed by stable focus on Close; no later fact or eligible accrual delta is erased. |
+| CP-VO38 | "Send to %@." | A | Names the locally paired selected receiver for Take with me; appearance, location, and sensor state are not inferred. |
+| CP-VO39 | "That action is too old to verify. Showing the current timer. Close." | A | Uncertainty-safe epoch/age-expiry announcement; unlike rejected-no-op copy, it does not claim whether the action was applied. |
 
 Cadence rule (not a string): timers announce at coarse marks only (open, 10 s/1:00, end),
 polite live region — per-second announcement is an accessibility defect (`accessibility.md` §5).
@@ -395,14 +455,19 @@ Strings the review pass found unregistered in the round-2 artboards, plus the D-
 | CP-MB18 | Quit | A | Standard platform item; neutral while product identity remains deferred (D-001) |
 | CP-MB19 | Break status | A | Neutral accessibility label; the dynamic value carries the actual clock and suppression state |
 | CP-MB20 | Recovery suggestion | A | Exact protocol term (`03` §4.3); names a suggestion, never a recovered outcome; reused as BR-12 eyebrow |
-| CP-MB21 | Quiet while the Mac is inactive · Presenting, reminders off · Quiet in Focus · Quiet in this app · Snoozed · Waiting for a pause | A | Exact `SuppressionReason` variants, visible and appended to VoiceOver only when that reason is active |
+| CP-MB21 | Quiet while the Mac is inactive · Presenting, reminders off · Quiet in Focus · Quiet in this app · Snoozed · Waiting for a pause | A | **Current-runtime/v1 projection only.** Canonical v2 Paused/Held reasons use CP-HU22–27 and CP-MB23. |
+| CP-MB23 | Paused while the Mac is inactive · Held · meeting you selected · Held · presenting you selected · Held · likely call · Held · timed task you selected · Held · presentation mode you selected · Held · Focus you selected · Held · selected busy time until %@ · Held · selected app is active · Held · snoozed · Held · waiting for a low-friction moment | A | Canonical v2 reason set. Each source-derived variant requires matching fresh provenance and says no more than that evidence proves. `%@` is a fresh known busy-end time. |
+| CP-MB24 | Still due · timer not restored | A | Operational-only recovery menu state during grace; no countdown, completion mark, or fresh schedule. |
+| CP-MB25 | `%@ · timer not restored` | A | Not-due/manual-early recovery menu format; `%@` is the ordinary actual retained schedule status, never a manufactured due label. |
+| CP-MB26 | `Paused: %@ · timer not restored` | A | Paused due/not-due recovery format. `%@` is the exact selected reason for manual Pause, or the registered evidence-qualified non-manual reason; system-only detail may instead use CP-BR75. |
+| CP-MB27 | `Held: %@ · timer not restored` | A | Held due/not-due recovery format; `%@` is the fresh, provenance-qualified hold reason, never an inferred meeting/deep-focus label. |
 | CP-MB22 | `%@ due.` | A | VoiceOver clock-state format; current concrete outputs are `Visual reset due.` and `Movement due.` |
 | CP-HU21 | in 45 s · in 30 s · in 15 s · in 5 s | A | Coarse capsule steps (D-029) — nothing ticks; height is the continuous signal |
 | CP-SE25 | Breaks · Visual resets · Movement · Schedule | A | Settings sidebar group + rows (functional labels) |
 | CP-SE26 | Quiet · Quiet times · Apps & Focus | A | Settings sidebar; "Quiet times", never "blocked" or "locked" |
 | CP-SE27 | Review · Weekly rhythm | A | "Rhythm", never "report" or "score" `[C039]` |
 | CP-SE28 | Cadence · Notifications · Privacy | A | App group; name is a placeholder (D-001) |
-| CP-SE29 | Gentle — about 30 min · about 75 min / Balanced — about 25 min · about 60 min / Frequent movement — about 25 min · about 35 min | A | Profile subtitles; targets from `product_protocol.yaml` profiles (1800/4500 · 1500/3600 · 1500/2100 s). "About" is repeated in every row because it is the load-bearing CP-SE08 window framing. |
+| CP-SE29 | Gentle — about 30 min · about 75 min / Balanced — about 25 min · about 60 min / Frequent movement — about 25 min · about 35 min | A | **Current-runtime/v1 projection only.** Targets use legacy profiles (1800/4500 · 1500/3600 · 1500/2100 s). "About" remains load-bearing. Canonical v2 uses the registered set and distinct Balanced v2 values below. |
 | CP-SE30 | Visual reset — about every 25 min, for 20 s / Movement — about every 60 min, suggested 5 min | A | Timing rows; "about every" (not "every about" — reviewed 2026-08-25), "suggested" never "required" |
 | CP-SE31 | Heads-up before a break — About 45 seconds | A | `heads_up_seconds_before_target: 45` |
 | CP-SE32 | Wait for a low-friction moment | A | `low_friction_wait` toggle; describes delivery timing, no sensing implied |
@@ -431,6 +496,30 @@ the string labels app state or an action and makes no health claim. Class A stri
 only the injected product configuration or the app's behavior. The four advisory strings are
 non-blocking comparisons against injected thresholds; they do not recommend an outcome.
 
+The Step 3 keys below inventory **current-runtime/v1 copy**. They do not activate the v2
+contract. Canonical future v2 Settings must register and project this complete set instead:
+
+| Stable v2 ID | Display copy | Exact explanation |
+|---|---|---|
+| `calm` | Calm | More space between offers. |
+| `balanced_v2` | Balanced | Starts offering visual resets after 20 minutes and movement after 50 minutes of estimated active computer use. |
+| `frequent_reset` | Frequent reset | Offers resets sooner while preserving the same choice to start, defer, or skip. |
+| `adaptive` | Adaptive | Starts with the current Balanced schedule. At first, it may change only when reminders are delivered or held, not their frequency and not any health conclusion. |
+| `custom_v2` | Custom | Uses the timing values you choose. |
+
+Migration copy is explicit and neutral: **Keep current schedule** preserves the legacy ID and
+every value; **Review new schedule** shows the successor before acceptance. Legacy Balanced is
+not silently retuned: its visual window is 20/25/30 minutes and movement window is 50/60/70.
+Migration copy calls it **legacy Balanced** and the selectable successor **Balanced (current v2
+schedule)**, whose windows are 20/25/27 and 50/55/70. The ordinary preset display remains simply
+**Balanced**. A legacy `custom` selection carries every legal positive finite v1 field, unit,
+ordering, and value unchanged into `custom_v2`, including values outside the safer new-authoring
+bounds such as a 5-second visual duration or `[30]` movement option. Only contract version,
+identifier, and migration state change after acceptance. New-authoring bounds apply only to a new
+payload or the edited, dirty scalar/atomic duration group plus necessary ordering closure; every untouched
+migrated value remains exact. No automatic migration, clamp, rejection, inference, or health
+promise is implied.
+
 | Catalog keys | Exact string or format | Classification and basis | Status |
 |---|---|---|---|
 | `settings.navigation_title`; `settings.section.schedule`; `settings.section.break_content`; `settings.section.context_and_exclusions`; `settings.section.accessibility`; `settings.section.privacy_and_data`; `settings.section.integrations`; `settings.section.why_defaults`; `settings.section.safety_support` | `Settings`; `Schedule`; `Break content`; `Context & exclusions`; `Accessibility`; `Privacy & data`; `Integrations`; `Why these defaults?`; `Safety & support` | Neutral UI navigation labels | Reviewed |
@@ -438,7 +527,7 @@ non-blocking comparisons against injected thresholds; they do not recommend an o
 | `settings.loading`; `settings.load_failed.title`; `settings.load_failed.message`; `settings.retry` | `Loading settings…`; `Settings couldn't be loaded`; `Your existing settings have not been changed.`; `Try again` | Neutral UI status, factual rollback state, and action | Reviewed |
 | `settings.coming_later.title`; `settings.coming_later.message` | `This section is coming next`; `Schedule is ready now. The remaining local settings are being built in order.` | Neutral implementation-status placeholder; no capability or outcome claim | Reviewed |
 | `settings.schedule.rhythm`; `settings.schedule.timing`; `settings.schedule.delivery` | `Rhythm`; `Timing`; `Delivery` | Neutral UI grouping labels | Reviewed |
-| `settings.profile.gentle`; `settings.profile.balanced`; `settings.profile.frequent`; `settings.profile.high_frequency`; `settings.profile.custom` | `Gentle`; `Balanced`; `Frequent movement`; `Research-informed high frequency`; `Custom` | Class A profile names; built-ins map to the injected protocol catalog, per CP-SE23 | Reviewed |
+| `settings.profile.gentle`; `settings.profile.balanced`; `settings.profile.frequent`; `settings.profile.high_frequency`; `settings.profile.custom` | `Gentle`; `Balanced`; `Frequent movement`; `Research-informed high frequency`; `Custom` | **Current-runtime/v1 only.** Built-ins map to the injected legacy protocol catalog, per CP-SE23; canonical v2 uses the registered set above. | Reviewed legacy |
 | `settings.schedule.advanced`; `settings.schedule.visual_reset`; `settings.schedule.movement` | `Advanced schedules`; `Visual reset`; `Movement` | Neutral product-setting and event labels | Reviewed |
 | `settings.schedule.independent_clocks` | `Two clocks run independently. A visual reset never completes movement.` | Class A product-model fact, CP-SE20 | Approved |
 | `settings.schedule.heads_up`; `settings.schedule.low_friction`; `settings.schedule.working_hours_only` | `Heads-up before a break`; `Wait for a low-friction moment`; `Only during working hours` | Class A configuration labels, CP-SE31/32 and CP-MB14 | Approved |
@@ -544,6 +633,19 @@ Destructive acknowledgements render only after App persistence acknowledges the 
 | `settings.privacy.reset.confirmation_title`; `.confirmation_body`; `.action`; `.resetting`; `.acknowledgement` | `Reset history and app preferences?`; `This deletes history and every app preference, including exclusions, integration choices, and the app's notification prompt and authorization history. The Balanced schedule is restored. The setup-completion marker is kept so setup does not reopen. macOS permissions are not changed.`; `Reset app data`; `Resetting history and app preferences…`; `History, app preferences, and the app's notification prompt and authorization history were reset. Balanced is now selected. The setup-completion marker and macOS permissions were not changed.` | Exact reset boundary and acknowledged result; app-owned notification interaction metadata resets while onboarding completion and macOS authorization are intentionally preserved | Reviewed |
 | `app.settings.privacy.export.suggested_filename` | `Break History` | Neutral localized suggested filename for the App-owned save panel | Reviewed |
 | `settings.privacy.export.failed`; `.export.busy`; `.delete.failed`; `.delete.busy`; `.reset.failed`; `.reset.busy` | `History wasn't exported. No file was saved.`; `A break is in progress. Finish or dismiss it, then try the export again.`; `History wasn't deleted. Your existing data remains.`; `A break is in progress. Finish or dismiss it, then try deleting history again.`; `Local data wasn't reset. Your existing data and settings remain.`; `A break is in progress. Finish or dismiss it, then try the reset again.` | Truthful failure/busy states; never claim export, deletion, or reset before acknowledgement | Reviewed |
+
+### D-043 coordination privacy registration (canonical v2, not current runtime)
+
+These strings become reachable only with the v2 coordinator/companion implementation. The
+current Settings export remains history-only; `CURRENT_STATE_CONFORMANCE.md` keeps this future
+inventory visibly nonactivated.
+
+| Catalog keys | Exact string or format | Classification and basis | Status |
+|---|---|---|---|
+| `v2.settings.privacy.stored.coordination.title`; `.detail` | `Coordination continuity`; `This Mac keeps the current coordinator generation, contiguous action-disposition high water, active timer fence, and paired-device verification keys needed to reject stale actions after relaunch. Fingerprints shown in the data report are display copies of those keys.` | Class A/Class 1/2 continuity disclosure; actual public keys verify signatures, fingerprints are display-only, high water is not a delivery claim, and the separate temporary crash-outbox disclosure covers its bounded raw envelope | Canonical v2 — D-043; not runtime activated |
+| `v2.settings.privacy.stored.candidates.title`; `.detail`; `.replay_detail`; `.crash_outbox_detail`; `.outcome_ack_pending_detail` | `Temporary action buffers`; `Raw received companion actions, duplicates, losing actions, rejected stale actions, and out-of-order counters stay in memory for no more than 90 seconds. They are not saved, exported, or used for analytics.`; `A payload-free retry receipt stays in memory until this device confirms receipt of the outcome, or for 90 seconds, so a lost acknowledgement does not apply an action twice. Creating an acknowledgement or timer fence does not erase it.`; `To recover an action after this device restarts, its counter, action ID, exact encrypted resend envelope, selected receiver, and key epoch may be saved locally for less than 90 seconds. It is resent only in the same device uptime with a usable time anchor. Otherwise it is erased without sending or creating another action.`; `After a result arrives, the exact signed result acknowledgement and its receiver/key binding may be saved locally for less than 90 seconds so the device can finish confirming receipt after a same-uptime restart. It contains no action payload and never reapplies the action.` | Class A/Class 0 exact lifecycle and maximum retention. The crash-outbox string discloses the sole short-lived raw-action-envelope persistence exception; the separate minimized outcome-ACK continuation is not history or a raw action | Canonical v2 — D-043; not runtime activated |
+| `v2.settings.privacy.coordination.report`; `.report_detail` | `Include coordination status in data report`; `The report includes current generation and fence status plus public fingerprints. It never includes raw action buffers or a private signing key.` | Class A export/access boundary; the future report excludes secrets and Class-0 buffers | Canonical v2 — requires owning implementation story |
+| `v2.settings.privacy.reset.coordination` | `Reset app data also deletes local coordination state, paired-device trust, and the private coordinator signing key. History-only deletion keeps them so current timers remain safe.` | Class A deletion boundary; `[07 §10]` | Canonical v2 — requires owning implementation story |
 
 ## Settings Step 6 Integrations, evidence, and safety string-catalog registration (2026-08-28)
 

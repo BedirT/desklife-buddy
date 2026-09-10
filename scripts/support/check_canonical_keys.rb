@@ -71,8 +71,12 @@ end
 check_present.call(document, "product_protocol.yaml", "permissions.required_for_core")
 
 expected_precedence = %w[
-  manual_pause system_inactive_or_locked explicit_presentation_mode focus_filter
-  calendar_busy excluded_application outside_working_hours snooze low_friction_wait
+  manual_pause system_inactive_or_locked system_asleep_or_unavailable
+  relevant_accepted_ritual qualified_confirmed_away outside_working_hours
+  user_declared_meeting_or_call user_declared_screen_sharing_or_presentation
+  inferred_likely_call user_selected_timed_task explicit_presentation_mode
+  selected_focus_filter_active selected_calendar_busy_interval
+  selected_application_active snooze low_friction_wait
 ]
 actual_precedence = lookup.call(document, "suppression_precedence")
 if actual_precedence != expected_precedence

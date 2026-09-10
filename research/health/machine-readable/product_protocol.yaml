@@ -1,9 +1,14 @@
 meta:
   name: desktop-wellness-balanced-v1
+  schema_version: 2.0
   research_snapshot: 2026-08-24
   positioning: general_wellness
   population: adults_18_plus
   authoritative_document: 03_PRODUCT_HEALTH_PROTOCOL_SPEC.md
+  canonical_runtime_contract: ../../../design/machine-readable/timing_runtime_v2.yaml
+  activation:
+    generated_swift: legacy_v1
+    canonical_v2: not_runtime_activated
 principles:
   - estimate_active_computer_use_not_sitting
   - separate_visual_movement_and_position_change
@@ -70,15 +75,269 @@ profiles:
       latest_preferred_seconds: 2100
       recommended_duration_seconds: 300
       quick_duration_seconds: 120
+preset_contract_v2:
+  contract_version: 2
+  new_install_default: balanced_v2
+  persisted_selection_requires: [preset_contract_version, preset_identifier, migration_state]
+  migration_states: [legacy_unmigrated, v2_selected, v2_migrated_with_explicit_acceptance]
+  recovery:
+    eligible_after_seconds: 5400
+    latest_typical_seconds: 7200
+    suggested_duration_min_seconds: 300
+    suggested_duration_max_seconds: 600
+    required_movement_deferrals: 2
+    maximum_offers_per_session: 1
+  presets:
+    calm:
+      display_name: Calm
+      visual:
+        soft_due_seconds: 1500
+        target_seconds: 1800
+        latest_preferred_seconds: 1980
+        duration_seconds: 20
+      movement:
+        soft_due_seconds: 3600
+        target_seconds: 4500
+        latest_preferred_seconds: 5400
+        recommended_duration_seconds: 300
+        quick_duration_seconds: 120
+      position_target_seconds: 3600
+    balanced_v2:
+      display_name: Balanced
+      default: true
+      visual:
+        soft_due_seconds: 1200
+        target_seconds: 1500
+        latest_preferred_seconds: 1620
+        duration_seconds: 20
+      movement:
+        soft_due_seconds: 3000
+        target_seconds: 3300
+        latest_preferred_seconds: 4200
+        recommended_duration_seconds: 300
+        quick_duration_seconds: 120
+      position_target_seconds: 2700
+    frequent_reset:
+      display_name: Frequent reset
+      visual:
+        soft_due_seconds: 1080
+        target_seconds: 1200
+        latest_preferred_seconds: 1320
+        duration_seconds: 20
+      movement:
+        soft_due_seconds: 1800
+        target_seconds: 2100
+        latest_preferred_seconds: 2700
+        recommended_duration_seconds: 300
+        quick_duration_seconds: 120
+      position_target_seconds: 1800
+    adaptive:
+      display_name: Adaptive
+      initial_bounds_from: balanced_v2
+      frequency_changes_allowed: false
+      allowed_initial_adaptation:
+        - delivery_within_window
+        - bounded_automatic_holds
+    custom_v2:
+      display_name: Custom
+      payload_schema_version: 2
+      storage_compatibility_domain:
+        fields_and_units: legacy_custom_v1_payload_schema
+        numeric_values: every_positive_finite_v1_value_without_v2_authoring_clamp
+        ordering: preserve_each_duration_array_element_order_and_every_numeric_value
+        migration_rule: never_silently_retune_reject_or_coerce_a_legal_v1_payload
+      new_authoring_constraints:
+        visual_duration_range_seconds: [10, 60]
+        movement_duration_options_seconds: [120, 300]
+        ordering_rule: 0_less_than_soft_due_less_than_or_equal_target_less_than_or_equal_latest
+        applies_to: newly_created_or_user_edited_v2_payload_only
+      edit_semantics:
+        dirty_identity: exact_canonical_field_path_or_registered_atomic_group
+        scalar_dirty_paths:
+          - visual.softDueSeconds
+          - visual.targetSeconds
+          - visual.latestPreferredSeconds
+          - movement.softDueSeconds
+          - movement.targetSeconds
+          - movement.latestPreferredSeconds
+        atomic_group_dirty_paths:
+          - visual.durationOptionsSeconds
+          - movement.durationOptionsSeconds
+        validation_rule: >-
+          Apply new-authoring numeric bounds only to dirty scalar fields or every element of a dirty
+          duration group. Validate positivity, finiteness, nonempty duration arrays, and the minimum
+          necessary soft/target/latest ordering closure using exact untouched neighbors. An ordering
+          failure attaches to the edited field; it never clamps or rewrites its untouched neighbor.
+        untouched_rule: >-
+          Every untouched legal migrated value and array element round-trips byte-for-value and in
+          the same order even when outside new-authoring bounds. An unrelated edit never rejects,
+          clamps, sorts, deduplicates, or silently retunes legacy visual 5 seconds or movement [30].
+        new_payload_rule: all_fields_and_both_duration_groups_begin_dirty
+      migration_metadata_contract:
+        preset_contract_version: {type: unsigned_integer, required_value: 2}
+        preset_identifier: {type: stable_ascii_identifier, required_value: custom_v2}
+        migration_state:
+          type: registered_enum
+          allowed_values: [v2_selected, v2_migrated_with_explicit_acceptance]
+        custom_timing_required: true
+        unknown_metadata: rejected_before_save
+      safety_note: neutral_non_blocking
+  legacy_identifier_disposition:
+    rule: >-
+      Decode every shipped identifier with its exact v1 values. Never silently
+      retune an existing user. Offer an explicit migration and preserve the old
+      selection until accepted.
+    gentle:
+      exact_values_from: profiles.gentle
+      suggested_successor: calm
+    balanced:
+      exact_values_from: profiles.balanced
+      suggested_successor: balanced_v2
+    frequent_movement:
+      exact_values_from: profiles.frequent_movement
+      suggested_successor: frequent_reset
+    research_informed_high_frequency:
+      exact_values_from: profiles.research_informed_high_frequency
+      suggested_successor: custom_v2
+      successor_seed: exact_v1_snapshot
+    custom:
+      exact_values_from: persisted_custom_timing
+      suggested_successor: custom_v2
+      payload_compatibility: >-
+        The v2 storage domain accepts every legal positive finite v1 custom value and preserves
+        the exact fields, units, ordering, and values. Explicit acceptance changes only
+        preset_contract_version, preset_identifier, and migration_state; it does not reinterpret,
+        clamp, reject, or silently retune timing. Safer v2 authoring bounds apply only after the
+        person edits or creates a value.
+      extreme_payload_fixture: legacy_custom_extreme_fixture
+  legacy_custom_v1_payload_schema:
+    source_of_truth:
+      - Packages/Domain/Sources/Domain/SchedulePreferences.swift.ScheduleProfile.Codable
+      - Packages/Domain/Sources/Domain/SchedulePreferences.swift.CustomProtocolTiming.Codable
+      - Packages/Domain/Sources/Domain/SchedulePreferences.swift.OpportunityTiming.Codable
+    top_level_type: ScheduleProfile
+    object_member_wire_order: not_semantically_significant_for_keyed_Codable_containers
+    canonical_schema_traversal_order: exactly_the_ordered_fields_lists_below
+    ordered_fields:
+      - {name: kind, type: utf8_string, required_value: custom}
+      - {name: customTiming, type: custom_protocol_timing_v1}
+    custom_protocol_timing_v1:
+      ordered_fields:
+        - {name: visual, type: opportunity_timing_v1}
+        - {name: movement, type: opportunity_timing_v1}
+    opportunity_timing_v1:
+      ordered_fields:
+        - {name: softDueSeconds, type: finite_binary64_seconds}
+        - {name: targetSeconds, type: finite_binary64_seconds}
+        - {name: latestPreferredSeconds, type: finite_binary64_seconds}
+        - {name: durationOptionsSeconds, type: nonempty_ordered_array_of_finite_binary64_seconds}
+      constraints:
+        - every_scalar_and_duration_array_element_is_finite_and_strictly_greater_than_zero
+        - softDueSeconds_less_than_or_equal_to_targetSeconds
+        - targetSeconds_less_than_or_equal_to_latestPreferredSeconds
+        - durationOptionsSeconds_is_nonempty
+        - durationOptionsSeconds_element_order_is_significant_and_is_never_sorted_or_deduplicated
+    additional_persisted_fields: none
+    unknown_field_policy: decoder_may_ignore_unknown_keys_but_migration_never_invents_them
+  legacy_custom_extreme_fixture:
+    legacy_payload:
+      kind: custom
+      customTiming:
+        visual:
+          softDueSeconds: 5
+          targetSeconds: 5
+          latestPreferredSeconds: 5
+          durationOptionsSeconds: [5, 7]
+        movement:
+          softDueSeconds: 30
+          targetSeconds: 60
+          latestPreferredSeconds: 90
+          durationOptionsSeconds: [30, 300, 45]
+    migrated_representation:
+      preset_contract_version: 2
+      preset_identifier: custom_v2
+      migration_state: v2_migrated_with_explicit_acceptance
+      customTiming:
+        visual:
+          softDueSeconds: 5
+          targetSeconds: 5
+          latestPreferredSeconds: 5
+          durationOptionsSeconds: [5, 7]
+        movement:
+          softDueSeconds: 30
+          targetSeconds: 60
+          latestPreferredSeconds: 90
+          durationOptionsSeconds: [30, 300, 45]
+    allowed_difference: only_selection_metadata_legacy_kind_custom_is_replaced_by_preset_contract_version_preset_identifier_custom_v2_and_migration_state
+    prohibited_difference: any_customTiming_field_value_array_length_or_array_order
 activity_estimator:
   recent_input_window_seconds: 60
   long_idle_reset_seconds: 300
   wake_unlock_grace_seconds: 90
+  return_from_long_idle_grace_seconds: 60
+  system_unavailable_visual_courtesy_seconds: 300
+  system_unavailable_return_grace_seconds: 60
+  expected_sample_seconds: 5
+  maximum_covered_sample_gap_seconds: 15
   terminology: estimated_active_computer_use
   limitations:
     - passive_reading_may_be_undercounted
     - input_does_not_indicate_body_position
     - idle_does_not_indicate_movement
+clock_semantics_v2:
+  visual: visual_reset_schedule_based_on_estimated_active_computer_use
+  movement: movement_opportunity_schedule_based_on_estimated_active_computer_use
+  position: optional_position_change_schedule_based_on_estimated_active_computer_use_or_user_interval
+  recovery: optional_recovery_schedule_from_eligible_interaction_time_and_explicit_deferrals
+  prohibited_permission_free_inferences: [gaze, near_screen_exposure, body_movement, body_stillness, body_position, position_stability, posture]
+  position_manual_cycle:
+    always_present: true
+    disabled_schedule_state: manual_only_no_accrual_no_due_no_offer
+    explicit_change_rotates_cycle: true
+    explicit_change_enables_reminders: false
+candidate_data_lifecycle_v2:
+  class: class_0_ephemeral
+  memory_only: true_except_the_two_disclosed_bounded_crash_recovery_transport_records_below
+  maximum_retention_seconds: 90
+  discard_at_settlement_or_fence: true
+  persistence: false_except_sender_crash_replay_outbox_and_outcome_ack_pending
+  export: false
+  analytics: false
+  compact_replay_receipt:
+    memory_only: true
+    raw_payload: false
+    maximum_retention_seconds: 90
+    discard_at_verified_delivery_acknowledgement_of_ack_or_limit: true
+    projection_or_generation_fence_does_not_erase: true
+    export: false
+    purpose: action_id_lost_ack_idempotency_only
+  sender_crash_replay_outbox:
+    class: class_0_crash_replay_only
+    local_encrypted_persistence: true
+    maximum_retention_seconds: 90
+    fields: [device_id, origin_session_id, counter, action_id, exact_canonical_resend_envelope, monotonic_anchor_and_epoch, selected_receiver_device_id_and_key_id_and_epoch_when_handoff]
+    replay_gate: local_monotonic_epoch_matches_anchor_is_available_and_elapsed_seconds_strictly_less_than_90
+    epoch_mismatch: erase_without_resend_without_replacement_then_show_too_old_to_verify_current_state
+    discard_at: verified_signed_outcome_is_atomically_moved_to_outcome_ack_pending_or_same_epoch_elapsed_greater_than_or_equal_to_90_or_epoch_mismatch
+    excluded_from: [backup, history, export, analytics, logs, product_facts, health_records]
+    sole_raw_action_envelope_persistence_exception: true
+  outcome_ack_pending:
+    class: class_0_crash_replay_only
+    local_encrypted_persistence: true
+    maximum_retention_seconds: 90
+    fields: [exact_complete_signed_outcome_ack_bytes_v1, outcome_revision, coordinator_expiry_ticks, delivery_token, outcome_replay_binding_digest, local_receive_monotonic_epoch_and_ticks, receiver_device_id_and_key_id_and_epoch]
+    replay_gate: same_local_monotonic_epoch_and_elapsed_seconds_strictly_less_than_90
+    discard_at: acknowledgement_of_ack_transmitted_or_same_epoch_elapsed_greater_than_or_equal_to_90_or_epoch_mismatch
+    excluded_from: [backup, history, export, analytics, logs, product_facts, health_records]
+    raw_payload: false
+    purpose: finish_acknowledgement_of_ack_after_sender_crash_without_reapplying_the_action
+boundary_predicates:
+  deadline_reached: elapsed_seconds_greater_than_or_equal_to_deadline_seconds
+  recent_input_eligible: seconds_since_input_less_than_or_equal_to_60
+  long_idle_begins: seconds_since_input_greater_than_or_equal_to_300
+  valid_covered_sample: adjacent_interval_seconds_less_than_or_equal_to_15
+  corridor_releases: elapsed_seconds_greater_than_or_equal_to_corridor_seconds
+  snooze_reoffers: elapsed_seconds_greater_than_or_equal_to_selected_snooze_seconds
 opportunity_delivery:
   wait_for_low_friction_moment: true
   merge_window_seconds: 300
@@ -87,27 +346,89 @@ opportunity_delivery:
   snooze_options_seconds: [300, 600, 900]
   max_repeated_escalations_per_opportunity: 1
   lockout_allowed: false
+  post_hold_landing_corridor_seconds: 90
+  post_manual_pause_resume_corridor_seconds: 90
+  working_hours_reentry_corridor_seconds: 60
 suppression_precedence:
   - manual_pause
   - system_inactive_or_locked
-  - explicit_presentation_mode
-  - focus_filter
-  - calendar_busy
-  - excluded_application
+  - system_asleep_or_unavailable
+  - relevant_accepted_ritual
+  - qualified_confirmed_away
   - outside_working_hours
+  - user_declared_meeting_or_call
+  - user_declared_screen_sharing_or_presentation
+  - inferred_likely_call
+  - user_selected_timed_task
+  - explicit_presentation_mode
+  - selected_focus_filter_active
+  - selected_calendar_busy_interval
+  - selected_application_active
   - snooze
   - low_friction_wait
+state_semantics_v2:
+  evidence_reduction_from: ../../../design/machine-readable/timing_runtime_v2.yaml#presentation_states.evidence_reduction
+  manual_pause_options:
+    fixed_seconds: [1800, 3600]
+    calendar_deadlines: [user_selected_until, next_local_day_boundary]
+    indefinite: until_explicit_resume
+    presenting_option_maps_to: held.explicit_presentation_mode
+    persistence: reason_and_deadline_survive_relaunch
+  paused:
+    rule: named_clock_scope_does_not_accrue
+    reasons:
+      - manual_pause
+      - outside_working_hours
+      - system_inactive_or_locked
+      - system_asleep_or_unavailable
+      - qualified_confirmed_away
+      - relevant_accepted_ritual
+    reason_clock_scope:
+      manual_pause: [visual, movement, position, recovery]
+      outside_working_hours: [visual, movement, position, recovery]
+      system_inactive_or_locked: [visual, movement, position, recovery]
+      system_asleep_or_unavailable: [visual, movement, position, recovery]
+      qualified_confirmed_away: [visual, movement, position, recovery]
+      accepted_visual_ritual: [visual, position]
+      accepted_movement_merged_or_recovery_ritual: [visual, movement, position, recovery]
+  held:
+    rule: all_clocks_continue_under_their_normal_eligibility
+    reasons:
+      - user_declared_meeting_or_call
+      - user_declared_screen_sharing_or_presentation
+      - inferred_likely_call
+      - user_selected_timed_task
+      - explicit_presentation_mode
+      - selected_focus_filter_active
+      - selected_calendar_busy_interval
+      - selected_application_active
+      - snooze
+      - low_friction_wait
+    evidence_contract_from: ../../../design/machine-readable/timing_runtime_v2.yaml#presentation_states.held.evidence_contract
 completion_semantics:
   visual:
-    accepted_events: [timer_finished, user_declared_done]
+    schedule_restart_facts: [timerFinished, userDeclaredCompleted]
     camera_verification: false
   movement:
-    accepted_events: [user_started_5_min, user_started_2_min, user_declared_already_moved, companion_event_future]
+    schedule_restart_facts: [timerFinished, userDeclaredCompleted, userDeclaredAlreadyMoved]
     inferred_from_idle: false
+    sensor_observation_is_completion: false
+    companion_sensor_observation_is_completion: false
+    strong_fresh_movement_automation:
+      effect: scheduling_decision_restart_only
+      requires_user_opt_in: true
+      requires_explanation_and_undo: true
+      cross_clock_visual_courtesy: true
   position_change:
     resets_movement_clock: false
   likely_natural_interruption:
     counts_as_movement: false
+    visual_cycle_restarts_at_return: true
+    preserves_movement_need: true
+    qualifying_permission_free_sources:
+      - input_idle_same_epoch_elapsed_greater_than_or_equal_to_300
+      - system_unavailable_same_epoch_elapsed_greater_than_or_equal_to_300_without_unresolved_ritual
+    unknown_elapsed_creates_fact_or_courtesy: false
 content:
   default_movement: easy_walking_or_equivalent
   equal_alternatives: [wheel_or_self_propel, seated_active_movement, position_change_only]

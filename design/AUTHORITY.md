@@ -39,8 +39,8 @@ Precedence is concern-specific rather than one universal file list.
 | Owner intent and accepted product decisions | Decisions recorded as `Active` or `Accepted` in `DECISIONS.md`, plus the legacy-unstatused dispositions below; unresolved items in `OPEN_QUESTIONS.md` | Issues, plans, explorations, or code may not infer acceptance or assign a missing historical status |
 | Health evidence and protocol meaning | The research order in `../CLAUDE.md` section 5, led by `03_PRODUCT_HEALTH_PROTOCOL_SPEC.md` | Product prose may not turn uncertainty into an outcome claim |
 | Claims and intended-purpose language | `08_CLAIMS_SAFETY_REGULATORY_REGISTER.md`, `claims_register.csv`, then registered strings in `COPY_INVENTORY.md` | A view, model, App Store draft, or generated explanation may not invent stronger copy |
-| Timing, threshold, preset, and closed machine values | `../research/health/machine-readable/product_protocol.yaml`, after any required canonical research amendment | Generated Swift and UI labels may project values but may not fork them |
-| Product state and action semantics | Governing `Active` or `Accepted` entries and the legacy-unstatused dispositions below, then `PRODUCT_MODEL.md` and `INTERACTION_SPEC.md` | A feature model, App coordinator, or persistence codec may not create a parallel semantic |
+| Timing, threshold, preset, and closed machine values | `../research/health/machine-readable/product_protocol.yaml`, after any required canonical research amendment; v2 runtime structure in `machine-readable/timing_runtime_v2.yaml` | Generated Swift and UI labels may project values but may not fork them; canonical-not-activated values may not be presented as shipped |
+| Product state and action semantics | Governing `Active` or `Accepted` entries and the legacy-unstatused dispositions below, then `machine-readable/timing_runtime_v2.yaml`, `PRODUCT_MODEL.md`, and `INTERACTION_SPEC.md` | A feature model, App coordinator, or persistence codec may not create a parallel semantic |
 | Screen scope and accessibility | `SCREEN_INVENTORY.md`, `ACCESSIBILITY.md`, then accepted rendered states and design-system rules | A render is not scope authority; a snapshot is not accessibility acceptance |
 | Privacy, permission, data class, and retention | `07_PRIVACY_AND_DATA_SPEC.md`, normative `Active` or `Accepted` decisions, then the canonical machine contract created by the owning story | Entitlements, adapters, and storage do not authorize collection by existing |
 | Implementation ownership and delivery | The closest applicable nested/module `AGENTS.md`, then `../AGENTS.md`; this map and `HANDOFF.md` retain product ownership | A plan may sequence work but may not move ownership across layers silently; implementation instructions may not redefine product semantics |
@@ -74,35 +74,29 @@ status back into history. The complete legacy audit is:
 | D-028 | Governs the measured contrast floors and re-scoped low-ink tiers; no later decision supersedes it. |
 
 A citation label is only a pointer. It never overrides the cited decision's actual text,
-recorded status, or supersession chain. Until Story #19 repairs the source files, the following
-known labels are explicitly non-authoritative:
+recorded status, or supersession chain. Story #19 closed the known quarantine on 2026-09-01:
 
-| Existing source reference | Invalid label or reading | Governing decision text | Required repair owner |
-|---|---|---|---|
-| `DESIGN_SYSTEM.md:9` | D-013 is not the landscape/horizon decision. | D-016 governs “a break is a place, not a dialog” and the horizon composition. | Story #19 |
-| `DESIGN_SYSTEM.md:46` | D-014 is superseded round-1 footprint rationale, not the two-atmosphere decision. | D-016 governs dusk visual-reset and late-golden movement atmospheres. | Story #19 |
-| `DECISIONS.md:539`, D-026's first bullet | The D-013 tag does not support opaque full-field presentation. | D-021 governs full coverage; D-026 supersedes D-005 and retains the static-presentation exception. | Story #19 |
-| `DECISIONS.md:379`, D-020a's opening | There is no D-020 entry; the amended character clauses are in D-019. | D-019 is the legacy character decision; D-020a amends its eye anatomy and rationale as dispositioned above. | Story #19 |
-| `SCREEN_INVENTORY.md:13` | The D-013…D-025 range is not a precise Horizon-selection citation. | D-016 selects Horizon; later decisions refine named parts. | Story #19 |
-| `SCREEN_INVENTORY.md:56` | D-018 governs Settings/menu glyphs, not the in-app capsule. | D-022 governs the top-center capsule; D-023 governs its glint. | Story #19 |
-| `SCREEN_INVENTORY.md:271` | D-018 does not govern the capsule's keyboard route. | D-029 governs the status-menu and notification keyboard routes. | Story #19 |
-| `COPY_INVENTORY.md:318` | D-019's blanket eye prohibition was amended. | D-020a permits closed eyes and bounded expression while retaining no open eyes or blinking. | Story #19 |
-| `INTERACTION_SPEC.md:55-67` and `:136-137` | Sky rise/lower, capsule re-presentation, and the ~800 ms declaration-key guard remain from D-029. They are non-authoritative on the entrance, exit, and keyboard-arming overlap named by D-032. | Accepted D-032 governs immediate entrance/exit and first-frame Return after canonical reconciliation; unrelated D-029 capsule clauses remain governing. | Story #19 |
-| `INTERACTION_SPEC.md:174-177` | The immediate motion-table behavior matches D-032, but Moments 6 and 9 cite D-031, the privacy-export decision. | D-032 is the correct decision authority for immediate break entrance and exit. | Story #19 |
-| `SCREEN_INVENTORY.md:190-198`, `:212-214`, and `:232-233` | The accessibility blocks retain D-029's ~800 ms guard and superseded sky-rise/crossfade transitions. These clauses are non-authoritative on D-032's named overlap. | D-032 governs first-frame Return and immediate presentation; the final accessibility wording must be reconciled without weakening immediate Escape. | Story #19 |
+| Repaired source | Canonical decision now cited | Closure |
+|---|---|---|
+| `DESIGN_SYSTEM.md` organizing idea and atmospheres | D-016 | D-013/D-014 mislabels removed |
+| D-026 full opaque field | D-021 | D-013 mislabel removed; static exception retained |
+| D-020a opening | D-019 amended by D-020a | Nonexistent D-020 reference removed |
+| `SCREEN_INVENTORY.md` Horizon, capsule, and keyboard routes | D-016; D-022/D-023; D-029 | D-013…D-025 range and D-018 capsule mislabels removed |
+| `COPY_INVENTORY.md` eye-character rejection | D-019 amended by D-020a | Closed resting eyes distinguished from prohibited gaze-like motion |
+| `INTERACTION_SPEC.md` entrance, exit, countdown start, and key arming | D-032 clarified by D-043 | Superseded sky transition/guard removed; D-031 mis-citation removed |
+| `SCREEN_INVENTORY.md` break accessibility blocks | D-032 clarified by D-043 | First-frame inputs and immediate reduced-motion equivalent reconciled |
 
-Story #19 must repair these canonical cross-references before a semantics implementation may
-rely on them. The table prevents a known wrong label from selecting behavior; it does not edit
-or reinterpret the source decision text in this story.
+The protocol consistency check fails if a quarantined citation pattern is reintroduced. The
+historical decision text remains append-only; corrected source references do not rewrite why a
+decision was made.
 
 ### D-032 reconciliation boundary
 
 Accepted D-032 names only D-029's break entrance, break exit, and keyboard-arming clauses as
-superseded. Under this authority map, that supersession becomes an implementation contract only
-after Story #19 reconciles `INTERACTION_SPEC.md` and `SCREEN_INVENTORY.md`; it does not erase
-unrelated D-029 capsule, countdown, focus, or accessibility clauses. The correct D-032 reading is
-the selected field appearing and closing immediately, with no compositor transition or global
-tint, and Return available on the first active frame while Escape remains immediate.
+superseded. D-043 completed that canonical reconciliation without erasing unrelated D-029
+capsule, coarse-countdown, focus, or accessibility clauses. The final field, accepted deadline,
+focus, every printed declaration shortcut and pointer control appear together; exit is immediate
+with no compositor transition or global tint.
 
 The current source is only partially aligned. `VisualResetModel.doneEarlyFromKeyboard()` is
 immediate and its “Keyboard Done early is immediate from the first active frame” test proves that
@@ -126,8 +120,8 @@ implementation may claim otherwise or choose a convenient hybrid.
 These standard frost timings, the visual countdown-settlement gate, and the Movement keyboard
 guard are quarantined as **implementation evidence**, not product authority. They must not be
 copied into new work as the intended contract. Conversely, D-032 must not be claimed as fully
-implemented while these source paths and their retaining tests remain. Story #19 first repairs
-the stale canonical clauses and D-031 mis-citation against the exact D-032 text.
+implemented while these source paths and their retaining tests remain. The canonical source
+repair is complete; runtime alignment remains open.
 
 After that canonical repair, the **Break surfaces** collision owner is the single writer across
 `BreakFieldAnimatedPanel` and shared panel motion, the `DSMotion`/DesignSystem token seam,
@@ -157,9 +151,10 @@ stop-and-reconcile rule rather than whichever file is closest.
   production authority.
 - **Superseded**: retained for provenance and explicitly points to its replacement.
 
-The owner-approved Calm Ensemble review is **historical intake**. Its approval allows
-issue-driven canonicalization work; it does not override the current research YAML,
-claims register, privacy spec, decision log, or shipped behavior by itself.
+The owner-approved Calm Ensemble review remains **historical intake** except for the exact
+permission-free timing/action/identity/ledger clauses promoted by D-043 and protocol §17. Its
+other sensing, permission, privacy, companion, learning, and Labs directions do not override the
+claims register, privacy spec, decision log, machine contracts, or shipped behavior by themselves.
 
 ## Required traceability record
 
@@ -185,6 +180,23 @@ A pull request must link the record and name any deliberately deferred field. A
 follow-up issue is not permission to ship through an unresolved safety, privacy,
 claims, migration, or accessibility field.
 
+### D-043 traceability record
+
+| Field | D-043 record |
+|---|---|
+| Decision | D-043, Accepted from the owner's 2026-09-01 approval of the complete historical review and explicit implementation direction. It clarifies D-032's supersession of D-029's break entrance/exit/key-arming clauses and supersedes only D-022's visible `On hold` label with `Held`; D-022's capsule placement, behavior, and sanctioned sources remain active. No unrelated decision is superseded. |
+| Intended purpose and claim | Private general-wellness scheduling for visual resets, movement opportunities, position variety, and optional recovery. `[C033]` estimated use only; `[C034]` no movement verification; no diagnosis, treatment, prevention, posture, gaze, symptom-improvement, or outcome claim. |
+| Normative prose | `research/health/03_PRODUCT_HEALTH_PROTOCOL_SPEC.md` §17; `PRODUCT_MODEL.md` §§3, 5–8; `INTERACTION_SPEC.md` §§1–9; `USER_FLOWS.md` F-01–F-14. |
+| Machine contract | `machine-readable/timing_runtime_v2.yaml` version 2.0; `product_protocol.yaml.preset_contract_v2`; legacy-read-only mapping in `event_schema.json.x_contract_status`. |
+| Behavior owner | Existing `ActivityEstimator`, `ProtocolEngine`, lifecycle reducers, `ProtocolRuntime`, `ProtocolStateStore`, `SwiftDataProtocolStore`, App composition, and existing Features. This story changes none; `CURRENT_STATE_CONFORMANCE.md` assigns each runtime gap. |
+| Action and identity | `ClockCycleID`, `OpportunityID`, stable `GlobalStateID`, coordinator generation/projection epoch, `ActionID`, `DecisionID`, device/session identity, deterministic merged `visual_segment_id`/`movement_segment_id`, atomically crash-replayable gap-free device counters/contiguous-disposition high water and causal parents, scope-compatible leases, the canonical phase graph/guards, identical begin/clear conflict-key identity, complete same-key rank reduction, the shared opportunity-action frontier, atomic global/running predecessor-fence and successor-revision rebase, same-generation valid-late terminal rule, one executable exact-byte authority including `projection_fence_bytes_v1` and `outcome_ack_bytes_v1`, actual persisted Ed25519 verification keys with selected receiver/key epoch binding, closed phase-specific companion-action normalization, exact signed acknowledgement-of-ack, total logical terminal order, retained pre-terminal snapshot, and idempotent replay are defined in the v2 machine contract. |
+| Permission | None for this permission-free contract. No entitlement or permission is added. Optional sensor restart remains disabled until its separate permission/claims/privacy/validation story; refusal cannot alter the core. |
+| Data lifecycle | No runtime data change in this story. Ten product facts remain distinct. Operational, observation, assessment, decision, correction, and retained companion continuity remain separate future stores. Received raw candidate/losing/duplicate/rejection and sparse out-of-order buffers plus payload-free compact replay receipts are Class 0, memory-only ≤90 s, never exported/persisted as history, and never product facts. The sole raw-action-envelope persistence exception is the locally encrypted sender crash-replay outbox: same local monotonic epoch, usable anchor, and elapsed <90 s are all required for exact resend; otherwise erase without resend or replacement. A second minimized `outcome_ack_pending` record retains exact signed outcome-ACK bytes and receiver/key binding only to finish ACK-of-ACK after a same-epoch crash. Ordinary rotation may retain only its already-bound non-exportable old private-key Keychain handle through that window; re-pair/reset erases it. Replay receipt erasure requires verified signed acknowledgement-of-ack or expiry; ACK/fence creation is insufficient. Persistent contiguous-disposition high water retains no raw payload and never proves receipt. |
+| Fallback | Honest schedules based on estimated active computer use; awake/active/unlocked coarse sampling, recent input only as movement-clock accrual eligibility, passive-reading visual accrual, zero gap catch-up, exact `elapsed >= deadline` edges, and no gaze/body/position/sensor-completion inference. Unknown accepted timing is operational-only `timerRecoveryUnavailable`: settle admitted same-generation candidates, commit no timer/completion/fresh-cycle fact, preserve due schedules, sign/fence the old projection epoch, then begin 60 s grace. The neutral projection says the timer could not be restored and no finish was recorded; due body copy appears only for an actually due retained schedule, while the menu independently preserves actual Paused/Held reason plus `timer not restored` or the ordinary phase. Manual, locked, inactive, sleeping, unavailable, accepted-ritual, confirmed-away, outside-hours, and hidden-system subtypes have deterministic precedence. |
+| Accessibility | D-032/D-043 first-frame Escape/⌘./Return/5/2/1–3/Q/A/P/**V**/S and pointer controls; movement offered/running distinction, initial focus/order, VoiceOver timer-not-started/selected-duration states, complete merged companion movement offer with Start 5 initial focus, projection-only companion Escape/⌘., phase-specific live controls plus neutral and terminal/nonterminal-ACK-unknown offline/revalidating states, expired/transfer-pending/terminal-action-pending/nonterminal-action-pending/rejected/already-ended/failed states with exact enabled controls, selected-receiver naming, provenance-preserving do-not-repeat copy, stale-Undo one-announcement/stable-focus receipt, exhaustive evidence-bound non-manual/hidden-system Paused timer-recovery copy, immediate static equivalent, and existing focus restore, contrast, text-size, equal movement, and multi-display obligations remain. Runtime conflict stays declared. |
+| Verification | Machine parity/citation/link checks plus lint, Domain, and Features in Story #19. Runtime stories require RED characterization, retained v1 fixtures, focused reducers, snapshots, real app/device proof, and exact-head gates. |
+| Compatibility | V2 presets use new IDs including `custom_v2`; all shipped raw values decode unchanged. `custom_v2` storage accepts every legal positive finite legacy payload; partial editing validates only dirty fields/atomic duration groups plus necessary ordering closure, so untouched legacy values remain exact. No historical identity is invented. Schedule clocks never wall-catch-up. Actions originated after known closure and unknown/mismatched actions fail closed; already-originated valid-late candidates reconcile only in the same live unfenced generation. Duplicate ActionID retries replay a known compact acknowledgement without effects until acknowledgement-of-ack/expiry, then use uncertainty-safe too-old-to-verify current-state copy. Old-generation actions show current state. Restart Undo preserves eligible accrual deltas and becomes stale only after a structural terminal/ritual/restart/cycle mutation. `event_schema.json` v1 remains decode-only. |
+
 ## Stable identifier compatibility
 
 Persisted and exchanged identifiers are a compatibility surface, not refactoring
@@ -195,8 +207,11 @@ detail.
    tests using a retained older fixture.
 3. A semantic replacement receives a new identifier. The old identifier remains
    decodable and is migrated or projected explicitly.
-4. Unknown, stale, duplicated, or incompatible actions must fail closed or become an
-   auditable no-op; they may not choose a new outcome by arrival order.
+4. Unknown, stale, or incompatible actions fail closed with truthful current-state copy. A duplicate
+   replays its known compact acknowledgement without a second effect while its receipt survives;
+   after expiry it says too old to verify because high water proves disposition, not delivery. It is
+   not described as “no change.” None may choose an outcome by arrival order
+   or create a retained raw-candidate audit record.
 5. Persisted schema changes require an explicit version transition. A default value
    may fill a new field only when it cannot invent a historical observation, decision,
    permission, completion, or health outcome.
@@ -214,6 +229,10 @@ The minimum known current compatibility inventory is:
   `focusFilter`, `companionFuture`;
 - built-in profile IDs: `gentle`, `balanced`, `frequent_movement`,
   `research_informed_high_frequency`, plus `custom`;
+- canonical v2 preset IDs, not runtime-activated yet: `calm`, `balanced_v2`,
+  `frequent_reset`, `adaptive`, and `custom_v2`. The first four legacy IDs remain decodable at
+  exact v1 values; explicit migration successors are owned by
+  `product_protocol.yaml.preset_contract_v2.legacy_identifier_disposition`;
 - persisted preference tags: `AppPreferences` root keys `formatVersion`, `schedule`,
   `historyRetention`, `content`, `context`, `accessibility`, and `integrations`;
   `SchedulePreferences` keys `profile`, `headsUpEnabled`, and `workingHoursOnly`; explicit
@@ -266,9 +285,12 @@ through the compatibility rules above.
 
 ## Generated and executable consistency
 
-`GeneratedProtocolProfiles.swift` is generated from `product_protocol.yaml` by
-`scripts/generate-protocol-configuration.sh`. A timing or preset story must change the
-owning machine source, regenerate, and prove no hand-authored duplicate remains.
+`GeneratedProtocolProfiles.swift` is generated from the legacy-compatible `profiles` section of
+`product_protocol.yaml` by `scripts/generate-protocol-configuration.sh`. D-043 deliberately adds
+the canonical-not-runtime-activated `preset_contract_v2`; Story #19 must prove that this addition
+does **not** change generated Swift. The later runtime migration story must add v2 decoding,
+retained v1 fixtures, explicit user migration, and regenerated executable values together before
+any v2 preset is selectable or shown as active.
 
 For every behavior story, review in this order:
 

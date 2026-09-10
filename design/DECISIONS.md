@@ -376,7 +376,8 @@ pointer read.
 
 **Date:** 2026-08-25 · **Tag:** Design heuristic · **Status:** Accepted
 
-The user reviewed D-019 and rejected part of its *rationale* (not its outcome): the
+The user reviewed the D-019 character decision and rejected part of its *rationale* (not its
+outcome), producing this addendum: the
 "an open eye would imply watching" argument was overweighted. Eyes on a character read as
 care — someone keeping you company — long before they read as surveillance, and the privacy
 story belongs in onboarding and Settings, not in the character's anatomy.
@@ -444,11 +445,11 @@ the primary automatic route. Only if it cannot present may an already-authorized
 notification be attempted with the same delivery identity. Automatic fallback never requests
 notification permission.
 
-**Hover/keyboard exits on the capsule:** Now · Later ▸ (5 · 10 · 15 min `[03 §4.1]`,
-"After this meeting" only when Calendar is enabled `[03 §4.1, §9]`, "Presenting for
+**Legacy D-022 hover/keyboard exits on the capsule:** Now · Later ▸ (5 · 10 · 15 min `[03 §4.1]`,
+the then-approved "After this meeting" copy when Calendar was enabled `[03 §4.1, §9]`, "Presenting for
 1 hour" `[03 §9]`). Esc waves the capsule off for the cycle.
 
-**Hold state.** "On hold · busy until 3:00" — driven only by the protocol's sanctioned
+**Legacy D-022 hold copy, superseded by D-043.** "On hold · busy until 3:00" — driven only by the protocol's sanctioned
 suppression sources `[03 §8, §9]`: manual pause, working hours, optional Calendar busy,
 Focus filter, user-named meeting apps. The MVP never promises automatic meeting detection
 `[03 §9]` and never inspects other apps `[03 §9, 07 §3]`.
@@ -681,6 +682,253 @@ Return no longer has the former 800 ms declaration delay. This owner decision su
 break-specific motion and keyboard-arming bullets in D-029. A replacement animation must be
 reviewed as a separate change and must preserve the accepted first-frame input and Dock behavior.
 
+### D-043: Canonical permission-free timing and action semantics
+
+**Date:** 2026-09-01 · **Tag:** Owner decision · **Status:** Accepted
+
+**Approval record:** after reviewing the complete Local Health Companion expansion, the owner
+said “All this looks perfect!” and explicitly directed agents to create and implement the issue
+plan. GitHub issue #19 then named this canonicalization as its outcome and acceptance contract.
+This entry promotes only the permission-free semantics in that approved intake. It does not
+authorize protected sensing, permissions, entitlements, or companion transport.
+
+[`machine-readable/timing_runtime_v2.yaml`](machine-readable/timing_runtime_v2.yaml) is the
+single exact contract for four independent clocks, Paused versus Held, elapsed time and gaps,
+accepted-ritual deadlines, stable identities, every action, merge, stale actions, cross-device
+terminal reconciliation, and separate ledgers. Timing and preset values live in
+[`product_protocol.yaml`](../research/health/machine-readable/product_protocol.yaml).
+
+The new preset IDs are `calm`, `balanced_v2`, `frequent_reset`, `adaptive`, and `custom_v2`.
+Shipped raw IDs retain their exact v1 meanings and decode unchanged until the person explicitly
+accepts a successor. Legacy `custom` is payload-compatible field-for-field and becomes
+`custom_v2` only with contract version and migration state after acceptance. No migration
+silently retunes an existing schedule. Adaptive initially changes only delivery within a due
+window and bounded automatic holds, never schedule frequency or a health conclusion.
+
+Schedule clocks accrue from local monotonic samples and never catch up from wall time. Their
+honest permission-free meanings are schedules based on estimated active computer use; they do
+not claim gaze/near-screen exposure, body movement, position, posture, or stability. Wall
+metadata is for display, exchange, and audit, never countdown reconstruction. Accepted deadlines
+use a persisted same-epoch monotonic anchor. The original shorthand “epoch loss expires
+conservatively” is superseded by the contract-repair addendum below: unavailable timing is unknown,
+not a timer fact. A device handoff
+requires a bounded monotonic acknowledgement and subtracts all uncertainty. A five-minute
+permission-free idle episode preserves movement need and starts a fresh visual cycle when the
+person returns, followed by a 60-second grace. A visual reset therefore cannot appear minutes
+after that likely away interval.
+
+No sensor observation is a completion or health fact. A later validated, enabled rule may use
+strong fresh movement/away evidence to create an explained, undoable `scheduling_decision` that
+restarts future timing. The ten product facts remain closed and live apart from operational,
+observation, assessment, scheduling-decision, correction, and companion-action ledgers.
+
+Every hold carries typed provenance, qualification, observation and expiry time, and correction
+state. Calendar proves only selected busy time, Focus only a selected active filter, and a
+selected application only that it is active; any inference remains explicitly "likely." Missing,
+stale, conflicting, or unqualified evidence is unknown. Confirmed away requires fresh,
+unambiguous, authorized qualifying evidence and still never proves movement completion.
+
+The machine contract's canonical phase graph and per-transition source, target, opportunity,
+participant, and payload guards are mandatory. Concurrent nonterminal actions use a registered
+least-interruptive rank and stable identity, never arrival order. A valid terminal candidate
+originated before learning closure remains eligible when it arrives late; one originated after
+known closure does not. Terminal winners use product-fact rank and logical identity only, never
+wall time, remaining duration, or incomparable segment time. One retained pre-terminal snapshot
+supports deterministic rebase when a late winner changes: apply the winner and clock effects
+once, preserve independent merged-component effects, replay idempotent inputs, and upsert one
+projected fact without repeating user-visible side effects. Every threshold edge is
+`elapsed >= deadline`, including exact 90- and 300-second boundaries.
+
+This entry also resolves D-032's keyboard-arming overlap: entrance, exit, accepted deadline,
+focus, every printed shortcut (`Escape`, `⌘.`, Return, `5`, `2`, `1`/`2`/`3`, `Q`, `A`, `P`),
+and every pointer control are active on the first frame. Movement first presents a distinct
+offered state: 5/2 acceptance starts its timer, and Done early exists only in the running state.
+There is no declaration guard or
+entrance-settlement countdown gate. D-029's unrelated capsule, coarse-countdown, focus, and
+accessibility clauses remain active. D-022's capsule location, behavior, and sanctioned hold
+sources also remain active, but its visible label **"On hold" is superseded by "Held"** so the
+presentation state cannot be confused with the user's explicit **Paused** state. This canonical
+decision does not claim current runtime conformance; `CURRENT_STATE_CONFORMANCE.md` retains
+those implementation and copy-projection gaps.
+
+#### D-043 contract-repair addendum — 2026-09-01
+
+This addendum supersedes only the ambiguous recovery, concurrency, participant, and display-name
+phrasing above; the approval provenance and non-activation boundary remain unchanged.
+
+- An unavailable accepted monotonic epoch/anchor is **unknown**, not proof the timer elapsed. It
+  closes through operational-only `timerRecoveryUnavailable`, emits no `timerFinished`, creates no
+  fresh cycle, preserves affected due need, and permits a new OpportunityID only after 60 seconds.
+- A same-epoch sleep/lock/system-unavailable interval of `elapsed >= 300 s`, with no unresolved
+  running ritual, gets the long-idle visual courtesy and grace without completion or movement
+  credit. Unknown elapsed time gets neither fact nor courtesy.
+- Paused/Held evidence overlays a running ritual rather than replacing its phase. Clearing one
+  record reduces all remaining evidence; a valid future deadline resumes the same segment, while
+  corridors apply only to nonrunning state.
+- Effect-bearing nonterminal commands require a live coordinator lease and atomic acknowledgement.
+  Terminal projection leases are monotonic and at most 90 seconds; settlement closes the candidate
+  window before successor cycles advance.
+- Position is an affected nonparticipant for movement/merged position actions. Terminal fact IDs
+  use OpportunityID, fixed terminal slot, and registered component scope, never a winner's subset.
+  All portable IDs use the machine contract's versioned canonical byte encoding.
+- The stable preset ID remains `balanced_v2`; its ordinary user-facing display name is **Balanced**.
+  Migration UI may distinguish **legacy Balanced** from **Balanced (current v2 schedule)**.
+
+#### D-043 generation, companion, and cross-slot repair addendum — 2026-09-01
+
+This append-only repair supersedes only the prior addendum's unqualified “permits after 60
+seconds,” “live coordinator lease,” and “valid late” shorthand. It does not change D-043 approval
+provenance, health values, fact vocabulary, or non-activation boundary.
+
+- Opportunity-scoped leases use OpportunityID + revision. Global/system/schedule commands use
+  stable GlobalStateID + global revision and never require a fabricated OpportunityID. One complete
+  causal/precedence rank covers every authoritative nonterminal transition.
+- Every terminal or operational closure settles admitted same-generation candidates, commits a
+  signed high-water projection-epoch fence, revokes old leases, and only then allows successors.
+  The timer-recovery 60-second grace begins after that fence. Coordinator epoch loss fences the old
+  persisted generation; an old-generation action becomes a rejected no-op with honest feedback,
+  not an indefinitely valid late action.
+- A valid-late candidate means same live, unfenced coordinator generation and projection epoch.
+  Leases and raw candidate buffers remain bounded to 90 seconds without wall-time ranking.
+- Position always has a latent manual cycle. Change position rotates it even when reminders are
+  off and never enables prompts; snapshots retain that identity and enablement.
+- Merged visual timer/Done and same-revision parent Escape share one cross-slot arbiter. Escape
+  preempts an uncommitted component, otherwise component finality advances the revision. There is
+  exactly one fact path and one visual successor effect; an already-acknowledged component remains
+  final for a later movement-phase Escape.
+- Companion live/offline/expired/pending/revalidating/rejected-no-op/already-ended/transfer-failed
+  states have explicit copy and accessible fallback. Raw candidates/losers/duplicates/rejections
+  are Class 0, memory-only for at most 90 seconds, then erased without persistence/export.
+
+#### D-043 evidence, replay, and companion-registry repair addendum — 2026-09-01
+
+This append-only repair supersedes the prior addenda's one-winner nonterminal shorthand, generic
+companion `pending` state, opaque companion-terminal wrapper, unconditional due recovery copy, and
+“duplicate no-op” wording. Approval provenance, health values, closed facts, and non-activation are
+unchanged.
+
+- Nonterminal commands reduce by registered conflict-key. One same-key winner is selected, but all
+  compatible winners for disjoint evidence records apply atomically before full Paused/Held
+  reduction. Pause/system set and clear pairs therefore compose, and lock never discards a
+  simultaneous long-idle edge at exactly 300 seconds.
+- Pause, Held, working-hours, and system commands keep GlobalStateID identity. If one affects a
+  running ritual, expected opportunity context atomically compares and fences the old projection
+  revision before suspension/resume. Hold can begin while accumulating without an OpportunityID.
+- A duplicate ActionID replays its original compact acknowledgement without reapplying effects.
+  The Class-0 receipt is memory-only, payload-free, and bounded to 90 seconds. After it is erased,
+  high water reports already settled; an unseen stale action reports expired before acceptance.
+- The signed projection fence uses one registered domain/version, ordered typed
+  `cadence_contract_bytes_v1` schema, SHA-256 digest bytes, Ed25519 signing/verification input, and
+  previous-digest chain. Unknown or mutated bytes fail closed.
+- Companion transport wrappers normalize through a closed registry to an exact concrete local
+  transition before validation. Merged visual Done advances to movement offer. Every concrete
+  exit from merged visual running, including timer recovery, shares the derived cross-slot arbiter.
+- Companion projection distinguishes transfer pending from terminal-action pending and registers
+  each state's controls, labels, focus/order, VoiceOver, keyboard, Escape, and cancellation.
+  Recovery copy says “still due” only when the retained schedule is actually due; otherwise it
+  says the timer was not restored and the schedule was not reset while showing the actual phase.
+
+#### D-043 sixth contract-repair addendum — 2026-09-01
+
+This append-only repair refines identity and delivery mechanics without changing the approved
+health purpose, facts, cadence values, permission boundary, or non-activation:
+The immediately preceding addendum's post-erasure “already settled / expired before acceptance”
+sentence is retained only as historical trace and is superseded by the uncertainty-safe rule below.
+
+- Begin and matching clear for each evidence record share identical conflict-key kind and identity
+  bytes. Operation, transition, rank, ActionID, and arrival never enter key identity.
+- A compact replay receipt survives until verified device acknowledgement-of-ack or 90 monotonic
+  seconds; ACK/fence creation cannot erase it. After expiry, high water proves only contiguous
+  disposition, so duplicate/unseen actions say too old to verify. Device counters are gap-free and
+  out-of-order entries wait in a Class-0 sparse window.
+- A global command affecting a running ritual fences its old opportunity revision, creates a
+  successor, and rebases the exact phase, segment, monotonic deadline/remaining duration, and
+  snapshot. Restart/undo cannot rotate cycles under a running or Paused/Held-suspended snapshot.
+- Fence bytes register exact integer widths, numeric enum/union tags, nested optional layout, and
+  collection cardinality. Width, tag, or cardinality mutations fail closed.
+- The companion live registry is phase/segment-specific with closed remote-ID groups. Unknown
+  terminal acknowledgement preserves the selected action and says do not repeat; neutral
+  offline/revalidating copy is used only when no operation is pending.
+- Timer-recovery body may state due, but its menu independently preserves actual Paused/Held state
+  and qualified reason. `custom_v2` storage preserves every legal positive finite v1 payload;
+  safer new-authoring bounds apply only after creation or edit.
+
+#### D-043 seventh contract-repair addendum — 2026-09-01
+
+This append-only repair supersedes the sixth addendum only where it left sender crash recovery,
+companion Escape, fence verification keys, Custom payload shape, Undo freshness, and non-manual
+timer-recovery reasons implicit. Approval provenance, health values, ten facts, permissions, and the
+non-activation boundary remain unchanged.
+
+- Gap-free sender counters are made crash-safe by one atomic local encrypted Class-0 outbox commit
+  containing counter, ActionID, and exact resend envelope. Relaunch resends the same action; valid
+  signed acknowledgement-of-ack or 90 seconds erases it. This is the sole bounded raw-envelope
+  persistence exception and is excluded from backup, history, export, logs, and analytics.
+- The acknowledgement-of-ack has an exact signed versioned envelope bound to generation, device,
+  ActionID digest, counter, outcome revision, 32-byte delivery token, original-outcome digest, and
+  monotonic expiry. Verification uses the persisted actual paired-device Ed25519 public key.
+- Projection fences use the independent complete `projection_fence_bytes_v1` encoder. Verification
+  uses the persisted actual 32-byte installation public key; fingerprints are display-only.
+- Companion Escape and Command-period dismiss status only in every state. Explicit controls alone
+  Skip, finish, cancel a transfer, or cancel revalidation. Merged movement offered exposes Start 5
+  (initial focus), Start 2, already moved, position, visual-only, and explicit Skip. `Take with me`
+  is a distinct remote request normalized to the fact-free nonterminal handoff transition.
+- Every remote wrapper is checked against its concrete guard, opportunity/phase/segment,
+  participants and affected cycles, resolver/slot, fact, and effects before commit.
+- A global command fences the predecessor opportunity revision, creates a successor, rebases the
+  exact suspended phase/segment/deadline/snapshot onto it, and retains fence lineage. No canonical
+  text describes the predecessor revision itself as preserved or suspended.
+- Legacy Custom's complete schema is the Codable `kind`/`customTiming` payload with visual and
+  movement soft/target/latest seconds and both nonempty ordered duration arrays. Migration changes
+  only v2 selection metadata; its full extreme fixture is mechanically checked.
+- Restart Undo binds the exact unchanged post-decision four-clock revision vector and snapshot.
+  Any later terminal, ritual, cycle, recovery, or schedule mutation makes it unavailable, so it
+  cannot erase a later fact while restoring older clocks.
+- Timer recovery registers manual, working-hours, inactive, locked, sleeping, unavailable,
+  qualified-away, accepted-ritual, and intentionally hidden system Pause projections. Only manual
+  Pause requires a selected reason; hidden system detail uses neutral `Paused · timer not restored`.
+
+#### D-043 eighth contract-repair addendum — 2026-09-01
+
+This append-only repair makes crash provenance, merged segment identity, cross-resolver arbitration,
+partial Custom editing, and recovery evidence executable without changing the approved health
+purpose, facts, cadence values, permission boundary, or non-activation. It refines earlier mechanics
+where they were incomplete; it does not rewrite their approval provenance.
+The seventh addendum's unconditional “Relaunch resends the same action” and “exact unchanged
+post-decision ... revision vector” sentences remain historical trace only. They are superseded by
+the same-epoch/anchor/age gate and structural-vector-plus-eligible-delta Undo rules below.
+
+- Sender outbox replay is allowed only in the same local monotonic epoch, with a usable anchor and
+  elapsed time under 90 seconds. Epoch mismatch, missing anchor, corruption, or expiry erases the
+  raw action without resend or replacement and shows the uncertainty-safe current projection.
+- Deterministic versioned segment IDs are created before merged visual and movement segment guards
+  consume them. A shared opportunity-action frontier settles Start 5/2 versus Skip/Escape and
+  Take-with-me versus terminal actions independent of arrival order before effects are exposed.
+- `outcome_ack_bytes_v1` and `outcome_ack_pending` bind the signed result, outcome revision,
+  coordinator expiry, selected receiver, delivery token, and key ID/epoch. A same-epoch relaunch may
+  finish ACK-of-ACK; no recursive acknowledgement is created.
+- Remote Start is a fact-bearing nonterminal operation with pending, unknown-ACK, revalidation, and
+  acknowledged `merged_movement_running` states. Every remote target is checked for exact source and
+  target phase, opportunity kind, segment, participant/affected cycles, resolver, slot, fact, and
+  effects before commit.
+- Restart Undo remains eligible across ordinary accrual and restores the predecision value plus
+  eligible monotonic deltas. A later terminal, ritual, restart, or cycle rotation
+  makes it stale and receives the registered unchanged-current-schedule receipt with stable focus.
+- Custom partial edits validate only dirty scalar fields or atomic duration groups plus necessary
+  ordering closure. Untouched legal positive finite v1 values remain byte-for-byte exact even when
+  outside safer new-authoring bounds.
+- Global signed fences carry distinct predecessor and successor opportunity revisions plus the
+  coordinator signing-key ID/epoch. One executable exact-byte authority defines widths, tags,
+  ordering, collection framing, digests, signatures, and fixed executable vectors for segment IDs,
+  fences, outcome ACKs, and acknowledgement-of-ack envelopes.
+- Take-with-me binds one selected receiver DeviceID and verification-key ID/epoch. Ordinary rotation
+  keeps an old verification key and only an already-bound non-exportable Keychain signing handle
+  through the bounded window; new pairing fences the old peer, erases its pending transport record,
+  and yields a visible rejected-no-op receipt.
+- Timer recovery binds exact fresh evidence record ID/revision/generation and snapshot digest.
+  Overlapping system reasons use deterministic subtype precedence, and weak evidence never becomes
+  “Walk completed,” movement completion, or another body claim.
+
 ### D-033: Settings uses a solid two-tone window shell with an inset content well
 
 **Date:** 2026-08-30 · **Tag:** Owner decision · **Status:** Accepted
@@ -732,7 +980,6 @@ Timing and Delivery follow as sections inside one continuous, aligned native for
 competing cards or columns. Advanced schedules moves below that form as a tertiary disclosure.
 The duplicate inline evidence link is removed because the same destination remains persistently
 available in the anchored Help navigation. This page uses the accepted D-033 solid shell and does
-not add glass, decorative gradients, analytics, scores, or another navigation rail.
 
 ### D-036: Content library follows the owner's icon-led reference composition
 

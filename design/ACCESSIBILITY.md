@@ -56,20 +56,14 @@ An unanswerable field means the design is incomplete.
 
 ## 3. Reference annotations (to be completed during design)
 
-> **2026-08-25 reconciliation note.** The blocks below predate the Horizon round-2 design;
-> the **current, per-screen blocks are `SCREEN_INVENTORY.md` §K**, which govern where the two
-> disagree. Known deltas: (a) BR-01's "offered" state is superseded by the self-running
-> surface (D-021) — "initial focus = the primary action" now resolves to **Done early**, the
-> least destructive declaration, which honors this block's reasoning; (b) the `⌥⌘V` global
-> shortcut is dropped — **no default global hotkeys** ship (D-029; it also shadowed Finder's
-> move-paste); (c) BR-05's "Start 5 minutes" initial focus no longer exists (self-running);
-> (d) BR-05's rule that the four options are VoiceOver **siblings with parallel names is
-> kept** — round 2 places "Change position" at a tertiary *visual* tier (D-024), but its
-> semantic rank, hit target (44px), and printed key (`P`) stay equal (D-027). The visual-tier
-> vs sibling-tree tension was reviewed and resolved in that direction, not silently;
-> (e) "Increase Contrast: dimming layer becomes opaque" predates D-026 — the default surface
-> is already a full opaque field; IC instead raises ink tiers, borders, and the horizon track
-> (D-028).
+> **2026-09-01 reconciliation note.** `SCREEN_INVENTORY.md` §K and the blocks below describe
+> one contract. Visual and merged-visual fields run immediately and focus **Done early**.
+> Movement is different: `Now` opens a distinct **offered** field with no timer, `breakStarted`,
+> or Done early; focus starts at **Start 5 minutes**. Accepting 5 or 2 minutes enters the running
+> field and only then records `breakStarted`. No default global hotkeys ship (D-029). Change
+> position keeps an equal semantic rank and 44px target while being visually tertiary and logged
+> separately. Increase Contrast raises ink, borders, and the horizon track rather than adding a
+> dim layer. These clauses supersede only older artwork/runtime behavior, not one another.
 
 The three below are the load-bearing ones. Design directions should be evaluated against these
 before anything else.
@@ -78,9 +72,8 @@ before anything else.
 
 1. **Keyboard path** — appears unprompted; also MB-09. *(A proposed `⌥⌘V` global shortcut
    was removed — D-029.)*
-2. **Initial focus** — the primary action. Not the exit: focusing the exit first implies the
-   product expects to be dismissed.
-3. **Focus order** — primary action → skip → (optional "why this?") → exit.
+2. **Initial focus** — "Done early," the least-destructive declaration.
+3. **Focus order** — Done early → Skip → wraps. Two stops.
 4. **Escape** — dismisses immediately, records `skipped`, no confirmation, no re-prompt for
    this opportunity (`D-009`).
 5. **VoiceOver names** — surface announces once: purpose, duration, actions available.
@@ -88,8 +81,8 @@ before anything else.
    Optionally once near the end for the blink cue. Never per second (A6).
 7. **Text scaling** — the instruction line reflows; it never truncates and never scrolls. If
    it cannot fit at the largest size, the layout is wrong, not the copy.
-8. **Increase Contrast** — dimming layer becomes opaque enough for AA text contrast; the
-   surface gains a defined edge.
+8. **Increase Contrast** — the already-opaque field raises ink, border, and horizon-track
+   contrast; it does not add a dimming layer.
 9. **Reduce Motion** — no fade of the content, no moving focal element. Dimming still
    transitions, but as a slow opacity change only (A5). Static mode replaces any animated
    focal cue with text.
@@ -100,28 +93,143 @@ before anything else.
 
 ### BR-05/06 — Movement offer and activity choice
 
-1. **Keyboard path** — MB-10, HU-02, or the break surface.
-2. **Initial focus** — "Start 5 minutes."
-3. **Focus order** — 5 min → 2 min → choose activity → I already moved → not now → exit.
-4. **Escape** — dismisses, records `skipped`.
-5. **VoiceOver names** — the four activity options must be siblings in the same group with
-   parallel names ("Walk or wheel", "Seated movement", "Small space", "Change position") —
-   **not** "Walk" plus "Accessibility alternatives" (A2). The VoiceOver tree is where unequal
-   status becomes undeniable.
-6. **VoiceOver values** — remaining time announced at start, at the halfway point at most, and
-   at completion.
-7. **Text scaling** — four options stack vertically; they never become a horizontal scroller.
+1. **Keyboard path** — MB-10, HU-02, or the break surface. `Now` opens offered; Return/5 and
+   Q/2 accept durations. A/P/Escape/Command-period and every pointer control work first-frame.
+2. **Initial focus** — offered: "Start 5 minutes"; running: "Done early."
+3. **Focus order** — offered: 5 min → 2 min → I already moved → Change position → [merged only:
+   Just the visual one] → Skip. Running: Walk or wheel → Small space → Seated → Done early →
+   I already moved → Change position → Skip.
+4. **Escape** — dismisses immediately and records `skipped` from offered or running.
+5. **VoiceOver names** — offered duration controls are "Start five minutes, Return or 5" and
+   "Start two minutes, Q or 2". Running activity options are siblings with parallel names
+   ("Walk or wheel", "Seated movement", "Small space") — never "Walk" plus "Accessibility
+   alternatives". "Change position instead, P, logged separately" has equal semantics without
+   pretending it completes movement. Merged offered additionally names "Just the visual one, V."
+6. **VoiceOver values** — offered announces "Timer not started." Running announces the selected
+   duration at start and completion, with at most one halfway announcement.
+7. **Text scaling** — the three equal-rank content choices stack vertically; separate
+   duration/declaration/position/exit controls follow in reading order and never become a
+   horizontal scroller.
 8. **Increase Contrast** — option boundaries become explicit.
 9. **Reduce Motion** — no animated demonstrations. Instructions are text `[04 §2]`.
 10. **Meaning without color** — the selected activity is indicated by more than a tint.
 11. **Alternative movement** — this screen *is* the commitment. Seated and small-space options
-    carry the same type size, same target size, same position class as walking.
+    carry the same type size, same target size, same position class as walking. Change position
+    remains reachable when position reminders are off; it rotates the manual cycle without
+    enabling prompts and remains explicitly separate from movement completion.
 12. **Multi-display** — as BR-01.
+
+### ED-20/21 — Companion timer projection
+
+1. **Keyboard path** — Return/Space activates the focused enabled control. Offline, expired, and
+   transfer-failed expose **Retry** and **Close**. Transfer-pending exposes **Cancel transfer**;
+   neutral revalidating exposes **Cancel reconnect** and **Close**; offline-terminal-ack-unknown
+   exposes **Check status** and **Close**; revalidating-terminal-ack-unknown exposes **Cancel
+   reconnect** and **Close**; terminal-action-pending and nonterminal-action-pending expose **Close**
+   because a submitted action cannot be cancelled. Offline-nonterminal-ack-unknown exposes **Check
+   status** and **Close**; revalidating-nonterminal-ack-unknown exposes **Cancel reconnect** and
+   **Close**.
+2. **Initial focus** — Live uses the exact phase/segment row's registered focus target. Running
+   transferable rows focus Take with me; merged movement offered instead focuses **Start 5 minutes**;
+   Neutral offline/expired/transfer-failed focus Retry;
+   both offline terminal/nonterminal-ack-unknown states focus Check status. Transfer-pending focuses Cancel transfer;
+   all three revalidating states focus Cancel reconnect; terminal/nonterminal pending, rejected,
+   and already-ended focus Close. No absent or disabled trigger receives focus. `Just the visual one` exists only in
+   merged movement offered.
+3. **Focus order** — exactly the enabled control IDs registered for that state. Status is read but
+   not a fake focus stop. Unavailable phase-specific controls are absent, not disabled. Merged
+   movement offered is Start 5 → Start 2 → I already moved → Change position → Just the visual one
+   → Skip, with Return/5, Q/2, A, P, V, and S respectively.
+4. **Escape** — Escape or Command-period dismisses the status projection only in every companion
+   state. It never sends Skip/terminal action or cancels a transfer/revalidation; those cancellations
+   require their named enabled controls.
+5. **VoiceOver names** — semantic action names, never device appearance or sensor language.
+6. **VoiceOver values** — exactly one registered announcement for live, neutral offline,
+   offline-terminal-ack-unknown, offline-nonterminal-ack-unknown, expired, transfer-pending,
+   terminal-action-pending, nonterminal-action-pending, neutral revalidating,
+   revalidating-terminal-ack-unknown, revalidating-nonterminal-ack-unknown, rejected-no-op, already-ended, or
+   transfer-failed. Terminal pending names the selected action, never “Sending timer.” Unknown ACK
+   states preserve and name that action: terminal actions say “received”; Start actions say
+   “started.” Both say “Do not repeat.”
+   Check status/reconnect never resends it. Neutral states explicitly say no companion operation is
+   pending. Epoch/age uncertainty announces CP-VO39 exactly once: “That action is too old to
+   verify. Showing the current timer. Close.” It never reuses the rejected-no-op announcement or
+   claims whether the action was applied. No silent no-op.
+7. **Text scaling** — state and recovery copy wrap above a vertical action group.
+8. **Increase Contrast** — labels, traits, focus rings, and boundaries distinguish every state.
+9. **Reduce Motion** — immediate state replacement; no spinner or transfer animation required.
+10. **Meaning without color** — each state has explicit text and enabled action labels; no pending
+    or failure meaning depends on color or a disabled trigger.
+11. **Alternative movement** — sensor-free manual controls remain on the authoritative device;
+    Watch/iPhone ownership, motion, location, HealthKit, walking, and standing are not required.
+12. **Multi-display** — the Mac key panel remains reachable until acknowledged handoff; failure
+    returns focus without stranding a panel. Take with me exposes “Send to [paired name]” and its
+    VoiceOver name before activation; that label binds the exact receiver, not device appearance.
+
+### ED-19 — Timer recovery unavailable
+
+1. **Keyboard path** — Close works with Return, Escape, and Command-period; Retry is shown only
+   when a failed fence/storage transaction can be attempted again.
+2. **Initial focus** — Close, or Retry when it is the only recovery action.
+3. **Focus order** — recovery status → Retry when present → Close.
+4. **Escape** — closes the unusable ritual without recording skip, completion, or timer finish.
+5. **VoiceOver names** — due: “Timer could not be restored. No finish was recorded. The schedule
+   is still due.” Not due/manual early: “Timer could not be restored. No finish was recorded. This
+   schedule was not reset.” The retained phase selects the string before Close receives focus.
+6. **VoiceOver values** — active due says “Still due · timer not restored.” Manual Pause says
+   “Paused: [selected reason] · timer not restored.” Outside-hours, inactive, lock, sleep,
+   unavailable, qualified-away, and accepted-ritual pauses use their registered evidence-qualified
+   reason without requiring a selected reason; intentionally hidden system detail says “Paused ·
+   timer not restored.” When reasons overlap, manual, locked, inactive, sleeping, unavailable,
+   accepted-ritual, confirmed-away, outside-hours, then hidden-system precedence selects one stable
+   qualified projection. Held always says “Held: [fresh,
+   provenance-qualified reason] · timer not restored,” whether due or not due. Other not-due state
+   reads the ordinary retained schedule status plus “timer not restored”; no countdown chatter.
+7. **Text scaling** — title, body, and actions wrap in one vertical group.
+8. **Increase Contrast** — explicit boundary and focus ring.
+9. **Reduce Motion** — immediate quiet transition, no entrance/exit gate.
+10. **Meaning without color** — “still due” appears only when true; otherwise “schedule was not
+    reset” plus the actual menu phase carries the state. Paused/Held wording and qualified reason
+    remain visible independent of due body copy. “Not restored” is always explicit.
+11. **Alternative movement** — no body state or completion is inferred.
+12. **Multi-display** — one key recovery status, one focus restoration, actual menu phase reachable.
+
+### Restart Undo — stale receipt
+
+1. **Keyboard path** — Close works with Return, Escape, and Command-period; no stale Undo control remains.
+2. **Initial focus** — Close.
+3. **Focus order** — message → Close.
+4. **Escape** — dismisses only this receipt and does not change the schedule.
+5. **VoiceOver names** — “Close, button.”
+6. **VoiceOver values** — announces CP-VO37 exactly once: “That restart can no longer be undone.
+   Your current schedule was not changed. Close.”
+7. **Text scaling** — message and Close stack and wrap without clipping.
+8. **Increase Contrast** — explicit boundary and focus ring.
+9. **Reduce Motion** — immediate replacement with no travel or spinner.
+10. **Meaning without color** — the rejection and unchanged-current-schedule result are written.
+11. **Alternative movement** — no movement, completion, or sensor claim appears.
+12. **Multi-display** — one receipt and one stable Close focus on the active key panel.
+
+### Settings Custom v2 — partial edit
+
+1. **Keyboard path** — Tab reaches every editable field/group, its inline error, Save, and Cancel.
+2. **Initial focus** — the first user-selected field, otherwise the first field.
+3. **Focus order** — timing fields in visual then movement order → duration groups → Save → Cancel.
+4. **Escape** — cancels the edit without changing stored values.
+5. **VoiceOver names** — each field names its unit and clock; arrays are one named editable group.
+6. **VoiceOver values** — untouched migrated values are read exactly; validation names only the dirty
+   field/group or necessary ordering peer, then focuses the first invalid dirty control.
+7. **Text scaling** — labels, values, and inline errors stack without horizontal scrolling.
+8. **Increase Contrast** — focus and invalid state use outline, icon, and text, not color alone.
+9. **Reduce Motion** — error/focus changes are immediate.
+10. **Meaning without color** — invalid state is written and associated with the control.
+11. **Alternative movement** — movement duration choices remain user-authored, not capability claims.
+12. **Multi-display** — one Settings window owns the edit and restores focus after validation.
 
 ### MB-01…MB-05 — Menu bar glyph
 
 1. **Keyboard path** — reachable via the system menu bar keyboard shortcut (`⌃F2` /
-   Keyboard Navigation), plus a global shortcut to open the menu directly.
+   Keyboard Navigation). No default global shortcut is installed.
 2. **Initial focus** — first menu item.
 3. **Focus order** — status region (if focusable) → items in visual order.
 4. **Escape** — closes the menu.

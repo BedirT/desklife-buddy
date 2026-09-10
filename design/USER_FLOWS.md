@@ -1,7 +1,7 @@
 # User Flows
 
 Flows are written as **decision paths**, not happy paths. Every flow states its exit, its
-suppression behavior, and what the product records. Screen IDs refer to `SCREEN_INVENTORY.md`.
+Paused/Held behavior, and what the product records. Screen IDs refer to `SCREEN_INVENTORY.md`.
 
 Legend: `→` next step · `⤳` background/no UI · `✕` flow ends
 
@@ -13,14 +13,14 @@ Legend: `→` next step · `⤳` background/no UI · `✕` flow ends
 Install → launch → ON-01 What this is
   → ON-02 What it can and cannot know          (the honesty screen; not skippable content,
                                                 but the whole flow is skippable)
-  → ON-03 Choose a rhythm  [Gentle | Balanced✓ | Frequent]
+  → ON-03 Choose a rhythm  [Calm | Balanced✓ | Frequent reset | Adaptive | Custom]
   → ON-04 How you move     [Walk/wheel | Seated movement | Mix movement paths | Position change]
   → ON-05 Comfort          [Standard | Static + brightness; macOS choices shown read-only]
   → ON-06 Ready            (Choices summarized; integrations named, not requested.)
   ✕ Menu bar item appears (MB-01). Clocks start.
 ```
 
-- **Skip at any point** → ON-07: Balanced profile, all four movement options offered
+- **Skip at any point** → ON-07: Balanced preset, all four movement options offered
   equally, no permissions requested, no reminder to finish setup.
 - **No permission is requested during onboarding** `[09 §7 permission-first onboarding]`.
   Notifications are requested at F-03 step 1; Calendar at SE-12.
@@ -31,14 +31,15 @@ Install → launch → ON-01 What this is
 ## F-02 · Steady state (the flow that runs 40× a day)
 
 ```
-⤳ activity estimator running (CGEventSource; 60 s window)
+⤳ permission-free estimator running (5 s expected samples; 15 s maximum covered gap)
 ⤳ four clocks advancing: visual · movement · position · recovery
-  → visual clock reaches soft-due (20 min, Balanced)
+  → visual clock reaches soft-due (20 min, Balanced v2)
     → MB-02 glyph changes            ← Level 0. This is the whole interaction 
                                         most of the time.
-    → suppression check (PRODUCT_MODEL §6)
-        suppressed → ⤳ hold, accumulate per policy, do not queue duplicates
-        clear      → wait for a low-friction moment (max: visual target + 90 s runtime; movement latest per profile)
+    → Paused/Held check (PRODUCT_MODEL §6)
+        Paused → ⤳ freeze affected clocks; no catch-up
+        Held   → ⤳ eligible need continues; do not present or queue duplicates
+        clear  → wait for a low-friction moment (max: Balanced v2 latest 27 min)
     → F-03
 ```
 
@@ -50,16 +51,17 @@ If a direction cannot make MB-01→MB-02 legible and calm, the direction fails.
 ## F-03 · Visual reset
 
 ```
-  ├ Start now          → BR-02 opens running (≈20 s, D-021) → timerFinished
-  │                      → AK-01 (Reduce Motion / static / text-only: AK-02, nothing shown) ✕  clock resets
-  │                      ("I already looked away" → userDeclaredCompleted ✕)
+HU-01 heads-up (45 s before target)
+  ├ Start now          → BR-01 → BR-02 immediate + absolute 20 s deadline
+  │                      → coarse final milestone → timerFinished
+  │                      → AK-02 (nothing shown) ✕  fresh visual schedule
   ├ In 5 minutes       → snoozed(300) → return to F-02 ✕
   ├ More options       → HU-05 → BR-13 [5·10·15 min | after meeting | pause 1 hr |
   │                                     not appropriate]
-  └ ignored            → at target: BR-02 opens running
-                          ├ Escape / click away → skipped ✕   (never blocked, never re-shown
-                          │                                    for this opportunity)
-                          ├ "I already looked away" → userDeclaredCompleted ✕
+  └ ignored            → at target: BR-01 appears
+                          ├ Escape / click away → skipped ✕   (fresh visual schedule,
+                          │                                    no completion credit)
+                          ├ "Done early" → userDeclaredCompleted ✕
                           └ run to completion → as above
 ```
 
@@ -73,26 +75,32 @@ If a direction cannot make MB-01→MB-02 legible and calm, the direction fails.
 
 ```
 HU-02 heads-up
-  → BR-07 opens running (D-021) with the guidance sentence, three equal choice chips,
-     2-minute pill, Done early, I already moved, Skip, and Change position instead
-     [Not now → BR-13 snooze sheet]
-      ├ Chips select the activity in place (BR-06 content swaps the guidance sentence):
-      │     Walk or wheel · Small space · Seated (equal thirds) + tertiary Change position
-      │     instead — equal semantic rank, quieter visual tier (D-027)
-      │     └ position change chosen → F-05 (does NOT reset the movement clock)
-      ├ 5 min / 2 min selected → countdown runs → BR-08 "Done" → userDeclaredCompleted ✕
-      │     └ user leaves the Mac entirely → timer continues → on return, BR-08
-      ├ "I already moved" → userDeclaredAlreadyMoved ✕  (no follow-up question)
-      └ Not now → BR-13 snooze sheet
+  → Now → BR-05 offered (no fact or timer) [Start 5 minutes (initial focus) | 2 minutes | I already moved |
+                    Change position instead | Skip]
+      ├ Start 5 min / 2 min → breakStarted + selected duration + absolute deadline
+      │     → BR-07 running [three equal content choices | Done early | I already moved |
+      │                      Change position instead | Skip]
+      │     → timerFinished / BR-08 "Done early" → fresh movement + visual schedules ✕
+      │     └ device sleeps/locks → same-epoch deadline resumes/finishes; unavailable anchor
+      │                              → operational recovery, no timer fact/fresh cycle
+      ├ "I already moved" → userDeclaredAlreadyMoved → fresh movement schedule;
+      │     visual fresh only with an explicit or strong fresh screen-away basis ✕
+      ├ "Change position instead" → positionChanged → rotate the always-present position cycle;
+      │     when reminders are off they remain off with no due state or prompt ✕
+      └ Skip / Escape → skipped; fresh movement schedule without completion credit ✕
 ```
 
-- The movement clock resets on an accepted 5/2-minute start (new cycle, debt cleared),
-  on `Done early`, and on `I already moved`. A skip counts one deferral and resets the
-  clock keeping the debt.
-- Idle never resets it. A `likelyNaturalInterruption` is recorded and **does not count**
-  `[protocol: completion_semantics.likely_natural_interruption.counts_as_movement: false]`.
-- A finished movement timer starts a fresh visual presentation cycle without recording a visual
-  completion, so returning from the break cannot trigger a visual reset moments later (D-042).
+BR-05 has no timer, `breakStarted`, or Done early. Its focus order is 5 → 2 → already moved →
+position → [merged only: Just the visual one, V] → Skip;
+Return/5 and Q/2 accept their durations on the first frame. BR-07 focuses Done early and exposes
+1/2/3 content choices. A/P/Escape/⌘. remain first-frame actions in both states. VoiceOver says
+"timer not started" while offered and names the accepted duration while running.
+
+- Movement timer/declaration and `I already moved` create a fresh movement schedule. Skip/Escape
+  also starts a new schedule to respect refusal, but records no completion credit. Acceptance
+  alone never resets the schedule.
+- Idle never completes movement. At five minutes, `likelyNaturalInterruption` preserves movement
+  need and starts a fresh visual schedule only when the person returns.
 - Safety line is present on every running movement screen `[C040]`.
 
 ---
@@ -117,38 +125,60 @@ Both due inside merge_window (300 s)
   → BR-09 single surface:
         segment 1 · look far away (≈20 s)
         segment 2 · movement (5 or 2 min, or choose activity)
-  ├ complete both → both clocks reset ✕
-  ├ "Just the visual one" → BR-10 → visual resets, movement remains due,
-  │                          screen says so plainly, returns to F-02
-  └ Escape at any point → whatever completed is recorded; the rest stays due ✕
+  ├ visual timer / Done early → cross-slot arbiter commits visual component → movement offered
+  │   ├ accept 5 / 2 min → movement running
+  │   │   ├ timer / Done early → fresh movement; visual remains fresh ✕
+  │   │   ├ I already moved → declared movement fact; visual remains fresh ✕
+  │   │   ├ Change position → position fact/cycle; visual remains fresh ✕
+  │   │   ├ content changes → selected duration is unchanged
+  │   │   └ Skip / Escape → skipped movement schedule; visual remains fresh ✕
+  │   ├ Change position → position fact/cycle; base participants remain visual+movement ✕
+  │   ├ Just the visual one (V) → BR-10 → visual fresh, movement remains due ✕
+  │   └ Skip / Escape → skipped movement schedule; visual remains fresh ✕
+  └ Escape during visual → same-revision cross-slot arbiter preempts uncommitted component;
+     one skipped path and one visual successor effect, never timerFinished + skipped ✕
+     Escape during movement → retain finished visual effect; skipped movement starts fresh ✕
 ```
+
+If visual completion was already acknowledged at the successor revision, it is final and Escape
+uses the movement-phase path. Same-revision timer/Done/Escape never project independently.
 
 ---
 
 ## F-07 · Snooze and repeated deferral
 
 ```
-snoozed(n) → suppression active for n → opportunity returns once
+snoozed(n) → Held for n with same OpportunityID → opportunity returns once
 Second deferral of the same opportunity → no immediate re-offer; wait for the next normal cycle
 Further deferrals → NO escalation: no bigger surface, no color change, no counter, no guilt copy
 Session pattern (ED-15): after the session, at most one neutral note in the
   weekly rhythm or a settings suggestion — "Balanced may be too frequent for how you
-  work. Try Gentle?" — never mid-session, never as an interruption.
+  work. Try Calm?" — never mid-session, never as an interruption.
 ```
 
 This flow is where most competitors fail. It is a first-class design target, not an edge case.
 
 ---
 
-## F-08 · Pause and presentation
+## F-08 · Paused and Held
 
 ```
 MB-12 → [30 min | 1 hour | Until… | Until tomorrow | While presenting]
-  → MB-04 glyph + MB-08 menu state showing what is paused and until when
-  → resume is always one click
+  → explicit Pause: clocks freeze, deadline/reason survive relaunch
+  → explicit presenting/meeting/call, selected Focus, selected Calendar busy interval,
+    selected app, or qualified likely-call inference: Held; eligible need continues
+  → MB-04 glyph + menu state says Paused or Held and the actual reason/deadline
+  → resume is always one click, followed by a 90 s quiet corridor
+Working hours begin → new monotonic baseline + 60 s quiet corridor; no wall catch-up
 Presentation mode left on (ED-14): once, quietly, at the next natural moment —
-  "Still paused for presenting. Resume?" Dismissible. Never repeated in the same session.
+  "Still held for presenting. Resume?" Dismissible. Never repeated in the same session.
 ```
+
+Every hold record carries source provenance, qualification, observed-at, expiry, and correction
+state. UI says only what the evidence proves: Calendar is "selected busy time," Focus is "Focus
+you selected," an app is "selected app is active," and inference is "likely." Stale, missing,
+conflicting, or unqualified evidence is unknown, not a hold. Confirmed away additionally requires
+fresh, unambiguous, authorized evidence and never becomes a movement-completion fact.
 
 ---
 
@@ -184,7 +214,7 @@ Core function requires **zero** permissions `[protocol: permissions.required_for
 ## F-11 · Recovery suggestion
 
 ```
-recoveryDebtSeconds eligible (90 min, Balanced) and typically by 120 min
+recoveryDebtSeconds eligible (90 min, Balanced v2) and typically by 120 min
   → BR-12: a longer break, 5–10 min, offered once
   → declined → not re-offered as a longer break this session
 Tone: an offer between peers. Never an alarm, never "you have not taken a real break."
@@ -195,11 +225,29 @@ Tone: an offer between peers. Never an alarm, never "you have not taken a real b
 ## F-12 · Changing the schedule
 
 ```
-SE-02 → profile or custom
+SE-02 → Calm / Balanced / Frequent reset / Adaptive / Custom (`custom_v2`)
+  Legacy Gentle/Balanced/Frequent movement/High frequency value loaded:
+    → Keep current schedule preserves exact v1 ID/values
+    → Review new schedule shows the named successor; migrate only after acceptance
+  Legacy Balanced remains 20/25/30 visual and 50/60/70 movement; migration copy names the
+    successor "Balanced (current v2 schedule)" at 20/25/27 and 50/55/70. Normal display is Balanced.
+  Legacy custom accepted for migration:
+    → preserve every legal positive finite v1 field, unit, ordering, and value, including
+      visual 5 s and movement [30]; change only contract version, identifier, and migration state
+    → migrated scalar fields and duration-array groups begin untouched
+    → apply safer v2 bounds only to a newly created or dirty field/group plus necessary ordering
+      neighbors; unrelated edits never clamp/reject untouched visual 5 s or movement [30]
+  Adaptive starts at the current Balanced v2 contract and initially changes only delivery within the due window
+    and bounded automatic holds, never reminder frequency or a health conclusion
   Very frequent (SE-03) or effectively disabled (SE-04):
     → one neutral note about what that means. No warning icon, no block, no shame [03 §5].
 Default changed by an app update (ED-18): first launch after → say what changed and why,
   offer to keep the old value. Never silently re-tune someone's schedule.
+Optional validated schedule restart → Undo remains available across ordinary eligible accrual
+  → Undo restores the predecision values plus that eligible accrual delta
+  → later terminal/ritual/restart/cycle mutation makes Undo stale
+  → announce “That restart can no longer be undone. Your current schedule was not changed.” once;
+    focus Close and preserve every later fact/effect
 ```
 
 ---
@@ -214,6 +262,108 @@ SE-09 → what is stored (plain list) · retention · export · delete
   → SE-10 delete: states exactly what will be removed and what remains
 Nothing here is buried, and nothing requires an account to reach.
 ```
+
+The export/history surface projects the ten product facts. Operational, observation,
+assessment, scheduling-decision, correction, and companion-action ledgers remain separately
+typed and disclosed before their owning features retain or export them.
+
+---
+
+## F-14 · Take an accepted timer away
+
+```
+Accepted visual or movement ritual → Take with me
+  → Mac shows registered live/offline availability; Take with me is enabled only while live
+  → Mac sends GlobalStateID + generation + OpportunityID + projection epoch + independent
+    ClockCycleIDs + segment ID + absolute deadline + ActionID + exact selected receiver DeviceID,
+    local device label, key ID, and key epoch
+  ├ companion starts handoff → Transfer pending · “Sending timer…” · Cancel transfer
+  │   └ acknowledges bounded monotonic handoff + ≤90 s exact-generation lease → Live
+  │       ├ terminal action → normalize wrapper to exact local transition
+  │       │   → Terminal action pending · “Sending ‘[selected action]’…” · Close
+  │       │   → causal acknowledgement; submitted action cannot be cancelled or repeated
+  │       ├ Start 5/2 → Nonterminal action pending · “Starting ‘[selected start]’…” · Close
+  │       │   → signed outcome enters merged movement running and records breakStarted once
+  │       │   → unknown ACK preserves duration/target → Check status; never repeat or resend Start
+  │       └ same-generation concrete action set reconciles by its named resolver
+  │           → winner materializes the exact local product fact/effect/successor phase
+  │       → other devices show Already ended / Ended on another device
+  │       → losing/duplicate raw candidates erase from memory at settlement/fence
+  ├ connectivity lost with no operation pending → Offline · Retry / Close · Keep using this Mac
+  ├ connectivity lost while terminal ACK unknown
+  │   → “Connection lost. Checking whether [selected action] was received; do not repeat.”
+  │   → Check status / Close; selected action provenance remains; never resend
+  ├ lease elapsed → Expired · Retry / Close → neutral Revalidating · Cancel reconnect / Close
+  ├ terminal ACK check → Revalidating terminal ACK unknown · Cancel reconnect / Close
+  │   → “Checking whether [selected action] was received; do not repeat.”
+  │   → Live or Rejected, no-op · Close
+  ├ nonterminal Start ACK check → Revalidating nonterminal ACK unknown · Cancel reconnect / Close
+  │   → merged movement running or Rejected, no-op; original breakStarted is never replayed
+  ├ duplicate with compact receipt before acknowledgement-of-ack/90 s
+  │   → replay recorded acknowledgement; no second effect
+  │   → device returns the signed generation/device/ActionID/counter/outcome-revision/
+  │     32-byte-token/outcome-binding envelope → receipt may erase
+  ├ duplicate/unseen action after receipt expiry → too old to verify; show current timer
+  ├ merged movement offered → Start 5 (initial focus, Return/5) / Start 2 (Q/2) /
+  │   I already moved / Change position / Just the visual one / explicit Skip
+  │   → Start and authoritative local Skip/Escape enter one fixed-cutoff opportunity-action frontier;
+  │     handoff and terminal action do the same; arrival order never selects the winner
+  │   → before settlement show pending only, with no fact/deadline/transfer/haptic exposed
+  ├ Escape or Command-period on any companion status → dismiss projection only; no Skip,
+  │   terminal action, transfer cancellation, or revalidation cancellation
+  ├ sender crash before atomic counter+ActionID+outbox commit → no reservation
+  ├ sender crash after commit/before or after send → only same local monotonic epoch and elapsed
+  │   <90 s may resend the same envelope/ActionID/receiver/key; otherwise erase without resend or replacement
+  ├ signed outcome received → atomically persist exact outcome ACK bytes/revision/expiry/token/
+  │   binding in outcome_ack_pending, then original action outbox may erase
+  ├ sender crash after outcome → same-epoch <90 s relaunch completes acknowledgement-of-ack from
+  │   outcome_ack_pending without reapplying; transmission erases pending, no recursive ACK
+  ├ pairing/key rotates → only exact receiver/key epoch accepts; old key lives through its bounded
+  │   referenced window; a replacement pairing fences old commands with visible rejection
+  ├ counter 11 arrives before 10 → hold 11 in Class-0 sparse window; high water stays 9
+  │   → 10 arrives → dispose 10 then 11 in order; high water becomes 11
+  └ no acknowledgement → Transfer failed · Retry / Close; Mac deadline remains valid
+```
+
+Sleep, lock, relaunch, and connectivity loss never extend the accepted duration. If the monotonic
+epoch/anchor cannot be resumed, the ritual closes operationally with no `timerFinished` or fresh
+schedule. Same-generation candidates settle, the old projection epoch is signed/fenced, then the
+60-second grace begins; only fence + grace permits re-offer. The recovery projection says no finish
+was recorded, then says **still due** only if the retained schedule is due. An accumulating/manual-
+early schedule instead says the timer was not restored and the schedule was not reset, while the
+menu keeps its actual phase. A manual Paused menu remains **Paused: [selected reason] · timer not
+restored**; system, working-hours, qualified-away, and accepted-ritual pauses use the matching
+registered qualified reason without requiring a selected reason. Intentionally hidden system
+detail uses **Paused · timer not restored**. Held remains **Held: [qualified evidence reason] · timer not restored**, whether
+the retained schedule is due or not due. Offline intent cannot affect state until a coordinator
+renews its lease and revalidates generation/phase/revision. Duplicate, unknown,
+post-lease, old-generation, or mismatched-cycle actions get explicit current-state receipts, never
+silence or an inaccurate zero-change claim. Raw candidates and payload-free compact replay
+receipts and sparse counter entries are memory-only for at most 90 seconds and are not history/export
+data. The minimized encrypted sender crash-replay outbox is the only raw-action-envelope persistence
+exception: it is excluded from backup/history/export/logs and erased after the signed outcome is
+atomically moved to `outcome_ack_pending`, at same-epoch `elapsed >= 90`, or on epoch mismatch. The separate minimized outcome-ACK-pending
+record contains no action payload and follows the same epoch/age limits. Only strong, fresh,
+qualified movement evidence that passes validation/permission gates may support a separate
+user-approved schedule restart; weak/stale/ambiguous evidence does nothing and cannot masquerade as the timer or a
+user declaration.
+
+Merged visual acceptance creates the deterministic visual segment ID before running projection;
+the winning visual exit creates the movement ID before movement offered. OpportunityID + registered
+slot/version yield the same IDs on every paired device and through rebase. Every exit, Start,
+handoff, or terminal action consumes the already-projected current segment ID.
+
+Keyboard/focus comes from one state registry. Return/Space activates the focused enabled control.
+Live selects one exact phase/segment row; it exposes only that row's registered remote actions and
+focus order, and `Just the visual one` exists only in merged movement offered. Neutral
+offline/expired/transfer-failed focus Retry; offline-terminal-ACK-unknown focuses Check status;
+offline-nonterminal-ACK-unknown also focuses Check status; transfer-pending focuses Cancel transfer;
+terminal/nonterminal ACK revalidating focuses Cancel reconnect; terminal- and nonterminal-pending,
+rejected, and already-ended focus Close. Focus order is exactly the available control IDs, never
+a status placeholder or disabled trigger. Escape and Command-period always dismiss status only;
+the named Cancel transfer/Cancel reconnect controls alone cancel those uncommitted operations. Every transition has visible copy
+and one VoiceOver announcement. The fallback requires no HealthKit, motion, location, camera, or
+other sensor data.
 
 ---
 

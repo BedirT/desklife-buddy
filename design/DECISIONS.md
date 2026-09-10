@@ -376,7 +376,7 @@ pointer read.
 
 **Date:** 2026-08-25 · **Tag:** Design heuristic · **Status:** Accepted
 
-The user reviewed D-020 and rejected part of its *rationale* (not its outcome): the
+The user reviewed D-019 and rejected part of its *rationale* (not its outcome): the
 "an open eye would imply watching" argument was overweighted. Eyes on a character read as
 care — someone keeping you company — long before they read as surveillance, and the privacy
 story belongs in onboarding and Settings, not in the character's anatomy.
@@ -536,7 +536,7 @@ overlay, ~35% dimming") and D-021 ("full coverage — the work is entirely hidde
 sky") coexisting unlogged, with `DESIGN_SYSTEM.md` §4 still carrying the 35% anchor. Resolved
 explicitly:
 
-- **The default break presentation is the full opaque field** (D-013/D-021). There is no
+- **The default break presentation is the full opaque field** (D-021). There is no
   dimming layer in it, so the 35% number does not apply to it.
 - **The anti-lock-screen obligation** (`macos-design.md` §3) that D-005's translucency used
   to carry is now carried by: the lit, visible menu bar and clock (D-012), permanently

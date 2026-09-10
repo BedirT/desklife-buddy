@@ -232,7 +232,7 @@ struct HeadsUpCapsuleCoordinatorTests {
         #expect(coordinator.present(presentation))
         let compactFrame = harness.panels[0].frame
         model.setHovered(true)
-        await Task.yield()
+        await waitUntil { harness.panels[0].updateCount == 1 }
 
         #expect(harness.panels.count == 1)
         #expect(harness.panels[0].model === model)
@@ -243,7 +243,7 @@ struct HeadsUpCapsuleCoordinatorTests {
         #expect(harness.panels[0].frame.maxX > compactFrame.maxX)
 
         model.setHovered(false)
-        await Task.yield()
+        await waitUntil { harness.panels[0].updateCount == 2 }
 
         #expect(harness.panels[0].updateCount == 2)
         #expect(harness.panels[0].frame == compactFrame)
@@ -262,7 +262,7 @@ struct HeadsUpCapsuleCoordinatorTests {
         #expect(coordinator.layoutObservationRegistrationCount == 1)
 
         model.setHovered(true)
-        await Task.yield()
+        await waitUntil { coordinator.layoutObservationRegistrationCount == 2 }
 
         #expect(coordinator.layoutObservationRegistrationCount == 2)
         #expect(harness.panels[0].updateCount == 3)
@@ -482,6 +482,13 @@ private func panelSize(for capsuleSize: CGSize) -> CGSize {
     HeadsUpCapsuleLayoutMetrics.standard.chromeInsets.panelFrame(
         around: CGRect(origin: .zero, size: capsuleSize),
     ).size
+}
+
+private func waitUntil(_ condition: () -> Bool) async {
+    for _ in 0 ..< 100 {
+        if condition() { return }
+        await Task.yield()
+    }
 }
 
 private final class HeadsUpCapsuleHarness {

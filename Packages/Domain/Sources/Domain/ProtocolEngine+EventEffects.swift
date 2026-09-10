@@ -74,6 +74,9 @@ extension ProtocolEngine {
         if opportunity == .visual {
             reset(.visual)
         } else if opportunity == .movement {
+            // The elapsed movement surface is also a real break in the visual session,
+            // without manufacturing a visual-completion event.
+            reset(.visual)
             movementClock.phase = .gracedAfterSuppression
         }
     }

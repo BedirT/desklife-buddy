@@ -38,6 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         var headsUpVerificationSettings: HeadsUpNotificationSettings?
         var headsUpVerificationPermissionPanel: HeadsUpPermissionPanel?
         var headsUpVerificationCaptureCount = 0
+        var automaticTimingVerificationCaptureCount = 0
         var settingsVerificationRouteAccepted: Bool?
     #endif
     var activityTimer: Timer?
@@ -123,9 +124,13 @@ extension AppDelegate {
         installSettingsPresentationBoundary(on: runtime)
         runtime.onRoute = { [weak self] action in self?.route(action) }
 
-        activitySource = SystemActivitySource(
-            onAvailabilityChange: { [weak self] sample in self?.observe(sample) },
-        )
+        if Self.isRunningTests {
+            activitySource = nil
+        } else {
+            activitySource = SystemActivitySource(
+                onAvailabilityChange: { [weak self] sample in self?.observe(sample) },
+            )
+        }
     }
 
     func installSettingsPresentationBoundary(on runtime: ProtocolRuntime) {
@@ -168,7 +173,7 @@ extension AppDelegate {
     func restore(_ runtime: ProtocolRuntime) async throws {
         if let headsUpLifecycleCoordinator {
             #if DEBUG
-                let initialSample = headsUpVerificationMode?.enablesRuntime == true
+                let initialSample = headsUpVerificationMode?.usesInjectedSnapshot == true
                     ? nil
                     : activitySource?.sample()
             #else
@@ -179,13 +184,13 @@ extension AppDelegate {
             )
             #if DEBUG
                 await runHeadsUpVerificationAfterRestore()
-                if headsUpVerificationMode?.enablesRuntime == true { return }
+                if headsUpVerificationMode?.usesInjectedSnapshot == true { return }
             #endif
             startActivityTimer()
             return
         }
         try await runtime.restore()
-        if let activitySource {
+        if let activitySource, !Self.isRunningTests {
             try await runtime.observe(activitySource.sample())
         }
         startActivityTimer()
@@ -193,6 +198,10 @@ extension AppDelegate {
 
     func startActivityTimer() {
         activityTimer?.invalidate()
+        guard !Self.isRunningTests else {
+            activityTimer = nil
+            return
+        }
         activityTimer = Timer.scheduledTimer(
             timeInterval: 5,
             target: self,

@@ -180,7 +180,7 @@ final class ProtocolRuntime {
             let headsUpOutput = reduceHeadsUpObservation(
                 in: &candidate,
                 observedAt: observationDate,
-                isLowFrictionMoment: isLowFrictionMoment,
+                isLowFrictionMoment: candidate.lastObservationWasLowFriction,
                 suppressionReason: SuppressionResolver.resolve(
                     activeReasons: suppressions,
                 ).reason,
@@ -400,11 +400,9 @@ extension ProtocolRuntime {
         to current: ProtocolState,
         endedAt: Date,
     ) -> EstimatedActiveUseRun? {
-        let visualDelta = current.visualClock.accumulatedActiveUseSeconds
-            - previous.visualClock.accumulatedActiveUseSeconds
         let movementDelta = current.movementClock.accumulatedActiveUseSeconds
             - previous.movementClock.accumulatedActiveUseSeconds
-        let seconds = max(visualDelta, movementDelta)
+        let seconds = movementDelta
         guard seconds.isFinite, seconds > 0 else { return nil }
         return try? EstimatedActiveUseRun(
             startedAt: endedAt.addingTimeInterval(-seconds),
@@ -415,10 +413,7 @@ extension ProtocolRuntime {
     func publish(liveHeadsUp: OpportunityPresentation?) {
         state = engine.state
         statusContext = StatusMenuContext(
-            estimatedActiveUseSeconds: max(
-                state.visualClock.accumulatedActiveUseSeconds,
-                state.movementClock.accumulatedActiveUseSeconds,
-            ),
+            estimatedActiveUseSeconds: state.movementClock.accumulatedActiveUseSeconds,
             activeSuppression: currentSuppression,
             manualPause: manualPauseSummary,
             liveHeadsUp: liveHeadsUp,

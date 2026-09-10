@@ -378,7 +378,7 @@ private extension MovementAction {
 }
 
 private final class MovementOverlayMonotonicClock {
-    private let origin = SuspendingClock.now
+    private let origin = ContinuousClock.now
 
     var seconds: TimeInterval {
         let components = origin.duration(to: .now).components

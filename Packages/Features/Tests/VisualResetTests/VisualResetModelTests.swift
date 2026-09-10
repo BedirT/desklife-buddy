@@ -348,6 +348,25 @@ extension VisualResetModelTests {
         model.refresh()
         #expect(model.progress == 0.5)
     }
+
+    @Test("A refresh after system suspension completes an elapsed visual reset")
+    func suspensionElapsedResetCompletes() {
+        let clock = TestClock()
+        var actions: [VisualResetAction] = []
+        let model = VisualResetModel(
+            durationSeconds: 20,
+            now: { clock.value },
+            onAction: { actions.append($0) },
+        )
+
+        model.open()
+        clock.value = 1200
+        model.refresh()
+
+        #expect(model.remainingSeconds == 0)
+        #expect(model.phase == .finished(.timerFinished))
+        #expect(actions == [.opened, .timerFinished])
+    }
 }
 
 private final class TestClock {

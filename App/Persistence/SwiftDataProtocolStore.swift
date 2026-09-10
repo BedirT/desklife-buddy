@@ -337,12 +337,12 @@ private extension SwiftDataProtocolStore {
             visualClock: OpportunityClockState(
                 cycleID: visualCycleID,
                 accumulatedActiveUseSeconds: stored.visualAccumulatedActiveUseSeconds,
-                phase: stored.visualSnoozeDeadline == nil ? .gracedAfterSuppression : .snoozed,
+                phase: stored.visualSnoozeDeadline == nil ? .accumulating : .snoozed,
             ),
             movementClock: OpportunityClockState(
                 cycleID: movementCycleID,
                 accumulatedActiveUseSeconds: stored.movementAccumulatedActiveUseSeconds,
-                phase: stored.movementSnoozeDeadline == nil ? .gracedAfterSuppression : .snoozed,
+                phase: stored.movementSnoozeDeadline == nil ? .accumulating : .snoozed,
             ),
             visualSnoozeDeadline: stored.visualSnoozeDeadline,
             movementSnoozeDeadline: stored.movementSnoozeDeadline,

@@ -6,18 +6,24 @@ import Foundation
         case capsule
         case notification
         case permissionPanel
+        case automatic
 
         init?(arguments: [String]) {
             let matches = [
                 ("--verify-heads-up-capsule", Self.capsule),
                 ("--verify-heads-up-notification", Self.notification),
                 ("--verify-heads-up-permission", Self.permissionPanel),
+                ("--verify-automatic-visual", Self.automatic),
             ].filter { arguments.contains($0.0) }
             guard matches.count == 1, let mode = matches.first?.1 else { return nil }
             self = mode
         }
 
         var enablesRuntime: Bool {
+            self == .capsule || self == .notification || self == .automatic
+        }
+
+        var usesInjectedSnapshot: Bool {
             self == .capsule || self == .notification
         }
     }
@@ -58,6 +64,13 @@ import Foundation
                     usesInAppHeadsUp: true,
                     hasBeenAuthorized: false,
                 )
+            case .automatic:
+                HeadsUpNotificationAuthorizationState(
+                    hasPresentedExplainer: true,
+                    hasRequestedAuthorization: false,
+                    usesInAppHeadsUp: true,
+                    hasBeenAuthorized: false,
+                )
             case .notification:
                 HeadsUpNotificationAuthorizationState(
                     hasPresentedExplainer: true,
@@ -82,6 +95,8 @@ import Foundation
         private let base: any ProtocolRuntimeStore
         private(set) var persistedPhases: [String] = []
         private(set) var promptPresentedEventCount = 0
+        private(set) var breakStartedEventCount = 0
+        private(set) var skippedEventCount = 0
 
         init(base: any ProtocolRuntimeStore) {
             self.base = base
@@ -94,6 +109,8 @@ import Foundation
         func commit(events: [OpportunityEvent], state: ProtocolState) async throws {
             try await base.commit(events: events, state: state)
             promptPresentedEventCount += events.count(where: { $0.kind == .promptPresented })
+            breakStartedEventCount += events.count(where: { $0.kind == .breakStarted })
+            skippedEventCount += events.count(where: { $0.kind == .skipped })
             guard let active = state.headsUpDeliveryState.activeDelivery else { return }
             let phase = switch (
                 active.phase,

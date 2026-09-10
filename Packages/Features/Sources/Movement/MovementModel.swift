@@ -387,7 +387,7 @@ private extension MovementModel {
 }
 
 private final class MovementMonotonicClock {
-    private let origin = SuspendingClock.now
+    private let origin = ContinuousClock.now
 
     var seconds: TimeInterval {
         let components = origin.duration(to: .now).components

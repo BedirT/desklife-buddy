@@ -47,26 +47,45 @@ public struct ActivityEstimatorConfiguration: Equatable, Sendable {
     public let recentInputWindowSeconds: TimeInterval
     public let longIdleResetSeconds: TimeInterval
     public let wakeUnlockGraceSeconds: TimeInterval
+    public let lowFrictionInputPauseSeconds: TimeInterval
+    public let postInterruptionGraceSeconds: TimeInterval
+    public let maximumSampleGapSeconds: TimeInterval
 
     /// Creates estimator thresholds while preserving a distinct long-idle boundary.
     public init(
         recentInputWindowSeconds: TimeInterval,
         longIdleResetSeconds: TimeInterval,
         wakeUnlockGraceSeconds: TimeInterval,
+        lowFrictionInputPauseSeconds: TimeInterval? = nil,
+        postInterruptionGraceSeconds: TimeInterval = 60,
+        maximumSampleGapSeconds: TimeInterval? = nil,
     ) throws {
+        let lowFrictionInputPauseSeconds = lowFrictionInputPauseSeconds
+            ?? min(5, longIdleResetSeconds / 2)
+        let maximumSampleGapSeconds = maximumSampleGapSeconds
+            ?? min(90, longIdleResetSeconds / 2)
         guard recentInputWindowSeconds > 0,
               longIdleResetSeconds > 0,
-              wakeUnlockGraceSeconds >= 0
+              wakeUnlockGraceSeconds >= 0,
+              lowFrictionInputPauseSeconds > 0,
+              postInterruptionGraceSeconds >= 0,
+              maximumSampleGapSeconds > 0
         else {
             throw ProtocolConfigurationError.nonPositiveValue
         }
-        guard recentInputWindowSeconds < longIdleResetSeconds else {
+        guard lowFrictionInputPauseSeconds < longIdleResetSeconds,
+              recentInputWindowSeconds < longIdleResetSeconds,
+              maximumSampleGapSeconds < longIdleResetSeconds
+        else {
             throw ProtocolConfigurationError.invalidActivityThresholds
         }
 
         self.recentInputWindowSeconds = recentInputWindowSeconds
         self.longIdleResetSeconds = longIdleResetSeconds
         self.wakeUnlockGraceSeconds = wakeUnlockGraceSeconds
+        self.lowFrictionInputPauseSeconds = lowFrictionInputPauseSeconds
+        self.postInterruptionGraceSeconds = postInterruptionGraceSeconds
+        self.maximumSampleGapSeconds = maximumSampleGapSeconds
     }
 }
 

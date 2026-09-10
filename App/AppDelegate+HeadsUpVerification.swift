@@ -28,6 +28,16 @@ import HeadsUp
                 return
             }
 
+            if mode == .automatic {
+                for delay in [6.0, 12.0, 32.0, 36.0] {
+                    addVerificationTimer(
+                        delay: delay,
+                        selector: #selector(captureAutomaticTimingVerification),
+                    )
+                }
+                return
+            }
+
             do {
                 headsUpVerificationSettings = try await coordinator.center.notificationSettings()
             } catch {
@@ -110,6 +120,42 @@ import HeadsUp
                 outcome: "presented",
                 capsuleCaptured: captured,
             )
+        }
+
+        @objc func captureAutomaticTimingVerification() {
+            guard let caches = FileManager.default.urls(
+                for: .cachesDirectory,
+                in: .userDomainMask,
+            ).first else { return }
+            automaticTimingVerificationCaptureCount += 1
+            let overlayRemaining = overlayCoordinator?.remainingSecondsForVerification
+            let overlayCaptured = overlayCoordinator?.captureForVerification() ?? false
+            let active = runtime?.state.headsUpDeliveryState.activeDelivery
+            let trace = headsUpVerificationStore
+            let state: [String: Any] = [
+                "activeDelivery": active != nil,
+                "breakStartedEventCount": trace?.breakStartedEventCount ?? 0,
+                "capture": automaticTimingVerificationCaptureCount,
+                "dockHidden": NSApp.currentSystemPresentationOptions.contains(.hideDock),
+                "manualRouteUsed": runtime?.lastRoutedAction != nil,
+                "overlayCaptured": overlayCaptured,
+                "overlayRemainingSeconds": overlayRemaining.map { $0 as Any } ?? NSNull(),
+                "promptPresentedEventCount": trace?.promptPresentedEventCount ?? 0,
+                "runtimeError": lastRuntimeError.map { String(describing: $0) as Any } ?? NSNull(),
+                "skippedEventCount": trace?.skippedEventCount ?? 0,
+                "visualAccumulatedSeconds": runtime.map {
+                    $0.state.visualClock.accumulatedActiveUseSeconds as Any
+                } ?? NSNull(),
+            ]
+            guard JSONSerialization.isValidJSONObject(state),
+                  let data = try? JSONSerialization.data(
+                      withJSONObject: state,
+                      options: [.prettyPrinted, .sortedKeys],
+                  )
+            else { return }
+            let filename = "automatic-timing-state-\(ProcessInfo.processInfo.processIdentifier)-"
+                + "\(automaticTimingVerificationCaptureCount).json"
+            try? data.write(to: caches.appendingPathComponent(filename), options: .atomic)
         }
 
         func writeHeadsUpVerificationEvidence(

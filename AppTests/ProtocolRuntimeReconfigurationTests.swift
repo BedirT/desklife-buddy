@@ -55,6 +55,7 @@ struct ProtocolRuntimeReconfigurationTests {
         )
         try await runtime.restore()
         try await runtime.observe(sample(uptime: 10))
+        try await runtime.observe(sample(uptime: 85))
         try await runtime.observe(sample(uptime: 110))
         #expect(runtime.state.visualClock.accumulatedActiveUseSeconds == 100)
 

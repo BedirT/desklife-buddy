@@ -55,7 +55,67 @@ struct ProtocolEngineTests {
         )
 
         #expect(engine.visualClock.phase == .readyToPresent)
+        #expect(engine.lastObservationWasLowFriction)
         #expect(output.presentation == .visual)
+    }
+
+    @Test("Passive reading advances only the visual clock")
+    func passiveReadingAdvancesOnlyVisual() {
+        var engine = ProtocolEngine(configuration: configuration)
+        _ = engine.observe(.active(uptimeSeconds: 0, secondsSinceInput: 0))
+
+        _ = engine.observe(.active(uptimeSeconds: 10, secondsSinceInput: 70))
+
+        #expect(engine.visualClock.accumulatedActiveUseSeconds == 10)
+        #expect(engine.movementClock.accumulatedActiveUseSeconds == 0)
+        #expect(engine.recoveryState.accumulatedEligibleActiveUseSeconds == 0)
+    }
+
+    @Test("A five-second input pause releases an already-due visual opportunity")
+    func shortInputPauseReleasesVisual() {
+        var engine = ProtocolEngine(configuration: configuration)
+        _ = engine.observe(.active(uptimeSeconds: 0, secondsSinceInput: 0))
+        _ = engine.observe(.active(uptimeSeconds: 20, secondsSinceInput: 0))
+
+        let output = engine.observe(.active(uptimeSeconds: 21, secondsSinceInput: 5))
+
+        #expect(engine.visualClock.phase == .readyToPresent)
+        #expect(output.presentation == .visual)
+    }
+
+    @Test("Long idle restarts visual timing but preserves movement debt")
+    func longIdleRestartsOnlyVisual() {
+        var engine = ProtocolEngine(configuration: configuration)
+        _ = engine.observe(.active(uptimeSeconds: 0, secondsSinceInput: 0))
+        _ = engine.observe(.active(uptimeSeconds: 20, secondsSinceInput: 0))
+
+        let output = engine.observe(.active(uptimeSeconds: 320, secondsSinceInput: 300))
+
+        #expect(output.events.map(\.kind) == [.likelyNaturalInterruption])
+        #expect(engine.visualClock.cycleID == 1)
+        #expect(engine.visualClock.accumulatedActiveUseSeconds == 0)
+        #expect(engine.movementClock.accumulatedActiveUseSeconds == 20)
+        #expect(engine.movementClock.phase == .gracedAfterSuppression)
+    }
+
+    @Test("Suppression grace expires from monotonic observations without a manual call")
+    func suppressionGraceAutoExpires() {
+        var engine = ProtocolEngine(configuration: configuration)
+        _ = engine.observe(.active(uptimeSeconds: 0, secondsSinceInput: 0))
+        _ = engine.observe(
+            .active(uptimeSeconds: 5, secondsSinceInput: 0),
+            activeSuppressions: [.calendarBusy],
+        )
+        _ = engine.observe(.active(uptimeSeconds: 6, secondsSinceInput: 0))
+
+        #expect(engine.visualClock.phase == .gracedAfterSuppression)
+
+        _ = engine.observe(.active(uptimeSeconds: 65, secondsSinceInput: 0))
+        #expect(engine.visualClock.phase == .gracedAfterSuppression)
+
+        let released = engine.observe(.active(uptimeSeconds: 66, secondsSinceInput: 0))
+        #expect(engine.visualClock.phase != .gracedAfterSuppression)
+        #expect(released.presentation != nil)
     }
 
     @Test("Pause suppressions stop accumulation while context holds continue it")
@@ -117,9 +177,17 @@ struct ProtocolEngineTests {
     func movementTimerDoesNotReset() {
         var engine = accumulatedEngine(seconds: 7)
 
-        _ = engine.record(.timerFinished, opportunity: .movement, source: .localTimer)
+        let visualCycleID = engine.visualClock.cycleID
+        let output = engine.record(
+            .timerFinished,
+            opportunity: .movement,
+            source: .localTimer,
+        )
 
         #expect(engine.movementClock.accumulatedActiveUseSeconds == 7)
+        #expect(engine.visualClock.cycleID == visualCycleID + 1)
+        #expect(engine.visualClock.accumulatedActiveUseSeconds == 0)
+        #expect(output.events.map(\.opportunity) == [.movement])
     }
 
     @Test("Accepted selected movement start resets only movement")

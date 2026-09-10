@@ -328,6 +328,42 @@ struct HeadsUpLifecycleCoordinatorTests {
         #expect(pendingRuntime.state.headsUpDeliveryState.pendingAction == pendingAction)
     }
 
+    @Test("A blocked restored automatic break retries on the next activity sample")
+    func blockedRestoredAutomaticBreakRetries() async throws {
+        let id = deliveryID(6)
+        let action = HeadsUpPendingAction(
+            id: id,
+            kind: .openBreak,
+            opportunity: .merged(visualCycleID: 0, movementCycleID: 0),
+            source: .localTimer,
+        )
+        let store = HeadsUpRuntimeStore(state: ProtocolState(
+            headsUpDeliveryState: HeadsUpDeliveryState(pendingAction: action),
+        ))
+        let runtime = try makeRuntime(store: store)
+        var presentations: [HeadsUpDeliveryID] = []
+        var result = AppOverlayPresentationDecision.blocked
+        let harness = makeHarness(
+            runtime: runtime,
+            presentBreak: { presentedID, _ in
+                presentations.append(presentedID)
+                return result
+            },
+        )
+
+        try await harness.coordinator.start()
+        await harness.coordinator.drain()
+        #expect(presentations == [id])
+
+        result = .presented
+        harness.coordinator.observe(.active(uptimeSeconds: 1, secondsSinceInput: 0))
+        await harness.coordinator.drain()
+
+        #expect(presentations == [id, id])
+        #expect(harness.coordinator.pendingBreakOpening?.id == id)
+        #expect(runtime.state.headsUpDeliveryState.pendingAction == action)
+    }
+
     @Test("More Options clears its outbox only after the exact scoped surface presents")
     func exactMoreOptionsPresentation() async throws {
         let store = HeadsUpRuntimeStore()

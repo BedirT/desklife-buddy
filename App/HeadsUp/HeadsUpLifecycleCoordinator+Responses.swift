@@ -5,7 +5,10 @@ import HeadsUp
 extension HeadsUpLifecycleCoordinator {
     func openBreak(_ id: HeadsUpDeliveryID, opportunity: HeadsUpOpportunityID) {
         pendingBreakOpening = PendingBreakOpening(id: id, opportunity: opportunity)
-        _ = presentBreak(id, opportunity)
+        let decision = presentBreak(id, opportunity)
+        if decision == .blocked, pendingBreakOpening?.id == id {
+            pendingBreakOpening = nil
+        }
     }
 
     func openMoreOptions(_ id: HeadsUpDeliveryID, opportunity: HeadsUpOpportunityID) {

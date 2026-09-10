@@ -357,8 +357,9 @@ extension HeadsUpDeliveryTests {
 
         _ = engine.record(.timerFinished, opportunity: .movement, source: .localTimer)
         #expect(engine.movementClock.cycleID == 9)
-        _ = engine.record(.timerFinished, opportunity: .visual, source: .localTimer)
         #expect(engine.visualClock.cycleID == 6)
+        _ = engine.record(.timerFinished, opportunity: .visual, source: .localTimer)
+        #expect(engine.visualClock.cycleID == 7)
         #expect(engine.movementClock.cycleID == 9)
         _ = engine.selectMovement(durationSeconds: 12)
         #expect(engine.movementClock.cycleID == 10)

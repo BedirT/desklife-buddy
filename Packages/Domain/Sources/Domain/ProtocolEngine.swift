@@ -77,9 +77,12 @@ public struct ProtocolEngine: Sendable {
     public internal(set) var recoveryState: RecoveryState
     public internal(set) var notAppropriateOpportunities: Set<OpportunityType>
     public private(set) var headsUpDeliveryState: HeadsUpDeliveryState
+    public private(set) var lastObservationWasLowFriction = false
     var visualSnoozeDeadline: Date?
     var movementSnoozeDeadline: Date?
     var recoveryLastObservedAt: Date?
+    private var visualGraceEndsAtUptime: TimeInterval?
+    private var movementGraceEndsAtUptime: TimeInterval?
 
     /// Creates an engine with injected configuration and optional restored clock values.
     public init(
@@ -117,13 +120,16 @@ public struct ProtocolEngine: Sendable {
     ) -> ProtocolEngineOutput {
         let assessment = activityEstimator.assess(sample)
         let suppression = SuppressionResolver.resolve(activeReasons: activeSuppressions)
+        let effectiveLowFrictionMoment = isLowFrictionMoment || assessment.isShortInputPause
+        lastObservationWasLowFriction = effectiveLowFrictionMoment
 
         if suppression.accumulationPolicy == .continue {
-            addActiveUse(assessment.accumulatedSeconds)
+            addVisualSession(assessment.visualSessionSeconds)
+            addMovementActiveUse(assessment.movementActiveUseSeconds)
         }
 
         if assessment.didBeginLikelyNaturalInterruption {
-            applyNaturalInterruption()
+            applyNaturalInterruption(at: sample.uptimeSeconds)
             return ProtocolEngineOutput(
                 events: [OpportunityEventDraft(
                     kind: .likelyNaturalInterruption,
@@ -138,7 +144,10 @@ public struct ProtocolEngine: Sendable {
             return ProtocolEngineOutput(events: [], presentation: nil)
         }
 
-        exitSuppressionOrUpdatePhases(isLowFrictionMoment: isLowFrictionMoment)
+        exitSuppressionOrUpdatePhases(
+            at: sample.uptimeSeconds,
+            isLowFrictionMoment: effectiveLowFrictionMoment,
+        )
         return ProtocolEngineOutput(events: [], presentation: recommendedPresentation())
     }
 
@@ -172,6 +181,8 @@ public struct ProtocolEngine: Sendable {
 
     /// Ends the explicit post-suppression grace and recomputes each schedulable phase.
     public mutating func resumeAfterSuppressionGrace() {
+        visualGraceEndsAtUptime = nil
+        movementGraceEndsAtUptime = nil
         if visualClock.phase == .gracedAfterSuppression {
             visualClock.phase = scheduledPhase(
                 for: visualClock,
@@ -195,9 +206,13 @@ public struct ProtocolEngine: Sendable {
 }
 
 extension ProtocolEngine {
-    mutating func addActiveUse(_ seconds: TimeInterval) {
+    mutating func addVisualSession(_ seconds: TimeInterval) {
         guard seconds.isFinite, seconds > 0 else { return }
         visualClock.accumulatedActiveUseSeconds += seconds
+    }
+
+    mutating func addMovementActiveUse(_ seconds: TimeInterval) {
+        guard seconds.isFinite, seconds > 0 else { return }
         movementClock.accumulatedActiveUseSeconds += seconds
         recoveryState.accumulatedEligibleActiveUseSeconds += seconds
     }
@@ -211,42 +226,47 @@ extension ProtocolEngine {
         }
     }
 
-    mutating func applyNaturalInterruption() {
-        visualClock.phase = phaseAfterNaturalInterruption(
-            visualClock,
-            schedule: configuration.visual,
-        )
-        movementClock.phase = phaseAfterNaturalInterruption(
-            movementClock,
-            schedule: configuration.movement,
-        )
+    mutating func applyNaturalInterruption(at uptimeSeconds: TimeInterval) {
+        if visualClock.phase != .running {
+            reset(.visual)
+        }
+        if movementClock.phase != .running {
+            movementClock.phase = .gracedAfterSuppression
+            movementGraceEndsAtUptime = uptimeSeconds
+                + configuration.activityEstimator.postInterruptionGraceSeconds
+        }
         rotateSessionScopedState()
     }
 
-    func phaseAfterNaturalInterruption(
-        _ clock: OpportunityClockState,
-        schedule: OpportunitySchedule,
-    ) -> OpportunityPhase {
-        if clock.phase == .running { return .running }
-        if clock.phase == .gracedAfterSuppression {
-            return scheduledPhase(
-                for: clock,
-                schedule: schedule,
-                isLowFrictionMoment: true,
-            )
-        }
-        return .gracedAfterSuppression
-    }
-
     mutating func exitSuppressionOrUpdatePhases(
+        at uptimeSeconds: TimeInterval,
         isLowFrictionMoment: Bool,
     ) {
         if case .suppressed = visualClock.phase {
             visualClock.phase = .gracedAfterSuppression
+            visualGraceEndsAtUptime = uptimeSeconds
+                + configuration.activityEstimator.postInterruptionGraceSeconds
         }
         if case .suppressed = movementClock.phase {
             movementClock.phase = .gracedAfterSuppression
+            movementGraceEndsAtUptime = uptimeSeconds
+                + configuration.activityEstimator.postInterruptionGraceSeconds
         }
+
+        advanceGrace(
+            clock: &visualClock,
+            schedule: configuration.visual,
+            deadline: &visualGraceEndsAtUptime,
+            at: uptimeSeconds,
+            isLowFrictionMoment: isLowFrictionMoment,
+        )
+        advanceGrace(
+            clock: &movementClock,
+            schedule: configuration.movement,
+            deadline: &movementGraceEndsAtUptime,
+            at: uptimeSeconds,
+            isLowFrictionMoment: isLowFrictionMoment,
+        )
 
         updatePhase(
             clock: &visualClock,
@@ -258,6 +278,29 @@ extension ProtocolEngine {
             schedule: configuration.movement,
             isLowFrictionMoment: isLowFrictionMoment,
         )
+    }
+
+    func advanceGrace(
+        clock: inout OpportunityClockState,
+        schedule: OpportunitySchedule,
+        deadline: inout TimeInterval?,
+        at uptimeSeconds: TimeInterval,
+        isLowFrictionMoment: Bool,
+    ) {
+        guard clock.phase == .gracedAfterSuppression else {
+            deadline = nil
+            return
+        }
+        if deadline == nil {
+            deadline = uptimeSeconds + configuration.activityEstimator.postInterruptionGraceSeconds
+        }
+        guard let graceDeadline = deadline, uptimeSeconds >= graceDeadline else { return }
+        clock.phase = scheduledPhase(
+            for: clock,
+            schedule: schedule,
+            isLowFrictionMoment: isLowFrictionMoment,
+        )
+        deadline = nil
     }
 
     func updatePhase(
@@ -325,7 +368,7 @@ extension ProtocolEngine {
 
         switch kind {
         case .likelyNaturalInterruption:
-            applyNaturalInterruption()
+            applyNaturalInterruption(at: 0)
         case .positionChanged:
             movementClock.phase = .gracedAfterSuppression
         case .notAppropriate:

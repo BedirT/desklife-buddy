@@ -1,4 +1,5 @@
 import AppKit
+import Domain
 import Foundation
 import StatusMenu
 import VisualReset
@@ -21,6 +22,31 @@ extension AppDelegate {
         #else
             return HeadsUpRuntimePolicy(maximumSnoozeReoffers: 1)
         #endif
+    }
+
+    static func automaticVisualVerificationConfiguration(
+        from configuration: ProtocolConfiguration,
+    ) throws -> ProtocolConfiguration {
+        try ProtocolConfiguration(
+            visual: OpportunitySchedule(
+                softDueSeconds: 5,
+                targetSeconds: 10,
+                latestPreferredSeconds: 15,
+                durationOptionsSeconds: configuration.visual.durationOptionsSeconds,
+            ),
+            movement: configuration.movement,
+            activityEstimator: configuration.activityEstimator,
+            delivery: OpportunityDeliveryConfiguration(
+                waitForLowFrictionMoment: true,
+                mergeWindowSeconds: configuration.delivery.mergeWindowSeconds,
+                headsUpDefault: true,
+                headsUpSecondsBeforeTarget: 5,
+                snoozeOptionsSeconds: configuration.delivery.snoozeOptionsSeconds,
+                maximumRepeatedEscalations: configuration.delivery.maximumRepeatedEscalations,
+                lockoutAllowed: configuration.delivery.lockoutAllowed,
+            ),
+            recovery: configuration.recovery,
+        )
     }
 
     static var isRunningTests: Bool {

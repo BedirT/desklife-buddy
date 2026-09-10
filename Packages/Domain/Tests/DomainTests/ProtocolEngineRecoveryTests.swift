@@ -157,7 +157,9 @@ struct ProtocolEngineRecoveryTests {
         )
         _ = restored.record(.skipped, opportunity: .movement)
         _ = restored.observe(.active(uptimeSeconds: 501, secondsSinceInput: 0))
-        let nextSession = restored.observe(.active(uptimeSeconds: 591, secondsSinceInput: 0))
+        let duringReturnGrace = restored.observe(.active(uptimeSeconds: 561, secondsSinceInput: 0))
+        let nextSession = restored.observe(.active(uptimeSeconds: 651, secondsSinceInput: 0))
+        #expect(duringReturnGrace.presentation != .recovery)
         #expect(nextSession.presentation == .recovery)
     }
 

@@ -63,6 +63,7 @@ final class HeadsUpLifecycleCoordinator {
     var readyDeliveryIDs: Set<HeadsUpDeliveryID> = []
     var deliveryTasks: [HeadsUpDeliveryID: Task<Void, Never>] = [:]
     var serialTaskTail: Task<Void, Never>?
+    var workRevision = 0
     var suppressionRetractionCancellation: OverlayCancellation?
     var didStart = false
     #if DEBUG
@@ -165,6 +166,7 @@ final class HeadsUpLifecycleCoordinator {
             guard let self else { return }
             do {
                 try await runtime.observe(sample)
+                retryPendingPresentation()
             } catch {
                 onError(error)
             }
@@ -231,6 +233,7 @@ final class HeadsUpLifecycleCoordinator {
     }
 
     func retryPendingPresentation() {
+        guard pendingBreakOpening == nil else { return }
         guard let pending = runtime.state.headsUpDeliveryState.pendingAction else { return }
         handlePendingAction(pending)
     }

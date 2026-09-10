@@ -39,6 +39,8 @@ final class VisualResetOverlayCoordinator {
     private var refreshCancellation: OverlayCancellation?
     private var screenCancellation: OverlayCancellation?
     private var isDismissing = false
+    private var openingLifecyclePending = false
+    private var pendingTerminalAction: VisualResetAction?
     private var restorationPending = false
     private var interactiveDisplayID: OverlayDisplayID?
     private var preActivationMainDisplayID: OverlayDisplayID?
@@ -183,6 +185,8 @@ final class VisualResetOverlayCoordinator {
         preActivationMainDisplayID = nil
         restorationPending = false
         isDismissing = false
+        openingLifecyclePending = false
+        pendingTerminalAction = nil
     }
 
     #if DEBUG
@@ -208,6 +212,19 @@ final class VisualResetOverlayCoordinator {
 
     private func handle(_ action: VisualResetAction) {
         guard let actionModel = model else { return }
+        if action == .opened {
+            openingLifecyclePending = true
+        } else if openingLifecyclePending {
+            pendingTerminalAction = action
+            return
+        }
+        performLifecycle(action, for: actionModel)
+    }
+
+    private func performLifecycle(
+        _ action: VisualResetAction,
+        for actionModel: VisualResetModel,
+    ) {
         onLifecycle(action) { [weak self, weak actionModel] result in
             guard let self,
                   let actionModel,
@@ -218,7 +235,14 @@ final class VisualResetOverlayCoordinator {
             switch result {
             case .success:
                 actionModel.confirmLifecycle(action)
-                guard action != .opened else { return }
+                if action == .opened {
+                    openingLifecyclePending = false
+                    if let pendingTerminalAction {
+                        self.pendingTerminalAction = nil
+                        performLifecycle(pendingTerminalAction, for: actionModel)
+                    }
+                    return
+                }
                 dismissPanels { [weak self] in
                     guard let self else { return }
                     restorePriorApplication()
@@ -229,6 +253,8 @@ final class VisualResetOverlayCoordinator {
             case .failure:
                 actionModel.rejectLifecycle(action)
                 guard action == .opened else { return }
+                openingLifecyclePending = false
+                pendingTerminalAction = nil
                 dismissPanels { [weak self] in
                     self?.restorePriorApplication()
                 }
@@ -254,6 +280,8 @@ final class VisualResetOverlayCoordinator {
         let outgoingPanels = Array(panels.values)
         panels.removeAll()
         model = nil
+        openingLifecyclePending = false
+        pendingTerminalAction = nil
         restorationPending = true
         isDismissing = false
         let barrier = OverlayDismissalBarrier(
@@ -408,7 +436,7 @@ extension VisualResetOverlayCoordinator {
 }
 
 private final class OverlayMonotonicClock {
-    private let origin = SuspendingClock.now
+    private let origin = ContinuousClock.now
 
     var seconds: TimeInterval {
         let components = origin.duration(to: .now).components

@@ -56,7 +56,12 @@
     ) {
         for appearance in appearances {
             let snapshotName = name.map { "\($0)-\(appearance.rawValue)" } ?? appearance.rawValue
-            let host = hostedSnapshot(for: view, layout: layout, appearance: appearance)
+            let host = hostedSnapshot(
+                for: view,
+                layout: layout,
+                appearance: appearance,
+                fileKey: "\(filePath)",
+            )
             defer { host.close() }
             export(
                 host.view,
@@ -90,6 +95,7 @@
                     .environment(\.dynamicTypeSize, size),
                 layout: layout,
                 appearance: .light,
+                fileKey: "\(filePath)",
             )
             defer { host.close() }
             export(
@@ -129,8 +135,14 @@
 
     private final class HostedSnapshot {
         let view: NSView
+        private let window: NSWindow
 
-        init(rootView: some View, layout: SnapshotLayout, appearance: SnapshotAppearance) {
+        init(
+            rootView: some View,
+            layout: SnapshotLayout,
+            appearance: SnapshotAppearance,
+            fileKey: String,
+        ) {
             let controller = NSHostingController(rootView: AnyView(rootView))
 
             let size: CGSize
@@ -145,7 +157,19 @@
             }
 
             let frame = NSRect(origin: .zero, size: size)
-            let window = reusableSnapshotWindow(frame: frame)
+            // One window per test file and size: any cross-suite reuse lets
+            // earlier suites' backing-store/appearance residue bleed into later
+            // captures, while deallocating windows crashes (SwiftUI hosting
+            // teardown). File-scoped pooling bounds window count; content is
+            // detached on close.
+            let key = "\(fileKey)-\(Int(size.width))x\(Int(size.height))"
+            let window: NSWindow
+            if let pooled = snapshotWindowPool[key] {
+                window = pooled
+            } else {
+                window = SnapshotWindow(contentRect: frame)
+                snapshotWindowPool[key] = window
+            }
             window.appearance = appearance.nsAppearance
             window.contentViewController = controller
             window.setFrame(frame, display: true)
@@ -153,27 +177,16 @@
             controller.view.layoutSubtreeIfNeeded()
             window.layoutIfNeeded()
             window.displayIfNeeded()
-            snapshotController = controller
+            self.window = window
             view = controller.view
         }
 
         func close() {
-            // Keep one reusable offscreen window alive for AppKit stability.
+            window.contentViewController = nil
         }
     }
 
-    private var snapshotWindow: NSWindow?
-    private var snapshotController: NSHostingController<AnyView>?
-
-    private func reusableSnapshotWindow(frame: NSRect) -> NSWindow {
-        if let snapshotWindow {
-            return snapshotWindow
-        }
-
-        let window = SnapshotWindow(contentRect: frame)
-        snapshotWindow = window
-        return window
-    }
+    private var snapshotWindowPool: [String: NSWindow] = [:]
 
     private final class SnapshotWindow: NSWindow {
         private let snapshotBackingScaleFactor: CGFloat = 2
@@ -203,10 +216,16 @@
         for view: some View,
         layout: SnapshotLayout,
         appearance: SnapshotAppearance,
+        fileKey: String,
     ) -> HostedSnapshot {
         let rootView = frozen(view)
             .environment(\.colorScheme, appearance.colorScheme)
-        return HostedSnapshot(rootView: rootView, layout: layout, appearance: appearance)
+        return HostedSnapshot(
+            rootView: rootView,
+            layout: layout,
+            appearance: appearance,
+            fileKey: fileKey,
+        )
     }
 
     private func export(

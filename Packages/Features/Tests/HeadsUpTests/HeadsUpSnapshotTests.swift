@@ -13,7 +13,10 @@
         private let placementLayout = SnapshotLayout.fixed(width: 1000, height: 220)
 
         private func capsule(_ model: HeadsUpModel) -> some View {
-            HeadsUpView(model: model)
+            // Entered endpoint: motion endpoints own the before/after coverage in
+            // HeadsUpMotionSnapshotTests. Capturing `.automatic` here races the enter
+            // animation and snapshots the 0.55-opacity initial frame instead.
+            HeadsUpView(model: model, entranceEndpoint: .after)
                 .padding(DSSpacing.xxl)
                 .frame(width: 760, height: 150, alignment: .top)
                 .background(Color.dsBackground)

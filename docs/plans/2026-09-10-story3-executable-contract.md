@@ -56,9 +56,9 @@ locks that parity. No behavior changes; no Swift edits.
       order-independent reconciliation; ten-facts vs operational/evidence
       ledgers — done = claims-review + accessibility-review terminology pass,
       prohibited-wording scan clean, reviewer adversarial pass addressed.
-- [ ] 5. Verify and hand off: full `scripts/lint.sh`, `scripts/test.sh Domain`
+- [x] 5. Verify and hand off: full `scripts/lint.sh`, `scripts/test.sh Domain`
       (no-change safety), traceability record in PR, evidence pack — done =
-      PR opened against `main` at exact head, issue #19 referenced, merge left
+      PR #29 opened against `main` at exact head, issue #19 referenced, merge left
       to root/integration.
 
 ## Decision log

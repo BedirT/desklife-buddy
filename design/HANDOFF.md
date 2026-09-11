@@ -14,9 +14,10 @@ estimates active computer use from coarse input timing; visual timing accrues el
 available-session time through short no-input periods. Neither signal can see sitting,
 posture, gaze, or movement. Current completions are timer facts or user declarations. Every break is
 dismissible with Escape. Nothing escalates. No score, no streak, no health-outcome
-verification. Optional sensing in the approved historical intake does not change those facts
-until its observation, claim, permission, retention, fallback, and verification contracts are
-promoted canonically.
+verification. The optional-capability safety contract is now canonical in D-044 and the owning
+health/design specifications, but no optional source or effect is implemented by that promotion.
+Each later implementation still needs its observation consent, bounded effect authority,
+lifecycle, calm fallback, accessibility parity, and proof dossier before code or an entitlement lands.
 
 ## Implemented build history and next authority
 
@@ -51,13 +52,13 @@ Further work starts from the current seams and collision map in
 | Lifecycle, timing, motion, keyboard, events, suppression | `INTERACTION_SPEC.md` | every behavior |
 | Timings and thresholds | `research/health/machine-readable/product_protocol.yaml` | **normative** — read it, don't copy tables |
 | Strings | `COPY_INVENTORY.md` | **Strings ship as written.** Rewording is a claims decision (`claims_register.csv`), not a code decision |
-| Screen list + per-screen a11y acceptance | `SCREEN_INVENTORY.md` (+ §K blocks) | scope and acceptance |
-| Decisions and their reasoning | `DECISIONS.md`, the full append-only log through its latest entry (currently including D-030–D-032) | status, supersession, and why; do not relitigate governing entries in code review |
+| Screen list + per-screen a11y acceptance | `SCREEN_INVENTORY.md` (§K core and §M optional-capability blocks) | scope and acceptance |
+| Decisions and their reasoning | `DECISIONS.md`, the full append-only log through D-044 | status, supersession, and why; do not relitigate governing entries in code review |
 | Renders | `renders/` (pending) | final pixels, light + dark |
 
 ## Accessibility acceptance
 
-Each §K block in `SCREEN_INVENTORY.md` is a test list: keyboard path, initial focus,
+Each §K/§M block in `SCREEN_INVENTORY.md` is a test list: keyboard path, initial focus,
 focus order, Escape, VoiceOver names/values (announce cadence: open + coarse marks only,
 never per-second), text scaling to +35% without clipping, Increase Contrast variant,
 Reduce Motion variant per `INTERACTION_SPEC.md` §5, grayscale legibility, movement
@@ -88,9 +89,10 @@ requirement · no looping animation (D-025 remains the closed list; later entrie
 D-029 and D-032, amend or supersede named moments) · no "movement verified" or
 any verification language (`[C034]`) · no account, no network, no analytics by default.
 
-This is an inventory, not permanent authority against owner-approved optional sensing.
-Adding a protected capability still requires the complete traceability record in
-`AUTHORITY.md` and the owning canonical amendments before code or entitlements land.
+This is an inventory of the implemented baseline, not permanent authority against D-044 optional
+sensing. Adding a protected capability still requires the complete traceability record in
+`AUTHORITY.md`, the `03` §18 capability row, P1-P8 lifecycle, named screens/flows/copy, and
+graduated evidence in `10` before code or entitlements land.
 
 ## Review gates before shipping
 
@@ -100,6 +102,9 @@ Adding a protected capability still requires the complete traceability record in
   `research/health/05_DESIGNER_AGENT_BRIEF.md` §11 answers yes.
 - Prohibited-wording scan (`.claude/rules/health-and-claims.md` §4) over all shipped
   strings, including notification text and App Store copy.
+- Optional capabilities additionally require the version-bound measurement and decision-value
+  dossiers, physical-device/resource matrix, exact rollback drill, and independent approvals in
+  `10` §§14-20. Shadow requires consent and visible sensing just as Suggest/automatic modes do.
 
 ## Open questions carried into build — do not hard-code
 

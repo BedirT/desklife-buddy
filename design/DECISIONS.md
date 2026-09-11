@@ -1117,3 +1117,40 @@ It emits only the existing movement `timerFinished` fact and does not manufactur
 `timerFinished`, visual completion, gaze claim, or movement verification. The movement clock keeps
 its existing honest timer-expiry semantics. Visual and movement outcomes therefore remain distinct,
 while scheduling recognizes the completed break surface as the boundary of the prior visual session.
+
+### D-044: Optional capabilities use separate observation consent and bounded effect authority
+
+**Date:** 2026-09-10 · **Tag:** Owner-approved capability contract · **Status:** Accepted
+
+The owner-approved Calm Ensemble direction is canonical for gated optional-
+capability work. The adult general-wellness intended purpose remains unchanged
+by camera, context, motion, HealthKit, environmental facts, subjective reports,
+companions, or Foundation Models. These sources may contribute explicit,
+local, source-qualified observations and reversible scheduling or delivery
+effects only after their capability-specific proof gate. They never diagnose,
+measure physiology, fabricate completion or benefit, create a composite score,
+or make the permission-free Mac experience inferior.
+
+For this gated post-MVP scope, D-044 supersedes the absolute camera/blink/gaze/
+posture-sensing prohibition in root `CLAUDE.md` §11 and the original research
+MVP exclusions. Those lines continue to prohibit undisclosed or unvalidated
+sensing in the current core, posture/body scoring, medical inference, and any
+capability that has not passed this contract. They are not authority to bypass
+the complete fallback or introduce a sensor before its owning story.
+
+Observation consent and effect authority are two separate grants. A protected
+source is enabled by named observation, device, and time scope; then Off/Shadow,
+Suggest, or one enumerated bounded automatic effect is chosen independently.
+A system permission never grants automation, research export, analytics, sync,
+or every derivation from that source. Denial, revocation, staleness, conflict,
+bystanders, unsupported hardware, offline state, and resource pressure become
+unknown and preserve the calm core.
+
+The canonical matrices live in `03_PRODUCT_HEALTH_PROTOCOL_SPEC.md` §18,
+`07_PRIVACY_AND_DATA_SPEC.md` §§17-20,
+`08_CLAIMS_SAFETY_REGULATORY_REGISTER.md` §§13-14, and the matching design
+screen, flow, copy, and accessibility specifications. Capability code or
+entitlements do not exist by virtue of this decision. Each implementation
+requires a measurement dossier, decision-value dossier, outcome-claim boundary,
+physical-device/resource proof, and exact rollback path from
+`10_VALIDATION_AND_EXPERIMENT_PLAN.md`.

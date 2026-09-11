@@ -434,3 +434,118 @@ Obtain current legal advice before launch; the product should be designed to exc
 - Public privacy copy matches actual code paths.
 - SDK/network traffic is documented.
 - No feature silently changes the data classification or intended purpose.
+
+## 17. Optional-capability lifecycle amendment
+
+The owner-approved capabilities remain outside the permission-free MVP, but
+their prototype and later implementation boundary is now canonical. `P1`-`P8`
+are the lifecycle families referenced by `03` §18. None authorizes collection
+before the matching screen, consent receipt, indicator, stop control, deletion,
+and proof gate exist.
+
+| Family | Data path | Raw lifetime | Derived lifetime when history is on | Keep Nothing / export / delete |
+|---|---|---|---|---|
+| P1 Context Sense | bundle ID or device-use fact -> expiring context observation -> likely-call/hold assessment -> scheduling decision | Current value in memory; Calendar content is reduced immediately to busy/free; no titles, URLs, window names, attendees, audio, or history | Observation expires with source freshness, at most 15 min; selected rules until removed; decision summaries 30 days | Keep Nothing retains settings but no decision history. Export names rules and decisions, never app-use or meeting history. Delete removes rules, assessments, and summaries |
+| P2 Selected context | user-selected window/crop pixels -> local frame-change/OCR reducer -> deadline only | Memory only, smallest buffer, discard pixels and OCR text immediately after reduction and no later than 5 s; never logs, model input, export, or crash attachment | User-confirmed deadline until session ends; optional rule until removed; decision summary 30 days | Keep Nothing retains the active deadline only. Export excludes pixels/text. Stop/delete clears deadline, crop descriptor, rule, and decisions |
+| P3 Desk Lens live | low-resolution camera frames -> feature reducer -> presence/distance/position/blink observation | Memory only; bounded ring buffer no longer than 10 s; release immediately after feature extraction; no image/video/still, identity template, face embedding, screenshot, backup, export, log, analytics, or model prompt | Live observations memory-only and at most 15 min; no per-frame or face timeline; optional decision summaries 30 days | Keep Nothing allows live effect but retains no observation/decision history. Export includes consent, versions, enabled effects, and decisions only. Stop flushes buffers and observations |
+| P4 Personal calibration | explicit calibration session -> derived scalar/range/accepted shape/baseline | P3 raw boundary | Encrypted local calibration until reset, invalidation, or capability disable; optional weekly summary 30 days | Not exported by default; explicit data report describes existence/version, not biometric geometry. Delete calibration is independent of history deletion and returns the capability to uncalibrated Off/Shadow |
+| P5 Companion, Motion, HealthKit | bounded Motion or exact HealthKit sample on source device -> typed dated summary -> paired action/observation | Fine motion and exact HealthKit samples remain on source device in memory, are discarded after reduction and no later than 15 min; transport buffers follow existing Class-0 90 s maximum | Fresh observation at most 15 min; open-opportunity evidence through resolution plus 24 h; companion continuity per §2/§9; optional decision and derived-event summary 30 days | Keep Nothing preserves only live transaction safety. Export includes typed derived facts and provenance, never exact samples/vectors. Delete source history and unpair/delete private sync are separate named actions |
+| P6 Environment | accessory sample -> value/unit/calibration/source fact -> optional setup proposal | Current accessory sample in memory; no continuous room trace by default | Optional daily aggregate and decisions 30 days; accessory configuration until removed | Keep Nothing displays current fact only. Export includes retained facts with units/source. Delete removes history/configuration; accessory vendor data is explicitly outside this app's deletion claim |
+| P7 Subjective report | user-selected controlled value -> dated declaration -> experiment analysis | No free text; draft in memory until submitted or dismissed | 90 days by default, selectable 30 days or none; experiment consent and assignment retained only for the experiment | Keep Nothing permits an immediate result but saves no answer or assignment. Export labels every field self-reported. Correct replaces via an auditable correction; delete removes answers and derived analysis |
+| P8 Local Reflection | previewed retained facts -> deterministic template or user-invoked on-device model -> draft | Input/output in memory until dismissed unless the user explicitly saves it; never includes P2/P3/P5 raw data, Calendar/app content, private keys, or free-text medical history | Saved explanation/proposal 30 days; accepted deterministic rule persists until removed; model output never becomes evidence | Keep Nothing disables saved transcripts and learning but permits on-demand templates. Export labels generated text and sources. Delete draft/history does not silently delete an accepted rule; each is named separately |
+
+These are app-controlled lifetimes, not promises that an operating system never
+uses swap, camera-system services, HealthKit storage, or an accessory vendor's
+own infrastructure. Copy states the controlled process and transfer boundary.
+
+## 18. Consent, indicator, revocation, and effect receipts
+
+Every capability starts Off and is absent from first-launch requirements. The
+capability page must show sample output before any protected source runs, then
+state value, exact source and observation, device/process boundary, raw and
+derived lifetimes, energy tier, effect choices, fallback, export/delete scope,
+and system indicator. It offers `Not now`, a bounded `Use this session` when the
+platform permits, and `Continue`. Only `Continue` may trigger the system prompt.
+
+After source authorization, the app previews a live derived fact before asking
+for effect authority. Observation consent and effect authority produce separate
+versioned receipts. Each receipt records capability/source, named observations
+or effects, device, scope/expiry, policy version, granted time, and current
+revocation state. The receipt is configuration, not proof that sensing occurred.
+
+While a protected source is active:
+
+- the platform indicator remains unobscured;
+- the menu/status surface exposes a non-color-only sensing state and source
+  count, with VoiceOver state;
+- `Sensing & Intelligence` shows source, mode, started/expiry time, current
+  derived fact or `Unknown`, effect authority, energy tier, and last decision;
+- `Stop all sensing` is one keyboard- and VoiceOver-reachable action that stops
+  source acquisition before navigation or confirmation; scheduling continues;
+- each source and each effect also has an independent stop control.
+
+OS denial or revocation, consent expiry, unsupported hardware, pairing loss,
+source conflict, lock/sleep, app termination, process failure, or a resource
+stop ends acquisition before another observation is accepted. In-flight raw
+buffers flush; the current assessment expires to unknown; automatic effects
+stop; any already-recorded scheduling decision remains inspectable and undoable.
+The product does not repeatedly ask, open System Settings without a user action,
+or treat denial as a wellness failure. Re-enabling begins from the capability
+page and never silently restores prior automatic authority.
+
+## 19. Strict-local networking modes
+
+**Strict Local - This Mac** is the default for protected Mac sensing. Capability
+helpers have no vendor endpoint and, where platform packaging allows, no network
+entitlement. No raw or derived protected data, prompt, model input, identifier,
+analytics, crash attachment, or update telemetry leaves the Mac. Companion
+exchange and private sync are Off.
+
+**Strict Local - My Devices** is a separate opt-in for direct, authenticated,
+user-selected device exchange. It permits only the versioned minimized P5
+envelopes and observations disclosed on the consent page. Discovery metadata is
+ephemeral; no internet relay, vendor backend, analytics, or general device
+history is allowed. Connection state and the selected peer remain visible.
+Unavailable direct exchange falls back locally rather than using an undisclosed
+relay.
+
+**Private Sync** remains the independently consented D-038 mode. It may use the
+owner's private iCloud zone only for its enumerated minimum companion records.
+It is not described as Strict Local - This Mac, and it never receives raw
+HealthKit, Motion, AirPods, Calendar, app, pointer, location, camera, environment,
+subjective, or model-prompt data.
+
+An export is an explicit user-directed egress and names its destination before
+writing. Update/notarization traffic is operational distribution traffic, not a
+sensing-data exception. A release may claim C076 only after process/network
+inventory, offline operation, and monitored no-egress tests pass on the exact
+binary and every third-party dependency.
+
+## 20. Keep Nothing and capability deletion
+
+`Keep Nothing` is a storage policy, not a hidden Off switch. The core clocks and
+any currently enabled capability may operate from ephemeral state, but no new
+product history, sensor observation history, scheduling-decision summary,
+weekly aggregate, subjective answer, experiment assignment, or generated
+transcript persists. Settings, consent/effect receipts, current safety-critical
+coordination continuity, and accepted deterministic rules remain until their
+separate reset/remove action because forgetting them could re-enable collection
+or make a live action unsafe. The UI lists these exceptions before selection.
+
+The data center exposes separate, accurately scoped actions:
+
+- `Delete history`: retained product, observation, assessment, decision,
+  correction, weekly, subjective, and generated-history records;
+- `Delete calibration`: P4 ranges, baselines, accepted shapes, and profiles;
+- `Remove rules`: learned and user-authored deterministic rules;
+- `Stop and delete capability`: stop its source/effects, flush raw/derived
+  state, delete its receipt/history/calibration/rules, and keep unrelated core
+  settings;
+- `Delete synced companion data`: private-cloud records only, with result;
+- `Reset app data`: all app-controlled local data and trust, subject to the
+  existing in-flight coordination safety disclosure.
+
+Export and deletion enumerate record families and device/cloud scope. A success
+message appears only after verified completion. Partial failure names what was
+deleted, what remains, why, and a retry path. Disabling, revoking, deleting, and
+unpairing are distinct actions and never impersonate one another.

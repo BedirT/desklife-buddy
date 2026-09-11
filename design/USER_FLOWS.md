@@ -378,7 +378,7 @@ other sensor data.
 
 ---
 
-## F-14 · Continue a movement break on iPhone
+## F-15 · Continue a movement break on iPhone
 
 ```text
 Mac movement option accepted
@@ -398,7 +398,7 @@ Mac movement option accepted
 No continuation occurs without the user's action. iPhone is complete without Watch. The Mac
 break remains available if Handoff fails, and no remote response delays Mac timing.
 
-## F-15 · Companion offline and delayed delivery
+## F-16 · Companion offline and delayed delivery
 
 ```text
 Companion action occurs while offline, signed out, or counterpart unreachable
@@ -415,7 +415,7 @@ Companion action occurs while offline, signed out, or counterpart unreachable
 The UI never says `Synced` before acknowledgement. A delayed companion action can update the
 exact opportunity history but cannot open a break retroactively or alter the due calculation.
 
-## F-16 · Enable or disable private companion sync
+## F-17 · Enable or disable private companion sync
 
 ```text
 Settings -> Apple companions -> Private iCloud sync
@@ -430,7 +430,7 @@ Settings -> Apple companions -> Private iCloud sync
 Handoff and local Live Activities do not require this setting. Refusal, unavailability, or
 later revocation affects only durable automatic reconciliation.
 
-## F-17 · Companion resolution elsewhere
+## F-18 · Companion resolution elsewhere
 
 ```text
 Phone or Watch displays an active opportunity
@@ -442,3 +442,186 @@ Phone or Watch displays an active opportunity
 
 Timer expiry maps only to `timerFinished`; it never becomes proof of movement. Sensors cannot
 enter any resolution branch.
+
+## F-19 · Understand Paused, Held, and Why now
+
+```text
+Status says Paused
+  -> open status: exact user/system pause reason + clocks stopped + end condition
+  -> Resume ends the pause; Why now opens the same operational receipt
+
+Status says Held
+  -> open status: due need continues + presentation reason + expected release
+  -> Why now -> noticed source + inference/uncertainty + effect + authority + correction
+  -> Release hold changes delivery only; Not a call expires the assessment
+```
+
+Paused and Held never share copy even if they share a glyph. When evidence is
+stale, revoked, or disputed, the hold releases through the ordinary landing
+corridor without marking a break complete or discarding need.
+
+## F-20 · Enable one optional observation and effect
+
+```text
+Sensing & Intelligence -> choose capability
+  -> sample preview while source remains Off
+  -> value + exact source/observations + device/process boundary
+  -> raw/derived lifetime + energy + fallback + export/delete + indicator
+  -> Not now: close, core unchanged
+  OR Use this session / Continue
+    -> choose named observations and time scope
+    -> system permission only after Continue
+    -> denied: PM-11, core/manual path focused, no repeat prompt
+    -> granted: show live derived fact or Unknown
+      -> choose Off/Shadow, Suggest, or one enumerated automatic effect
+      -> separate effect receipt -> capability center
+```
+
+Returning from System Settings never restores source or automatic authority
+silently. Enabling one camera observation does not enable the others. Research
+export, analytics, companion exchange, private sync, and model use each remain
+Off unless separately chosen.
+
+## F-21 · Inspect and correct a capability decision
+
+```text
+Why now / Weekly decision / capability last decision
+  -> Sensing inspector
+  -> What it noticed: source, device, time/freshness, quality, versions
+  -> What it inferred: assessment, uncertainty, contradictions
+  -> What it changed: before/after delivery or schedule only
+  -> Why allowed: active deterministic rule + effect receipt + expiry
+  -> Undo when still valid OR source-specific correction OR Stop source
+  -> correction expires assessment and records correction separately
+  -> current opportunity facts remain unchanged
+```
+
+`Not a call`, `I was here`, `This distance is comfortable`, `This position is
+comfortable`, and `That was not my movement` never require free text. The app
+does not praise correction, blame the person, or ask them to train it.
+
+## F-22 · Shadow, Suggest, and bounded automatic graduation in use
+
+```text
+Shadow
+  -> inspector/audit shows what would have changed + counterfactual time
+  -> no status, clock, delivery, notification, timer, or opportunity changes
+
+Suggest
+  -> one bounded proposal with evidence summary
+  -> Accept applies exactly once OR Not now / Never suggest makes no change
+
+Bounded automatic
+  -> policy firewall validates source + freshness + consent + exact effect
+  -> record decision -> apply enumerated effect -> expose Why now + Undo
+  -> invalid/stale/conflicting/revoked/resource-limited -> Unknown -> fallback
+```
+
+No level can mark completion, create a health outcome, increase reminder
+frequency or loudness beyond the chosen schedule, or let a model response apply
+an effect.
+
+## F-23 · Stop all sensing without pausing schedules
+
+```text
+Status menu or SI-01 -> Stop all sensing
+  -> stop acquisition before navigation or confirmation
+  -> flush raw buffers -> expire observations/assessments -> stop effects
+  -> show source list stopped + `Schedules are still on`
+  -> offer scoped Delete capability data / Delete calibration / Close
+```
+
+Escape closes the receipt and never resumes sensing. Restart/relaunch leaves the
+sources Off until the person explicitly enables them again.
+
+## F-24 · Use the calm core after denial, revocation, or failure
+
+```text
+source denied / revoked / unsupported / offline / conflicted / resource stopped
+  -> capability becomes Unavailable or Unknown
+  -> no negative inference and no automatic effect
+  -> current manual clock, status, break, Pause/Hold, and correction paths remain
+  -> one factual status with manual equivalent focused
+  -> Try again or Open System Settings only on explicit action
+```
+
+This flow is required independently on Mac, iPhone, and Watch. A missing Watch,
+HealthKit type, visible face, supported gait, accessory, or Foundation Model is
+ordinary capability absence, not user failure.
+
+## F-25 · Keep Nothing, export, and delete capability data
+
+```text
+Privacy & data -> Keep Nothing
+  -> list data that stops persisting
+  -> list settings/receipts/rules/live coordination that must remain
+  -> confirm -> erase retained history -> keep live ephemeral operation
+
+Export or Delete
+  -> choose record families + local device / paired device / private cloud scope
+  -> show exact included/excluded fields and destination/effect
+  -> execute
+    -> verified complete: scoped receipt
+    -> partial: completed + remaining families/devices + reason + Retry
+```
+
+History, calibration, rules, capability stop, unpairing, private-cloud deletion,
+and reset are separate actions. No success message appears before each selected
+scope acknowledges completion.
+
+## F-26 · Use whole-desk modules without a reminder pile
+
+```text
+Sensing & Intelligence -> Whole-desk modules
+  -> choose one setup/environment/content/user-authored routine
+  -> exact source/manual input + claim boundary + frequency/effect preview
+  -> Off / run now / Suggest inside existing interruption budget
+  -> raw fact or user declaration remains distinct from recommendation
+  -> unavailable source -> manual/no-module route
+```
+
+Setup, light/glare, humidity/air quality, hearing, breathing, work boundary,
+hydration, maintenance, and Shortcut actions do not create independent nag
+clocks, symptom attribution, quotas, or condition-specific advice.
+
+## F-27 · Audit the assistant in Weekly
+
+```text
+Weekly rhythm -> Assistant activity disclosure
+  -> factual holds/restarts/suggestions/corrections/resource stops/unused modules
+  -> select one row -> SI-03 decision chain
+  -> Quiet rule / Turn off capability / Correct / Close
+```
+
+The disclosure is absent when Keep Nothing retained no eligible decisions. It
+shows null and mixed records without rewriting them as progress. It contains no
+person score, target, praise, shame, streak, outcome trend, or comparison.
+
+## F-28 · Draft an explanation with Foundation Models
+
+```text
+user invokes Explain or Draft rule
+  -> show minimized input facts before use
+  -> model unavailable/offline: deterministic explanation immediately
+  -> model available: label generated draft + source facts
+  -> Edit / Use as proposed deterministic rule / Discard
+  -> choosing Use enters normal rule confirmation; no direct schedule effect
+```
+
+Protected raw data and free-text medical history never enter the prompt. A
+refusal, hallucination, unsafe claim, or empty response is discarded and cannot
+replace the deterministic fallback.
+
+## Optional-capability flow invariants
+
+1. Source consent, system permission, effect authority, research participation,
+   analytics, device exchange, and sync are separate choices.
+2. Every active protected source has a persistent non-color indicator and one-
+   action stop; no screen, lock, or interruption hides acquisition.
+3. Every effect has `Why now?`, provenance, correction, expiry, and rollback.
+4. No signal, weak signal, stale signal, conflict, or non-detection is unknown,
+   never evidence against the person.
+5. The sensor-free/manual Mac path is complete; iPhone is complete without
+   Watch; no purchase, body motion, camera visibility, or self-report is owed.
+6. A capability can become quieter or turn itself Off after errors. It cannot
+   increase pressure, hide its mistakes, or infer a health outcome.

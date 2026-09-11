@@ -41,7 +41,7 @@ C039,prohibited,Gamification,Your wellness score is 82.,No validated weighting.,
 C040,allowed,Safety,"Stop or choose another option if you feel pain, dizziness, or instability.",General safety.,S050,Clinical content review
 C041,allowed,Safety,Seek urgent help for sudden vision loss or another sudden serious symptom.,Appropriate escalation with localization.,S050;S051;S052;S053;S078,Clinical/localization review
 C042,prohibited,Safety,The app can tell whether your symptoms are serious.,No triage capability.,,Regulatory/claims
-C043,allowed,Regulatory,Supports general wellness and healthier work-break routines.,Aligned intended purpose.,S054;S055;S056;S057;S058,Regulatory review
+C043,allowed,Regulatory,Supports adult general wellness.,Allowed short category label; never substitutes for the full intended-purpose sentence C051.,S054;S055;S056;S057;S058,Regulatory review
 C044,prohibited,Regulatory,"Prevents diabetes, RSI, migraine, dry eye, or cardiovascular disease.",Medical prevention claims.,S054;S055;S056;S057;S058,Regulatory review
 C045,validation_required,Comparative,Less disruptive than fixed timers.,Requires direct comparative study.,,Evidence lead
 C046,validation_required,Outcome,Reduces end-of-day eye discomfort.,Requires product-specific outcome study.,,Evidence/clinical review
@@ -49,3 +49,33 @@ C047,allowed,Accessibility,Move in a way that works for you.,Inclusive and neutr
 C048,prohibited,Accessibility,Stand goal failed.,Exclusionary and false movement equivalence.,S045;S046,Accessibility/claims
 C049,allowed,Calendar,Uses selected Calendar busy times locally when enabled.,Factual if implemented.,S070,Privacy QA
 C050,prohibited,Calendar,Understands every meeting automatically.,No universal reliable signal.,S068;S070,Product/claims QA
+C051,allowed,Intended purpose,"Supports adult general wellness with optional visual resets, movement, position variety, and desk-work routines.",Use only with the complete non-medical boundary in 08 section 1.,S001;S002;S012;S024;S054;S055;S056;S057;S058,Regulatory/claims
+C052,allowed,Camera,Desk Lens is using the camera for the observations you enabled.,Factual only while the active indicator and per-observation controls are present.,,Privacy/product QA
+C053,prohibited,Camera,The camera understands your health.,A camera proxy is not physiological or clinical understanding.,,Regulatory/claims
+C054,allowed,Distance,You look closer than your saved comfortable range.,Personal-relative estimate only after valid calibration and a fresh high-quality sample.,S028;S030,Measurement/claims QA
+C055,prohibited,Distance,Your viewing distance is unsafe.,No universal safe distance or validated hazard measurement.,S028;S030,Regulatory/claims
+C056,allowed,Position,One position for a while.,Personal-relative low-variation estimate with unknown-on-poor-quality behavior.,S024;S028,Measurement/accessibility QA
+C057,prohibited,Position,Bad posture or slouch detected.,No universal ideal posture and no medical or causal inference.,S023;S024,Regulatory/claims
+C058,allowed,Blink,Fewer complete blinks were visible during recent clear samples.,Visible-sample estimate only after detector validation; never an eye-health conclusion.,S015;S016;S017,Measurement/claims QA
+C059,prohibited,Blink,Dry eye or incomplete blinking detected.,A visual classifier cannot diagnose a condition or establish symptom cause.,S015;S016;S017,Regulatory/claims
+C060,allowed,Motion,Your Watch sensed walking during this break.,Names source interval and supported movement class; absence remains unknown.,S045;S046;S066,Measurement/accessibility QA
+C061,prohibited,Motion,No movement detected.,Sensor absence or non-detection cannot negate wheeling seated activity slow gait or uncarried devices.,S045;S046;S080,Accessibility/claims
+C062,allowed,HealthKit,Your iPhone shared a recent step or workout summary when you enabled it.,Derived retrospective fact with source and age; not deadline-grade or Mac-direct.,S066;S067,Privacy/claims QA
+C063,prohibited,HealthKit,HealthKit confirms you needed or completed this break.,HealthKit facts do not prove need completion benefit or current state.,S066;S067,Regulatory/claims
+C064,allowed,Environment,The connected sensor reports this humidity light or air-quality value.,Raw accessory fact with source time unit and calibration status.,S012;S028,Measurement/product QA
+C065,prohibited,Environment,This room is causing your symptoms.,Environmental correlation is not diagnosis or causal attribution.,,Regulatory/claims
+C066,allowed,Subjective,You reported lower eye comfort.,Describes optional self-report only with scale and time window.,,Privacy/claims QA
+C067,prohibited,Subjective,The app measured an improvement in your eye health.,A self-report is not an objective or causal health outcome.,,Evidence/claims
+C068,allowed,Companion,Waiting to sync; the timer still works on this device.,Factual only when local deadline and action remain usable offline.,S066;S067,Product/accessibility QA
+C069,prohibited,Companion,All your devices are live and agree.,Background delivery pairing and clock state can be delayed or unavailable.,S066;S067,Product/claims QA
+C070,allowed,Foundation Models,An on-device model drafted this explanation from the facts shown here.,Factual only when model availability input boundary and deterministic effect boundary are inspectable.,,Model/privacy QA
+C071,prohibited,Foundation Models,AI knows what your body needs.,No physiological inference medical advice or autonomous schedule authority.,,Regulatory/model claims
+C072,allowed,Context,Likely in a call; reminders held.,Qualified inference with Why now correction expiry and delivery-only effect.,S068;S070,Product/claims QA
+C073,prohibited,Context,Meeting detected.,Overstates a fused fallible context inference as universal fact.,S068;S070,Product/claims QA
+C074,allowed,Automation,A recent observation restarted future timing; no break was marked complete.,Accurately separates a reversible scheduling decision from a product or health outcome.,,Product/claims QA
+C075,prohibited,Automation,The app automatically verified your break worked.,No sensor assessment or schedule effect proves completion or benefit.,,Evidence/claims
+C076,allowed,Privacy,Strict local keeps protected sensing inside this device process boundary and makes no vendor connection.,Requires verified no-egress architecture and must name any separately enabled device exchange.,S059;S060;S061;S062;S063,Privacy/security QA
+C077,prohibited,Privacy,Your data never leaves this device.,False when the user enabled companion exchange export or private sync and too absolute about OS behavior.,S059;S060;S061;S062;S063,Privacy/claims QA
+C078,allowed,Accessibility,Manual actions have the same schedule effect.,Factual only when sensor-free and manual paths have equal consequence and dignity.,S045;S046;S080,Accessibility QA
+C079,validation_required,Outcome,This capability improved your comfort routine or health outcome.,Requires a version-bound dossier with a suitable design and cannot be inferred from engagement.,,Evidence/clinical review
+C080,prohibited,Outcome,Your weekly wellness score shows improvement.,Composite score fabricates weighting and invites shame or medical interpretation.,,Evidence/accessibility/claims

@@ -7,8 +7,9 @@ Derived from `research/health/05_DESIGNER_AGENT_BRIEF.md` §5 and the interrupti
 
 ## 1. Top-level structure
 
-The app has no "home". It has an ambient presence and four destinations, three of which the
-user opens deliberately.
+The app has no "home". It has an ambient presence and five destinations, four of which the
+user opens deliberately. The fifth is the optional capability center; it exists even when all
+sensing is Off so denial and revocation never remove the person's controls.
 
 ```
 Menu-bar item  (Level 0, always present)
@@ -20,6 +21,7 @@ Menu-bar item  (Level 0, always present)
     ├── Working hours       (toggle, with the current window as its subtitle)
     ├── ─────────
     ├── Weekly rhythm…      → window
+    ├── Sensing & Intelligence… → window (shows Off when unused)
     ├── Settings…           → window (⌘,)
     ├── ─────────
     └── Quit Cadence
@@ -31,7 +33,8 @@ Interrupt surfaces (system-initiated, transient — not "places")
 
 Windows (user-initiated — real places)
 ├── Weekly rhythm       Level 4
-├── Settings            8 sections
+├── Sensing & Intelligence capability status, inspector, stop, correct, effects
+├── Settings            9 sections
 └── Onboarding          first launch only
 ```
 
@@ -54,6 +57,7 @@ Content, in order:
 | Pause ▸ | 30 minutes · 1 hour · Until a time… · Until tomorrow · Presenting… | Checkmark shows the active pause |
 | Working hours | Current window as subtitle | Toggle |
 | Weekly rhythm… | — | Opens window |
+| Sensing & Intelligence… | Active source count or Off | Opens the status/control center; never hidden while a source is active |
 | Settings… | ⌘, | Opens window |
 | Quit | ⌘Q | — |
 
@@ -62,7 +66,7 @@ When suppressed, the status region's state line explains **why**, in the user's 
 
 ## 3. Settings
 
-Eight sections, ordered by how often a real user touches them, matching `[05 §5]`.
+Nine sections, ordered by how often a real user touches them, matching `[05 §5]` and D-044.
 
 | # | Section | Contains |
 |---|---|---|
@@ -70,10 +74,11 @@ Eight sections, ordered by how often a real user touches them, matching `[05 §5
 | 2 | **Break content** | Preferred movement (walk-or-equivalent / seated active / mixed / position change) · which activities may appear · 2-minute option visibility · optional breathing content · standing-desk mode · content library browser (read-only) |
 | 3 | **Context & exclusions** | Excluded apps · pause behavior · low-friction-moment waiting · presentation mode · idle handling · what happens after suppression |
 | 4 | **Accessibility** | Reduced motion / static mode · high contrast · overlay brightness · text-only break mode · timer announcement cadence · keyboard shortcuts · seated-first content · sound (off by default) |
-| 5 | **Privacy & data** | What is stored (plain list) · retention (30/90 days, keep nothing) · export · delete history · reset all · analytics opt-in (off) · optional check-ins (off) |
-| 6 | **Integrations** | Notifications · Calendar busy times · Focus Filter · Launch at login. Each: current state, what it's for, what it does *not* read, and how to revoke |
-| 7 | **Why these defaults?** | Evidence transparency. Visual breaks · movement · standing vs moving · no posture score · no blue-light framing · what activity estimation can and cannot know · link to the source library |
-| 8 | **Safety & support** | Routine safety text · persistent-symptom guidance · urgent red-flag text · what the app cannot assess · support and feedback |
+| 5 | **Sensing & Intelligence** | Every optional capability · source state and indicator · session/window scope · Off/Shadow/Suggest/bounded automatic effect · last decision · correction · Stop all sensing |
+| 6 | **Privacy & data** | What is stored by record family · raw/derived lifetimes · Strict Local mode · retention (30/90 days, keep nothing) · export · capability delete · delete calibration/rules/history · reset all · analytics opt-in (off) · optional check-ins (off) |
+| 7 | **Integrations** | Notifications · Calendar busy times · Focus Filter · Launch at login · Apple companions. Each: current state, what it is for, what it does *not* read, and how to revoke |
+| 8 | **Why these defaults?** | Evidence transparency. Visual breaks · movement · standing vs moving · no posture score · no blue-light framing · what each estimate can and cannot know · link to the source library |
+| 9 | **Safety & support** | Routine safety text · persistent-symptom guidance · urgent red-flag text · what the app cannot assess · support and feedback |
 
 Progressive disclosure: each section leads with the two or three controls people actually
 change, with the rest behind a disclosure. Time Out's failure mode is a settings surface that
@@ -120,13 +125,15 @@ Target: under 90 seconds, skippable at any point to a working default state.
 |---|---|---|
 | Next break | Menu-bar glyph | Status menu |
 | Why it's quiet | Status menu state line | Menu-bar glyph variant |
+| Why this decision happened | `Why now?` from status/Weekly | Sensing inspector decision chain |
 | Take a break now | Status menu | Global shortcut (optional) |
 | Change frequency | Settings ▸ Schedule | Weekly ▸ Adjust · post-deferral suggestion |
 | Movement preference | Settings ▸ Break content | In-break activity choice |
 | Evidence & uncertainty | Settings ▸ Why these defaults? | One quiet link on the break surface |
-| Permissions | Settings ▸ Integrations | The moment of value, in context |
+| Optional sensing | Sensing & Intelligence | Status menu indicator · capability page · Weekly assistant audit |
+| Permissions | Capability page or Settings ▸ Integrations | The moment of value, after source/effect preview |
 | Safety | Settings ▸ Safety & support | Footer line on movement content |
-| Data | Settings ▸ Privacy & data | Onboarding step 1 (promise only) |
+| Data | Settings ▸ Privacy & data | Capability lifecycle · onboarding step 1 (promise only) |
 
 ## 7. Naming
 
@@ -140,3 +147,7 @@ Target: under 90 seconds, skippable at any point to a working default state.
 | Level 4 window | **Weekly rhythm** | Dashboard · report · stats · insights |
 | Evidence section | **Why these defaults?** | Science · research center |
 | Quiet states | **Paused / Quiet** | Snoozed (reserved for a single deferral) · Disabled |
+| Scheduling continues, presentation waits | **Held** | Paused · completed |
+| Optional capability home | **Sensing & Intelligence** | Surveillance · AI health center |
+| Evidence detail | **Sensing inspector** | Body report · diagnosis |
+| Decision explanation | **Why now?** | AI insight · health reason |

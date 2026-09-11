@@ -6,6 +6,13 @@ This document converts the evidence review into exact launch behaviour. It is au
 
 The protocol is a **testable product hypothesis**, not a medical prescription. Configuration must remain visible and reversible.
 
+Its canonical intended purpose is adult general wellness: help people plan
+optional visual resets, movement, position variety, and desk-work routines;
+understand and adjust when reminders appear; and, when individually enabled,
+use local contextual or sensor-derived observations to make those routines
+quieter and more personally useful. It is a routine/interruption assistant, not
+a health monitor, and no optional capability expands that boundary (`08` §1).
+
 ## 2. Terminology
 
 ### Estimated active computer use
@@ -675,3 +682,87 @@ legacy `event_schema.json` is now explicitly a read-only v1 envelope whose mappi
 the ten facts; its broader record kinds never enlarge the product-fact vocabulary. No timer,
 idle, sensor, camera, motion, HealthKit, companion, or model observation is a completion fact or
 proof of a health outcome.
+
+## 18. Optional-capability protocol - pre-implementation authority
+
+This section promotes the owner-approved Calm Ensemble capability direction into
+a canonical safety contract. It authorizes gated prototypes and later
+issue-scoped implementation; it does not claim that any capability exists now,
+grant an entitlement, or bypass the graduation rules in `10`.
+
+### 18.1 Two separate grants
+
+Each protected source requires two independent, reversible grants:
+
+1. **observation consent**: which source may run, for which named observations,
+   on which device, and for session, chosen desk hours, or until stopped; and
+2. **effect authority**: Off/Shadow, Suggest, or one enumerated bounded automatic
+   effect.
+
+A system permission satisfies neither grant by itself. Enabling camera presence
+does not enable distance, position, or blink analysis. Enabling a source never
+enables all effects, research export, analytics, private sync, or Foundation
+Models. Expiry, revocation, stale calibration, unsupported hardware, resource
+pressure, conflicting evidence, and a bystander all resolve to unknown and the
+named fallback. None creates negative evidence or added reminder pressure.
+
+### 18.2 Canonical capability matrix
+
+`Proof` is the minimum level before the stated effect may ship: **B** bench only,
+**H** Shadow, **S** Suggest, and **A** bounded automatic. A higher letter includes
+the lower-level evidence. `Life` points to the exact lifecycle family in `07`
+and `Claims` to `08`/the CSV.
+
+| Capability | User value | Observation permission | Maximum effect authority | Calm fallback and correction | Life | Claims | Accessibility parity | Proof |
+|---|---|---|---|---|---|---|---|---|
+| Context Sense | Avoid a poorly timed interruption | Per-source app/device state; Calendar and selected-window sources remain separate | Hold or release delivery only; clocks continue | Manual `Hold`, `Not a call`, source-off, and normal opportunity window; correction expires the assessment and can disable its rule | P1/P2 | C049-C050, C072-C073 | Manual hold on Mac/iPhone/Watch; no app labeling required | A only after false-hold, release-latency, protected-context, and revocation gates |
+| Camera presence | Avoid prompting while clearly away and suspend other camera features on conflict | Camera plus explicit presence observation, session or chosen desk hours | Eligibility/delivery within existing bounds; never completion | Permission-free session estimate; `I was here`, Stop Desk Lens, multi-face/poor-quality unknown | P3 | C052-C053 | Keyboard/VoiceOver controls and a fully equal no-camera route | A only after representative measurement, bystander, indicator, resource, and device gates |
+| Relative distance | Offer a reversible setup cue against the person's saved range | Camera plus Distance; separate desk-profile calibration | Ambient cue or Suggest; automatic visual veil remains separately gated actuation | No cue; `This is comfortable`, quiet, recalibrate, larger-text/setup path | P3/P4 | C054-C055 | No fixed range for disability, vision correction, body size, camera placement, or assistive setup | S; actuation A only after measurement and decision-value dossiers graduate |
+| Position variety | Invite another user-accepted comfortable shape | Camera or AirPods source separately plus Position | Suggest a position opportunity; no movement-clock effect | Manual position action; `This position is comfortable`, add/delete shape, unknown framing | P3/P4 | C020-C024, C056-C057 | Seated, wheeling, reclined, standing, supported, and limited-range shapes have equal status | S; A cue only after representative false-cue and dignity gates |
+| Blink sampling | Tailor an already-due visual reset without a separate nag loop | Camera plus Blink bursts, separate from other camera observations | Shadow or modify already-due visual content; no standalone automatic prompt | Standard visual reset; `Samples were unclear`, stop bursts, discard baseline | P3/P4 | C005-C009, C058-C059 | No eye visibility, facial-feature, glasses, gaze, or camera requirement for visual resets | S after measurement dossier; no A until product-value dossier graduates |
+| Motion Companion | Carry accepted breaks and avoid a redundant future reminder after supported movement evidence | Companion continuation and bounded Motion are separate grants | Timer behavior; Suggest or automatic schedule restart; never a completion fact | Manual timer and `I already moved`; `That was not my movement`; non-detection has no effect | P5 | C060-C061, C068-C069, C074-C075 | Walking, wheeling/pushing, seated movement, slow gait, aids, unworn device, and no-Watch routes are equal | A only per supported movement class after physical-device and disparity gates |
+| HealthKit summary | Use recent retrospective context without pretending it is live | Exact read types on iPhone, each purpose named; no write authority | Shadow/Suggest schedule rule; never deadline-grade or direct Mac access | Ignore stale/unavailable data; manual actions unchanged; remove source contribution | P5 | C062-C063 | No HealthKit, iPhone, Watch, workout, step, stand, or roll requirement | S after type-specific provenance/staleness gates; A requires a separate decision dossier |
+| Environment | Make a setup experiment from an explicit room fact | Each accessory/source and measurement type separately | Display fact or Suggest a user-authored setup/Shortcut action | Manual value or no module; correct source/unit, recalibrate, disconnect | P6 | C064-C065 | No hardware purchase or sensed environment required; nonvisual and nonsound-only presentation | S after source calibration and attribution-comprehension gates |
+| Subjective reports | Let the person test what feels useful | Optional controlled fields, separate experiment/research export consent | Personal reflection or proposal only; never an automatic health rule alone | Skip without penalty; correct/delete response; core and experiments remain usable | P7 | C035-C036, C066-C067, C079 | Accessible verbal/number choices, `Prefer not to answer`, no motor/timing burden | S for proposals after comprehension/privacy gates; never sole-source A |
+| Companion continuity | Finish one accepted action away from Mac | Explicit per-transfer receiver; private sync remains separate | Present the same opportunity and reconcile one action | Local deadline continues; cancel transfer, current-state receipt, re-pair/unpair | P5 | C068-C069 | iPhone complete without Watch; Mac complete without either; equivalent manual controls | A only after offline, drift, duplicate, revocation, and physical-device gates |
+| Foundation Models | Explain visible facts and draft a deterministic rule | Per-use invocation over a previewed minimized input | Text proposal only; never a clock, hold, cue, completion, or health decision | Deterministic template; edit/reject/delete draft; unavailable/offline is quiet | P8 | C070-C071 | Same facts and controls without generated prose; VoiceOver/readability proof | S for user-confirmed drafts after hallucination/privacy tests; never A |
+
+### 18.3 Effect firewall
+
+Every assessment enters the deterministic policy firewall with provenance,
+freshness, confidence band, calibration/detector version, independence group,
+allowed effects, consent receipt, and resource state. The firewall permits only
+the exact active authority. It records a separate scheduling decision and
+exposes `What it noticed`, `What it changed`, `Why now?`, correction, and undo.
+
+- Shadow records what would have changed and changes nothing visible outside the
+  inspector or an explicitly opened audit.
+- Suggest requires a user action before any schedule or delivery effect.
+- Automatic may perform only the enumerated effect inside existing schedule and
+  interruption bounds. It never expands cadence, increases loudness, creates a
+  product fact, or marks an opportunity complete.
+- Any invalid, stale, missing, revoked, disputed, out-of-policy, or
+  unsupported input is unknown. The permission-free core remains complete.
+- Repeated correction, a material subgroup gap, a claims failure, an indicator
+  failure, unexpected egress, or a resource-gate breach demotes the capability
+  immediately under `10`; it never learns around the guardrail.
+
+### 18.4 Modules outside the four clocks
+
+Workstation setup, light/glare, humidity/air quality, hearing facts, breathing
+content, work-boundary routines, hydration reminders, eye-care maintenance, and
+Shortcuts/environment actions are optional modules inside the same interruption
+budget. They may display a raw fact, run a user-authored routine, or propose a
+low-risk experiment. They do not add a hidden clock, prescribe a quota, infer a
+condition, attribute symptoms, grade behavior, or outrank a current visual,
+movement, position, or recovery opportunity.
+
+### 18.5 Protocol acceptance
+
+An optional capability is incomplete unless its implementation issue traces
+every column of §18.2 to exact permission, UI, ledger, retention, export/delete,
+accessibility, test, performance, and physical-device evidence. Denied,
+revoked, expired, unsupported, offline, resource-limited, and Keep Nothing
+states must each demonstrate the complete calm core path. Missing proof keeps
+the capability Off or in Bench/Shadow; it does not justify broader consent,
+hidden sensing, fabricated outcome, score, shame, or medical inference.

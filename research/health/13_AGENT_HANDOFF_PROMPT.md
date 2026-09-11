@@ -172,7 +172,9 @@ For every material design or engineering choice, record:
 
 Do not implement without explicit product-owner and expert review if a proposal includes:
 
-- camera/gaze/blink/posture sensing;
+- any camera/distance/blink/position, context, Motion/HealthKit, environment,
+  subjective, companion, or Foundation Models behavior that is not traced to
+  the D-044 matrices, a graduated `10` dossier, and exact independent approval;
 - symptom interpretation;
 - HealthKit-derived health recommendations;
 - a medical or prevention claim;

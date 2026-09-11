@@ -36,8 +36,19 @@ The app should:
 6. Keep every interruption dismissible and deferrable; no coercive lockout.
 7. Adapt to idle time, meetings, presentations, user-defined exclusions, sleep/wake, and Focus contexts without pretending those signals are perfect.
 8. Use language about comfort, recovery, movement, and routine—not prevention, treatment, correction, or risk reduction.
-9. Work locally without an account; never collect keystrokes, window titles, URLs, screenshots, raw calendar details, or camera footage.
+9. Keep the permission-free core local without an account and never collect
+   keystrokes, window titles, URLs, screenshots, or raw Calendar details.
+   Optional capabilities follow the P1-P8 boundaries and never intentionally
+   persist camera footage or other raw protected buffers.
 10. Provide seated, wheelchair-compatible, balance-safe, keyboard-only, VoiceOver, reduced-motion, high-contrast, and migraine-friendly flows from the first release.
+
+The permission-free launch core above remains complete. The canonical
+post-MVP optional-capability contract in `03` §18, `07` §§17-20, `08` §§13-14,
+and `10` §§14-20 permits individually consented local context, camera, companion
+motion/HealthKit, environment, subjective, and Foundation Models prototypes.
+Those capabilities do not broaden the adult general-wellness purpose, collect
+raw protected history, or gain scheduling authority before their named proof
+and rollback gates.
 
 ## Recommended default protocol
 
@@ -92,7 +103,7 @@ When movement opportunities are repeatedly deferred and estimated active use rea
 | `12_SOURCE_LIBRARY.md` | Source bibliography keyed as `[S###]` |
 | `13_AGENT_HANDOFF_PROMPT.md` | Ready-to-use prompt for design/development agents |
 | `14_OPEN_QUESTIONS_AND_VERSIONING.md` | Unresolved issues and evidence-review cadence |
-| `ALL_RESEARCH_COMBINED.md` | Concatenated human-readable package |
+| `ALL_RESEARCH_COMBINED.md` | Concatenated 2026-08-24 snapshot; later canonical amendments live in the owning files above |
 | `machine-readable/product_protocol.yaml` | Default protocol and state rules |
 | `machine-readable/event_schema.json` | Privacy-minimized event schema |
 | `machine-readable/claims_register.csv` | Copy guardrails |

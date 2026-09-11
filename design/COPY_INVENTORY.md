@@ -31,7 +31,7 @@ carefully.
 | CP-L04 | Stand if it feels comfortable and your setup is ready. Change back whenever you want. | `04 §7` `[P02]` | BR-11 |
 | CP-L05 | This app cannot assess symptoms. Stop the activity and seek urgent help for chest pain or pressure, fainting, severe unusual shortness of breath, sudden weakness, sudden vision loss, a dark curtain/shadow, sudden flashes or many new floaters, severe eye pain, or new bladder/bowel changes with numbness or leg weakness. | `04 §12`, `[C041]`, `[C042]` | SE-15 **only** — never during a routine break |
 | CP-L06 | Persistent or worsening eye, neck, back, wrist, or headache symptoms may have causes a reminder app cannot assess. Consider an appropriate health professional. | `08 §4`, `[C041]` | SE-15 |
-| CP-L07 | Supports general wellness and healthier work-break routines. | `08 §1`, `[C043]` | ON-01, About, SE-13 |
+| CP-L07 | Supports adult general wellness with optional visual resets, movement, position variety, and desk-work routines. | `08 §1`, `[C051]` | ON-01, About, SE-13 |
 
 Content cards `V01`–`V05`, `M01`–`M05`, `L01`–`L06`, `P01`–`P04`, `B01`–`B02` are used
 **as written** in `04`. Design may not invent a card, reword an instruction, or change a
@@ -206,7 +206,7 @@ account, integration, network, event, or macOS-setting capability.
 |---|---|---|---|
 | `app.onboarding.title` | `Set up breaks` | Neutral native window title owned by the App catalog. | Reviewed |
 | `onboarding.action.back`; `.continue`; `.finish`; `.retry`; `.skip`; `onboarding.progress` | `Back`; `Continue`; `Finish`; `Try again`; `Skip setup`; `Step %d of %d` | Neutral walkthrough navigation. Skip remains available on every decision page and is never failure-framed. | Reviewed |
-| `onboarding.promise.title`; `.detail`; `.wellness`; `.invitations`; `.no_account` | `A private way to remember breaks`; `A private, research-informed way to remember visual and movement breaks without fighting your workflow.`; `Supports general wellness and healthier work-break routines.`; `Breaks are invitations. Nothing is blocked, and you can leave at any time.`; `Works without an account` | Intended-purpose and autonomy copy. CP-L07 and CP-ON05 are verbatim; `[C043]`, `[C002]`, and `lockout_allowed: false`. “Research-informed” does not claim an exact optimum or outcome. | Reviewed |
+| `onboarding.promise.title`; `.detail`; `.wellness`; `.invitations`; `.no_account` | `A private way to remember breaks`; `A private, research-informed way to remember visual and movement breaks without fighting your workflow.`; `Supports adult general wellness with optional visual resets, movement, position variety, and desk-work routines.`; `Breaks are invitations. Nothing is blocked, and you can leave at any time.`; `Works without an account` | Intended-purpose and autonomy copy. CP-L07 and CP-ON05 are verbatim; `[C051]`, `[C002]`, and `lockout_allowed: false`. “Research-informed” does not claim an exact optimum or outcome. | Reviewed |
 | `onboarding.honesty.title`; `.estimated_use`; `.cannot_know`; `.idle_is_not_movement`; `.passive_reading` | `What this can and cannot know`; `It estimates active computer use from keyboard and pointer activity.`; `It cannot tell whether you are sitting, standing, or looking at the screen.`; `Time away from the keyboard is not proof that you moved.`; `Passive reading or watching may not register as active computer use.` | Required estimate/measurement boundary and OQ-04 disclosure. CP-ON01–04 exact; `[C013]`, `[C022]`, `[C033]`, `[C034]`. | Reviewed |
 | `onboarding.rhythm.title`; `.detail`; reused `settings.profile.*` timing keys | `Choose a rhythm`; `Choose a starting schedule. You can change it any time in Settings.`; approved Gentle/Balanced/Frequent movement titles and qualified `about` timings | Neutral starting preference. All timing values remain explicitly approximate and reuse the approved settings source. | Reviewed |
 | `onboarding.movement.title`; reused `settings.break_content.preferred_movement_explanation`; reused `settings.break_content.movement.*` | `How you move`; approved equal-status explanation and four equal-rank movement choices | Choice copy preserves movement parity and keeps position change semantically separate from movement completion; `[C003]`, `[C034]`, `[C047]`, `[C048]`. It does not use CP-ON06. | Reviewed |
@@ -660,14 +660,14 @@ guidance remains confined to SE-15.
 | `settings.integrations.notifications`; `.notifications_detail`; `.notifications.not_determined`; `.authorized`; `.denied`; `.revoked`; `.unavailable`; `.setup`; `.open_settings` | `Notifications`; `Use macOS notifications for a quiet heads-up before a break. The in-app heads-up remains available when notifications are off.`; `Not set up. Opening Settings never requests permission.`; `Allowed in System Settings`; `Off in System Settings. The in-app heads-up remains available.`; `No longer allowed in System Settings. The in-app heads-up remains available.`; `Notifications are unavailable. The in-app heads-up remains available.`; `Set up notifications…`; `Open Notification Settings…` | Class A live authorization and recovery copy; PM-01/PM-02 and ED-07. Opening Settings never prompts. | Reviewed |
 | `settings.integrations.launch_at_login`; `.launch_at_login_detail`; `.launch_at_login_unavailable`; `.launch_at_login.requires_approval`; `.launch_at_login.open_login_items` | `Open at login`; `Open the app after you sign in to this Mac.`; `Open at login is unavailable in this build.`; `Approval required in System Settings. Open at login is currently off.`; `Open Login Items…` | Neutral reversible system-service preference, truthful unavailable and approval-required states, and framework-owned recovery route; PM-06 | Reviewed |
 | `settings.integrations.unavailable_this_build`; `.unavailable_this_build_detail`; `.calendar`; `.calendar_detail`; `.focus`; `.focus_detail` | `Not available in this build`; `These integrations are shown for transparency. They do not request access or run in the background.`; `Calendar busy times`; `No Calendar data is requested or read in this build.`; `Focus Filter`; `No Focus information is requested or read in this build.` | Class A absence and privacy boundary; no entitlement, request, data access, or dead toggle | Reviewed |
-| `settings.evidence.overview`; `.overview_detail`; `.conclusion`; `.uncertainty`; `.sources`; `.back` | `What shaped the defaults`; `The app supports general wellness and healthier work-break routines. The evidence supports useful ranges and honest uncertainty, not one universal schedule.`; `What we use`; `What remains uncertain`; `Sources`; `All topics` | Evidence-transparency navigation and claim framing; SE-13, CP-L07 | Reviewed |
+| `settings.evidence.overview`; `.overview_detail`; `.conclusion`; `.uncertainty`; `.sources`; `.back` | `What shaped the defaults`; `The app supports adult general wellness with optional visual resets, movement, position variety, and desk-work routines. The evidence supports useful ranges and honest uncertainty, not one universal schedule.`; `What we use`; `What remains uncertain`; `Sources`; `All topics` | Evidence-transparency navigation and claim framing; SE-13, CP-L07, C051 | Reviewed |
 | `settings.evidence.visual.*` | `Visual resets`; `A useful range, not a magic timer.`; `The default offers short visual resets within a 20–30 minute window of estimated active computer use.`; `The evidence supports a window, not an exact number. The 20-20-20 rule is memorable, but it is not a uniquely proven optimum.`; `Visual-break evidence · S012–S017` | Qualified visual-break evidence; `[C005]`, `[C006]`, `[S012–S017]` | Reviewed |
 | `settings.evidence.movement.*` | `Movement`; `Easy movement, with more than one valid duration.`; `The Balanced schedule offers about five minutes of easy movement around each hour, with a useful two-minute quick option.`; `No single movement schedule is universally best. The more frequent schedule is an explicit higher-burden choice, not a superior outcome claim.`; `Movement-break evidence · S001–S010` | CP-BR41 and accepted movement evidence; no equivalence or superior-outcome claim | Reviewed |
 | `settings.evidence.standing.*` | `Standing and moving are different`; `Position change is useful context, not movement completion.`; `Changing position can add variety. It is logged separately and never completes a movement opportunity.`; `Standing reduces sitting time, but evidence for broader outcomes from standing alone remains uncertain.`; `Standing and movement evidence · S011, S034` | `[C034]`, `[C048]`; standing never completes movement | Reviewed |
 | `settings.evidence.posture.*` | `Why there is no posture score`; `Comfort, fit, and variation instead of policing.`; `The app favors comfortable setup and position variation. It does not rate posture or enforce one ideal position.`; `There is no universal correct posture, and intervention evidence is mixed.`; `Posture and workstation evidence · S023–S032` | `[C023]`; rejects universal-correct-posture and posture-scoring claims | Reviewed |
 | `settings.evidence.blue_light.*` | `Why there is no blue-light framing`; `Display comfort without damage or protection claims.`; `The app focuses on breaks, readability, glare, and comfort. It does not claim that ordinary consumer-screen blue light damages your eyes.`; `Display color and evening light can affect comfort or timing, but that is different from a retinal-damage claim.`; `Blue-light evidence · S018–S022` | `[C008]`, `[C009]`; explicitly rejects retinal-damage/protection framing | Reviewed |
 | `settings.evidence.estimation.*` | `What activity estimation can know`; `Recent computer interaction, not the body.`; `Timing is based on estimated active computer use: key and pointer input only.`; `It cannot tell whether you are sitting, standing, moving, or looking at the screen. Time away from the keyboard is not proof that you moved.`; `Activity-estimation limits · C013, C033, C034` | CP-SE21 and accepted estimator limitations; both `estimated` and limitations are load-bearing | Reviewed |
-| `settings.evidence.library.*` | `Source library`; `How evidence, claims, and product decisions are separated.`; `The source library keeps evidence references, allowed claims, and product decisions traceable by identifier.`; `A source library makes decisions inspectable. It does not remove uncertainty or establish a universal schedule.`; `Evidence review · S001–S080` / `Claims register · C001–C050` / `Product health protocol · sections 4–12` | Read-only local source index; traceability does not claim certainty | Reviewed |
+| `settings.evidence.library.*` | `Source library`; `How evidence, claims, and product decisions are separated.`; `The source library keeps evidence references, allowed claims, and product decisions traceable by identifier.`; `A source library makes decisions inspectable. It does not remove uncertainty or establish a universal schedule.`; `Evidence review · S001–S080` / `Claims register · C001–C080` / `Product health protocol · sections 4–18` | Read-only local source index; traceability does not claim certainty | Reviewed |
 | `settings.safety.introduction`; `.routine`; `.routine_detail` | `Break activities are optional and general. This app cannot assess symptoms or replace professional care.`; `Routine guidance`; `Choose a comfortable option, use support if needed, and stop if you feel pain, dizziness, unusual shortness of breath, weakness, or instability.` | CP-L01 autonomy and routine stop conditions; no diagnosis or outcome claim | Approved |
 | `settings.safety.persistent`; `.persistent_detail` | `Persistent or worsening symptoms`; `Persistent or worsening eye, neck, back, wrist, or headache symptoms may have causes a reminder app cannot assess. Consider an appropriate health professional.` | CP-L06 verbatim, SE-15 only | Approved |
 | `settings.safety.urgent`; `.urgent_detail` | `Seek urgent help`; `This app cannot assess symptoms. Stop the activity and seek urgent help for chest pain or pressure, fainting, severe unusual shortness of breath, sudden weakness, sudden vision loss, a dark curtain/shadow, sudden flashes or many new floaters, severe eye pain, or new bladder/bowel changes with numbness or leg weakness.` | CP-L05 verbatim, SE-15 only; restrained danger treatment does not appear on routine guidance | Approved |
@@ -710,6 +710,7 @@ movement, health benefit, device presence, or successful Mac receipt before ackn
 | CP-AC28; `settings.companions.data_title` | `What sync includes` | Privacy disclosure heading | Approved |
 | CP-AC29; `settings.companions.data_detail` | `Opportunity records include their identifier, movement type and content, selected duration, creation time, deadline, state, revision, authority device, and any resolution's action identifier, device, action, and time. Action records include their identifier, opportunity identifier, device, action, action time, revision basis, and declaration or timer-fact certainty. Cloud records also store a record identifier, parent opportunity, revision, and projection time.` | Complete meaningful private CloudKit payload and record-metadata inventory; excludes provider-owned internal metadata | Approved |
 | CP-AC30; `settings.companions.data_excludes` | `Does not include HealthKit, Motion, AirPods, Calendar, app names, pointer paths, or location data.` | Load-bearing exclusion disclosure | Approved |
+
 | CP-AC31; `settings.companions.offline_detail` | `When private sync is on, actions are saved on this device first and sync when iCloud is available.` | Local append and offline replay, explicitly conditional on the opt-in | Approved |
 | CP-AC32; `settings.companions.turn_off` | `Turn Off Private Sync…` | Opens exact retained-copy disclosure before applying | Approved |
 | CP-AC33; `settings.companions.delete` | `Delete Synced Companion Data…` | Destructive action remains separate from disabling sync | Approved |
@@ -735,3 +736,116 @@ movement, health benefit, device presence, or successful Mac receipt before ackn
 Prohibited companion substitutions: `Completed automatically`, `Movement verified`,
 `Watch detected your break`, `Goal reached`, `Stand credit`, `Fitness score`, `End early`, and
 any copy that says an offline action reached Mac before acknowledgement.
+
+## Optional capability contract strings (2026-09-10, D-044)
+
+These strings are canonical for future optional-capability surfaces. They do
+not assert current implementation. Every factual line ships only after the
+linked proof gate in `03` §18 and `10` passes.
+
+### Intended purpose and center
+
+| ID / key | Exact copy | Class / register | Review verdict |
+|---|---|---|---|
+| OC-001 `capability.intended_purpose` | `Supports adult general wellness with optional visual resets, movement, position variety, and desk-work routines.` | A, C051; always paired with OC-002 in onboarding/public purpose copy | Approved boundary; not an outcome promise |
+| OC-002 `capability.not_health_monitor` | `A routine and interruption assistant, not a health monitor. It does not assess symptoms or replace professional care.` | A boundary, C051/C053/C071 | Approved; `health` is purpose context, not a measurement claim |
+| OC-003 `sensing.center.title` | `Sensing & Intelligence` | A product label | Approved |
+| OC-004 `sensing.center.off` | `Sensing off` | A state | Approved when every protected source is stopped |
+| OC-005 `sensing.center.active` | `%lld sources active` | A state | Approved when count matches acquisition, singular/plural localized |
+| OC-006 `sensing.center.strict_local_mac` | `Strict Local - This Mac` | A, C076 | Approved only after exact-binary no-egress proof |
+| OC-007 `sensing.center.strict_local_devices` | `Strict Local - My Devices` | A, C076/C077 | Approved only with disclosed direct selected-device exchange |
+| OC-008 `sensing.stop_all` | `Stop all sensing` | A control | Approved; stops acquisition before receipt |
+| OC-009 `sensing.stop_receipt` | `Sensing stopped. Schedules are still on.` | A state | Approved when buffers flush and effects stop |
+
+### Consent and effect authority
+
+| ID / key | Exact copy | Class / register | Review verdict |
+|---|---|---|---|
+| OC-010 `capability.preview.title` | `See what this capability would notice` | A preview label | Approved; source remains Off |
+| OC-011 `capability.preview.source` | `Source: %@` | A | Approved when it names one exact source/device |
+| OC-012 `capability.preview.observations` | `Observations: %@` | A | Approved; list cannot imply every derivation is enabled |
+| OC-013 `capability.preview.raw_lifetime` | `Raw input: %@` | A | Approved when sourced from P1-P8 lifecycle |
+| OC-014 `capability.preview.derived_lifetime` | `Derived records: %@` | A | Approved when Keep Nothing exception is stated |
+| OC-015 `capability.preview.energy` | `Energy use: %@` | A | Approved after physical measurement; otherwise `Not measured yet` |
+| OC-016 `capability.not_now` | `Not now` | A control | Approved, no penalty |
+| OC-017 `capability.use_session` | `Use this session` | A control | Approved only when expiry is enforceable |
+| OC-018 `capability.continue` | `Continue` | A control | Approved as the sole route to a system request |
+| OC-019 `capability.effect.title` | `Choose what this may change` | A control heading | Approved after live derived preview |
+| OC-020 `capability.effect.shadow` | `Shadow - show what would change` | A mode | Approved; changes nothing outside inspector/audit |
+| OC-021 `capability.effect.suggest` | `Suggest - ask before changing anything` | A mode | Approved |
+| OC-022 `capability.effect.automatic` | `Automatic - apply only the listed change` | A mode | Approved only after capability A gate |
+| OC-023 `capability.permission.denied` | `This source is not available. The regular schedule and manual actions still work.` | A state, C078 | Approved; no blame or repeat prompt |
+| OC-024 `capability.open_settings` | `Open System Settings` | A control | Approved only after explicit action |
+
+### Inspector, Paused/Held, and correction
+
+| ID / key | Exact copy | Class / register | Review verdict |
+|---|---|---|---|
+| OC-025 `decision.why_now` | `Why now?` | A route | Approved |
+| OC-026 `decision.noticed` | `What it noticed` | A heading | Approved when followed by source/freshness |
+| OC-027 `decision.inferred` | `What it inferred` | B heading | Approved when uncertainty/contradiction is present |
+| OC-028 `decision.changed` | `What it changed` | A heading | Approved; exact schedule/delivery before/after only |
+| OC-029 `decision.authority` | `Why this was allowed` | A heading | Approved; active rule/receipt/version/expiry |
+| OC-030 `decision.correct` | `Correct this` | A control | Approved; no free text required |
+| OC-031 `decision.undo` | `Undo schedule change` | A control | Approved when reversal is still valid |
+| OC-032 `status.paused` | `Paused - schedule clocks are stopped until %@.` | A state | Approved only for a true pause |
+| OC-033 `status.held` | `Held - reminders are quiet until %@. Schedule clocks continue.` | A/B state | Approved only for a hold with exact end |
+| OC-034 `status.likely_call` | `Likely in a call - reminders held.` | B, C072/C073 | Approved with Why now and Not a call |
+| OC-035 `correction.not_call` | `Not a call` | A declaration | Approved |
+| OC-036 `correction.was_here` | `I was here` | A declaration | Approved; does not create completion |
+| OC-037 `correction.distance_comfortable` | `This distance is comfortable` | A declaration, C054 | Approved; recalibrates only after confirmation |
+| OC-038 `correction.position_comfortable` | `This position is comfortable` | A declaration, C056 | Approved; no posture judgment |
+| OC-039 `correction.not_movement` | `That was not my movement` | A declaration, C060/C061 | Approved; expires assessment, no penalty |
+| OC-040 `correction.none` | `None of these` | A control | Approved; correction never demanded |
+
+### Source-qualified facts
+
+| ID / key | Exact copy | Class / register | Review verdict |
+|---|---|---|---|
+| OC-041 `camera.active` | `Desk Lens is using the camera for the observations you enabled.` | A, C052/C053 | Approved only while indicator/controls are present |
+| OC-042 `camera.bystander` | `Camera observations paused while more than one person is in view.` | A/privacy | Approved; retain no identity/count history |
+| OC-043 `camera.unknown` | `Looking for a clear sample.` | A | Approved; unknown creates no effect |
+| OC-044 `distance.relative` | `You look closer than your saved comfortable range.` | A, C054/C055 | Approved after fresh calibration/quality proof |
+| OC-045 `position.still` | `One position for a while.` | A, C056/C057 | Approved as personal-relative variation estimate |
+| OC-046 `position.shift` | `A small shift?` | B, C020/C056 | Approved as optional invitation |
+| OC-047 `blink.samples` | `Fewer complete blinks were visible during recent clear samples.` | A, C058/C059 | Approved only after measurement gate; not symptom copy |
+| OC-048 `motion.walking` | `Your Watch sensed walking during this break.` | A, C060/C061 | Approved for validated supported class/source/interval |
+| OC-049 `motion.schedule_effect` | `Future timing restarted. No break was marked complete.` | A, C074/C075 | Approved schedule/completion distinction |
+| OC-050 `healthkit.summary` | `Your iPhone shared a recent %@ summary from HealthKit.` | A, C062/C063 | Approved with exact type and age, no direct-Mac implication |
+| OC-051 `environment.fact` | `%@ reports %@ %@ as of %@.` | A, C064/C065 | Approved with source/value/unit/time/calibration status |
+| OC-052 `subjective.report` | `You reported %@ %@.` | A, C035/C066/C067 | Approved with scale and time window |
+| OC-053 `companion.waiting` | `Waiting to sync. The timer still works on this device.` | A, C068/C069 | Approved only with local deadline proof |
+| OC-054 `model.generated` | `An on-device model drafted this explanation from the facts shown here.` | A, C070/C071 | Approved with generated label and source preview |
+| OC-055 `model.no_effect` | `It did not change your schedule.` | A, C070/C071 | Approved when policy firewall guarantees it |
+
+### Unavailable, privacy, data, and weekly audit
+
+| ID / key | Exact copy | Class / register | Review verdict |
+|---|---|---|---|
+| OC-056 `capability.unknown` | `No clear observation right now.` | A | Approved; never `No movement` or person blame |
+| OC-057 `capability.resource_stopped` | `%@ paused to reduce resource use. The regular schedule continues.` | A | Approved with exact capability; `paused` applies to capability only |
+| OC-058 `capability.model_unavailable` | `Generated explanation is unavailable. Here are the recorded facts instead.` | A | Approved deterministic fallback |
+| OC-059 `privacy.keep_nothing.capabilities` | `Keep Nothing saves no capability history, decisions, check-ins, experiments, or generated explanations.` | A/privacy | Approved when retention tests pass |
+| OC-060 `privacy.keep_nothing.exceptions` | `Settings, permission choices, active safety continuity, and rules remain until you reset or remove them.` | A/privacy | Approved required exception disclosure |
+| OC-061 `privacy.delete_capability` | `Stop and delete this capability` | A control | Approved; exact scope before execution |
+| OC-062 `privacy.delete_partial` | `Some data remains.` | A result heading | Approved only with record-family/device/cloud detail and Retry |
+| OC-063 `weekly.assistant.title` | `Assistant activity` | A heading | Approved; audits product, not person |
+| OC-064 `weekly.held` | `Held %lld opportunities; %lld were corrected.` | A | Approved factual retained counts only |
+| OC-065 `weekly.restarted` | `Recent observations restarted future timing %lld times.` | A, C074/C075 | Approved with inspector route and no completion implication |
+| OC-066 `weekly.unused` | `This capability has not changed a useful decision in 30 days. Turn it off?` | A/product-value prompt | Approved only from retained decisions; no user judgment |
+| OC-067 `weekly.none` | `No assistant activity was retained.` | A | Approved for Keep Nothing/empty history |
+
+### Claims review - optional capability contract
+
+The mechanical scanner terms in this section were reviewed explicitly:
+
+| Hit | Location | Class | Register | Verdict |
+|---|---|---|---|---|
+| `health` | OC-002 | A boundary | C051/C053/C071 | Keep; explicitly says the product is not a health monitor and does not assess symptoms |
+| `sitting` / `movement verified` / `bad posture` / `slouch` / medical verbs | Not present in shipping OC strings | D | C013/C022/C023/C034/C053/C057/C059/C063/C071/C075 | Prohibited; scanner remains blocking |
+| `score`, `failed`, `compliance`, `perfect`, `protect`, `risk` | Not present in shipping OC strings | D | C038/C039/C048/C080 | Prohibited in capability UI; operational `partial` and `unavailable` are used instead |
+
+All source statements are Class A only after exact product/measurement proof;
+likely-call remains Class B; all comfort/health improvement claims remain Class
+C and absent. Verdict: **pass for specification**, with shipping gated by the
+per-row proof condition.

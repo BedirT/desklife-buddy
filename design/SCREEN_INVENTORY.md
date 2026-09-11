@@ -10,7 +10,7 @@ exists) · `reviewed` (passed all three review skills) · `canonical` (in `rende
 Every entry marked `designed` or beyond must have: light + dark renders, an accessibility
 annotation block (`ACCESSIBILITY.md` §2), and its copy registered in `COPY_INVENTORY.md`.
 
-Phase: **2 → 3 — direction chosen (Horizon, D-016), refined by D-017–D-029 and D-032–D-043; consolidation done, canonical renders next.**
+Phase: **2 → 3 — direction chosen (Horizon, D-016), refined by D-017–D-029 and D-032–D-044; consolidation done, canonical renders next.**
 Round-2 artboards live in `explorations/round-2/`; annotation blocks for the four core
 surfaces are in §K below.
 
@@ -139,6 +139,9 @@ obligation, while identifiers and declared visual states are covered by previews
 | SE-13 | Why these defaults? | Evidence transparency `[05 §9]` | todo |
 | SE-14 | Why these defaults? — a single topic | e.g. "Standing and moving are different" | todo |
 | SE-15 | Safety & support | Routine · persistent · urgent | todo |
+| SE-16 | Apple companions | Existing companion status, Handoff/private-sync boundaries, device removal | todo |
+| SE-17 | Sensing & Intelligence entry | Every capability remains visible when Off/denied/revoked; opens SI-01 | canonical contract; UI todo |
+| SE-18 | Privacy record families | Raw/derived lifetimes, Strict Local mode, Keep Nothing exceptions, scoped export/delete actions | canonical contract; UI todo |
 
 ## H. Permission flows
 
@@ -151,6 +154,10 @@ obligation, while identifiers and declared visual states are covered by previews
 | PM-05 | Calendar — revoked while enabled | Quiet, recoverable | todo |
 | PM-06 | Launch at login | Opt-in, reversible | todo |
 | PM-07 | Focus Filter setup | Points at the system flow honestly | todo |
+| PM-08 | Capability preview | Sample derived fact, value, exact source, raw/derived life, energy, fallback; source still Off | canonical contract; UI todo |
+| PM-09 | Source scope and system request | Named observation(s), device, session/desk-hours scope; Not now / Use this session / Continue | canonical contract; UI todo |
+| PM-10 | Effect authority | Off/Shadow, Suggest, or one enumerated automatic effect after a live derived preview | canonical contract; UI todo |
+| PM-11 | Denied/revoked/expired/unsupported | Exact reason, core path, manual equivalent, Open System Settings only on action, no repeated prompt | canonical contract; UI todo |
 
 ## I. Edge and error states (all required — `[05 §10]`)
 
@@ -177,6 +184,15 @@ obligation, while identifiers and declared visual states are covered by previews
 | ED-19 | Accepted timer cannot restore its monotonic epoch/anchor | Close unusable ritual; “Timer couldn’t be restored”; no finish recorded; retained due body may say still due, while menu independently preserves actual Paused/Held reason or ordinary phase; signed fence then 60 s quiet grace | canonical contract; runtime todo |
 | ED-20 | Companion timer projection lifecycle | Complete live/neutral-offline/offline-terminal-ACK-unknown/offline-nonterminal-ACK-unknown/expired/transfer-pending/terminal-action-pending/nonterminal-action-pending/neutral-revalidating/revalidating-terminal-ACK-unknown/revalidating-nonterminal-ACK-unknown/rejected-no-op/already-ended/transfer-failed registry; never silently ineffective | canonical contract; runtime todo |
 | ED-21 | Coordinator restarts with an in-flight old-generation action | Known retry replays while compact receipt survives acknowledgement-of-ack; after 90 s duplicate/unseen actions are too old to verify and show current state; no repeated effect; successor remains blocked until disposition/fence commit | canonical contract; runtime todo |
+| ED-22 | Protected source denied or revoked while active | Stop acquisition, flush raw buffers, expire assessment, stop automatic authority, show calm core and manual path; no nag | canonical contract; UI/runtime todo |
+| ED-23 | Camera has multiple faces or a bystander persists | Suspend all person-derived observations, retain no identity or bystander fact, show `Camera observations paused`; other core behavior continues | canonical contract; UI/runtime todo |
+| ED-24 | Calibration or sample becomes stale/poor | `Unknown`, no negative inference or automatic effect; Recalibrate and source-off remain available | canonical contract; UI/runtime todo |
+| ED-25 | Low Power or thermal/resource stop | Name the affected capability, stop heavy work, return to fallback without changing cadence or asking for permission again | canonical contract; UI/runtime todo |
+| ED-26 | Foundation Models unavailable/offline/refuses/fails | Deterministic explanation from the same visible facts; no lost controls, schedule effect, or medical substitute | canonical contract; UI/runtime todo |
+| ED-27 | Environment accessory unavailable or vendor data outside app control | Current fact becomes unknown; no stale advice; name external deletion boundary | canonical contract; UI/runtime todo |
+| ED-28 | Keep Nothing selected during active capability | Live effect may continue ephemerally; history/learning stop immediately; list retained consent, rule, and safety-continuity exceptions | canonical contract; UI/runtime todo |
+| ED-29 | Export/delete partially fails | No success claim; list completed/remaining record families and devices/cloud, retry, core still usable | canonical contract; UI/runtime todo |
+| ED-30 | Automatic effect was wrong | `Undo` restores bounded schedule/delivery state when valid; source-specific correction expires the assessment and is auditable | canonical contract; UI/runtime todo |
 
 ## J. Cross-cutting appearance variants
 
@@ -762,11 +778,12 @@ Multi-display        - This is an ordinary Mac Settings window. It opens on the 
 | Acknowledgement | 2 | 1 | 0 | 0 |
 | Weekly | 5 | 0 | 0 | 0 |
 | Onboarding | 7 | 0 | 0 | 0 |
-| Settings | 15 | 1 | 0 | 0 |
-| Permissions | 7 | 0 | 0 | 0 |
-| Edge states | 18 | 0 | 0 | 0 |
-| Apple companions | 16 | 7 | 0 | 0 |
-| **Total** | **106** | **23** | **0** | **0** |
+| Settings | 18 | 1 | 0 | 0 |
+| Permissions | 11 | 0 | 0 | 0 |
+| Edge states | 30 | 0 | 0 | 0 |
+| Apple companions | 18 | 7 | 0 | 0 |
+| Optional capability surfaces | 15 | 0 | 0 | 0 |
+| **Total** | **142** | **23** | **0** | **0** |
 
 `explored` = drawn in `explorations/` (round 1: three ways; round 2: the chosen Horizon
 direction, plus the accepted companion Direction B), non-canonical. Nothing advances to
@@ -797,10 +814,79 @@ declaration vocabulary. iPhone is complete without Apple Watch.
 | WA-02 | Watch Smart Stack projection | Compact instruction and time from the paired iPhone Live Activity | accepted direction |
 | WA-03 | Watch offline action | Local durable action queue and Waiting to sync status; iPhone later relays it | required |
 | WA-04 | Watch ended elsewhere | Read-only Ended on another device; no stale action controls | required |
-| SE-16 | Apple companions settings | Standalone status, Handoff explanation, private iCloud opt-in, stored-field disclosure, disable/delete scope | required |
+| IP-08 | Motion capability preview and scope | Break-only/recent-movement choice, supported modes, raw/derived life, no-signal meaning, manual parity, system request | canonical contract; UI todo |
+| IP-09 | HealthKit type consent and result | Exact read type/purpose, source age, no write, no direct Mac access, revoke/delete path | canonical contract; UI todo |
+| WA-05 | Motion sensing active/stopped | Non-color-only active state, bounded session expiry, Stop sensing, same timer controls; no fitness score | canonical contract; UI todo |
 
 Companion edge states required before release: phone unavailable, Handoff failure, Watch not
 installed, Watch unreachable, Live Activities disabled, iCloud signed out, iCloud temporarily
 unavailable, offline action replay, duplicate action, out-of-order revision, stale resolution,
 first resolution elsewhere, app relaunch during an active deadline, device sleep or suspension,
 Reduce Motion, Increase Contrast, VoiceOver, and largest accessibility text.
+
+## M. Optional capability surfaces
+
+These surfaces are canonical contracts, not implemented claims. They reuse the
+ordinary Settings/window vocabulary and do not form a dashboard. `Stop all
+sensing` is available from SI-01 and the status menu whenever any protected
+source is active.
+
+| ID | Surface or state | Required content and behavior | Status |
+|---|---|---|---|
+| SI-01 | Sensing & Intelligence center | Active source count, non-color indicator, Strict Local mode, each capability's source/mode/expiry/effect/cost, last decision, Stop all sensing | canonical contract; UI todo |
+| SI-02 | Sensing inspector - live | `What it noticed`, source/device, freshness, quality, calibration/detector, unknown/conflict, raw/derived retention; never raw protected content | canonical contract; UI todo |
+| SI-03 | Sensing inspector - decision | `What it inferred`, `What it changed`, active authority/policy/expiry, evidence families, correction and Undo | canonical contract; UI todo |
+| SI-04 | Paused / Held / Why now | Separate schedule pause from presentation hold; exact reason, clocks affected, end condition, Resume/Release, decision route | canonical contract; UI todo |
+| SI-05 | Shadow candidate | Clearly says nothing changed; proposed effect, evidence, counterfactual time, source correction, promote/dismiss only from capability settings | canonical contract; UI todo |
+| SI-06 | Suggestion | One proposed bounded change, Accept/Not now/Never suggest, no preselected acceptance, no countdown pressure | canonical contract; UI todo |
+| SI-07 | Automatic decision receipt | Exact effect, observation age, rule, expiry, Undo/correction; never completion, outcome, or praise | canonical contract; UI todo |
+| SI-08 | Capability correction | Source-specific choices such as Not a call / I was here / This distance is comfortable / This position is comfortable / That was not my movement | canonical contract; UI todo |
+| SI-09 | Stop-all receipt | Immediate stopped state, source list and flushed-live-state confirmation, schedules still on, optional scoped deletion routes | canonical contract; UI todo |
+| SI-10 | Capability data sheet | P1-P8 raw/derived lifetimes, process/device/cloud boundary, history/Keep Nothing/export/delete effects in plain language | canonical contract; UI todo |
+| SI-11 | Whole-desk modules | Setup, light/glare, environment, hearing, breathing, work boundary, hydration, maintenance; Off by default, no separate nag stack | canonical contract; UI todo |
+| SI-12 | Weekly assistant audit | Holds, schedule restarts, suggestions, corrections, unused capabilities, resource stops; factual counts with inspect/quiet/turn-off actions | canonical contract; UI todo |
+| SI-13 | Permission or capability unavailable | Denied/revoked/expired/unsupported/resource-limited reason, complete manual/core path, Try again only on action | canonical contract; UI todo |
+| SI-14 | Foundation Models draft | Shown input facts, generated label, deterministic fallback, Edit/Use rule/Discard; no direct Apply-to-schedule | canonical contract; UI todo |
+| SI-15 | Export/delete result | Record-family/device/cloud result, partial failure and retry, explicit remaining settings/receipts/rules/continuity | canonical contract; UI todo |
+
+### M.1 Optional-surface accessibility annotations
+
+| Field | Required annotation for SI-01 through SI-15 |
+|---|---|
+| Keyboard path | Menu extra -> `Sensing & Intelligence`, Settings section, or `Why now?`; every row and disclosure reachable without pointer/hover/drag |
+| Initial focus | Center: first capability summary; inspector: heading; suggestion/receipt: primary non-destructive review action; failure: core/manual action; stop receipt: heading |
+| Focus order | Heading/status -> evidence or capability rows -> bounded effect -> correction/Undo -> privacy detail -> Stop/Close. Destructive deletion follows its scope explanation |
+| Escape | Closes the current sheet/inspector immediately and returns focus to its invoker. It never grants, applies, deletes, stops schedules, or reverses an already-recorded decision |
+| VoiceOver names | Purpose names, never icon/appearance names. Active source, observation mode, effect authority, expiry, device, and connection are separate values |
+| VoiceOver values/announcements | Announce open once and only meaningful changes: source started/stopped/revoked, assessment unknown, effect applied/undone, correction saved, delete result. Never announce samples or confidence continuously |
+| Text scaling | Largest supported Mac/iPhone/Watch size reflows rows vertically; no clipped source, expiry, retention, action, or uncertainty text; no horizontal scroll |
+| High contrast/transparency | Solid fallback and system separators/outlines preserve focus and state; raw confidence color is never the only cue |
+| Reduced motion | Immediate replace/dissolve only. No sensor heartbeat, pulse, scan, waveform, body skeleton, gaze marker, or animated confidence |
+| Meaning without color | Every source and state uses text plus system symbol/shape. Active/stopped/unknown/Shadow/Suggest/automatic never share a label |
+| Movement parity | Manual and sensor-free actions appear in the same action tier and have the same schedule effect; wheeling, seated movement, aids, slow gait, and no-Watch are never error states |
+| Multi-display/device | Mac controls open on the active display and remain reachable with hidden menu bar through Dock/Settings; iPhone is complete without Watch; Watch never holds the only stop/correction action |
+
+### M.2 Surface-specific accessibility additions
+
+- SI-01 keeps `Stop all sensing` persistently reachable but visually separate
+  from schedule Pause. It requires no disclosure expansion.
+- SI-02/03 present a readable text chain, never a graph, animation, camera image,
+  skeleton, sound, or color-only confidence visualization.
+- SI-04 announces `Paused` versus `Held`, which clocks accrue, and the exact end
+  condition. `Resume` and `Release hold` are not interchangeable labels.
+- SI-05/06/07 never auto-focus acceptance. Suggestion timeout or dismissal makes
+  no change. Undo remains reachable without interpreting the evidence.
+- SI-08 correction choices include `None of these`/Close and never demand a
+  reason. Corrections are not presented as training labor owed to the app.
+- SI-09 stops acquisition before displaying the receipt. Deletion is a separate
+  action so Escape cannot resume sensing or strand a destructive confirmation.
+- SI-11 gives sensor-free/manual modules equal visual rank. No module requires a
+  body motion, spoken response, visual-only signal, accessory, or purchase.
+- SI-12 exposes recorded facts and decisions on demand; its first view contains
+  no score, target, comparison, streak, success color, or inferred health trend.
+- SI-13 initial focus is the calm core/manual action, not `Try again` or System
+  Settings. Repeated denial never increases prominence.
+- SI-14 identifies generated text before content and exposes the same source
+  facts in deterministic reading order. Discard is always available.
+- SI-15 announces verified results only. Partial failure is not color-only and
+  names each remaining record family, device, and retry path.

@@ -365,3 +365,92 @@ Meaning without color - Checkmarks, labels, and status text accompany every acce
 - Successful results provide Dismiss. Failed results provide Retry. Both remain in normal keyboard
   order after the focused message.
 - Confirmation cancellation returns to the invoking control and announces no success or failure.
+
+## 7. Optional-capability accessibility contract
+
+Sensing is an enhancement, never the privileged path. The same user goal and
+schedule consequence must remain available without camera visibility, a
+particular face/body presentation, walking, standing, speech, sound, touch,
+iPhone, Watch, HealthKit, accessory hardware, self-report, or Foundation Models.
+
+### 7.1 Platform matrix
+
+| Requirement | Mac | iPhone | Watch |
+|---|---|---|---|
+| Reach source state | Menu extra, Dock fallback, Settings, SI-01; never menu-bar-only | Foreground companion Settings/status; never Live-Activity-only | Foreground app status; iPhone retains the complete control path |
+| Stop acquisition | `Stop all sensing` and per-source stop, keyboard/VoiceOver reachable without disclosure | Per-source Stop; Voice Control/Switch Control reachable | Stop bounded Motion session; Watch never owns the only global stop |
+| Understand effect | Text decision chain in SI-03; no graph required | Condensed source/effect/expiry plus open-on-iPhone detail | One source/effect/status; full detail on paired iPhone, not hidden entirely |
+| Correct | Full source-specific choices with Undo and Close | Same consequential correction for companion observations | Frequent correction actions locally; uncommon choices open exact iPhone opportunity |
+| Denied/revoked | Core/manual action receives initial focus; System Settings link secondary | Local timer/manual declarations remain; authorization route secondary | Timer/manual declarations remain; no repeated permission prompt |
+| Offline | Mac clocks and accepted local deadline remain authoritative | Local deadline/action persists with one status announcement | Local deadline/action persists; iPhone relay delay is not failure |
+| Largest text | Vertical reflow; no horizontal scrolling or clipped lifecycle copy | System text styles and 44x44-point targets; one column | Crown-scroll one column; no tiny side-by-side controls |
+| Nonvisual/nonsound | Full VoiceOver names/values and keyboard path; sensing state is not just menu glyph | VoiceOver/Voice Control and visible text; haptic optional | VoiceOver/AssistiveTouch and visible text; haptic optional |
+| Motion/contrast | Static replacement, solid fallback, labeled state | System transitions; labeled state | System transitions; labeled state |
+
+### 7.2 Sensor-free and manual parity
+
+| Capability | Sensor path | Equal-status path | Identical consequence required |
+|---|---|---|---|
+| Context Sense | likely call/selected timer hold | `Hold while presenting` / timed focus | Same delivery hold and release corridor |
+| Camera presence | confirmed-away eligibility adjustment | permission-free active/available-session estimate and Pause | Same schedule bounds; no added pressure when unknown |
+| Distance | personal-relative estimate and cue | larger text/setup guide, Recalibrate, or no cue | No penalty, missing insight, or health warning |
+| Position | visible-variation suggestion | `I shifted position` / choose another comfortable shape | Same position-clock effect only |
+| Blink | sample modifies due visual content | standard visual reset with optional comfortable blink instruction | Same visual opportunity and completion semantics |
+| Motion | supported movement observation restarts future timing | `I already moved` or manual timer/declaration | Same future schedule effect; neither is labeled medically verified |
+| HealthKit | dated step/workout context | manual declaration or no rule | No lost core action, status rank, or weekly grade |
+| Environment | accessory fact and setup experiment | manual value or no module | Same user-authored action, no symptom attribution |
+| Subjective | controlled check-in | `Prefer not to answer` / no experiment | Core, schedule, and capability controls remain identical |
+| Companion | iPhone/Watch continuation | Mac timer and declarations | Same terminal action mapping; iPhone complete without Watch |
+| Foundation Models | generated explanation/rule draft | deterministic facts/template | Same source facts and final rule confirmation |
+
+The manual control appears in the same view and action tier whenever the sensor
+action is time-sensitive. It is never called an alternative, accommodation, or
+fallback in user-facing copy. Completion animation, acknowledgement, weekly
+representation, and correction rights are identical.
+
+### 7.3 Movement diversity and non-detection
+
+Representative validation includes wheelchair propulsion and assisted wheeling,
+seated upper/lower-body movement, slow and shuffling gait, mobility aids,
+prostheses, tremor/involuntary motion, limited range, one-handed device use,
+standing desk use, Watch on either wrist or absent, phone carried or left at the
+desk, and movement outside camera framing. Each supported movement class earns
+its own measurement dossier. Evidence for walking cannot be generalized to
+wheeling or seated activity.
+
+Non-detection, missing device, low-quality frame, or classifier disagreement is
+always `Unknown`. It cannot preserve debt more aggressively, remove a manual
+declaration, display a negative state, reduce acknowledgement, or change the
+person's weekly representation.
+
+### 7.4 Bystanders and protected context
+
+- A second persistent face immediately suspends person-derived camera
+  observations. The app does not identify, count historically, label, compare,
+  or ask the primary person to dismiss the bystander.
+- Protected apps, selected windows, Calendar, Focus, meetings, screen sharing,
+  full-screen work, private notifications, and assistive-technology overlays
+  never expose content in SI-02, VoiceOver, logs, screenshots, exports, or
+  generated-model prompts.
+- Camera, selected-window, and audio/device-use indicators are never hidden by a
+  full-screen break. The Mac Dock/Settings path remains reachable if the menu
+  bar is hidden.
+- VoiceOver descriptions expose derived facts only. They do not read app names,
+  event names, OCR text, faces, or sensitive source content aloud.
+- A person can stop sensing before closing a screen, with no confirmation,
+  explanation, pointer precision, timed gesture, or speech required.
+
+### 7.5 Representative validation gate
+
+Accessibility review for each capability retains the platform/OS/device,
+assistive technology and version, input method, display/text/contrast/motion
+settings, movement/body/setup condition when relevant, task, result, defect,
+and participant interpretation. Synthetic fixtures and able-bodied internal
+testing may find defects but cannot establish representative parity.
+
+Automatic mode is blocked by any critical assistive-technology failure,
+inferior manual consequence, hidden indicator/stop, material unmitigated error
+gap, shame/medical interpretation, or unsupported movement generalization.
+Suggest mode is blocked when correction is not independently operable. Shadow
+may continue only when it collects no unconsented retained data and remains out
+of the person's normal interruption path.

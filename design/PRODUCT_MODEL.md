@@ -18,7 +18,10 @@ Everything else is consequence.
 
 ## 2. What the app knows, and what it does not
 
-This table is the source of most of the design's honesty constraints. Print it on the wall.
+This table is the source of most of the design's honesty constraints for the
+permission-free core. D-044 optional capabilities add only the source-qualified
+observations in §13; they do not rewrite any `does not know` entry into body or
+health certainty.
 
 | The app knows | The app does **not** know |
 |---|---|
@@ -31,9 +34,11 @@ This table is the source of most of the design's honesty constraints. Print it o
 | That the user pressed a button | Whether the user did the activity |
 | That a timer reached zero | Any health outcome whatsoever |
 
-Design consequence: the UI never says *sitting*, *screen time*, *verified*, *completed
-successfully*, *reduced*, or *prevented*. It says **estimated**, **you started**, **you
-reported**, **shown**, **deferred**.
+Design consequence: permission-free UI never says *sitting*, *screen time*,
+*verified*, *completed successfully*, *reduced*, or *prevented*. Optional
+capability UI says **source + observation/estimate + freshness + bounded effect**
+and uses only C051-C080 grammar. All modes may say **you started**, **you
+reported**, **shown**, and **deferred**.
 
 ## 3. The four clocks
 
@@ -390,7 +395,10 @@ Checkable statements. If a design violates one, the design is wrong.
 4. Nothing gets louder as a consequence of refusal.
 5. The seated path is never visually or semantically subordinate.
 6. No score, grade, streak, or ranking exists anywhere in the product.
-7. The app never claims to perceive the user's body.
+7. The permission-free core never claims to perceive the user's body. An
+   enabled optional capability may describe only its source-qualified,
+   time-bounded observation or estimate, never hidden perception, identity,
+   physiology, diagnosis, or health outcome.
 8. Core function requires no permission, no account, and no network.
 9. Every Paused or Held state can explain itself in the user's words.
 10. Every number shown is either from the protocol or labeled as an estimate.
@@ -402,11 +410,14 @@ remains complete by itself and is the only authority that decides when a Mac-wor
 movement opportunity is due. Visual resets stay on the Mac. Only an accepted movement break
 may be continued explicitly to iPhone, and Apple Watch participates through the paired iPhone.
 
-Companions are action surfaces, not new clocks or sensors. They render the exact Mac-authored
-movement opportunity, keep its continuous elapsed deadline while suspended, and return the
-user's declaration. They never infer presence, posture, gaze, movement, or completion. iPhone
-is a complete companion path without Apple Watch, and not owning or wearing a Watch has no
-product penalty.
+In the implemented E1 baseline, companions are action surfaces, not new clocks
+or sensors. They render the exact Mac-authored movement opportunity, keep its
+continuous elapsed deadline while suspended, and return the user's declaration.
+The separately consented Motion/HealthKit capability defined in `03` §18 may
+later contribute a typed observation or scheduling decision, but it never owns
+Mac clocks, infers completion, or changes this action contract. iPhone is a
+complete companion path without Apple Watch, and not owning or wearing a Watch
+has no product penalty.
 
 Every transported opportunity uses one versioned, platform-neutral contract:
 
@@ -462,3 +473,53 @@ and Mac opportunity history remain. These boundaries are disclosed before either
 
 Companion development uses neutral target and bundle identities while product naming remains
 deferred. This grants no authority to rename the stable Mac target, scheme, or module.
+
+## 13. Optional capability state model
+
+An optional capability is never a Boolean preference. Each instance has
+independent state along five axes:
+
+```text
+availability = unsupported | available | resourceLimited | failed
+source = denied | revoked | stopped | session | scheduledWindow
+quality = unknown | tentative | strong | confirmed
+effect = offShadow | suggest | boundedAutomatic(effectKind)
+retention = keepNothing | thirtyDays | ninetyDays | capabilitySpecific
+```
+
+The source axis says whether observation may occur. The effect axis says what a
+fresh assessment may change. They cannot be collapsed: system authorization or
+active sensing never implies automatic behavior. Every transition produces an
+inspectable operational receipt; observations, assessments, decisions, and
+corrections remain separate ledgers from the ten product facts.
+
+### Capability states visible to the person
+
+| State | Status surface | Effect |
+|---|---|---|
+| Off / denied / unsupported | `Sensing off` or exact unavailable reason | Permission-free Mac core, manual companion actions, and manual corrections remain complete |
+| Active, no fresh fact | source name + `Looking for a clear sample` or `Unknown` | No automatic effect and no negative inference |
+| Shadow | `Watching what would change` in Sensing center only | Records a bounded candidate decision for audit; changes nothing |
+| Suggest | names observation and proposed effect | Nothing changes until the person accepts |
+| Bounded automatic | names active rule, last effect, expiry, undo | Only the enumerated delivery/schedule effect may occur |
+| Corrected | correction and affected decision visible | Assessment expires; rule adjusts only within approved deterministic bounds |
+| Stopped / revoked | source and effect shown stopped | Buffers flush; automatic authority does not silently return |
+| Resource-limited / failed | exact capability unavailable, core still on | Falls back to permission-free or manual behavior without an extra prompt |
+
+### Decision chain
+
+Every non-Shadow effect must answer all five questions from the same decision
+record:
+
+1. **What it noticed:** source-qualified observation and freshness.
+2. **What it inferred:** assessment, uncertainty, and contributing source
+   families.
+3. **What it changed:** exact prior/resulting delivery or schedule state.
+4. **Why this authority applied:** active rule, consent/effect receipt, policy
+   version, and expiry.
+5. **How to correct it:** undo and a source-appropriate correction.
+
+No model-generated sentence, weekly aggregate, self-report alone, missing
+signal, or detector confidence number may cross this firewall. The Weekly
+surface audits the assistant's holds, restarts, suggestions, reversals, and
+unused capabilities; it never combines them into a person score.

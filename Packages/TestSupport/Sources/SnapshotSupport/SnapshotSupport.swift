@@ -60,7 +60,6 @@
                 for: view,
                 layout: layout,
                 appearance: appearance,
-                fileKey: "\(filePath)",
             )
             defer { host.close() }
             export(
@@ -95,7 +94,6 @@
                     .environment(\.dynamicTypeSize, size),
                 layout: layout,
                 appearance: .light,
-                fileKey: "\(filePath)",
             )
             defer { host.close() }
             export(
@@ -135,13 +133,14 @@
 
     private final class HostedSnapshot {
         let view: NSView
-        private let window: NSWindow
+        private let window: SnapshotWindow
+        private let controller: NSHostingController<AnyView>
+        private var didClose = false
 
         init(
             rootView: some View,
             layout: SnapshotLayout,
             appearance: SnapshotAppearance,
-            fileKey: String,
         ) {
             let controller = NSHostingController(rootView: AnyView(rootView))
 
@@ -157,19 +156,16 @@
             }
 
             let frame = NSRect(origin: .zero, size: size)
-            // One window per test file and size: any cross-suite reuse lets
-            // earlier suites' backing-store/appearance residue bleed into later
-            // captures, while deallocating windows crashes (SwiftUI hosting
-            // teardown). File-scoped pooling bounds window count; content is
-            // detached on close.
-            let key = "\(fileKey)-\(Int(size.width))x\(Int(size.height))"
-            let window: NSWindow
-            if let pooled = snapshotWindowPool[key] {
-                window = pooled
-            } else {
-                window = SnapshotWindow(contentRect: frame)
-                snapshotWindowPool[key] = window
-            }
+            // Fresh window per capture (GH #26): pooling one window per
+            // file+size leaked windows and let earlier suites'
+            // backing-store/appearance residue bleed into later captures.
+            // Deallocating the window used to crash the test host with
+            // EXC_BAD_ACCESS in objc_release on autoreleasepool drain. The
+            // hosting view outlived its controller once contentViewController
+            // was detached, so SwiftUI's async teardown raced dealloc.
+            // close() below performs the ordered teardown that makes
+            // per-capture dealloc safe.
+            let window = SnapshotWindow(contentRect: frame)
             window.appearance = appearance.nsAppearance
             window.contentViewController = controller
             window.setFrame(frame, display: true)
@@ -177,16 +173,39 @@
             controller.view.layoutSubtreeIfNeeded()
             window.layoutIfNeeded()
             window.displayIfNeeded()
+            self.controller = controller
             self.window = window
             view = controller.view
         }
 
         func close() {
+            guard !didClose else { return }
+            didClose = true
+            // Ordered main-thread teardown while every participant is still
+            // alive: drop the SwiftUI graph first so no async hosting work
+            // can outlive the controller, flush layout under the empty graph,
+            // drain the runloop, then detach the controller from the window
+            // and drain again. By the time this returns, only an empty
+            // hosting graph remains, so the window/controller/view dealloc
+            // that follows (when the deferred host goes out of scope) has no
+            // pending SwiftUI teardown left to race.
+            controller.rootView = AnyView(EmptyView())
+            controller.view.layoutSubtreeIfNeeded()
+            window.layoutIfNeeded()
+            window.displayIfNeeded()
+            drainMainRunLoop()
+            window.orderOut(nil)
             window.contentViewController = nil
+            controller.view.removeFromSuperview()
+            drainMainRunLoop()
+        }
+
+        private func drainMainRunLoop() {
+            // One display cycle is enough for the teardown transactions
+            // scheduled above to complete while the host is still retained.
+            RunLoop.main.run(until: Date(timeIntervalSinceNow: 1.0 / 60.0))
         }
     }
-
-    private var snapshotWindowPool: [String: NSWindow] = [:]
 
     private final class SnapshotWindow: NSWindow {
         private let snapshotBackingScaleFactor: CGFloat = 2
@@ -216,7 +235,6 @@
         for view: some View,
         layout: SnapshotLayout,
         appearance: SnapshotAppearance,
-        fileKey: String,
     ) -> HostedSnapshot {
         let rootView = frozen(view)
             .environment(\.colorScheme, appearance.colorScheme)
@@ -224,7 +242,6 @@
             rootView: rootView,
             layout: layout,
             appearance: appearance,
-            fileKey: fileKey,
         )
     }
 

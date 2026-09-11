@@ -303,3 +303,20 @@ For every behavior story, review in this order:
 
 That order prevents executable drift while preserving the rule that only exact-head,
 user-path evidence can prove the implementation matches the contract.
+
+## Issue #28 hybrid timing quarantine note - 2026-09-10
+
+This append-only note records an implementation conformance reading at `7ff836d9`; it changes no
+product semantic. D-032's quarantine applies only after an opportunity reaches the break surfaces:
+standard frost entrance and settled exit, the Visual Reset countdown-settlement gate, and Movement
+keyboard arming. D-037's visual screen-session eligibility, inclusive five-second low-friction
+release, firm configured latest boundary, sample-gap handling, and long-idle scheduling behavior
+are separate clock and delivery semantics outside that quarantine. They do not make D-032 fully
+implemented and must not be used to excuse any quarantined break-surface conflict.
+
+The same reading does not promote the Calm Ensemble companion intake. The shipped estimator and
+protocol reducer require no companion, transport, remote timebase, lease, or reconciliation state.
+The retained `companionFuture` event-source value is inert compatibility vocabulary, not a clock
+input. Companion timing and action reconciliation remain gated behind their canonical D-043
+contracts and the Optional companion transport collision zone; standalone Mac behavior remains
+complete and authoritative without them.

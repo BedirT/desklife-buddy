@@ -364,3 +364,31 @@ without iCloud. Production schema promotion remains an owner-controlled release 
 time is restrained, alternatives are progressively disclosed but remain semantically distinct,
 and compact system projections avoid fitness rings and scores. Production implementation uses
 native platform regions and accessibility behavior rather than generated device chrome.
+
+### DQ-25 - Do the shipped hybrid timing rules inherit D-032 or companion semantics?
+
+**Closed 2026-09-10 by the issue #28 conformance audit:** no. D-032's quarantine is limited to
+break-surface entrance, settled exit, the Visual Reset countdown-settlement gate, and Movement
+keyboard arming after an opportunity has been selected for presentation. D-037 separately owns
+the permission-free scheduling estimate and is outside that quarantine.
+
+At the audited `7ff836d9` head, `ActivityEstimator` and `ProtocolEngine` implement the D-037 split:
+an awake, active, unlocked screen session below the 300-second long-idle boundary advances visual
+timing, while only input inside the 60-second recent-input window advances movement and recovery.
+At an inclusive five seconds without input, an already-due unsuppressed opportunity may release;
+at the configured latest boundary it releases without a low-friction signal when no suppression
+is active. Generated built-in
+profiles set the visual latest boundary to target plus 90 seconds. Existing custom v1 schedules
+retain their exact configured latest value under the compatibility contract, but the reducer still
+treats that value as a firm boundary. Adjacent sample gaps above 90 seconds add no elapsed time.
+A long-idle edge emits `likelyNaturalInterruption` once, restarts a non-running visual cycle without
+completion, preserves the movement clock's accumulated need, and applies the 60-second return
+grace. It never infers movement or a health outcome.
+
+The Mac estimator and reducer contain no companion device, transport, lease, remote deadline, or
+action-reconciliation input. `OpportunityEventSource.companionFuture` remains a compatibility
+source tag only; no clock, phase, or presentation branch reads it. Companion coordination remains
+the separately gated future work already recorded under D-043 and the Optional companion transport
+collision zone. No new code follow-up is opened by this audit, and the existing D-032 runtime
+conflicts remain quarantined exactly as recorded in `AUTHORITY.md` and
+`CURRENT_STATE_CONFORMANCE.md`.

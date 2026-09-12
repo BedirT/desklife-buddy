@@ -23,6 +23,8 @@ struct SettingsView: View {
             integrationsActions: sceneModel.integrationsActions,
             trustCenterSnapshot: sceneModel.trustCenterSnapshot,
             trustCenterActions: sceneModel.trustCenterActions,
+            trustCenterRulesSnapshot: sceneModel.trustCenterRulesSnapshot,
+            trustCenterRulesActions: sceneModel.trustCenterRulesActions,
         )
         .task {
             await sceneModel.load()

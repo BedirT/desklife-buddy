@@ -316,3 +316,23 @@ extension AppDelegate {
         )
     }
 }
+
+/// The R1 SwiftData proposal store behind the `RuleProposalStore` seam the
+/// R2 `RuleManagementModel` is built against. Declared here, beside the
+/// other App store wiring, because the R1 persistence file stays untouched.
+extension SwiftDataRuleProposalStore: RuleProposalStore {}
+
+extension AppDelegate {
+    /// The rule-proposal store for the Trust Center rules section and the
+    /// Weekly audit feed: the injected override in tests, otherwise a
+    /// container-backed store sharing the settings container. Nil before
+    /// startup (or when the store cannot be built) leaves both surfaces
+    /// hidden — the R2 nil-means-unwired contract.
+    func ruleProposalStoreForWiring() -> (any RuleProposalStore)? {
+        if let ruleProposalStoreOverride {
+            return ruleProposalStoreOverride
+        }
+        guard let settingsStore else { return nil }
+        return try? SwiftDataRuleProposalStore(container: settingsStore.container)
+    }
+}

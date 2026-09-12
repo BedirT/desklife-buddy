@@ -11,6 +11,10 @@ import WeeklyRhythm
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var runtime: ProtocolRuntime?
     var settingsStore: SwiftDataSettingsStore?
+    /// Injected rule-proposal store for tests. When set, the Trust Center
+    /// rules section and the Weekly audit feed read this store instead of
+    /// the container-backed one.
+    var ruleProposalStoreOverride: (any RuleProposalStore)?
     lazy var settingsIntegrationsRuntime = SettingsIntegrationsAppRuntime.live()
     lazy var settingsTrustCenterRuntime = SettingsTrustCenterAppRuntime.live()
     lazy var settingsSceneModel = buildSettingsSceneModel()

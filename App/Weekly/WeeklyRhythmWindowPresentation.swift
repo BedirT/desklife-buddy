@@ -100,6 +100,12 @@ extension AppDelegate {
                 self?.settingsSceneModel.featureModel.select(.privacyAndData)
                 _ = self?.openSettingsWindow()
             },
+            loadAssistantAudit: { [weak self] in
+                await self?.loadWeeklyAssistantAudit()
+            },
+            openRuleSettings: { [weak self] in
+                self?.openRuleSettings()
+            },
         ))
     }
 
@@ -121,5 +127,25 @@ extension AppDelegate {
         window.title = AppL10n.weeklyRhythmTitle
         window.center()
         return window
+    }
+}
+
+extension AppDelegate {
+    /// Read-only descriptive projection of the stored rule proposals for
+    /// the Weekly assistant-audit section. Counts only — no throttle
+    /// telemetry is retained yet, so prevented prompts and unused rules
+    /// fall out of the empty trigger/fire maps. Nil when the store is
+    /// unavailable or unreadable, which keeps the section hidden.
+    func loadWeeklyAssistantAudit() async -> WeeklyAssistantAudit? {
+        guard let store = ruleProposalStoreForWiring() else { return nil }
+        guard let proposals = try? await store.loadProposals() else { return nil }
+        return WeeklyAssistantAudit.aggregate(proposals: proposals, triggerCounts: [:], fireCounts: [:])
+    }
+
+    /// Routes the Weekly audit's review-rules action to the Trust Center
+    /// rules section.
+    func openRuleSettings() {
+        settingsSceneModel.featureModel.select(.sensingAndIntelligence)
+        _ = openSettingsWindow()
     }
 }

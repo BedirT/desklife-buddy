@@ -188,6 +188,14 @@ if ((${#evidence_files[@]})); then
   fi
 fi
 
+# 12. Content retention (Epic 5 story S3): sanitized adapters retain
+# booleans + ticks only. Per-window text, app display names, calendar guest
+# lists, device identity, and calendar-store framework symbols must never
+# appear in product code. No exemptions by construction: the S3 adapters
+# take bare booleans in and emit booleans + ticks out, so these tokens have
+# no legitimate product use; a hit means content crossed the boundary.
+check_swift "content-retention" 'windowTitle|localizedName|uniqueID|manufacturer|[Aa]ttendee|EventKit|EKEvent|EKEntityType|EKParticipant|EKCalendar'
+
 if ((${#violations[@]})); then
   printf 'Raw import guard violations:\n' >&2
   for violation in "${violations[@]}"; do

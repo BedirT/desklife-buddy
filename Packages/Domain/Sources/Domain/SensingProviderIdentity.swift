@@ -27,6 +27,18 @@ public struct SensingProviderID: Equatable, Hashable, Sendable {
     /// Names the outside-Domain adapter's shaped-motion source; synthesizes
     /// sanitized scalars only, never raw samples.
     public static let motionHardware = SensingProviderID("motion-hardware")
+    /// Selected-app-active provider (Epic 5 story S3). Names the
+    /// outside-Domain frontmost-app adapter: selected-bundle boolean only,
+    /// never names, per-window text, pids, or history.
+    public static let frontmostApp = SensingProviderID("frontmost-app")
+    /// Any-device-busy provider (Epic 5 story S3). Names the outside-Domain
+    /// media-device adapter: merged in-use boolean only, never device
+    /// identity or per-device breakdown.
+    public static let mediaDevice = SensingProviderID("media-device")
+    /// Declared-filter provider (Epic 5 story S3). Names the outside-Domain
+    /// Focus adapter: user-declared filter-active boolean only, backed by
+    /// declaration (no public sensor API), never deep-work claims.
+    public static let focusFilter = SensingProviderID("focus-filter")
 }
 
 extension SensingProviderID: Codable {
@@ -116,13 +128,18 @@ public struct SensingProviderRegistry: Sendable {
         }
         descriptorsByID = map
     }
-
-    /// The closed compile-time set: test/fake providers only.
+    /// The closed compile-time set: test/fake providers plus the Epic 5 S3
+    /// sanitized-context providers (frontmost-app, media-device, Focus) and
+    /// the Epic 7 shaped-motion provider. Additive only: existing members
+    /// keep their codes.
     public static let compiled = SensingProviderRegistry(unchecked: [
         SensingProviderDescriptor(id: .fakePresence, displayName: "Fake presence"),
         SensingProviderDescriptor(id: .fakeMotion, displayName: "Fake motion"),
         SensingProviderDescriptor(id: .fakeAmbient, displayName: "Fake ambient"),
         SensingProviderDescriptor(id: .motionHardware, displayName: "Motion hardware (shaped)"),
+        SensingProviderDescriptor(id: .frontmostApp, displayName: "Frontmost app (selected boolean)"),
+        SensingProviderDescriptor(id: .mediaDevice, displayName: "Media device (any-busy boolean)"),
+        SensingProviderDescriptor(id: .focusFilter, displayName: "Focus filter (declared boolean)"),
     ])
 
     private init(unchecked descriptors: [SensingProviderDescriptor]) {

@@ -22,6 +22,17 @@ public enum EvidenceSource: String, Equatable, Hashable, Sendable, CaseIterable 
     /// Minimized hardware-motion source (Epic 7): shaped scalars from the
     /// outside-Domain adapter only. Sanitized scalars, never raw samples.
     case motionHardware
+    /// Selected-app-active source (Epic 5 story S3): boolean from the
+    /// outside-Domain frontmost-app adapter. No names, per-window text,
+    /// pids, or history cross the boundary.
+    case frontmostApp
+    /// Any-device-busy source (Epic 5 story S3): merged boolean from the
+    /// outside-Domain media-device adapter. No device identity crosses.
+    case mediaDevice
+    /// Declared-filter source (Epic 5 story S3): boolean from the
+    /// outside-Domain Focus adapter, backed by user declaration. No
+    /// content and no depth claims cross the boundary.
+    case focusFilter
 
     /// The registry provider this source claims to be.
     public var providerID: SensingProviderID {
@@ -30,6 +41,9 @@ public enum EvidenceSource: String, Equatable, Hashable, Sendable, CaseIterable 
         case .fakeMotion: .fakeMotion
         case .fakeAmbient: .fakeAmbient
         case .motionHardware: .motionHardware
+        case .frontmostApp: .frontmostApp
+        case .mediaDevice: .mediaDevice
+        case .focusFilter: .focusFilter
         }
     }
 

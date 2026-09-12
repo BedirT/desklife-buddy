@@ -86,6 +86,43 @@ task branch or worktree when parallel write-capable work actually requires one.
 There is no repository-specific merge queue, review client, or landing script.
 Commit only after the retained verification commands pass.
 
+## Orchestration (multi-story campaigns)
+
+When running a multi-story campaign, the orchestrator (main session) runs this
+loop; it outranks remembered process.
+
+- One story, one branch (`agent/<slug>` from current `main`), one worktree
+  (`/tmp/desklife-<slug>`), one lead. Leads confirm
+  `git rev-parse --show-toplevel` first, never touch `main`, never touch
+  another worktree, never commit in the integration checkout.
+- Claim: comment `in progress` on the story issue (worktree + branch) and open
+  a draft PR from the first commit so the work is visible. Leads push only to
+  their story branch.
+- Implement + self-verify: RED→green at the story's tier; story gates green;
+  commit(s) on the branch. Skip project-wide gates/formatters mid-flight; the
+  orchestrator runs those once at the end.
+- Review: two disjoint read-only reviewers on branch HEAD: (a) spec-fidelity
+  (acceptance rows traced to code/checks, AUTHORITY conformance), (b)
+  reliability/security (failure paths, injection, privacy/egress, crash
+  recovery). Verdicts: `APPROVED <sha>` or `FINDINGS <list>`. Docs-only
+  changes need one reviewer.
+- Repair: FINDINGS → lead fixes (new commit) → fresh review at the new HEAD.
+  Every repair invalidates prior verdicts. After 3 finding-bearing rounds:
+  stop, escalate to the owner with diff + findings.
+- Land: only the orchestrator merges, via PR (`gh pr merge --merge
+  --delete-branch`) after verifying PR head == reviewed HEAD, its own gate
+  run green at that HEAD, and verdicts recorded. Then merge-SHA comment,
+  close issue, remove worktree (`--force` only for merged branches).
+- Shared seams serialize: one in-flight story per shared file/set, or the
+  orchestrator merges itself. Writer cap ONE per story on shared seams.
+- Gate runs are bare commands; the exit code is the verdict. Never pipe a
+  gate through `tail`/`grep` when the exit code decides.
+- Waivers: orchestrator for test-only gaps with written reason; owner for
+  behavior gaps. "Tedious" is not a reason.
+- Session continuity: issues are durable state. End every session with branch
+  pushed, issue comment current, and the plan file's first unchecked step
+  accurate.
+
 ## Law
 
 Concurrency — MainActor-by-default (Swift 6.2 approachable concurrency, set in

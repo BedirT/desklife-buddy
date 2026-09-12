@@ -158,3 +158,20 @@ branches from the merged predecessor.
 | Settings/data controls | `AppPreferences`, Settings feature/App adapters, SwiftData settings store | settings model/store/history/privacy tests and snapshots |
 | Weekly factual projection | `WeeklyRhythmProjection`, App weekly store, Weekly feature | Domain projection, App store/route, feature model/snapshot tests |
 | Retained repository gate | `scripts/verify.sh` and direct build/run/UI/snapshot scripts | exact command receipts at the story's required verification rung |
+
+## Post-baseline note: issue #28 hybrid timing audit
+
+Audited at `7ff836d9` on 2026-09-10. This note updates the inventory around the landed D-037 engine;
+it changes no product semantic and does not replace the D-032 conflict row above.
+
+| Audited behavior | Shipped implementation evidence | Conformance reading |
+|---|---|---|
+| Visual screen-session eligibility | `ActivityEstimator` requires awake, active, unlocked system availability and accrues `visualSessionSeconds` below the 300-second long-idle boundary; `movementActiveUseSeconds` and recovery accrue only inside the 60-second recent-input window. | Outside D-032. This is D-037 clock eligibility, not break entrance, exit, countdown start, or keyboard arming. It preserves the no-gaze and no-movement-inference boundary. |
+| Five-second release | `ActivityEstimator.isShortInputPause` becomes true at an inclusive five seconds outside grace, and `ProtocolEngine` uses it as the low-friction signal for an already-due unsuppressed opportunity. | Outside D-032. Input-pause release chooses when a due opportunity may present; it is not D-032's removed 0.8-second declaration guard. |
+| Firm visual latest | When no suppression is active, `ProtocolEngine.scheduledPhase` returns `readyToPresent` at `elapsed >= latestPreferredSeconds` without requiring low-friction evidence. Generated built-in configurations overlay `timing_runtime_v2.visual_delivery.latest_after_target_seconds = 90` onto each legacy profile target. Custom v1 schedules preserve their exact configured latest value and still use it as the hard reducer boundary. | Outside D-032. This is the D-037 delivery deadline, distinct from D-032/D-043's accepted-break countdown deadline. The raw legacy profile `latest_preferred_seconds` values in `product_protocol.yaml` are compatibility inputs, not the generated built-in visual latest values. |
+| Long idle and gaps | Adjacent intervals above 90 seconds accrue nothing. At the inclusive 300-second idle edge, the engine emits one `likelyNaturalInterruption`, resets a non-running visual cycle without completion, preserves accumulated movement need, rotates session-scoped recovery state, and begins the configured 60-second return grace when recent input returns. | Outside D-032. This is D-037 schedule/session handling. It creates no movement or health-outcome fact. |
+| Companion independence | Neither `ActivityEstimator` nor `ProtocolEngine` consumes device, transport, lease, remote-deadline, or companion-action state. The only Domain clock-adjacent companion vocabulary is the unused-by-reducers `OpportunityEventSource.companionFuture` compatibility value. | Conforms to the historical-intake boundary. No companion assumption changes Mac clock or presentation reduction; companion reconciliation remains unimplemented and separately gated. |
+
+No new code TODO follows from this audit. The existing D-032 break-motion/countdown/key-arming
+quarantine and the existing D-043 coordinator, identity, persistence, and companion collision zones
+remain open exactly as documented above.

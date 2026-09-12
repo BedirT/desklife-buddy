@@ -95,12 +95,13 @@ public extension ProtocolEngine {
         return ProtocolEngineOutput(events: [], presentation: OpportunityCoordinator.presentation(for: self))
     }
 
-    // Story 2.6: legacy retaining Escape — migrate to the canonical reducer
-    // effect (applyMergedEscapeDuringVisual: fresh visual + fresh movement +
-    // one deferral + one skip). Production callers still on this path:
-    // App/Protocol/ProtocolRuntime+HeadsUpResponse.swift,
-    // App/Protocol/ProtocolRuntime+BreakFlow.swift,
-    // App/Protocol/ProtocolRuntime+BreakLifecycle.swift.
+    // Story 2.6: legacy retaining Escape for movement-segment paths only
+    // (BreakFlow movement-segment skip, BreakLifecycle movement-segment skip
+    // and visual-only). Escape-during-visual production callers route through
+    // the canonical reducer effect instead (OpportunityCoordinatorCommand
+    // .mergedEscapeDuringVisual -> applyMergedEscapeDuringVisual: fresh
+    // visual + fresh movement + one deferral + one skip, per D-043
+    // `merged.escape_during_visual`).
     /// Applies owner-confirmed merged Escape semantics without resetting the unfinished clock.
     mutating func skipMergedSegment(_ opportunity: OpportunityType) -> ProtocolEngineOutput {
         guard opportunity == .visual || opportunity == .movement else {

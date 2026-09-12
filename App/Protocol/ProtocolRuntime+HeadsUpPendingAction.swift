@@ -25,23 +25,29 @@ extension ProtocolRuntime {
             return nil
         }
 
-        var candidate = engine
+        let checkpoint = checkpointCoordinator()
+        var candidate = checkpoint.engine
         candidate.synchronizeHeadsUpDeliveryState(reducer.state)
-        let opening = pendingActionOpening(action, candidate: &candidate)
-        let synchronization = try await persistProtocolMutation(
-            candidate: &candidate,
-            drafts: opening.drafts,
-        )
-        engine = candidate
-        lifecycleSession = opening.nextSession
-        publish(liveHeadsUp: nil)
-        emitHeadsUpEffects(synchronization)
-        return action
+        coordinator.engine = candidate
+        let opening = pendingActionOpening(action)
+        candidate = coordinator.engine
+        do {
+            let synchronization = try await persistProtocolMutation(
+                candidate: &candidate,
+                drafts: opening.drafts,
+            )
+            coordinator.engine = candidate
+            lifecycleSession = opening.nextSession
+            publish(liveHeadsUp: nil)
+            emitHeadsUpEffects(synchronization)
+            return action
+        } catch {
+            restoreCoordinator(checkpoint)
+            throw error
+        }
     }
-
     func pendingActionOpening(
         _ action: HeadsUpPendingAction,
-        candidate: inout ProtocolEngine,
     ) -> (drafts: [OpportunityEventDraft], nextSession: LifecycleSession?) {
         guard action.kind == .openBreak else {
             return ([], lifecycleSession)
@@ -54,11 +60,12 @@ extension ProtocolRuntime {
         case .merged:
             (.visual, .merged(segment: .visual, selectedDuration: nil))
         }
-        let drafts = candidate.record(
-            .breakStarted,
+        let drafts = coordinator.dispatch(.record(
+            kind: .breakStarted,
             opportunity: opening.0,
+            selectedDurationSeconds: nil,
             source: action.source,
-        ).events
+        )).events
         return (drafts, opening.1)
     }
 }

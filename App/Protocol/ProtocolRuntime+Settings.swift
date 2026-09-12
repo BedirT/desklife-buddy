@@ -38,13 +38,15 @@ extension ProtocolRuntime {
                 state: retained,
             )
             let synchronization = synchronizeHeadsUpCycles(in: &candidate)
+            var savedState = candidate.state
+            savedState.coordinatorFence = coordinator.actionReducer.fenceState
             let retainedHistoryCount = try await settingsStore.commitPreferences(
                 resolved,
-                state: candidate.state,
+                state: savedState,
             )
             configuration = resolved.configuration
             self.preferences = resolved.preferences
-            engine = candidate
+            coordinator.engine = candidate
             statusContext = StatusMenuContext(
                 estimatedActiveUseSeconds: statusContext.estimatedActiveUseSeconds,
                 activeSuppression: statusContext.activeSuppression,
@@ -90,9 +92,11 @@ extension ProtocolRuntime {
             }
             let freshState = ProtocolState()
             let resolved = try await settingsStore.resetAll(state: freshState)
-            configuration = resolved.configuration
+            coordinator = OpportunityCoordinator(engine: ProtocolEngine(
+                configuration: resolved.configuration,
+                state: freshState,
+            ))
             preferences = resolved.preferences
-            engine = ProtocolEngine(configuration: resolved.configuration, state: freshState)
             pauseUntil = nil
             indefiniteSuppression = nil
             observedSuppressions = []

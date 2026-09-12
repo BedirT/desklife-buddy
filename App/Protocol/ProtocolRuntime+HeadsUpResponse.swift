@@ -8,7 +8,6 @@ extension ProtocolRuntime {
         clocks: [HeadsUpClock],
         deadline: Date,
         actionDate: Date,
-        candidate: inout ProtocolEngine,
     ) throws -> [OpportunityEventDraft] {
         let requestedInterval = deadline.timeIntervalSince(actionDate)
         guard requestedInterval > 0,
@@ -26,11 +25,11 @@ extension ProtocolRuntime {
             case .visual: .visual
             case .movement: .movement
             }
-            let output = candidate.snooze(
-                opportunity,
+            let output = coordinator.dispatch(.snooze(
+                opportunity: opportunity,
                 durationSeconds: duration,
                 at: snoozeStart,
-            )
+            ))
             guard output.events.count == 1 else {
                 throw ProtocolLifecycleError.invalidSnoozeDuration
             }
@@ -41,7 +40,6 @@ extension ProtocolRuntime {
 
     func applyHeadsUpResponseEffects(
         _ effects: [HeadsUpDeliveryEffect],
-        candidate: inout ProtocolEngine,
         actionDate: Date,
     ) throws -> [OpportunityEventDraft] {
         var drafts: [OpportunityEventDraft] = []
@@ -54,10 +52,9 @@ extension ProtocolRuntime {
                     clocks: clocks,
                     deadline: deadline,
                     actionDate: actionDate,
-                    candidate: &candidate,
                 )
             case let .skip(_, opportunity):
-                drafts += applyHeadsUpSkip(opportunity, candidate: &candidate)
+                drafts += applyHeadsUpSkip(opportunity)
             case .reserve, .updateCountdown, .updateTiming, .land, .holdThenRetract,
                  .openMoreOptions, .cancel, .cancelPendingAction:
                 break
@@ -68,15 +65,27 @@ extension ProtocolRuntime {
 
     func applyHeadsUpSkip(
         _ opportunity: HeadsUpOpportunityID,
-        candidate: inout ProtocolEngine,
     ) -> [OpportunityEventDraft] {
         switch opportunity {
         case .visual:
-            candidate.record(.skipped, opportunity: .visual, source: .user).events
+            coordinator.dispatch(.record(
+                kind: .skipped,
+                opportunity: .visual,
+                selectedDurationSeconds: nil,
+                source: .user,
+            )).events
         case .movement:
-            candidate.record(.skipped, opportunity: .movement, source: .user).events
+            coordinator.dispatch(.record(
+                kind: .skipped,
+                opportunity: .movement,
+                selectedDurationSeconds: nil,
+                source: .user,
+            )).events
         case .merged:
-            candidate.skipMergedSegment(.visual).events
+            // Escape-during-visual takes the canonical D-043
+            // `merged.escape_during_visual` effect (fresh visual + fresh
+            // movement + one deferral + one skip).
+            coordinator.dispatch(.mergedEscapeDuringVisual).events
         }
     }
 }

@@ -21,6 +21,8 @@ public struct SettingsFeatureView: View {
     private let integrationsActions: SettingsIntegrationsActions
     private let trustCenterSnapshot: TrustCenterSnapshot
     private let trustCenterActions: TrustCenterActions
+    private let trustCenterRulesSnapshot: TrustCenterRulesSnapshot?
+    private let trustCenterRulesActions: TrustCenterRulesActions
     private let evidenceTopic: SettingsEvidenceTopic
 
     public init(
@@ -35,6 +37,8 @@ public struct SettingsFeatureView: View {
         integrationsActions: SettingsIntegrationsActions = .none,
         trustCenterSnapshot: TrustCenterSnapshot? = nil,
         trustCenterActions: TrustCenterActions = .none,
+        trustCenterRulesSnapshot: TrustCenterRulesSnapshot? = nil,
+        trustCenterRulesActions: TrustCenterRulesActions = .none,
         evidenceTopic: SettingsEvidenceTopic = .visualResets,
     ) {
         _model = State(initialValue: model)
@@ -48,6 +52,8 @@ public struct SettingsFeatureView: View {
         self.integrationsActions = integrationsActions
         self.trustCenterSnapshot = trustCenterSnapshot ?? TrustCenterSnapshot.preview(.empty)
         self.trustCenterActions = trustCenterActions
+        self.trustCenterRulesSnapshot = trustCenterRulesSnapshot
+        self.trustCenterRulesActions = trustCenterRulesActions
         self.evidenceTopic = evidenceTopic
     }
 
@@ -238,6 +244,8 @@ public struct SettingsFeatureView: View {
                         snapshot: trustCenterSnapshot,
                         actions: trustCenterActions,
                         increaseContrast: increaseContrast,
+                        rulesSnapshot: trustCenterRulesSnapshot,
+                        rulesActions: trustCenterRulesActions,
                     )
                 case .ready where model.selectedSection == .whyTheseDefaults:
                     WhyDefaultsSettingsView(

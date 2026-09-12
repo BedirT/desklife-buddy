@@ -99,6 +99,7 @@ public struct WeeklyRhythmView: View {
                     weeklyTimeline(report)
                     retainedRunInspector(report)
                     recordedFacts(report)
+                    assistantAudit
                     gapAndAdjustment(report)
                 }
             }
@@ -228,6 +229,54 @@ public struct WeeklyRhythmView: View {
         .background(Color.dsSurfaceSecondary.opacity(0.28))
         .clipShape(RoundedRectangle(cornerRadius: DSRadius.md, style: .continuous))
         .accessibilityIdentifier("weekly.recordedFacts")
+    }
+
+    @ViewBuilder
+    private var assistantAudit: some View {
+        if let audit = model.audit {
+            VStack(alignment: .leading, spacing: DSSpacing.md) {
+                Text(WeeklyRhythmL10n.auditTitle)
+                    .font(primaryHeadlineFont)
+                    .foregroundStyle(Color.dsTextPrimary)
+                Text(WeeklyRhythmL10n.auditDetail)
+                    .font(primaryBodyFont)
+                    .foregroundStyle(Color.dsTextSecondary)
+                VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                    auditRow(label: WeeklyRhythmL10n.auditProposedRules, count: audit.proposedRuleCount)
+                    auditRow(label: WeeklyRhythmL10n.auditPendingRules, count: audit.pendingRuleCount)
+                    auditRow(label: WeeklyRhythmL10n.auditAddedRules, count: audit.addedRuleCount)
+                    auditRow(label: WeeklyRhythmL10n.auditSnoozedRules, count: audit.snoozedRuleCount)
+                    auditRow(label: WeeklyRhythmL10n.auditDeclinedRules, count: audit.declinedRuleCount)
+                    auditRow(label: WeeklyRhythmL10n.auditPreventedPrompts, count: audit.preventedRedundantPromptCount)
+                    auditRow(label: WeeklyRhythmL10n.auditSupportingEvidence, count: audit.supportingEvidenceCount)
+                    auditRow(label: WeeklyRhythmL10n.auditUnusedRules, count: audit.rulesWithoutRecordedTriggers)
+                    auditRow(label: WeeklyRhythmL10n.auditRecordedRows, count: audit.recordedRowCount)
+                }
+                Button(WeeklyRhythmL10n.auditReviewRules) { model.openRuleSettings() }
+                    .buttonStyle(.bordered)
+                    .accessibilityIdentifier("weekly.assistantAudit.reviewRules")
+            }
+            .padding(DSSpacing.lg)
+            .background(Color.dsSurfaceSecondary.opacity(0.28))
+            .clipShape(RoundedRectangle(cornerRadius: DSRadius.md, style: .continuous))
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("weekly.assistantAudit")
+        }
+    }
+
+    private func auditRow(label: String, count: Int) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: DSSpacing.sm) {
+            Text(label)
+                .font(primaryBodyFont)
+                .foregroundStyle(Color.dsTextPrimary)
+            Spacer(minLength: DSSpacing.md)
+            Text(WeeklyRhythmL10n.count(count))
+                .font(primaryBodyFont)
+                .foregroundStyle(Color.dsTextSecondary)
+                .monospacedDigit()
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label), \(WeeklyRhythmL10n.count(count))")
     }
 
     @ViewBuilder

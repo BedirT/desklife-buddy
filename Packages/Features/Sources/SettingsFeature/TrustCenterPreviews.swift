@@ -172,6 +172,58 @@ public extension TrustCenterSnapshot {
     }
 }
 
+/// Deterministic rule-management fixtures: every reachable rules state.
+public extension TrustCenterRulesSnapshot {
+    static func previewMixed() -> TrustCenterRulesSnapshot {
+        TrustCenterRulesSnapshot(rows: [
+            RuleProposalRowPresentation(
+                ruleKey: "quiet-when-weak",
+                kindCode: "holdBegin",
+                effectCode: "quiet",
+                status: .pending,
+                supportingEvidenceCount: 2,
+                requiredEvidenceCount: 2,
+                weeklyMax: 3,
+                cooldownTicks: 24 * 60 * 60,
+                canUndo: false,
+            ),
+            RuleProposalRowPresentation(
+                ruleKey: "shift-within-window",
+                kindCode: "holdBegin",
+                effectCode: "shift",
+                status: .added,
+                supportingEvidenceCount: 3,
+                requiredEvidenceCount: 2,
+                weeklyMax: 3,
+                cooldownTicks: 60 * 60,
+                canUndo: true,
+            ),
+            RuleProposalRowPresentation(
+                ruleKey: "restart-on-strong-motion",
+                kindCode: "sensorStrongMovementRestart",
+                effectCode: "restart",
+                status: .notNow,
+                supportingEvidenceCount: 1,
+                requiredEvidenceCount: 2,
+                weeklyMax: 2,
+                cooldownTicks: 24 * 60 * 60,
+                canUndo: true,
+            ),
+            RuleProposalRowPresentation(
+                ruleKey: "release-on-strong-absence",
+                kindCode: "holdRelease",
+                effectCode: "resume",
+                status: .never,
+                supportingEvidenceCount: 4,
+                requiredEvidenceCount: 2,
+                weeklyMax: 7,
+                cooldownTicks: 5 * 60,
+                canUndo: false,
+            ),
+        ])
+    }
+}
+
 #Preview("Trust center — educating") {
     TrustCenterView(snapshot: .preview(.educating))
         .frame(width: 700, height: 680)
@@ -195,4 +247,14 @@ public extension TrustCenterSnapshot {
 #Preview("Trust center — empty") {
     TrustCenterView(snapshot: .preview(.empty))
         .frame(width: 700, height: 680)
+}
+
+#Preview("Trust center — proposed rules") {
+    TrustCenterView(snapshot: .preview(.receipts), rulesSnapshot: .previewMixed())
+        .frame(width: 700, height: 1200)
+}
+
+#Preview("Trust center — no proposed rules") {
+    TrustCenterView(snapshot: .preview(.receipts), rulesSnapshot: .empty)
+        .frame(width: 700, height: 1200)
 }

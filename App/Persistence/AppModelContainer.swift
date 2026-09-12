@@ -15,6 +15,7 @@ enum AppModelContainer {
         StoredLedgerCorrection.self,
         StoredLedgerConsentReceipt.self,
         StoredLedgerCompanionAction.self,
+        StoredRuleProposal.self,
     ])
 
     static func make(inMemory: Bool = false, url: URL? = nil) throws -> ModelContainer {

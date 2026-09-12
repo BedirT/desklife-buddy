@@ -148,7 +148,7 @@ public struct ProtocolEngine: Sendable {
             at: sample.uptimeSeconds,
             isLowFrictionMoment: effectiveLowFrictionMoment,
         )
-        return ProtocolEngineOutput(events: [], presentation: recommendedPresentation())
+        return ProtocolEngineOutput(events: [], presentation: OpportunityCoordinator.presentation(for: self))
     }
 
     /// Applies one canonical event and returns the same distinct fact for persistence.
@@ -163,7 +163,7 @@ public struct ProtocolEngine: Sendable {
             opportunity: opportunity,
             selectedDurationSeconds: selectedDurationSeconds,
         ) else {
-            return ProtocolEngineOutput(events: [], presentation: recommendedPresentation())
+            return ProtocolEngineOutput(events: [], presentation: OpportunityCoordinator.presentation(for: self))
         }
         applyEventEffect(
             kind,
@@ -176,7 +176,7 @@ public struct ProtocolEngine: Sendable {
             opportunity: opportunity,
             selectedDurationSeconds: selectedDurationSeconds,
         )
-        return ProtocolEngineOutput(events: [event], presentation: recommendedPresentation())
+        return ProtocolEngineOutput(events: [event], presentation: OpportunityCoordinator.presentation(for: self))
     }
 
     /// Ends the explicit post-suppression grace and recomputes each schedulable phase.

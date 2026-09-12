@@ -70,3 +70,8 @@ custom_rules:
     message: "Use os.Logger so log capture (scripts/run.sh) sees it."
     severity: warning
     included: "(App|Packages/[^/]+/Sources)/.*\\.swift"
+
+  raw_protected_import:
+    regex: '^\s*import\s+(AVFoundation|AVKit|AVFAudio|AudioUnit|CoreAudio|AudioToolbox|Speech|HealthKit|CoreLocation|CoreMotion|Photos|PhotosUI|Vision|VisionKit|ScreenCaptureKit|ApplicationServices|Network|CloudKit|WebKit|MetricKit)\b(?!.*RAWGUARD-ALLOW:\s*\S)'
+    message: "Raw sensing/egress frameworks can never enter product targets — see scripts/check-raw-imports.sh (Epic 3 story 1)."
+    severity: error

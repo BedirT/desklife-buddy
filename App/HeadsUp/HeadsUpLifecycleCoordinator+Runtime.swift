@@ -282,6 +282,10 @@ extension HeadsUpLifecycleCoordinator {
         case .explicitPresentationMode: .explicitPresentationMode
         case .focusFilter: .focusFilter
         case .calendarBusy: .calendarBusy(until: nil)
+        case .userDeclaredMeetingOrCall: .userDeclaredMeetingOrCall(until: nil)
+        case .userDeclaredScreenSharingOrPresentation:
+            .userDeclaredScreenSharingOrPresentation(until: nil)
+        case .userSelectedTimedTask: .userSelectedTimedTask(until: nil)
         case .excludedApplication: .excludedApplication
         case .outsideWorkingHours: .outsideWorkingHours
         case .snooze, .lowFrictionWait: .snooze

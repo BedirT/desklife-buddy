@@ -187,6 +187,30 @@ enum HeadsUpL10n {
         "headsUp.phase.calendar_busy_detail",
         default: "during Calendar busy time",
     )
+    static let manualMeetingDetail = string(
+        "headsUp.phase.manual_meeting_detail",
+        default: "in a meeting you marked",
+    )
+    static let manualMeetingUntilDetailFormat = string(
+        "headsUp.phase.manual_meeting_until_detail_format",
+        default: "in a meeting you marked until %@",
+    )
+    static let manualPresentingDetail = string(
+        "headsUp.phase.manual_presenting_detail",
+        default: "presenting you marked",
+    )
+    static let manualPresentingUntilDetailFormat = string(
+        "headsUp.phase.manual_presenting_until_detail_format",
+        default: "presenting you marked until %@",
+    )
+    static let manualTimedFocusDetail = string(
+        "headsUp.phase.manual_timed_focus_detail",
+        default: "in timed focus you marked",
+    )
+    static let manualTimedFocusUntilDetailFormat = string(
+        "headsUp.phase.manual_timed_focus_until_detail_format",
+        default: "in timed focus you marked until %@",
+    )
     static let excludedApplicationDetail = string(
         "headsUp.phase.excluded_application_detail",
         default: "in this app",
@@ -325,6 +349,18 @@ private extension HeadsUpL10n {
             (onHoldTitle, formatted(busyUntilDetailFormat, formatDeadline(until)))
         case .calendarBusy(until: nil):
             (quietTitle, calendarBusyDetail)
+        case let .userDeclaredMeetingOrCall(until?):
+            (onHoldTitle, formatted(manualMeetingUntilDetailFormat, formatDeadline(until)))
+        case .userDeclaredMeetingOrCall(until: nil):
+            (onHoldTitle, manualMeetingDetail)
+        case let .userDeclaredScreenSharingOrPresentation(until?):
+            (presentingTitle, formatted(manualPresentingUntilDetailFormat, formatDeadline(until)))
+        case .userDeclaredScreenSharingOrPresentation(until: nil):
+            (presentingTitle, manualPresentingDetail)
+        case let .userSelectedTimedTask(until?):
+            (onHoldTitle, formatted(manualTimedFocusUntilDetailFormat, formatDeadline(until)))
+        case .userSelectedTimedTask(until: nil):
+            (onHoldTitle, manualTimedFocusDetail)
         case .excludedApplication:
             (quietTitle, excludedApplicationDetail)
         case .outsideWorkingHours:
@@ -358,6 +394,18 @@ private extension HeadsUpL10n {
             String.localizedStringWithFormat(holdBusyFormat, formatDeadline(until))
         case .calendarBusy(until: nil):
             calendarBusy
+        case let .userDeclaredMeetingOrCall(until?):
+            String.localizedStringWithFormat(manualMeetingUntilDetailFormat, formatDeadline(until))
+        case .userDeclaredMeetingOrCall(until: nil):
+            manualMeetingDetail
+        case let .userDeclaredScreenSharingOrPresentation(until?):
+            String.localizedStringWithFormat(manualPresentingUntilDetailFormat, formatDeadline(until))
+        case .userDeclaredScreenSharingOrPresentation(until: nil):
+            manualPresentingDetail
+        case let .userSelectedTimedTask(until?):
+            String.localizedStringWithFormat(manualTimedFocusUntilDetailFormat, formatDeadline(until))
+        case .userSelectedTimedTask(until: nil):
+            manualTimedFocusDetail
         case .excludedApplication:
             excludedApplication
         case .outsideWorkingHours:

@@ -36,6 +36,9 @@ public enum HeadsUpHold: Equatable, Sendable {
     case manualPause(until: Date?)
     case systemInactiveOrLocked, explicitPresentationMode, focusFilter
     case calendarBusy(until: Date?)
+    case userDeclaredMeetingOrCall(until: Date?)
+    case userDeclaredScreenSharingOrPresentation(until: Date?)
+    case userSelectedTimedTask(until: Date?)
     case excludedApplication, outsideWorkingHours, snooze
 }
 

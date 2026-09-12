@@ -114,6 +114,55 @@
       "status": "pending-owner",
       "evidence": "No benchmark automation exists (zero measure()/Benchmark hooks by design); the harness entry above is ready to collect them.",
       "missingInput": "Owner hardware run: execute the benchmark entry on the certifying Mac and attach the numbers; until then no performance claim is made."
+    },
+    {
+      "id": "trust-data-flow-doc",
+      "title": "Public data-flow diagram doc present",
+      "status": "pass",
+      "evidence": "check-certification-dossier.sh: docs/certification/data-flow.md exists with collector anchor trust-data-flow-doc v1 and ClosedPolicyFirewall vocabulary; stages name their Domain sources; only egress is user-initiated local files",
+      "notes": "Baseline without release-scope selection: exact signed-candidate paths wait on trust-release-scope-selection."
+    },
+    {
+      "id": "trust-firewall-card",
+      "title": "Firewall model + policy card present",
+      "status": "pass",
+      "evidence": "check-certification-dossier.sh: docs/certification/firewall-card.md exists with collector anchor trust-firewall-card v1 and ClosedPolicyFirewall vocabulary; deny-by-default tiers, allowlisted commands, lease windows, and sanitized receipts per the source",
+      "notes": "No performance, energy, or health-outcome claim is made in the card."
+    },
+    {
+      "id": "trust-fusion-card",
+      "title": "Fusion model + policy card present",
+      "status": "pass",
+      "evidence": "check-certification-dossier.sh: docs/certification/fusion-card.md exists with collector anchor trust-fusion-card v1 and EvidenceFusion vocabulary; determinism rule, Unknown precedence, and contradiction policy per the source",
+      "notes": "No accuracy, coverage, or outcome claim is made in the card."
+    },
+    {
+      "id": "trust-ledger-card",
+      "title": "Ledger model + policy card present",
+      "status": "pass",
+      "evidence": "check-certification-dossier.sh: docs/certification/ledger-card.md exists with collector anchor trust-ledger-card v1 and LedgerIdentity vocabulary; six additive-only ledgers, closed code sets, projection-only export, bounded retention",
+      "notes": "Coverage, abstention, and subgroup-error reporting wait on the owner hardware runs and release scope."
+    },
+    {
+      "id": "trust-stop-delete-doc",
+      "title": "Stop / Delete instruction doc present",
+      "status": "pass",
+      "evidence": "check-certification-dossier.sh: docs/certification/stop-delete.md exists with collector anchor trust-stop-delete-doc v1 and engageKillSwitch vocabulary; kill-switch-first stop, per-capability revocation, local-only deletion",
+      "notes": "Exact signed-candidate container paths wait on trust-release-scope-selection."
+    },
+    {
+      "id": "trust-dependency-inventory",
+      "title": "Dependency / license inventory present and re-verified",
+      "status": "pass",
+      "evidence": "check-certification-dossier.sh: docs/certification/dependency-license-inventory.md exists with collector anchor trust-dependency-inventory v1 and total 0 remote dependencies; all 4 manifests re-scanned for .package(url:) remotes on every run",
+      "notes": "First-party publication license not selected; choosing it is owner approval (trust-release-scope-selection). No license text invented."
+    },
+    {
+      "id": "trust-release-scope-selection",
+      "title": "Owner release-scope selection",
+      "status": "pending-owner",
+      "evidence": "No release scope has been selected: no public-repo decision, no license choice, no production signing/notarization, no submission or distribution. The baseline above is releasable without it; final certification is not.",
+      "missingInput": "Owner decision: select the release scope (public-repo + license choice, signing/notarization identity, submission/distribution target, exact signed-candidate container paths); until then final certification stays pending and no release claim is made."
     }
   ]
 }

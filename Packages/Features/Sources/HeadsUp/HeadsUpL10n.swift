@@ -117,7 +117,7 @@ enum HeadsUpL10n {
     static let moreOptions = string("headsUp.action.more_options", default: "More options")
     static let now = string("headsUp.action.now", default: "Now")
     static let later = string("headsUp.action.later", default: "Later")
-    static let afterMeeting = string("headsUp.action.after_meeting", default: "After this meeting")
+    static let afterMeeting = string("headsUp.action.after_meeting", default: "After this busy time")
     static let presentingOneHour = string("headsUp.action.presenting_one_hour", default: "Presenting for 1 hour")
 
     static let landed = string("headsUp.phase.landed", default: "now, or whenever suits")

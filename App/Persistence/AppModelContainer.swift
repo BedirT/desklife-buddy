@@ -9,6 +9,12 @@ enum AppModelContainer {
         StoredProtocolState.self,
         StoredAppPreferences.self,
         StoredOnboardingCompletion.self,
+        StoredLedgerObservation.self,
+        StoredLedgerAssessment.self,
+        StoredLedgerPolicyDecision.self,
+        StoredLedgerCorrection.self,
+        StoredLedgerConsentReceipt.self,
+        StoredLedgerCompanionAction.self,
     ])
 
     static func make(inMemory: Bool = false, url: URL? = nil) throws -> ModelContainer {

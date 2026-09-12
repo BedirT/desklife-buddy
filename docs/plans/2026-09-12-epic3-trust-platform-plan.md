@@ -1,9 +1,9 @@
 # Epic 3: Trust platform — plan
 
-Status: planned (Epic 2 merged at `05e68afd`, issue #3 closed; this plan is the intake for #4).
-Intake/escalation status: families 1–5 + 7 clear to build. Families 6, 8, 9 contain
-escalation stops (entitlements, privacy-manifest expansion, helper/XPC, physical
-TCC/energy certification) — those stories STOP for owner/hardware instead of guessing.
+Status: done (all 9 stories merged to main 2026-09-12; final `scripts/verify.sh` VERIFY OK at `5a0c830f`).
+Intake/escalation status: families 1–5 + 7 clear and landed. Families 6, 8, 9 stopped
+at their escalation boundaries as planned (placeholder capabilities only, no helper/XPC
+adoption, hardware-TCC/energy results pending owner) — harness + passing checks landed.
 
 ## Outcome
 
@@ -90,9 +90,17 @@ authority → worktree removed. Writer cap ONE per story; stories serialize on s
 seams. `scripts/verify.sh` must be green at every merge; formatter drift is fixed
 in-story, never banked.
 
-## Acceptance (issue #4 gates, checked at the last story)
+## Acceptance (issue #4 gates, checked at the last story — all green 2026-09-12)
 
-- Raw-class import guards green; Unknown-never-negative pinned; weak-evidence
-  bounds pinned; no-provider-mutation pinned; every automatic mutation replayable
-  with correction/undo; revocation deadline measured; base timer complete with all
-  permissions denied (prove with denied-fixture run); no-egress checks green.
+- Raw-class import guards green (`check-raw-imports: OK`, 16 exemptions honored).
+- Unknown-never-negative pinned (`EvidenceFusionTests.unknownNeverNegative`).
+- Weak-evidence bounds pinned (`ClosedPolicyFirewallTests.weakPresenceShiftIsWindowBounded` + shift-cap tests).
+- No-provider-mutation pinned (`ClosedPolicyFirewallTests`: missing evidence "leaves the coordinator untouched").
+- Every automatic mutation replayable with correction/undo (`LedgerExportCompletenessTests.correctionComplete`, `LedgerPersistenceDecisionTests.correctionRoundTrip`).
+- Revocation deadline measured (`PermissionBrokerTests.revokeDrainsWithinDeadline`, 5-tick deadline).
+- Base timer complete with all permissions denied (`PermissionBrokerTests.deniedFixtureCoreStillUseful`).
+- No-egress checks green (`CERTIFICATION DOSSIER OK`: 11 pass, 5 pending-owner).
+
+Landed PRs: #43 (story 1), #44 (story 2), #45 (story 3), #46 (story 4), #47 (story 5),
+#48 + receipt-order fix (story 6), #50 (story 7), #51 (story 8), #52 (story 9),
+#53 (closeout: formatter drift + dossier build-tree exclusion).

@@ -162,10 +162,10 @@ private func smallEngine() -> RuleProposalEngine {
     try engine.suggest(quietRule(), atTicks: ruleT0)
     let added = engine.decide(ruleKey: "quiet-when-weak", decision: .add, atTicks: ruleT0 + 1)
     #expect(added)
-    let fired_ruleT0_plus_10 = engine.evaluate(ruleKey: "quiet-when-weak", evidenceCount: 2, atTicks: ruleT0 + 10)
-    #expect(fired_ruleT0_plus_10.isFire)
-    let fired_ruleT0_plus_100 = engine.evaluate(ruleKey: "quiet-when-weak", evidenceCount: 2, atTicks: ruleT0 + 100)
-    #expect(fired_ruleT0_plus_100.isFire)
+    let firedAtT0Plus10 = engine.evaluate(ruleKey: "quiet-when-weak", evidenceCount: 2, atTicks: ruleT0 + 10)
+    #expect(firedAtT0Plus10.isFire)
+    let firedAtT0Plus100 = engine.evaluate(ruleKey: "quiet-when-weak", evidenceCount: 2, atTicks: ruleT0 + 100)
+    #expect(firedAtT0Plus100.isFire)
     let third = engine.evaluate(ruleKey: "quiet-when-weak", evidenceCount: 2, atTicks: ruleT0 + 200)
     guard case .capped = third else {
         Issue.record("third fire inside one week must cap, got \(third)")
@@ -181,16 +181,16 @@ private func smallEngine() -> RuleProposalEngine {
     try engine.suggest(quietRule(), atTicks: ruleT0)
     let added = engine.decide(ruleKey: "quiet-when-weak", decision: .add, atTicks: ruleT0 + 1)
     #expect(added)
-    let fired_ruleT0_plus_10 = engine.evaluate(ruleKey: "quiet-when-weak", evidenceCount: 2, atTicks: ruleT0 + 10)
-    #expect(fired_ruleT0_plus_10.isFire)
+    let firedAtT0Plus10 = engine.evaluate(ruleKey: "quiet-when-weak", evidenceCount: 2, atTicks: ruleT0 + 10)
+    #expect(firedAtT0Plus10.isFire)
     let early = engine.evaluate(ruleKey: "quiet-when-weak", evidenceCount: 2, atTicks: ruleT0 + 11)
     guard case .coolingDown(let remaining) = early else {
         Issue.record("immediate re-fire must cool down, got \(early)")
         return
     }
     #expect(remaining == 59)
-    let fired_ruleT0_plus_70 = engine.evaluate(ruleKey: "quiet-when-weak", evidenceCount: 2, atTicks: ruleT0 + 70)
-    #expect(fired_ruleT0_plus_70.isFire)
+    let firedAtT0Plus70 = engine.evaluate(ruleKey: "quiet-when-weak", evidenceCount: 2, atTicks: ruleT0 + 70)
+    #expect(firedAtT0Plus70.isFire)
 }
 
 @Test func insufficientEvidenceNeverFires() throws {
@@ -213,8 +213,8 @@ private func smallEngine() -> RuleProposalEngine {
     try engine.suggest(quietRule(), atTicks: ruleT0)
     let added = engine.decide(ruleKey: "quiet-when-weak", decision: .add, atTicks: ruleT0 + 1)
     #expect(added)
-    let fired_ruleT0_plus_10 = engine.evaluate(ruleKey: "quiet-when-weak", evidenceCount: 2, atTicks: ruleT0 + 10)
-    #expect(fired_ruleT0_plus_10.isFire)
+    let firedAtT0Plus10 = engine.evaluate(ruleKey: "quiet-when-weak", evidenceCount: 2, atTicks: ruleT0 + 10)
+    #expect(firedAtT0Plus10.isFire)
     engine.advance(atTicks: ruleT0 - 500)
     #expect(engine.fireCount(for: "quiet-when-weak") == 1)
     #expect(engine.proposal(for: "quiet-when-weak")?.status == .added)
@@ -257,8 +257,8 @@ private func smallEngine() -> RuleProposalEngine {
     // Reset re-arms the full path: Add then fire works at once.
     let readded = engine.decide(ruleKey: "quiet-when-weak", decision: .add, atTicks: ruleT0 + 3)
     #expect(readded)
-    let fired_ruleT0_plus_4 = engine.evaluate(ruleKey: "quiet-when-weak", evidenceCount: 2, atTicks: ruleT0 + 4)
-    #expect(fired_ruleT0_plus_4.isFire)
+    let firedAtT0Plus4 = engine.evaluate(ruleKey: "quiet-when-weak", evidenceCount: 2, atTicks: ruleT0 + 4)
+    #expect(firedAtT0Plus4.isFire)
 }
 
 // MARK: - Firewall-clamp compatibility (rule proposes, firewall qualifies)

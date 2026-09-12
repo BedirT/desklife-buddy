@@ -133,7 +133,9 @@ private struct LedgerExportDocument: Decodable {
 }
 
 private func tamperSchemaVersion(_ payload: Data, to version: Int) throws -> Data {
-    var object = try JSONSerialization.jsonObject(with: payload) as! [String: Any]
+    guard var object = try JSONSerialization.jsonObject(with: payload) as? [String: Any] else {
+        throw LedgerStoreError.invalidRecord("rule-proposal envelope")
+    }
     object["schemaVersion"] = version
     return try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys])
 }

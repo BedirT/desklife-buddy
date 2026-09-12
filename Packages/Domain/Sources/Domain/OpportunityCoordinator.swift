@@ -10,6 +10,10 @@ public struct OpportunityCoordinator: Sendable {
     /// The reduced engine. Read back after dispatch for persistence.
     public var engine: ProtocolEngine
 
+    /// The canonical action-reducer state. The coordinator owns it alongside
+    /// the engine so versioned actions route through one seam.
+    public var actionReducer = OpportunityActionReducer()
+
     /// Creates a facade over an already configured or restored engine.
     public init(engine: ProtocolEngine) {
         self.engine = engine
@@ -17,43 +21,71 @@ public struct OpportunityCoordinator: Sendable {
 
     /// Routes one command to its engine reduction and returns the same output
     /// the direct engine call would have produced.
+    ///
+    /// When the committed output carries session-rotation evidence (a
+    /// likely-natural-interruption fact), the action generation advances too:
+    /// pre-rotation offers fence from here on. Outputs are identical to the
+    /// direct engine call; only reducer fencing state moves.
     public mutating func dispatch(_ command: OpportunityCoordinatorCommand) -> OpportunityCoordinatorOutput {
+        let output: OpportunityCoordinatorOutput
         switch command {
         case let .observe(sample, activeSuppressions, isLowFrictionMoment):
-            return OpportunityCoordinatorOutput(engine.observe(
+            output = OpportunityCoordinatorOutput(engine.observe(
                 sample,
                 activeSuppressions: activeSuppressions,
                 isLowFrictionMoment: isLowFrictionMoment,
             ))
         case let .record(kind, opportunity, selectedDurationSeconds, source):
-            return OpportunityCoordinatorOutput(engine.record(
+            output = OpportunityCoordinatorOutput(engine.record(
                 kind,
                 opportunity: opportunity,
                 selectedDurationSeconds: selectedDurationSeconds,
                 source: source,
             ))
         case let .snooze(opportunity, durationSeconds, date):
-            return OpportunityCoordinatorOutput(engine.snooze(
+            output = OpportunityCoordinatorOutput(engine.snooze(
                 opportunity,
                 durationSeconds: durationSeconds,
                 at: date,
             ))
         case let .selectMovement(durationSeconds):
-            return OpportunityCoordinatorOutput(engine.selectMovement(durationSeconds: durationSeconds))
+            output = OpportunityCoordinatorOutput(engine.selectMovement(durationSeconds: durationSeconds))
         case let .skipMergedSegment(opportunity):
-            return OpportunityCoordinatorOutput(engine.skipMergedSegment(opportunity))
+            output = OpportunityCoordinatorOutput(engine.skipMergedSegment(opportunity))
         case let .resumeExpiredSnoozes(date):
-            return OpportunityCoordinatorOutput(engine.resumeExpiredSnoozes(at: date))
+            output = OpportunityCoordinatorOutput(engine.resumeExpiredSnoozes(at: date))
         case let .observeRecoverySession(date, systemAvailable):
             engine.observeRecoverySession(at: date, systemAvailable: systemAvailable)
-            return OpportunityCoordinatorOutput(events: [], presentation: currentPresentation())
+            output = OpportunityCoordinatorOutput(events: [], presentation: currentPresentation())
         case let .resumeRecoverySession(date):
             engine.resumeRecoverySession(at: date)
-            return OpportunityCoordinatorOutput(events: [], presentation: currentPresentation())
+            output = OpportunityCoordinatorOutput(events: [], presentation: currentPresentation())
         case .resumeInterruptedBreak:
             engine.resumeInterruptedBreak()
-            return OpportunityCoordinatorOutput(events: [], presentation: currentPresentation())
+            output = OpportunityCoordinatorOutput(events: [], presentation: currentPresentation())
         }
+        if output.events.contains(where: { $0.kind == .likelyNaturalInterruption }) {
+            actionReducer.noteSessionRotation()
+        }
+        return output
+    }
+
+    /// Advances the action generation after an out-of-band session rotation
+    /// (for example a restored interruption the coordinator never
+    /// dispatched). Dispatched rotation evidence advances automatically.
+    public mutating func noteSessionRotation() {
+        actionReducer.noteSessionRotation()
+    }
+
+    /// Routes one versioned action through the canonical reducer and returns
+    /// its auditable receipt plus the single presentation the arbitration
+    /// selects next.
+    public mutating func dispatchAction(
+        _ envelope: OpportunityActionEnvelope,
+        atTicks: TimeInterval,
+    ) -> OpportunityActionOutput {
+        let receipt = actionReducer.reduce(envelope, on: &engine, atTicks: atTicks)
+        return OpportunityActionOutput(receipt: receipt, presentation: currentPresentation())
     }
 
     /// The single interrupting experience the scheduler may offer next.

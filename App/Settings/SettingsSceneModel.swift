@@ -1,4 +1,5 @@
 import Domain
+import Foundation
 import Observation
 import SettingsFeature
 
@@ -7,25 +8,31 @@ final class SettingsSceneModel {
     let featureModel: SettingsFeatureModel
     private(set) var integrationsRuntime: SettingsIntegrationsRuntime
     private(set) var trustCenterSnapshot: TrustCenterSnapshot
+    /// Trust Center rules rows over the R1 proposal store. Nil (not empty)
+    /// means the seam is unwired and the R2 section stays hidden.
+    private(set) var trustCenterRulesSnapshot: TrustCenterRulesSnapshot?
 
     private let integrations: SettingsIntegrationsAppRuntime?
     private let trustCenter: SettingsTrustCenterAppRuntime?
+    private let ruleManagement: RuleManagementModel?
     private let excludedApplications: SettingsExcludedApplicationsAppAdapter
     private let loadsFeatureModel: Bool
-
     init(
         featureModel: SettingsFeatureModel,
         integrations: SettingsIntegrationsAppRuntime,
         trustCenter: SettingsTrustCenterAppRuntime,
         excludedApplications: SettingsExcludedApplicationsAppAdapter = .init(),
+        ruleManagement: RuleManagementModel? = nil,
     ) {
         self.featureModel = featureModel
         self.integrations = integrations
         self.trustCenter = trustCenter
+        self.ruleManagement = ruleManagement
         self.excludedApplications = excludedApplications
         loadsFeatureModel = true
         integrationsRuntime = .unavailable
         trustCenterSnapshot = .preview(.empty)
+        trustCenterRulesSnapshot = nil
     }
 
     init(
@@ -36,10 +43,12 @@ final class SettingsSceneModel {
         featureModel = previewModel
         integrations = nil
         trustCenter = nil
+        ruleManagement = nil
         excludedApplications = .init()
         loadsFeatureModel = false
         self.integrationsRuntime = integrationsRuntime
         self.trustCenterSnapshot = trustCenterSnapshot
+        trustCenterRulesSnapshot = nil
     }
 
     var excludedApplicationPresentations: [SettingsExcludedApplicationPresentation] {
@@ -100,6 +109,27 @@ final class SettingsSceneModel {
         )
     }
 
+    var trustCenterRulesActions: TrustCenterRulesActions {
+        guard let ruleManagement else { return .none }
+        return TrustCenterRulesActions(
+            decide: { [weak self] ruleKey, decision in
+                guard let self, let model = self.ruleManagement else { return }
+                _ = try? await model.decide(ruleKey: ruleKey, decision: decision)
+                await self.publishTrustCenterRules()
+            },
+            undo: { [weak self] ruleKey in
+                guard let self, let model = self.ruleManagement else { return }
+                _ = try? await model.undo(ruleKey: ruleKey)
+                await self.publishTrustCenterRules()
+            },
+            reset: { [weak self] ruleKey in
+                guard let self, let model = self.ruleManagement else { return }
+                try? await model.reset(ruleKey: ruleKey)
+                await self.publishTrustCenterRules()
+            },
+        )
+    }
+
     func load() async {
         if loadsFeatureModel, featureModel.phase == .loading {
             await featureModel.load()
@@ -122,8 +152,22 @@ final class SettingsSceneModel {
     }
 
     func refreshTrustCenter() async {
-        guard let trustCenter else { return }
-        await publishTrustCenter(trustCenter.load())
+        if let trustCenter {
+            await publishTrustCenter(trustCenter.load())
+        }
+        if trustCenterRulesSnapshot == nil {
+            await loadTrustCenterRules()
+        }
+    }
+
+    /// Loads stored proposals into the rule-management model and publishes
+    /// the rules snapshot. A failed load leaves the previous snapshot (or
+    /// the hidden nil seam) in place; owner actions re-publish without a
+    /// reload so a just-made transition keeps its undo.
+    func loadTrustCenterRules() async {
+        guard let ruleManagement else { return }
+        _ = try? await ruleManagement.load()
+        await publishTrustCenterRules()
     }
 
     func selectedSectionDidChange(_ section: SettingsSection) async {
@@ -144,6 +188,11 @@ final class SettingsSceneModel {
 
     private func publishTrustCenter(_ snapshot: TrustCenterSnapshot) async {
         trustCenterSnapshot = snapshot
+    }
+
+    private func publishTrustCenterRules() async {
+        guard let ruleManagement else { return }
+        trustCenterRulesSnapshot = TrustCenterRulesSnapshot(rows: ruleManagement.rows)
     }
 
     private func applyTrustCenter(
@@ -183,10 +232,16 @@ extension AppDelegate {
                 ),
                 catalog: catalog,
             )
+            let ruleManagement: RuleManagementModel? = if let ruleStore = ruleProposalStoreForWiring() {
+                RuleManagementModel(store: ruleStore, ticks: { ProcessInfo.processInfo.systemUptime })
+            } else {
+                nil
+            }
             return SettingsSceneModel(
                 featureModel: featureModel,
                 integrations: settingsIntegrationsRuntime,
                 trustCenter: settingsTrustCenterRuntime,
+                ruleManagement: ruleManagement,
             )
         } catch {
             preconditionFailure("Generated Settings schedule catalog is invalid: \(error)")

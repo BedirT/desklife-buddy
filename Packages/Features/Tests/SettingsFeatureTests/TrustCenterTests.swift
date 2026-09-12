@@ -249,7 +249,11 @@ struct TrustCenterTests {
     @Test("Same-tick receipt batches keep ledger order deterministically")
     func sameTickBatchesAreStable() throws {
         let device = UUID().uuidString
-        func receipt(_ scope: String, revision: UInt64, at offset: TimeInterval = 0) throws -> LedgerConsentReceiptRecord {
+        func receipt(
+            _ scope: String,
+            revision: UInt64,
+            at offset: TimeInterval = 0,
+        ) throws -> LedgerConsentReceiptRecord {
             try LedgerConsentReceiptRecord(
                 id: UUID(),
                 recordedAt: Date(timeIntervalSince1970: 1_700_000_000 + offset),
@@ -266,7 +270,11 @@ struct TrustCenterTests {
         }
         // Kill-switch batches share one tick: ties must keep ledger order,
         // not sort-algorithm order, and repeat runs must agree.
-        let batch = try [receipt("sensing-presence", revision: 1), receipt("sensing-motion", revision: 1), receipt("effect-hold", revision: 2)]
+        let batch = try [
+            receipt("sensing-presence", revision: 1),
+            receipt("sensing-motion", revision: 1),
+            receipt("effect-hold", revision: 2),
+        ]
         let first = TrustCenterReceiptPresentation.ordered(batch).map(\.scopeCode)
         let second = TrustCenterReceiptPresentation.ordered(batch).map(\.scopeCode)
         #expect(first == ["sensing-presence", "sensing-motion", "effect-hold"])
@@ -280,9 +288,24 @@ struct TrustCenterTests {
     func receiptIdentifiersAreUnique() {
         let base = Date(timeIntervalSince1970: 1_700_000_000)
         let rows = [
-            TrustCenterReceiptPresentation(scopeCode: "sensing-presence", scopeRevision: 1, statusCode: "granted", recordedAt: base),
-            TrustCenterReceiptPresentation(scopeCode: "sensing-presence", scopeRevision: 1, statusCode: "revoked", recordedAt: base.addingTimeInterval(60)),
-            TrustCenterReceiptPresentation(scopeCode: "sensing-presence", scopeRevision: 2, statusCode: "granted", recordedAt: base.addingTimeInterval(120)),
+            TrustCenterReceiptPresentation(
+                scopeCode: "sensing-presence",
+                scopeRevision: 1,
+                statusCode: "granted",
+                recordedAt: base,
+            ),
+            TrustCenterReceiptPresentation(
+                scopeCode: "sensing-presence",
+                scopeRevision: 1,
+                statusCode: "revoked",
+                recordedAt: base.addingTimeInterval(60),
+            ),
+            TrustCenterReceiptPresentation(
+                scopeCode: "sensing-presence",
+                scopeRevision: 2,
+                statusCode: "granted",
+                recordedAt: base.addingTimeInterval(120),
+            ),
         ]
         #expect(Set(rows.map(\.rowIdentifier)).count == 3)
     }

@@ -54,7 +54,7 @@ public struct HelperXPCGateway: Sendable {
         guard isOpen(capability) else { return .failure(.consentNotGranted) }
         guard await connection.isConnected else { return .failure(.peerUnreachable) }
         do {
-            return .success(try await connection.send(envelope))
+            return try await .success(connection.send(envelope))
         } catch {
             return .failure(.peerUnreachable)
         }

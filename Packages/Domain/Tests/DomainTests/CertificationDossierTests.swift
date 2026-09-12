@@ -156,6 +156,7 @@ struct CertificationDossierTests {
             "Dossier check without evidence was accepted",
         )
     }
+
     @Test("Unreadable probe inputs fail gracefully with a summary")
     func unreadableProbeInputsFailGracefully() throws {
         let scratch = FileManager.default.temporaryDirectory

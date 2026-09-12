@@ -112,7 +112,7 @@ public struct TrustCenterInspectorStatus: Equatable, Sendable {
             0
         }
         let firewall = TrustCenterFirewallStatus(
-            holdEventCount: policyDecisions.filter { $0.kindCode == "holdBegin" }.count,
+            holdEventCount: policyDecisions.count(where: { $0.kindCode == "holdBegin" }),
             lastEffectClassCode: lastEffect,
             windowSeconds: window,
         )

@@ -52,6 +52,7 @@ final class SettingsSceneModel {
             await excludedApplications.chooseApplication()
         }
     }
+
     var integrationsActions: SettingsIntegrationsActions {
         guard let integrations else { return .none }
         return integrations.actions { [weak self] runtime in
@@ -68,19 +69,19 @@ final class SettingsSceneModel {
             },
             grant: { [weak self] capability in
                 guard let self else { return }
-                await self.applyTrustCenter { await trustCenter.grant(capability) }
+                await applyTrustCenter { await trustCenter.grant(capability) }
             },
             revoke: { [weak self] capability in
                 guard let self else { return }
-                await self.applyTrustCenter { await trustCenter.revoke(capability) }
+                await applyTrustCenter { await trustCenter.revoke(capability) }
             },
             engageKillSwitch: { [weak self] in
                 guard let self else { return }
-                await self.applyTrustCenter { await trustCenter.engageKillSwitch() }
+                await applyTrustCenter { await trustCenter.engageKillSwitch() }
             },
             disengageKillSwitch: { [weak self] in
                 guard let self else { return }
-                await self.applyTrustCenter { await trustCenter.disengageKillSwitch() }
+                await applyTrustCenter { await trustCenter.disengageKillSwitch() }
             },
             exportTrustData: { [weak self] in
                 guard let self, let trustCenter = self.trustCenter else { return .unavailable }
@@ -89,12 +90,12 @@ final class SettingsSceneModel {
             deleteTrustData: { [weak self] in
                 guard let self, let trustCenter = self.trustCenter else { return .unavailable }
                 let result = await trustCenter.deleteTrustData()
-                await self.applyTrustCenter { await trustCenter.load() }
+                await applyTrustCenter { await trustCenter.load() }
                 return result
             },
             refresh: { [weak self] in
                 guard let self else { return }
-                await self.refreshTrustCenter()
+                await refreshTrustCenter()
             },
         )
     }
@@ -150,7 +151,6 @@ final class SettingsSceneModel {
     ) async {
         await publishTrustCenter(produce())
     }
-
 }
 
 extension AppDelegate {

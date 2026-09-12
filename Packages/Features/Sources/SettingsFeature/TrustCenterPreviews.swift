@@ -132,7 +132,11 @@ public extension TrustCenterSnapshot {
             inspectorStatus: TrustCenterInspectorStatus(
                 lease: TrustCenterLeaseStatus(activeLeaseCount: 0, openWindowCount: 2, issuanceBlocked: false),
                 bus: TrustCenterBusStatus(admittedCount: 5, pendingCount: 1, lastVerdictClassCode: "shift"),
-                firewall: TrustCenterFirewallStatus(holdEventCount: 3, lastEffectClassCode: "shift", windowSeconds: 180),
+                firewall: TrustCenterFirewallStatus(
+                    holdEventCount: 3,
+                    lastEffectClassCode: "shift",
+                    windowSeconds: 180,
+                ),
             ),
             receipts: [
                 previewReceipt("sensing-motion", "granted", offset: 300),

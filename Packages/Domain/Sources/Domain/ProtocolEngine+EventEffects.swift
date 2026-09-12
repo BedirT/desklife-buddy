@@ -61,8 +61,11 @@ extension ProtocolEngine {
 
     /// Applies merged Escape-during-visual for the canonical action reducer: a
     /// fresh visual cycle and a fresh movement cycle with one deferral and one
-    /// skip. Existing merged-Escape callers keep their retaining semantics;
-    /// only the reducer routes through this shared effect.
+    /// skip (D-043 `merged.escape_during_visual`). The reducer and the
+    /// coordinator `.mergedEscapeDuringVisual` command share this one effect,
+    /// so versioned actions and App Escape-during-visual dispatch stay
+    /// identical by construction. Movement-segment callers keep the legacy
+    /// retaining `skipMergedSegment` route.
     mutating func applyMergedEscapeDuringVisual() -> OpportunityEventDraft {
         reset(.visual)
         noteMovementDeferral()

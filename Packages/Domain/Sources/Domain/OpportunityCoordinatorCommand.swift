@@ -30,6 +30,14 @@ public enum OpportunityCoordinatorCommand: Equatable, Sendable {
     /// Applies merged Escape semantics (`ProtocolEngine.skipMergedSegment`).
     case skipMergedSegment(OpportunityType)
 
+    /// Applies merged Escape-during-visual through the canonical D-043
+    /// `merged.escape_during_visual` effect
+    /// (`ProtocolEngine.applyMergedEscapeDuringVisual`: fresh visual cycle
+    /// plus fresh movement cycle with one deferral and one skip). This is the
+    /// only route production Escape-during-visual callers may use; the legacy
+    /// retaining `skipMergedSegment` route stays for movement-segment paths.
+    case mergedEscapeDuringVisual
+
     /// Expires retained snoozes (`ProtocolEngine.resumeExpiredSnoozes`).
     case resumeExpiredSnoozes(at: Date)
 

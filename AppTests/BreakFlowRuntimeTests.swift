@@ -120,8 +120,14 @@ struct BreakFlowRuntimeTests {
         #expect(commit.state.movementClock == dueState.movementClock)
     }
 
-    @Test("Merged Skip retains the active unfinished segment clock")
+    @Test("Merged Skip during the visual segment applies the canonical fresh effect")
     func mergedSkip() async throws {
+        // Contract-backed migration (Story 2.6): D-043
+        // `timing_runtime_v2.yaml` action_contract `merged.escape_during_visual`
+        // rows clocks {visual: fresh_cycle, movement: fresh_cycle, recovery:
+        // deferral_increment} with facts [skipped]. The pre-2.6 retaining pin
+        // (graced unfinished clocks) covered the legacy `skipMergedSegment`
+        // route production no longer uses for this segment.
         let store = BreakFlowRuntimeStore(state: dueState)
         let runtime = try makeRuntime(store: store)
         try await runtime.restore()
@@ -133,14 +139,15 @@ struct BreakFlowRuntimeTests {
         let commit = try #require(store.commits.first)
         #expect(commit.events.map(\.kind) == [.skipped])
         #expect(commit.events.map(\.opportunity) == [.visual])
-        #expect(commit.state.visualClock.accumulatedActiveUseSeconds == 1500)
-        #expect(commit.state.visualClock.phase == .gracedAfterSuppression)
-        #expect(commit.state.movementClock.accumulatedActiveUseSeconds == 3600)
-        #expect(commit.state.movementClock.phase == .gracedAfterSuppression)
+        #expect(commit.state.visualClock == OpportunityClockState(cycleID: 1))
+        #expect(commit.state.movementClock == OpportunityClockState(cycleID: 1))
+        #expect(commit.state.recoveryState.movementDeferralCount == 1)
     }
 
-    @Test("Merged Skip before opening targets only the first visual segment")
+    @Test("Merged Skip before opening targets the first visual segment with the canonical effect")
     func mergedSkipBeforeOpening() async throws {
+        // Same D-043 `merged.escape_during_visual` row as above: with no
+        // session yet the merged Escape still freshens both cycles.
         let store = BreakFlowRuntimeStore(state: dueState)
         let runtime = try makeRuntime(store: store)
         try await runtime.restore()
@@ -151,8 +158,9 @@ struct BreakFlowRuntimeTests {
         let commit = try #require(store.commits.first)
         #expect(commit.events.map(\.kind) == [.skipped])
         #expect(commit.events.map(\.opportunity) == [.visual])
-        #expect(commit.state.visualClock.accumulatedActiveUseSeconds == 1500)
-        #expect(commit.state.movementClock.accumulatedActiveUseSeconds == 3600)
+        #expect(commit.state.visualClock == OpportunityClockState(cycleID: 1))
+        #expect(commit.state.movementClock == OpportunityClockState(cycleID: 1))
+        #expect(commit.state.recoveryState.movementDeferralCount == 1)
     }
 
     @Test("An exact calendar deadline stays unsupported until Domain can retain it")

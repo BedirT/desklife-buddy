@@ -22,6 +22,13 @@ public struct OpportunityCoordinator: Sendable {
     /// Routes one command to its engine reduction and returns the same output
     /// the direct engine call would have produced.
     ///
+    /// Seam honesty (Story 2.6): `dispatch` performs zero fence checks — no
+    /// lease, generation, revision, or committed-Actions validation. The
+    /// single-producer dispatch path is the only live producer, so the 2.3
+    /// fences are test-verified but not live-enforced here. The future D-043
+    /// crash-replay outbox and companion actions MUST route through
+    /// `dispatchAction`, the fenced entry point, never through this one.
+    ///
     /// When the committed output carries session-rotation evidence (a
     /// likely-natural-interruption fact), the action generation advances too:
     /// pre-rotation offers fence from here on. Outputs are identical to the
@@ -52,6 +59,9 @@ public struct OpportunityCoordinator: Sendable {
             output = OpportunityCoordinatorOutput(engine.selectMovement(durationSeconds: durationSeconds))
         case let .skipMergedSegment(opportunity):
             output = OpportunityCoordinatorOutput(engine.skipMergedSegment(opportunity))
+        case .mergedEscapeDuringVisual:
+            let draft = engine.applyMergedEscapeDuringVisual()
+            output = OpportunityCoordinatorOutput(events: [draft], presentation: currentPresentation())
         case let .resumeExpiredSnoozes(date):
             output = OpportunityCoordinatorOutput(engine.resumeExpiredSnoozes(at: date))
         case let .observeRecoverySession(date, systemAvailable):

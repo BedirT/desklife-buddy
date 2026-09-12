@@ -97,6 +97,7 @@ struct OpportunityCoordinatorTests {
             .snooze(opportunity: .movement, durationSeconds: 3, at: date),
             .snooze(opportunity: .recovery, durationSeconds: 3, at: date),
             .skipMergedSegment(.visual),
+            .mergedEscapeDuringVisual,
             .resumeRecoverySession(at: date),
             .resumeInterruptedBreak,
         ]
@@ -274,6 +275,11 @@ struct OpportunityCoordinatorTests {
             return engine.selectMovement(durationSeconds: durationSeconds)
         case let .skipMergedSegment(opportunity):
             return engine.skipMergedSegment(opportunity)
+        case .mergedEscapeDuringVisual:
+            return ProtocolEngineOutput(
+                events: [engine.applyMergedEscapeDuringVisual()],
+                presentation: OpportunityCoordinator(engine: engine).currentPresentation(),
+            )
         case let .resumeExpiredSnoozes(date):
             return engine.resumeExpiredSnoozes(at: date)
         case let .observeRecoverySession(date, systemAvailable):

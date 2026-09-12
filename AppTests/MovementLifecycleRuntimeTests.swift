@@ -412,8 +412,14 @@ struct MergedLifecycleRuntimeTests {
         #expect(store.commits.last?.events.first?.opportunity == .movement)
     }
 
-    @Test("Escape during the visual segment retains both unfinished clocks")
+    @Test("Escape during the visual segment applies the canonical fresh effect")
     func escapeDuringVisual() async throws {
+        // Contract-backed migration (Story 2.6): D-043
+        // `timing_runtime_v2.yaml` action_contract `merged.escape_during_visual`
+        // rows clocks {visual: fresh_cycle, movement: fresh_cycle, recovery:
+        // deferral_increment} with facts [skipped]. The pre-2.6 retaining pin
+        // (both clocks due, graced) covered the legacy `skipMergedSegment`
+        // route production no longer uses for this segment.
         let store = MovementRuntimeStore(state: dueState)
         let runtime = try makeRuntime(store: store)
         try await runtime.restore()
@@ -421,10 +427,9 @@ struct MergedLifecycleRuntimeTests {
 
         try await runtime.handleMerged(.skipped)
 
-        #expect(runtime.state.visualClock.accumulatedActiveUseSeconds == 1500)
-        #expect(runtime.state.visualClock.phase == .gracedAfterSuppression)
-        #expect(runtime.state.movementClock.accumulatedActiveUseSeconds == 3600)
-        #expect(runtime.state.movementClock.phase == .gracedAfterSuppression)
+        #expect(runtime.state.visualClock == OpportunityClockState(cycleID: 1))
+        #expect(runtime.state.movementClock == OpportunityClockState(cycleID: 1))
+        #expect(runtime.state.recoveryState.movementDeferralCount == 1)
         #expect(store.commits.last?.events.map(Fact.init) == [Fact(
             kind: .skipped,
             source: .user,
@@ -436,7 +441,11 @@ struct MergedLifecycleRuntimeTests {
         #expect(runtime.statusContext.liveHeadsUp == nil)
     }
 
-    @Test("Escape after visual completion retains visual effect and leaves movement due")
+    // Story 2.6 scope note: the movement-segment Escape below keeps the
+    // legacy retaining route (D-043 `merged.escape_during_movement` rows
+    // visual: retain); only Escape-during-visual migrated to the canonical
+    // fresh effect.
+    @Test("Escape after visual completion retains the completed visual segment and still offers movement")
     func escapeDuringMovement() async throws {
         let store = MovementRuntimeStore(state: dueState)
         let runtime = try makeRuntime(store: store)

@@ -34,86 +34,95 @@ extension ProtocolRuntime {
         durationSeconds: TimeInterval,
     ) async throws {
         let actionDate = now()
-        var candidate = engine
-        var drafts: [OpportunityEventDraft] = []
-        for opportunity in opportunities(for: scope) {
-            let output = candidate.snooze(
-                opportunity,
-                durationSeconds: durationSeconds,
-                at: actionDate,
-            )
-            guard output.events.count == 1 else {
-                throw ProtocolLifecycleError.invalidSnoozeDuration
+        try await commitBreakFlow(recordedAt: actionDate) {
+            var drafts: [OpportunityEventDraft] = []
+            for opportunity in opportunities(for: scope) {
+                let output = coordinator.dispatch(.snooze(
+                    opportunity: opportunity,
+                    durationSeconds: durationSeconds,
+                    at: actionDate,
+                ))
+                guard output.events.count == 1 else {
+                    throw ProtocolLifecycleError.invalidSnoozeDuration
+                }
+                drafts += output.events
             }
-            drafts += output.events
+            var candidate = coordinator.engine
+            mirrorBreakFlowSnoozeInHeadsUpLedger(
+                scope: scope,
+                deadline: actionDate.addingTimeInterval(durationSeconds),
+                candidate: &candidate,
+            )
+            coordinator.engine = candidate
+            return drafts
         }
-        mirrorBreakFlowSnoozeInHeadsUpLedger(
-            scope: scope,
-            deadline: actionDate.addingTimeInterval(durationSeconds),
-            candidate: &candidate,
-        )
-        try await commitBreakFlow(
-            candidate: candidate,
-            drafts: drafts,
-            recordedAt: actionDate,
-        )
     }
 
     private func reduceBreakFlowNotAppropriate(scope: BreakScope) async throws {
         let actionDate = now()
-        var candidate = engine
-        var drafts: [OpportunityEventDraft] = []
-        for opportunity in opportunities(for: scope) {
-            drafts += candidate.record(
-                .notAppropriate,
-                opportunity: opportunity,
-                source: .user,
-            ).events
+        try await commitBreakFlow(recordedAt: actionDate) {
+            var drafts: [OpportunityEventDraft] = []
+            for opportunity in opportunities(for: scope) {
+                drafts += coordinator.dispatch(.record(
+                    kind: .notAppropriate,
+                    opportunity: opportunity,
+                    selectedDurationSeconds: nil,
+                    source: .user,
+                )).events
+            }
+            return drafts
         }
-        try await commitBreakFlow(
-            candidate: candidate,
-            drafts: drafts,
-            recordedAt: actionDate,
-        )
     }
 
     private func reduceBreakFlowSkip(scope: BreakScope) async throws {
-        var candidate = engine
-        let output: ProtocolEngineOutput = switch scope {
+        // Escape-during-visual (active visual segment, or no session yet)
+        // takes the canonical D-043 `merged.escape_during_visual` effect
+        // (fresh visual + fresh movement + one deferral + one skip); the
+        // movement-segment path keeps the legacy retaining route.
+        let command: OpportunityCoordinatorCommand = switch scope {
         case .visual:
-            candidate.record(.skipped, opportunity: .visual, source: .user)
+            .record(kind: .skipped, opportunity: .visual, selectedDurationSeconds: nil, source: .user)
         case .movement:
-            candidate.record(.skipped, opportunity: .movement, source: .user)
+            .record(kind: .skipped, opportunity: .movement, selectedDurationSeconds: nil, source: .user)
         case .merged:
             switch lifecycleSession {
-            case .merged(segment: .visual, selectedDuration: _):
-                candidate.skipMergedSegment(.visual)
-            case .merged(segment: .movement, selectedDuration: _):
-                candidate.skipMergedSegment(.movement)
-            case nil:
-                candidate.skipMergedSegment(.visual)
+            case .merged(segment: .visual, selectedDuration: _): .mergedEscapeDuringVisual
+            case .merged(segment: .movement, selectedDuration: _): .skipMergedSegment(.movement)
+            case nil: .mergedEscapeDuringVisual
             case .movement:
                 throw ProtocolLifecycleError.noActiveSession
             }
         }
-        try await commitBreakFlow(candidate: candidate, drafts: output.events)
+        try await commitBreakFlow {
+            coordinator.dispatch(command).events
+        }
     }
 
+    /// Single choke point for every BreakFlow mutation (Story 2.6 F1):
+    /// snapshots the owned coordinator before the first dispatch and restores
+    /// engine + fence on any throw, so a failed store write retries from
+    /// identical state instead of double-applying.
     private func commitBreakFlow(
-        candidate: ProtocolEngine,
-        drafts: [OpportunityEventDraft],
         recordedAt: Date? = nil,
+        dispatching: () throws -> [OpportunityEventDraft],
     ) async throws {
-        var candidate = candidate
-        let synchronization = try await persistProtocolMutation(
-            candidate: &candidate,
-            drafts: drafts,
-            recordedAt: recordedAt,
-        )
-        engine = candidate
-        lifecycleSession = nil
-        publish(liveHeadsUp: nil)
-        emitHeadsUpEffects(synchronization)
+        let checkpoint = checkpointCoordinator()
+        do {
+            let drafts = try dispatching()
+            var candidate = coordinator.engine
+            let synchronization = try await persistProtocolMutation(
+                candidate: &candidate,
+                drafts: drafts,
+                recordedAt: recordedAt,
+            )
+            coordinator.engine = candidate
+            lifecycleSession = nil
+            publish(liveHeadsUp: nil)
+            emitHeadsUpEffects(synchronization)
+        } catch {
+            restoreCoordinator(checkpoint)
+            throw error
+        }
     }
 
     private func opportunities(for scope: BreakScope) -> [OpportunityType] {

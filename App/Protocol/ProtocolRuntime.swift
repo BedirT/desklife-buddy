@@ -39,7 +39,17 @@ final class ProtocolRuntime {
     let makeID: () -> UUID
     private let endOfDay: (Date) -> Date
     var headsUpRuntimePolicy: HeadsUpRuntimePolicy?
-    var engine: ProtocolEngine
+    /// The single owned opportunity coordinator (Story 2.6 atomic cutover).
+    /// Every production dispatch routes through this seam: no throwaway
+    /// coordinator may bypass its fence, and saves overlay its live
+    /// `actionReducer.fenceState`.
+    var coordinator: OpportunityCoordinator
+    /// The live engine, always the coordinator's engine: a computed view so
+    /// no second source of truth can diverge from the seam.
+    var engine: ProtocolEngine {
+        get { coordinator.engine }
+        set { coordinator.engine = newValue }
+    }
     var pauseUntil: Date?
     var indefiniteSuppression: SuppressionReason?
     var observedSuppressions: Set<SuppressionReason> = []
@@ -87,7 +97,10 @@ final class ProtocolRuntime {
                 ?? date.addingTimeInterval(86400)
         }
         let initialState = ProtocolState(profileID: profileID)
-        engine = ProtocolEngine(configuration: configuration, state: initialState)
+        coordinator = OpportunityCoordinator(engine: ProtocolEngine(
+            configuration: configuration,
+            state: initialState,
+        ))
         state = initialState
         statusContext = StatusMenuContext(
             workingHoursOnly: initialPreferences?.schedule.workingHoursOnly ?? true,
@@ -121,21 +134,33 @@ final class ProtocolRuntime {
     func restore() async throws {
         try await withLifecycleGate {
             if let restored = try await store.loadState() {
-                engine = ProtocolEngine(configuration: configuration, state: restored)
+                coordinator = OpportunityCoordinator(engine: ProtocolEngine(
+                    configuration: configuration,
+                    state: restored,
+                ))
+                coordinator.actionReducer = OpportunityActionReducer(
+                    fenceState: restored.coordinatorFence,
+                )
             }
             let restoreDate = now()
-            let retained = engine.state
-            var coordinator = OpportunityCoordinator(engine: engine)
+            let retained = coordinator.engine.state
+            let retainedFence = coordinator.actionReducer.fenceState
+            let checkpoint = checkpointCoordinator()
             coordinator.dispatch(.resumeInterruptedBreak)
             coordinator.dispatch(.resumeRecoverySession(at: restoreDate))
             let resumed = coordinator.dispatch(.resumeExpiredSnoozes(at: restoreDate))
             var candidate = coordinator.engine
             let synchronization = synchronizeHeadsUpCycles(in: &candidate)
             let restoredDelivery = prepareRestoredHeadsUpDelivery(in: &candidate)
-            if candidate.state != retained {
-                try await persist([], state: candidate.state)
+            if candidate.state != retained || coordinator.actionReducer.fenceState != retainedFence {
+                do {
+                    try await persist([], state: candidate.state)
+                } catch {
+                    restoreCoordinator(checkpoint)
+                    throw error
+                }
             }
-            engine = candidate
+            coordinator.engine = candidate
             publish(liveHeadsUp: publishedHeadsUpPresentation(
                 schedulerPresentation: resumed.presentation,
                 in: candidate,
@@ -162,19 +187,20 @@ final class ProtocolRuntime {
                 suppressions.insert(suppression)
             }
 
-            var coordinator = OpportunityCoordinator(engine: engine)
+            let checkpoint = checkpointCoordinator()
             coordinator.dispatch(.observeRecoverySession(
                 at: observationDate,
                 systemAvailable: sample.systemAwake && sample.sessionActive && !sample.screenLocked,
             ))
             _ = coordinator.dispatch(.resumeExpiredSnoozes(at: observationDate))
+            let previous = coordinator.engine.state
             let output = coordinator.dispatch(.observe(
                 sample: sample,
                 activeSuppressions: suppressions,
                 isLowFrictionMoment: isLowFrictionMoment,
             ))
             let estimatedActiveUseRun = estimatedActiveUseRun(
-                from: engine.state,
+                from: previous,
                 to: coordinator.engine.state,
                 endedAt: observationDate,
             )
@@ -187,13 +213,19 @@ final class ProtocolRuntime {
                     activeReasons: suppressions,
                 ).reason,
             )
-            let synchronization = try await persistProtocolMutation(
-                candidate: &candidate,
-                drafts: output.events,
-                recordedAt: observationDate,
-                estimatedActiveUseRun: estimatedActiveUseRun,
-            )
-            engine = candidate
+            let synchronization: [HeadsUpDeliveryEffect]
+            do {
+                synchronization = try await persistProtocolMutation(
+                    candidate: &candidate,
+                    drafts: output.events,
+                    recordedAt: observationDate,
+                    estimatedActiveUseRun: estimatedActiveUseRun,
+                )
+            } catch {
+                restoreCoordinator(checkpoint)
+                throw error
+            }
+            coordinator.engine = candidate
             publish(liveHeadsUp: publishedHeadsUpPresentation(
                 schedulerPresentation: output.presentation,
                 in: candidate,
@@ -221,7 +253,7 @@ final class ProtocolRuntime {
             case .skipped:
                 (.skipped, .user)
             }
-            var coordinator = OpportunityCoordinator(engine: engine)
+            let checkpoint = checkpointCoordinator()
             let output = coordinator.dispatch(.record(
                 kind: fact.kind,
                 opportunity: .visual,
@@ -229,11 +261,17 @@ final class ProtocolRuntime {
                 source: fact.source,
             ))
             var candidate = coordinator.engine
-            let synchronization = try await persistProtocolMutation(
-                candidate: &candidate,
-                drafts: output.events,
-            )
-            engine = candidate
+            let synchronization: [HeadsUpDeliveryEffect]
+            do {
+                synchronization = try await persistProtocolMutation(
+                    candidate: &candidate,
+                    drafts: output.events,
+                )
+            } catch {
+                restoreCoordinator(checkpoint)
+                throw error
+            }
+            coordinator.engine = candidate
             publish(liveHeadsUp: nil)
             emitHeadsUpEffects(synchronization)
         }
@@ -243,7 +281,7 @@ final class ProtocolRuntime {
         source: OpportunityEventSource = .localTimer,
     ) async throws {
         try await withLifecycleGate {
-            var coordinator = OpportunityCoordinator(engine: engine)
+            let checkpoint = checkpointCoordinator()
             let output = coordinator.dispatch(.record(
                 kind: .promptPresented,
                 opportunity: .recovery,
@@ -251,11 +289,17 @@ final class ProtocolRuntime {
                 source: source,
             ))
             var candidate = coordinator.engine
-            let synchronization = try await persistProtocolMutation(
-                candidate: &candidate,
-                drafts: output.events,
-            )
-            engine = candidate
+            let synchronization: [HeadsUpDeliveryEffect]
+            do {
+                synchronization = try await persistProtocolMutation(
+                    candidate: &candidate,
+                    drafts: output.events,
+                )
+            } catch {
+                restoreCoordinator(checkpoint)
+                throw error
+            }
+            coordinator.engine = candidate
             publish(liveHeadsUp: .recovery)
             emitHeadsUpEffects(synchronization)
         }
@@ -353,7 +397,7 @@ extension ProtocolRuntime {
         guard configuration.delivery.snoozeOptionsSeconds.contains(duration) else {
             throw ProtocolLifecycleError.invalidSnoozeDuration
         }
-        var coordinator = OpportunityCoordinator(engine: engine)
+        let checkpoint = checkpointCoordinator()
         var drafts: [OpportunityEventDraft] = []
         let actionDate = now()
         for opportunity in opportunities {
@@ -368,16 +412,27 @@ extension ProtocolRuntime {
             route(.snooze(duration))
             return
         }
-        let synchronization = try await persistProtocolMutation(
-            candidate: &candidate,
-            drafts: drafts,
-            recordedAt: actionDate,
-        )
-        engine = candidate
+        let synchronization: [HeadsUpDeliveryEffect]
+        do {
+            synchronization = try await persistProtocolMutation(
+                candidate: &candidate,
+                drafts: drafts,
+                recordedAt: actionDate,
+            )
+        } catch {
+            restoreCoordinator(checkpoint)
+            throw error
+        }
+        coordinator.engine = candidate
         publish(liveHeadsUp: nil)
         emitHeadsUpEffects(synchronization)
     }
 
+    /// Commits one transaction boundary. The stored state always overlays the
+    /// live reducer fence (Story 2.6 fence-through-save, additive over the
+    /// closed 2.5 schema): `engine.state` snapshots carry an empty fence, so
+    /// saving them directly would drop the replay authority and let a
+    /// committed ActionID recommit after restore instead of replaying.
     func persist(
         _ drafts: [OpportunityEventDraft],
         state: ProtocolState,
@@ -395,11 +450,38 @@ extension ProtocolRuntime {
                 selectedDurationSeconds: draft.selectedDurationSeconds,
             )
         }
+        var state = state
+        state.coordinatorFence = coordinator.actionReducer.fenceState
         try await store.commit(
             events: events,
             state: state,
             estimatedActiveUseRun: estimatedActiveUseRun,
         )
+    }
+    // MARK: - Coordinator transaction checkpoint (Story 2.6 F1)
+
+    /// Pre-dispatch snapshot of the owned coordinator: the engine plus the
+    /// action-reducer fence state. Every dispatch-then-commit path snapshots
+    /// before its first dispatch and restores both on any throw before
+    /// publish, so a failed store write (and its retry) replays from
+    /// identical state instead of double-applying. lifecycleSession and
+    /// published state are only touched on success, so restoring the
+    /// coordinator alone is sufficient.
+    struct CoordinatorCheckpoint: Sendable {
+        var engine: ProtocolEngine
+        var fence: CoordinatorFenceState
+    }
+
+    func checkpointCoordinator() -> CoordinatorCheckpoint {
+        CoordinatorCheckpoint(
+            engine: coordinator.engine,
+            fence: coordinator.actionReducer.fenceState,
+        )
+    }
+
+    func restoreCoordinator(_ checkpoint: CoordinatorCheckpoint) {
+        coordinator.engine = checkpoint.engine
+        coordinator.actionReducer = OpportunityActionReducer(fenceState: checkpoint.fence)
     }
 
     private func estimatedActiveUseRun(

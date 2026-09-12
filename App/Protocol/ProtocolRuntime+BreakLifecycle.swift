@@ -58,13 +58,14 @@ extension ProtocolRuntime {
 
     private func openMovement(source: OpportunityEventSource) async throws {
         guard lifecycleSession == nil else { throw ProtocolLifecycleError.invalidTransition }
-        var candidate = engine
-        let output = candidate.record(.breakStarted, opportunity: .movement, source: source)
-        try await commitLifecycle(
-            candidate: candidate,
-            drafts: output.events,
-            nextSession: .movement(selectedDuration: nil),
-        )
+        try await commitLifecycle(nextSession: .movement(selectedDuration: nil)) {
+            coordinator.dispatch(.record(
+                kind: .breakStarted,
+                opportunity: .movement,
+                selectedDurationSeconds: nil,
+                source: source,
+            )).events
+        }
     }
 
     private func selectMovement(_ duration: TimeInterval) async throws {
@@ -74,33 +75,30 @@ extension ProtocolRuntime {
         guard engine.isAcceptedMovementDuration(duration) else {
             throw ProtocolLifecycleError.invalidMovementDuration
         }
-        var candidate = engine
-        let output = candidate.selectMovement(durationSeconds: duration)
-        try await commitLifecycle(
-            candidate: candidate,
-            drafts: output.events,
-            nextSession: .movement(selectedDuration: duration),
-        )
+        try await commitLifecycle(nextSession: .movement(selectedDuration: duration)) {
+            coordinator.dispatch(.selectMovement(durationSeconds: duration)).events
+        }
     }
 
     private func finishMovement(_ event: MovementLifecycleEvent) async throws {
         guard case .movement = lifecycleSession else {
             throw ProtocolLifecycleError.noActiveSession
         }
-        var candidate = engine
-        let output = movementTerminalOutput(event, candidate: &candidate)
-        try await commitLifecycle(candidate: candidate, drafts: output.events, nextSession: nil)
+        try await commitLifecycle(nextSession: nil) {
+            movementTerminalOutput(event).events
+        }
     }
 
     private func openMerged(source: OpportunityEventSource) async throws {
         guard lifecycleSession == nil else { throw ProtocolLifecycleError.invalidTransition }
-        var candidate = engine
-        let output = candidate.record(.breakStarted, opportunity: .visual, source: source)
-        try await commitLifecycle(
-            candidate: candidate,
-            drafts: output.events,
-            nextSession: .merged(segment: .visual, selectedDuration: nil),
-        )
+        try await commitLifecycle(nextSession: .merged(segment: .visual, selectedDuration: nil)) {
+            coordinator.dispatch(.record(
+                kind: .breakStarted,
+                opportunity: .visual,
+                selectedDurationSeconds: nil,
+                source: source,
+            )).events
+        }
     }
 
     private func finishMergedVisual(
@@ -110,80 +108,102 @@ extension ProtocolRuntime {
         guard lifecycleSession == .merged(segment: .visual, selectedDuration: nil) else {
             throw ProtocolLifecycleError.noActiveSession
         }
-        var candidate = engine
-        var drafts = candidate.record(
-            kind,
-            opportunity: .visual,
-            source: source,
-        ).events
-        drafts += candidate.record(
-            .breakStarted,
-            opportunity: .movement,
-            source: .localTimer,
-        ).events
-        try await commitLifecycle(
-            candidate: candidate,
-            drafts: drafts,
-            nextSession: .merged(segment: .movement, selectedDuration: nil),
-        )
+        try await commitLifecycle(nextSession: .merged(segment: .movement, selectedDuration: nil)) {
+            var drafts = coordinator.dispatch(.record(
+                kind: kind,
+                opportunity: .visual,
+                selectedDurationSeconds: nil,
+                source: source,
+            )).events
+            drafts += coordinator.dispatch(.record(
+                kind: .breakStarted,
+                opportunity: .movement,
+                selectedDurationSeconds: nil,
+                source: .localTimer,
+            )).events
+            return drafts
+        }
     }
 
     private func reduceMergedMovement(_ event: MergedLifecycleEvent) async throws {
         guard case .merged(segment: .movement, selectedDuration: _) = lifecycleSession else {
             throw ProtocolLifecycleError.noActiveSession
         }
-        var candidate = engine
-        let output: ProtocolEngineOutput
+        let dispatching: () throws -> [OpportunityEventDraft]
         let nextSession: LifecycleSession?
         switch event {
         case let .selectedDuration(duration):
             guard engine.isAcceptedMovementDuration(duration) else {
                 throw ProtocolLifecycleError.invalidMovementDuration
             }
-            output = candidate.selectMovement(durationSeconds: duration)
             nextSession = .merged(segment: .movement, selectedDuration: duration)
+            dispatching = { self.coordinator.dispatch(.selectMovement(durationSeconds: duration)).events }
         case .movementTimerFinished, .doneEarly, .alreadyMoved, .positionChanged:
-            output = mergedMovementTerminalOutput(event, candidate: &candidate)
             nextSession = nil
+            dispatching = { self.mergedMovementTerminalOutput(event).events }
         case .visualOnly:
-            output = candidate.skipMergedSegment(.movement)
             nextSession = nil
+            dispatching = { self.coordinator.dispatch(.skipMergedSegment(.movement)).events }
         case .opened, .visualTimerFinished, .skipped:
             throw ProtocolLifecycleError.invalidTransition
         }
-        try await commitLifecycle(
-            candidate: candidate,
-            drafts: output.events,
-            nextSession: nextSession,
-        )
+        try await commitLifecycle(nextSession: nextSession, dispatching: dispatching)
     }
 
     private func skipMergedActiveSegment() async throws {
-        let opportunity: OpportunityType = switch lifecycleSession {
-        case .merged(segment: .visual, selectedDuration: _): .visual
-        case .merged(segment: .movement, selectedDuration: _): .movement
+        // Escape-during-visual takes the canonical D-043
+        // `merged.escape_during_visual` effect (fresh visual + fresh movement
+        // + one deferral + one skip); the movement-segment path keeps the
+        // legacy retaining route.
+        let command: OpportunityCoordinatorCommand = switch lifecycleSession {
+        case .merged(segment: .visual, selectedDuration: _): .mergedEscapeDuringVisual
+        case .merged(segment: .movement, selectedDuration: _): .skipMergedSegment(.movement)
         case .movement, nil: throw ProtocolLifecycleError.noActiveSession
         }
-        var candidate = engine
-        let output = candidate.skipMergedSegment(opportunity)
-        try await commitLifecycle(candidate: candidate, drafts: output.events, nextSession: nil)
+        try await commitLifecycle(nextSession: nil) {
+            coordinator.dispatch(command).events
+        }
     }
 
     private func movementTerminalOutput(
         _ event: MovementLifecycleEvent,
-        candidate: inout ProtocolEngine,
-    ) -> ProtocolEngineOutput {
+    ) -> OpportunityCoordinatorOutput {
         switch event {
         case .timerFinished:
-            candidate.record(.timerFinished, opportunity: .movement, source: .localTimer)
+            coordinator.dispatch(.record(
+                kind: .timerFinished,
+                opportunity: .movement,
+                selectedDurationSeconds: nil,
+                source: .localTimer,
+            ))
         case .doneEarly:
-            candidate.record(.userDeclaredCompleted, opportunity: .movement)
+            coordinator.dispatch(.record(
+                kind: .userDeclaredCompleted,
+                opportunity: .movement,
+                selectedDurationSeconds: nil,
+                source: .user,
+            ))
         case .alreadyMoved:
-            candidate.record(.userDeclaredAlreadyMoved, opportunity: .movement)
+            coordinator.dispatch(.record(
+                kind: .userDeclaredAlreadyMoved,
+                opportunity: .movement,
+                selectedDurationSeconds: nil,
+                source: .user,
+            ))
         case .positionChanged:
-            candidate.record(.positionChanged, opportunity: .positionChange)
+            coordinator.dispatch(.record(
+                kind: .positionChanged,
+                opportunity: .positionChange,
+                selectedDurationSeconds: nil,
+                source: .user,
+            ))
         case .skipped:
-            candidate.record(.skipped, opportunity: .movement)
+            coordinator.dispatch(.record(
+                kind: .skipped,
+                opportunity: .movement,
+                selectedDurationSeconds: nil,
+                source: .user,
+            ))
         case .opened, .selectedDuration:
             preconditionFailure("Movement terminal reducer received a non-terminal event")
         }
@@ -191,36 +211,65 @@ extension ProtocolRuntime {
 
     private func mergedMovementTerminalOutput(
         _ event: MergedLifecycleEvent,
-        candidate: inout ProtocolEngine,
-    ) -> ProtocolEngineOutput {
+    ) -> OpportunityCoordinatorOutput {
         switch event {
         case .movementTimerFinished:
-            candidate.record(.timerFinished, opportunity: .movement, source: .localTimer)
+            coordinator.dispatch(.record(
+                kind: .timerFinished,
+                opportunity: .movement,
+                selectedDurationSeconds: nil,
+                source: .localTimer,
+            ))
         case .doneEarly:
-            candidate.record(.userDeclaredCompleted, opportunity: .movement)
+            coordinator.dispatch(.record(
+                kind: .userDeclaredCompleted,
+                opportunity: .movement,
+                selectedDurationSeconds: nil,
+                source: .user,
+            ))
         case .alreadyMoved:
-            candidate.record(.userDeclaredAlreadyMoved, opportunity: .movement)
+            coordinator.dispatch(.record(
+                kind: .userDeclaredAlreadyMoved,
+                opportunity: .movement,
+                selectedDurationSeconds: nil,
+                source: .user,
+            ))
         case .positionChanged:
-            candidate.record(.positionChanged, opportunity: .positionChange)
+            coordinator.dispatch(.record(
+                kind: .positionChanged,
+                opportunity: .positionChange,
+                selectedDurationSeconds: nil,
+                source: .user,
+            ))
         case .opened, .visualTimerFinished, .selectedDuration, .visualOnly, .skipped:
             preconditionFailure("Merged terminal reducer received a non-terminal event")
         }
     }
 
+    /// Single choke point for every BreakLifecycle mutation (Story 2.6 F1):
+    /// snapshots the owned coordinator before the first dispatch and restores
+    /// engine + fence on any throw, so a failed store write retries from
+    /// identical state instead of double-applying.
     private func commitLifecycle(
-        candidate: ProtocolEngine,
-        drafts: [OpportunityEventDraft],
         nextSession: LifecycleSession?,
+        dispatching: () throws -> [OpportunityEventDraft],
     ) async throws {
-        var candidate = candidate
-        let synchronization = try await persistProtocolMutation(
-            candidate: &candidate,
-            drafts: drafts,
-        )
-        engine = candidate
-        lifecycleSession = nextSession
-        publish(liveHeadsUp: nil)
-        emitHeadsUpEffects(synchronization)
+        let checkpoint = checkpointCoordinator()
+        do {
+            let drafts = try dispatching()
+            var candidate = coordinator.engine
+            let synchronization = try await persistProtocolMutation(
+                candidate: &candidate,
+                drafts: drafts,
+            )
+            coordinator.engine = candidate
+            lifecycleSession = nextSession
+            publish(liveHeadsUp: nil)
+            emitHeadsUpEffects(synchronization)
+        } catch {
+            restoreCoordinator(checkpoint)
+            throw error
+        }
     }
 }
 

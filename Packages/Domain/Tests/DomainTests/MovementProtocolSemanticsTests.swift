@@ -220,22 +220,37 @@ struct MovementProtocolSemanticsTests {
         #expect(atExpiry.events.isEmpty)
     }
 
-    @Test("Merged Escape during visual skips only visual and leaves both clocks due")
-    func mergedEscapeDuringVisualPreservesBothDueClocks() {
+    @Test("Merged Escape during visual applies the canonical fresh effect")
+    func mergedEscapeDuringVisualFreshensBothCycles() {
+        // Contract-backed migration (Story 2.6, not green-painting): D-043
+        // `timing_runtime_v2.yaml` action_contract `merged.escape_during_visual`
+        // rows clocks {visual: fresh_cycle, movement: fresh_cycle, position:
+        // retain, recovery: deferral_increment} with facts [skipped]. The
+        // pre-2.6 retaining pin (both clocks due, graced) covered the legacy
+        // `skipMergedSegment` route production no longer uses for this
+        // segment; the coordinator `.mergedEscapeDuringVisual` command shares
+        // the reducer's `applyMergedEscapeDuringVisual` effect by construction.
         var engine = dueEngine()
         _ = engine.record(.breakStarted, opportunity: .visual, source: .localTimer)
+        var coordinator = OpportunityCoordinator(engine: engine)
 
-        let output = engine.skipMergedSegment(.visual)
+        let output = coordinator.dispatch(.mergedEscapeDuringVisual)
 
         #expect(output.events.map(\.kind) == [.skipped])
-        #expect(engine.visualClock.accumulatedActiveUseSeconds == 1500)
-        #expect(engine.visualClock.phase == .gracedAfterSuppression)
-        #expect(engine.movementClock.accumulatedActiveUseSeconds == 3600)
-        #expect(engine.movementClock.phase == .gracedAfterSuppression)
+        #expect(output.events.map(\.opportunity) == [.visual])
+        #expect(coordinator.engine.visualClock == OpportunityClockState(cycleID: 1))
+        #expect(coordinator.engine.movementClock == OpportunityClockState(cycleID: 1))
+        #expect(coordinator.engine.recoveryState.movementDeferralCount == 1)
+        engine = coordinator.engine
         let nextObservation = engine.observe(.active(uptimeSeconds: 0, secondsSinceInput: 0))
         #expect(nextObservation.presentation == nil)
     }
 
+    // Story 2.6 scope note: this movement-segment pin is intentionally NOT
+    // migrated. D-043 `merged.escape_during_movement` rows visual: retain,
+    // and only the visual-segment route moved to the canonical fresh effect
+    // (`merged.escape_during_visual`); movement-segment production callers
+    // keep the legacy retaining `skipMergedSegment` route, pinned here.
     @Test("Merged Escape after visual finish retains visual outcome and leaves movement due")
     func mergedEscapeDuringMovementRetainsVisualOutcome() {
         var engine = dueEngine()

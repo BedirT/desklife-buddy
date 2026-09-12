@@ -782,7 +782,7 @@ struct HeadsUpRuntimeTests {
         #expect(effects.isEmpty)
     }
 
-    @Test("Standalone skip rotates its cycle while merged skip preserves both due clocks")
+    @Test("Standalone skip rotates its cycle while merged skip applies the canonical fresh effect")
     func skipSemantics() async throws {
         let dueVisual = ProtocolState(
             visualClock: OpportunityClockState(accumulatedActiveUseSeconds: 1500),
@@ -795,6 +795,12 @@ struct HeadsUpRuntimeTests {
         #expect(standalone.state.visualClock.cycleID == 1)
         #expect(standalone.state.visualClock.accumulatedActiveUseSeconds == 0)
 
+        // Contract-backed migration (Story 2.6): D-043
+        // `timing_runtime_v2.yaml` action_contract `merged.escape_during_visual`
+        // rows clocks {visual: fresh_cycle, movement: fresh_cycle, recovery:
+        // deferral_increment} with facts [skipped]. The pre-2.6 retaining pin
+        // (both due clocks untouched) covered the legacy `skipMergedSegment`
+        // route production no longer uses for this segment.
         let dueMerged = ProtocolState(
             visualClock: OpportunityClockState(accumulatedActiveUseSeconds: 1500),
             movementClock: OpportunityClockState(accumulatedActiveUseSeconds: 3600),
@@ -807,10 +813,9 @@ struct HeadsUpRuntimeTests {
             opportunity: .merged(visualCycleID: 0, movementCycleID: 0),
         )
         try await merged.respondToHeadsUp(deliveryID(1), response: .skip)
-        #expect(merged.state.visualClock.cycleID == 0)
-        #expect(merged.state.visualClock.accumulatedActiveUseSeconds == 1500)
-        #expect(merged.state.movementClock.cycleID == 0)
-        #expect(merged.state.movementClock.accumulatedActiveUseSeconds == 3600)
+        #expect(merged.state.visualClock == OpportunityClockState(cycleID: 1))
+        #expect(merged.state.movementClock == OpportunityClockState(cycleID: 1))
+        #expect(merged.state.recoveryState.movementDeferralCount == 1)
     }
 
     @Test("More Options and dismissal clear delivery without declaring a user fact")

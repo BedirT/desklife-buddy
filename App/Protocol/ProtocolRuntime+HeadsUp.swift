@@ -158,31 +158,38 @@ extension ProtocolRuntime {
                 maximumSnoozeReoffers: policy.maximumSnoozeReoffers,
             )
             let output = reducer.respond(id, response: response)
-            var candidate = engine
+            let checkpoint = checkpointCoordinator()
+            var candidate = checkpoint.engine
             candidate.synchronizeHeadsUpDeliveryState(reducer.state)
-            let drafts = try applyHeadsUpResponseEffects(
-                output.effects,
-                candidate: &candidate,
-                actionDate: actionDate,
-            )
+            coordinator.engine = candidate
+            do {
+                let drafts = try applyHeadsUpResponseEffects(
+                    output.effects,
+                    actionDate: actionDate,
+                )
+                candidate = coordinator.engine
 
-            let synchronization = try await persistProtocolMutation(
-                candidate: &candidate,
-                drafts: drafts,
-                recordedAt: actionDate,
-            )
-            engine = candidate
-            publish(liveHeadsUp: nil)
-            emitHeadsUpEffects(synchronization)
-            emitHeadsUpEffects(
-                output.effects,
-                retiringDeliveryID: active.id,
-            )
-            onHeadsUpSettled?(id, response)
-        }
+                let synchronization = try await persistProtocolMutation(
+                    candidate: &candidate,
+                    drafts: drafts,
+                    recordedAt: actionDate,
+                )
+                coordinator.engine = candidate
+                publish(liveHeadsUp: nil)
+                emitHeadsUpEffects(synchronization)
+                emitHeadsUpEffects(
+                    output.effects,
+                    retiringDeliveryID: active.id,
+                )
+                onHeadsUpSettled?(id, response)
+            } catch {
+                restoreCoordinator(checkpoint)
+                throw error
+            }
     }
 }
 
+}
 extension ProtocolRuntime {
     func reduceHeadsUpObservation(
         in candidate: inout ProtocolEngine,

@@ -198,7 +198,7 @@ struct PersistFailureRollbackTests {
         try await runtime.observe(.active(uptimeSeconds: 310, secondsSinceInput: 300))
 
         #expect(store.commits.last?.events.map(\.kind) == [.likelyNaturalInterruption])
-        #expect(store.commits.filter { !$0.events.isEmpty }.count == 1)
+        #expect(store.commits.count(where: { !$0.events.isEmpty }) == 1)
     }
 
     @Test("Merged Escape retries to cycle 1 and deferral 1, never 2")
@@ -251,8 +251,8 @@ struct PersistFailureRollbackTests {
         // per covered opportunity (visual + movement).
         #expect(store.commits[0].events.map(\.kind) == [.snoozed, .snoozed])
     }
-
 }
+
 // MARK: - Fixtures
 
 private var dueState: ProtocolState {

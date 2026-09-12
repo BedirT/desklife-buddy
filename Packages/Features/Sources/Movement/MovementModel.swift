@@ -169,6 +169,7 @@ public final class MovementModel {
         onAction(.selectedDuration(selectedDurationSeconds))
         refresh()
     }
+
     /// Keyboard route for the quick duration (D-032): active on the first frame.
     public func selectQuickDurationFromKeyboard() {
         refresh()

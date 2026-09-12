@@ -17,6 +17,7 @@ import Foundation
 /// four-clock/evidence machinery are documented at each mapping.
 public enum OpportunityActionKind: String, Codable, Hashable, Sendable, CaseIterable {
     // MARK: Nonterminal opportunity intents
+
     case nowAcceptVisual
     case nowOpenMovementOffer
     case nowAcceptMovement
@@ -29,6 +30,7 @@ public enum OpportunityActionKind: String, Codable, Hashable, Sendable, CaseIter
     case companionTakeWithMe
 
     // MARK: Nonterminal global/system/schedule intents
+
     case pauseStart
     case pauseResume
     case holdBegin
@@ -47,6 +49,7 @@ public enum OpportunityActionKind: String, Codable, Hashable, Sendable, CaseIter
     case scheduleRestartUndo
 
     // MARK: Terminal candidates
+
     case visualTimerFinished
     case visualDoneEarly
     case visualSkip
@@ -94,9 +97,9 @@ extension OpportunityActionKind {
              .systemAvailableAfterExtended, .systemShortInputIdle,
              .systemLongIdleBegan, .systemReturnedFromLongIdle,
              .systemSampleGap, .sensorStrongMovementRestart, .scheduleRestartUndo:
-            return false
+            false
         default:
-            return true
+            true
         }
     }
 
@@ -110,9 +113,9 @@ extension OpportunityActionKind {
              .systemShortInputIdle, .systemLongIdleBegan,
              .systemReturnedFromLongIdle, .systemSampleGap,
              .sensorStrongMovementRestart, .scheduleRestartUndo:
-            return true
+            true
         default:
-            return false
+            false
         }
     }
 
@@ -120,33 +123,33 @@ extension OpportunityActionKind {
     /// contract `transition_rank_within_conflict_key` for the covered set.
     var sameKeyRank: Int {
         switch self {
-        case .pauseStart: return 0
-        case .systemUnavailable: return 5
-        case .workingHoursExit: return 10
-        case .systemLongIdleBegan: return 15
-        case .holdBegin: return 20
-        case .laterSnooze: return 25
-        case .companionTakeWithMe: return 30
-        case .sensorStrongMovementRestart: return 35
-        case .scheduleRestartUndo: return 36
-        case .pauseResume: return 40
-        case .systemAvailableAfterExtended: return 41
-        case .systemAvailable: return 42
-        case .workingHoursEnter: return 43
-        case .systemReturnedFromLongIdle: return 44
-        case .holdCorrectionRelease: return 45
-        case .holdRelease: return 46
-        case .systemSampleGap: return 50
-        case .systemShortInputIdle: return 51
-        case .nowAcceptVisual: return 60
-        case .nowOpenMovementOffer: return 61
-        case .nowAcceptMovement: return 62
-        case .mergedAccept: return 63
-        case .mergedMovementAccept: return 64
-        case .nowAcceptRecovery: return 65
-        case .movementChangeContent: return 70
-        case .mergedMovementChangeContent: return 71
-        default: return 90
+        case .pauseStart: 0
+        case .systemUnavailable: 5
+        case .workingHoursExit: 10
+        case .systemLongIdleBegan: 15
+        case .holdBegin: 20
+        case .laterSnooze: 25
+        case .companionTakeWithMe: 30
+        case .sensorStrongMovementRestart: 35
+        case .scheduleRestartUndo: 36
+        case .pauseResume: 40
+        case .systemAvailableAfterExtended: 41
+        case .systemAvailable: 42
+        case .workingHoursEnter: 43
+        case .systemReturnedFromLongIdle: 44
+        case .holdCorrectionRelease: 45
+        case .holdRelease: 46
+        case .systemSampleGap: 50
+        case .systemShortInputIdle: 51
+        case .nowAcceptVisual: 60
+        case .nowOpenMovementOffer: 61
+        case .nowAcceptMovement: 62
+        case .mergedAccept: 63
+        case .mergedMovementAccept: 64
+        case .nowAcceptRecovery: 65
+        case .movementChangeContent: 70
+        case .mergedMovementChangeContent: 71
+        default: 90
         }
     }
 
@@ -154,14 +157,14 @@ extension OpportunityActionKind {
     /// completion outranks timer finish. Arrival order never ranks.
     var terminalClaimRank: Int {
         switch factKind {
-        case .some(.skipped): return 0
-        case .some(.snoozed): return 5
-        case .some(.notAppropriate): return 10
-        case .some(.positionChanged): return 20
-        case .some(.userDeclaredAlreadyMoved): return 30
-        case .some(.userDeclaredCompleted): return 40
-        case .some(.timerFinished): return 50
-        default: return 60
+        case .some(.skipped): 0
+        case .some(.snoozed): 5
+        case .some(.notAppropriate): 10
+        case .some(.positionChanged): 20
+        case .some(.userDeclaredAlreadyMoved): 30
+        case .some(.userDeclaredCompleted): 40
+        case .some(.timerFinished): 50
+        default: 60
         }
     }
 
@@ -172,26 +175,26 @@ extension OpportunityActionKind {
         switch self {
         case .nowAcceptVisual, .nowAcceptMovement, .nowAcceptRecovery,
              .mergedAccept, .mergedMovementAccept:
-            return .breakStarted
+            .breakStarted
         case .visualTimerFinished, .movementTimerFinished,
              .mergedVisualSegmentFinished, .mergedMovementTimerFinished:
-            return .timerFinished
+            .timerFinished
         case .visualDoneEarly, .movementDoneEarly,
              .mergedVisualSegmentDoneEarly, .mergedMovementDoneEarly:
-            return .userDeclaredCompleted
+            .userDeclaredCompleted
         case .movementAlreadyMoved, .mergedMovementAlreadyMoved:
-            return .userDeclaredAlreadyMoved
+            .userDeclaredAlreadyMoved
         case .movementPositionChangedOffered, .movementPositionChangedRunning,
              .positionChanged, .mergedMovementPositionChanged:
-            return .positionChanged
+            .positionChanged
         case .visualSkip, .visualEscape, .movementSkipOffered,
              .movementSkipRunning, .movementEscapeOffered,
              .movementEscapeRunning, .positionSkip, .mergedMovementSkip,
              .mergedVisualOnly, .mergedEscapeDuringVisual,
              .mergedEscapeDuringMovement:
-            return .skipped
+            .skipped
         default:
-            return nil
+            nil
         }
     }
 }
@@ -219,16 +222,16 @@ extension OpportunityActionScope: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         switch try container.decode(String.self, forKey: .kind) {
         case "visual":
-            self = .visual(cycle: try container.decode(ClockCycleID.self, forKey: .cycle))
+            self = try .visual(cycle: container.decode(ClockCycleID.self, forKey: .cycle))
         case "movement":
-            self = .movement(cycle: try container.decode(ClockCycleID.self, forKey: .cycle))
+            self = try .movement(cycle: container.decode(ClockCycleID.self, forKey: .cycle))
         case "merged":
-            self = .merged(
-                visualCycle: try container.decode(ClockCycleID.self, forKey: .visualCycle),
-                movementCycle: try container.decode(ClockCycleID.self, forKey: .movementCycle),
+            self = try .merged(
+                visualCycle: container.decode(ClockCycleID.self, forKey: .visualCycle),
+                movementCycle: container.decode(ClockCycleID.self, forKey: .movementCycle),
             )
         case "position":
-            self = .position(cycle: try container.decode(ClockCycleID.self, forKey: .cycle))
+            self = try .position(cycle: container.decode(ClockCycleID.self, forKey: .cycle))
         case "globalSystem":
             self = .globalSystem
         default:
@@ -316,15 +319,15 @@ extension OpportunityActionPayload: Codable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.init(
-            selectedDurationSeconds: try container.decodeIfPresent(TimeInterval.self, forKey: .selectedDurationSeconds),
-            selectedSnoozeSeconds: try container.decodeIfPresent(TimeInterval.self, forKey: .selectedSnoozeSeconds),
-            reofferCount: try container.decodeIfPresent(Int.self, forKey: .reofferCount),
-            referenceDate: try container.decodeIfPresent(Date.self, forKey: .referenceDate),
-            pauseRecordID: try container.decodeIfPresent(UUID.self, forKey: .pauseRecordID),
-            holdDecisionID: try container.decodeIfPresent(DecisionID.self, forKey: .holdDecisionID),
-            affectedPositionCycle: try container.decodeIfPresent(ClockCycleID.self, forKey: .affectedPositionCycle),
-            contentIdentifier: try container.decodeIfPresent(String.self, forKey: .contentIdentifier),
+        try self.init(
+            selectedDurationSeconds: container.decodeIfPresent(TimeInterval.self, forKey: .selectedDurationSeconds),
+            selectedSnoozeSeconds: container.decodeIfPresent(TimeInterval.self, forKey: .selectedSnoozeSeconds),
+            reofferCount: container.decodeIfPresent(Int.self, forKey: .reofferCount),
+            referenceDate: container.decodeIfPresent(Date.self, forKey: .referenceDate),
+            pauseRecordID: container.decodeIfPresent(UUID.self, forKey: .pauseRecordID),
+            holdDecisionID: container.decodeIfPresent(DecisionID.self, forKey: .holdDecisionID),
+            affectedPositionCycle: container.decodeIfPresent(ClockCycleID.self, forKey: .affectedPositionCycle),
+            contentIdentifier: container.decodeIfPresent(String.self, forKey: .contentIdentifier),
         )
     }
 
@@ -401,18 +404,18 @@ extension OpportunityActionEnvelope: Codable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.init(
-            action: try container.decode(ActionID.self, forKey: .action),
-            kind: try container.decode(OpportunityActionKind.self, forKey: .kind),
-            scope: try container.decode(OpportunityActionScope.self, forKey: .scope),
-            originRevision: try container.decode(UInt64.self, forKey: .originRevision),
-            generation: try container.decode(CoordinatorGeneration.self, forKey: .generation),
-            projectionEpoch: try container.decodeIfPresent(ProjectionEpochID.self, forKey: .projectionEpoch),
-            originPhase: try container.decodeIfPresent(OpportunityActionPhase.self, forKey: .originPhase),
-            segmentID: try container.decodeIfPresent(MergedSegmentID.self, forKey: .segmentID),
-            causalParents: try container.decodeIfPresent([ActionID].self, forKey: .causalParents) ?? [],
-            lease: try container.decodeIfPresent(OpportunityLease.self, forKey: .lease),
-            payload: try container.decode(OpportunityActionPayload.self, forKey: .payload),
+        try self.init(
+            action: container.decode(ActionID.self, forKey: .action),
+            kind: container.decode(OpportunityActionKind.self, forKey: .kind),
+            scope: container.decode(OpportunityActionScope.self, forKey: .scope),
+            originRevision: container.decode(UInt64.self, forKey: .originRevision),
+            generation: container.decode(CoordinatorGeneration.self, forKey: .generation),
+            projectionEpoch: container.decodeIfPresent(ProjectionEpochID.self, forKey: .projectionEpoch),
+            originPhase: container.decodeIfPresent(OpportunityActionPhase.self, forKey: .originPhase),
+            segmentID: container.decodeIfPresent(MergedSegmentID.self, forKey: .segmentID),
+            causalParents: container.decodeIfPresent([ActionID].self, forKey: .causalParents) ?? [],
+            lease: container.decodeIfPresent(OpportunityLease.self, forKey: .lease),
+            payload: container.decode(OpportunityActionPayload.self, forKey: .payload),
         )
     }
 
@@ -491,13 +494,13 @@ public struct OpportunityActionReceipt: Equatable, Sendable, Codable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.init(
-            actionID: try container.decode(ActionID.self, forKey: .actionID),
-            outcome: try container.decode(OpportunityActionOutcome.self, forKey: .outcome),
-            facts: try container.decode([OpportunityEventDraft].self, forKey: .facts),
-            reason: try container.decode(String.self, forKey: .reason),
-            globalRevision: try container.decode(UInt64.self, forKey: .globalRevision),
-            opportunityRevision: try container.decodeIfPresent(UInt64.self, forKey: .opportunityRevision),
+        try self.init(
+            actionID: container.decode(ActionID.self, forKey: .actionID),
+            outcome: container.decode(OpportunityActionOutcome.self, forKey: .outcome),
+            facts: container.decode([OpportunityEventDraft].self, forKey: .facts),
+            reason: container.decode(String.self, forKey: .reason),
+            globalRevision: container.decode(UInt64.self, forKey: .globalRevision),
+            opportunityRevision: container.decodeIfPresent(UInt64.self, forKey: .opportunityRevision),
         )
     }
 

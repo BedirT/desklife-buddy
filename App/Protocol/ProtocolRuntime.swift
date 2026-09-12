@@ -50,6 +50,7 @@ final class ProtocolRuntime {
         get { coordinator.engine }
         set { coordinator.engine = newValue }
     }
+
     var pauseUntil: Date?
     var indefiniteSuppression: SuppressionReason?
     var observedSuppressions: Set<SuppressionReason> = []
@@ -458,6 +459,7 @@ extension ProtocolRuntime {
             estimatedActiveUseRun: estimatedActiveUseRun,
         )
     }
+
     // MARK: - Coordinator transaction checkpoint (Story 2.6 F1)
 
     /// Pre-dispatch snapshot of the owned coordinator: the engine plus the

@@ -439,7 +439,7 @@ struct MergedPanelTests {
         #expect(panel.atmosphereKindForTesting == "visual")
 
         try panel.update(content: .movement(MovementModel(
-            durations: MovementDurations.projected(from: try mergedSchedule()),
+            durations: MovementDurations.projected(from: mergedSchedule()),
             context: .merged,
             now: { 0 },
         )))

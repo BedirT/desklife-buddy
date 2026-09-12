@@ -418,7 +418,7 @@ private extension SwiftDataProtocolStore {
                 visualCycleID: visualCycleID,
                 movementCycleID: movementCycleID,
             ),
-            coordinatorFence: try coordinatorFence(from: stored),
+            coordinatorFence: coordinatorFence(from: stored),
         )
     }
 

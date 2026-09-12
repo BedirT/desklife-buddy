@@ -181,7 +181,7 @@ struct ProtocolFencePersistenceTests {
         // Fresh-boot ticks long past the pre-crash lease expiry: dedup still
         // precedes lease validation, so the resend replays without a second
         // commit on the new monotonic epoch.
-        let replay = reducer.reduce(envelope, on: &engine, atTicks: 60_000)
+        let replay = reducer.reduce(envelope, on: &engine, atTicks: 60000)
         #expect(replay.outcome == .duplicateReplay)
         #expect(replay.facts == committedFacts)
         #expect(reducer.opportunityRevisions[fenceFixtureOpportunity] == 1)
@@ -266,7 +266,7 @@ struct ProtocolFencePersistenceTests {
         // Ticks skew both directions on the restored reducer: duplicates
         // replay; the frontier never advances twice.
         var restored = OpportunityActionReducer(fenceState: skewed.coordinatorFence)
-        #expect(restored.reduce(envelope, on: &engine, atTicks: 60_000).outcome == .duplicateReplay)
+        #expect(restored.reduce(envelope, on: &engine, atTicks: 60000).outcome == .duplicateReplay)
         var restoredEarly = OpportunityActionReducer(fenceState: skewed.coordinatorFence)
         #expect(restoredEarly.reduce(envelope, on: &engine, atTicks: 0).outcome == .duplicateReplay)
         #expect(restored.opportunityRevisions[fenceFixtureOpportunity] == 1)
@@ -419,8 +419,10 @@ struct ProtocolFencePersistenceTests {
         let restored = try #require(try await store.loadState())
         var relaunched = ProtocolEngine(configuration: configuration, state: restored)
         #expect(relaunched.state.visualClock.cycleID == engine.visualClock.cycleID)
-        #expect(relaunched.state.visualClock.accumulatedActiveUseSeconds == engine.visualClock.accumulatedActiveUseSeconds)
-        #expect(relaunched.state.movementClock.accumulatedActiveUseSeconds == engine.movementClock.accumulatedActiveUseSeconds)
+        #expect(relaunched.state.visualClock.accumulatedActiveUseSeconds == engine.visualClock
+            .accumulatedActiveUseSeconds)
+        #expect(relaunched.state.movementClock.accumulatedActiveUseSeconds == engine.movementClock
+            .accumulatedActiveUseSeconds)
 
         _ = relaunched.observe(.active(uptimeSeconds: 0, secondsSinceInput: 0))
         var sawDue = false
@@ -474,7 +476,7 @@ struct ProtocolFencePersistenceTests {
             predicate: #Predicate { $0.key == key },
         )).first)
         let valid = String(decoding: stored.coordinatorFencePayload ?? Data(), as: UTF8.self)
-        stored.coordinatorFencePayload = Data(try #require(
+        stored.coordinatorFencePayload = try Data(#require(
             duplicateFenceRecord(in: valid, arrayKey: "committedActions"),
         ).utf8)
         try store.context.save()

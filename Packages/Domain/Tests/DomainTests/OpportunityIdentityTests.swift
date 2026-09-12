@@ -111,8 +111,10 @@ struct OpportunityIdentityTests {
     @Test("Merged segment IDs match the contract known vectors")
     func mergedSegmentKnownVectors() {
         let opportunity = OpportunityID(Self.uuid1)
-        #expect(MergedSegmentID.visual(for: opportunity).uuid.uuidString.lowercased() == "9763cb44-a5b7-806b-ba33-8ca4e24120dd")
-        #expect(MergedSegmentID.movement(for: opportunity).uuid.uuidString.lowercased() == "a55d02e9-11f2-87a5-ac2b-a0a70520a122")
+        #expect(MergedSegmentID.visual(for: opportunity).uuid.uuidString
+            .lowercased() == "9763cb44-a5b7-806b-ba33-8ca4e24120dd")
+        #expect(MergedSegmentID.movement(for: opportunity).uuid.uuidString
+            .lowercased() == "a55d02e9-11f2-87a5-ac2b-a0a70520a122")
     }
 
     @Test("Merged segment IDs are deterministic and distinct per segment")

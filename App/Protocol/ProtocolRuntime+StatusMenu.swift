@@ -72,7 +72,7 @@ extension ProtocolRuntime {
         emitHeadsUpEffects(headsUpEffects)
     }
 
-    private func applyHeadsUpSuppression(
+    func applyHeadsUpSuppression(
         _ reason: SuppressionReason,
         in candidate: inout ProtocolEngine,
     ) -> [HeadsUpDeliveryEffect] {

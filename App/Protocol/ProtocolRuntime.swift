@@ -53,6 +53,11 @@ final class ProtocolRuntime {
 
     var pauseUntil: Date?
     var indefiniteSuppression: SuppressionReason?
+    /// Active explicit manual context hold (meeting / presenting-or-sharing /
+    /// timed focus). Pure user declaration with a mandatory expiry; works
+    /// permission-free and never freezes need clocks. Process-live like the
+    /// timed manual pause.
+    var manualContextHold: ManualContextHold?
     var observedSuppressions: Set<SuppressionReason> = []
     let lifecycleGate = ProtocolLifecycleGate()
     var lifecycleSession: LifecycleSession?
@@ -179,6 +184,7 @@ final class ProtocolRuntime {
         try await withLifecycleGate {
             let observationDate = now()
             expireTimedPauseIfNeeded(at: observationDate)
+            expireManualContextHoldIfNeeded(at: observationDate)
             observedSuppressions = activeSuppressions
             if !sample.systemAwake || !sample.sessionActive || sample.screenLocked {
                 observedSuppressions.insert(.systemInactiveOrLocked)
@@ -333,6 +339,9 @@ extension ProtocolRuntime {
         } else if pauseUntil != nil {
             suppressions.insert(.manualPause)
         }
+        if let hold = manualContextHold, !hold.isExpired(at: now()) {
+            suppressions.insert(hold.suppressionReason)
+        }
         return SuppressionResolver.resolve(activeReasons: suppressions).reason
     }
 
@@ -368,6 +377,7 @@ extension ProtocolRuntime {
     func resumeManualSuppression() {
         pauseUntil = nil
         indefiniteSuppression = nil
+        manualContextHold = nil
         publish(liveHeadsUp: nil)
     }
 
@@ -385,6 +395,11 @@ extension ProtocolRuntime {
     func expireTimedPauseIfNeeded(at date: Date) {
         guard let pauseUntil, date >= pauseUntil else { return }
         self.pauseUntil = nil
+    }
+
+    func expireManualContextHoldIfNeeded(at date: Date) {
+        guard let hold = manualContextHold, hold.isExpired(at: date) else { return }
+        manualContextHold = nil
     }
 
     func snooze(_ duration: TimeInterval) async throws {

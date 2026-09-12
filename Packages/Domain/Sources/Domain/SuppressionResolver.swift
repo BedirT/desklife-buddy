@@ -1,4 +1,9 @@
 /// A sanctioned reason that blocks presentation without implying hidden sensing.
+///
+/// Manual context cases (`userDeclaredMeetingOrCall`,
+/// `userDeclaredScreenSharingOrPresentation`, `userSelectedTimedTask`) are
+/// pure user declarations: they work permission-free, always carry an
+/// explicit expiry via `ManualContextHold`, and never freeze need clocks.
 public enum SuppressionReason: String, CaseIterable, Hashable, Sendable {
     case manualPause
     case systemInactiveOrLocked
@@ -7,10 +12,15 @@ public enum SuppressionReason: String, CaseIterable, Hashable, Sendable {
     case calendarBusy
     case excludedApplication
     case outsideWorkingHours
+    case userDeclaredMeetingOrCall
+    case userDeclaredScreenSharingOrPresentation
+    case userSelectedTimedTask
     case snooze
     case lowFrictionWait
 
     /// Normative highest-to-lowest precedence from the product protocol.
+    /// Manual user state always wins over inference; `manualPause` still
+    /// outranks every manual context hold.
     public static let precedence: [SuppressionReason] = [
         .manualPause,
         .systemInactiveOrLocked,
@@ -19,6 +29,9 @@ public enum SuppressionReason: String, CaseIterable, Hashable, Sendable {
         .calendarBusy,
         .excludedApplication,
         .outsideWorkingHours,
+        .userDeclaredMeetingOrCall,
+        .userDeclaredScreenSharingOrPresentation,
+        .userSelectedTimedTask,
         .snooze,
         .lowFrictionWait,
     ]
@@ -28,7 +41,9 @@ public enum SuppressionReason: String, CaseIterable, Hashable, Sendable {
         case .manualPause, .systemInactiveOrLocked, .outsideWorkingHours:
             .pause
         case .explicitPresentationMode, .focusFilter, .calendarBusy,
-             .excludedApplication, .snooze, .lowFrictionWait:
+             .excludedApplication, .userDeclaredMeetingOrCall,
+             .userDeclaredScreenSharingOrPresentation, .userSelectedTimedTask,
+             .snooze, .lowFrictionWait:
             .continue
         }
     }

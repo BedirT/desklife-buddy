@@ -112,6 +112,20 @@ extension AppDelegate {
         verificationPreviewState = Self.verificationState(from: arguments)
         self.configuration = configuration
         self.runtime = runtime
+        ManualContextIntentCenter.handler = { [weak runtime] request in
+            guard let runtime else { throw ManualContextIntentError.appNotReady }
+            switch request {
+            case let .start(mode, durationSeconds):
+                let until = await MainActor.run {
+                    runtime.now().addingTimeInterval(durationSeconds)
+                }
+                try await runtime.startManualContext(mode: mode, until: until)
+                return await MainActor.run { runtime.manualContextHold }
+            case .end:
+                try await runtime.clearManualContext()
+                return nil
+            }
+        }
         installCompletionCapsule()
         installPrimaryOverlays(configuration: configuration)
         installStepSixOverlays(configuration: configuration)

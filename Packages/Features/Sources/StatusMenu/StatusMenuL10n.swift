@@ -80,6 +80,12 @@ enum StatusMenuL10n {
             string("status_menu.suppression.excluded_app", default: "Quiet in this app")
         case .outsideWorkingHours:
             string("status_menu.suppression.outside_hours", default: "Outside working hours")
+        case .userDeclaredMeetingOrCall:
+            string("status_menu.suppression.manual_meeting", default: "In a meeting you marked")
+        case .userDeclaredScreenSharingOrPresentation:
+            string("status_menu.suppression.manual_presenting", default: "Presenting you marked")
+        case .userSelectedTimedTask:
+            string("status_menu.suppression.manual_timed_focus", default: "In timed focus you marked")
         case .snooze:
             string("status_menu.suppression.snooze", default: "Snoozed")
         case .lowFrictionWait:

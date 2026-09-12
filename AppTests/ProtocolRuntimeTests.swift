@@ -344,7 +344,7 @@ struct ProtocolRuntimeTests {
     }
 }
 
-private final class RuntimeStore: ProtocolRuntimeStore {
+final class RuntimeStore: ProtocolRuntimeStore {
     enum Failure: Error {
         case requested
     }
@@ -379,7 +379,7 @@ private final class RuntimeStore: ProtocolRuntimeStore {
     }
 }
 
-private final class IDSequence {
+final class IDSequence {
     private var value: UInt8 = 0
 
     func next() -> UUID {

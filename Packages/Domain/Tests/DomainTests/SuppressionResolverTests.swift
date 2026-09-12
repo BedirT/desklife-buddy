@@ -34,6 +34,9 @@ struct SuppressionResolverTests {
             .calendarBusy,
             .excludedApplication,
             .outsideWorkingHours,
+            .userDeclaredMeetingOrCall,
+            .userDeclaredScreenSharingOrPresentation,
+            .userSelectedTimedTask,
             .snooze,
             .lowFrictionWait,
         ])
@@ -56,6 +59,9 @@ struct SuppressionResolverTests {
         .focusFilter,
         .calendarBusy,
         .excludedApplication,
+        .userDeclaredMeetingOrCall,
+        .userDeclaredScreenSharingOrPresentation,
+        .userSelectedTimedTask,
         .snooze,
         .lowFrictionWait,
     ])

@@ -15,15 +15,21 @@ public struct TrustCenterView: View {
     private let snapshot: TrustCenterSnapshot
     private let actions: TrustCenterActions
     private let increaseContrast: Bool
+    private let rulesSnapshot: TrustCenterRulesSnapshot?
+    private let rulesActions: TrustCenterRulesActions
 
     public init(
         snapshot: TrustCenterSnapshot,
         actions: TrustCenterActions = .none,
         increaseContrast: Bool = false,
+        rulesSnapshot: TrustCenterRulesSnapshot? = nil,
+        rulesActions: TrustCenterRulesActions = .none,
     ) {
         self.snapshot = snapshot
         self.actions = actions
         self.increaseContrast = increaseContrast
+        self.rulesSnapshot = rulesSnapshot
+        self.rulesActions = rulesActions
     }
 
     public var body: some View {
@@ -43,6 +49,9 @@ public struct TrustCenterView: View {
                     increaseContrast: increaseContrast,
                 )
                 TrustCenterReceiptsSectionView(snapshot: snapshot)
+                if let rulesSnapshot {
+                    TrustCenterRulesSectionView(snapshot: rulesSnapshot, actions: rulesActions)
+                }
                 guidanceSection
                 TrustCenterDataSectionView(
                     actions: actions,
@@ -398,6 +407,110 @@ private struct TrustCenterReceiptsSectionView: View {
         formatter.timeStyle = .short
         return formatter
     }()
+}
+
+private struct TrustCenterRulesSectionView: View {
+    @Environment(\.dsTextScale) private var textScale
+    let snapshot: TrustCenterRulesSnapshot
+    let actions: TrustCenterRulesActions
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.md) {
+            TrustCenterSectionHeading(
+                title: TrustCenterRulesL10n.rulesTitle,
+                detail: TrustCenterRulesL10n.rulesDetail,
+            )
+            if snapshot.rows.isEmpty {
+                DSEmptyState(
+                    systemImage: "tray",
+                    title: TrustCenterRulesL10n.rulesEmptyTitle,
+                    message: TrustCenterRulesL10n.rulesEmptyMessage,
+                )
+                .accessibilityIdentifier("trustCenter.rules.empty")
+            } else {
+                TrustCenterCard(increaseContrast: false) {
+                    VStack(alignment: .leading, spacing: DSSpacing.md) {
+                        ForEach(snapshot.rows, id: \.ruleKey) { row in
+                            ruleRow(row)
+                        }
+                    }
+                }
+                .accessibilityIdentifier("trustCenter.rules")
+            }
+        }
+    }
+
+    private func ruleRow(_ row: RuleProposalRowPresentation) -> some View {
+        let title = TrustCenterRulesL10n.ruleTitle(row.ruleKey)
+        let evidence = TrustCenterRulesL10n.evidenceDetail(
+            have: row.supportingEvidenceCount,
+            required: row.requiredEvidenceCount,
+        )
+        let cap = TrustCenterRulesL10n.capDetail(weeklyMax: row.weeklyMax, cooldownTicks: row.cooldownTicks)
+        return VStack(alignment: .leading, spacing: DSSpacing.sm) {
+            VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                HStack(alignment: .firstTextBaseline, spacing: DSSpacing.sm) {
+                    Text(title)
+                        .font(sectionTitleFont)
+                        .foregroundStyle(Color.dsTextPrimary)
+                    Spacer(minLength: DSSpacing.md)
+                    DSTag(TrustCenterRulesL10n.statusName(row.status), style: .neutral)
+                }
+                Text(evidence)
+                    .font(secondaryFont)
+                    .foregroundStyle(Color.dsTextSecondary)
+                Text(cap)
+                    .font(secondaryFont)
+                    .foregroundStyle(Color.dsTextSecondary)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(TrustCenterRulesL10n.rowAccessibility(
+                title: title,
+                status: row.status,
+                evidence: evidence,
+                cap: cap,
+            ))
+            HStack(spacing: DSSpacing.sm) {
+                // Never is a permanent decline the engine refuses to leave:
+                // Reset stays the only control on declined rows.
+                if row.status != .never {
+                    DSButton(TrustCenterRulesL10n.add, style: .primary) {
+                        Task { await actions.decide(row.ruleKey, .add) }
+                    }
+                    .accessibilityIdentifier("\(row.rowIdentifier).add")
+                    DSButton(TrustCenterRulesL10n.notNow, style: .secondary) {
+                        Task { await actions.decide(row.ruleKey, .notNow) }
+                    }
+                    .accessibilityIdentifier("\(row.rowIdentifier).notNow")
+                    DSButton(TrustCenterRulesL10n.never, style: .secondary) {
+                        Task { await actions.decide(row.ruleKey, .never) }
+                    }
+                    .accessibilityIdentifier("\(row.rowIdentifier).never")
+                }
+                if row.canUndo {
+                    DSButton(TrustCenterRulesL10n.undo, style: .secondary) {
+                        Task { await actions.undo(row.ruleKey) }
+                    }
+                    .accessibilityIdentifier("\(row.rowIdentifier).undo")
+                }
+                if row.status != .pending {
+                    DSButton(TrustCenterRulesL10n.reset, style: .secondary) {
+                        Task { await actions.reset(row.ruleKey) }
+                    }
+                    .accessibilityIdentifier("\(row.rowIdentifier).reset")
+                }
+            }
+        }
+        .accessibilityIdentifier(row.rowIdentifier)
+    }
+
+    private var sectionTitleFont: Font {
+        textScale == .largest ? DSTypography.title : DSTypography.headline
+    }
+
+    private var secondaryFont: Font {
+        textScale == .largest ? DSTypography.body : DSTypography.subtext
+    }
 }
 
 private struct TrustCenterDataSectionView: View {

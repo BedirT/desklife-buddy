@@ -35,6 +35,14 @@
             )
         }
 
+        @Test func assistantAudit() {
+            assertScreenSnapshot(
+                of: screen(.populated, audit: snapshotAudit, height: 1100),
+                named: "populated-assistant-audit",
+                layout: .fixed(width: 1000, height: 1100),
+            )
+        }
+
         @Test func increasedContrast() {
             assertScreenSnapshot(
                 of: screen(.populated, increaseContrast: true),
@@ -57,9 +65,11 @@
             increaseContrast: Bool = false,
             reduceMotion: Bool = false,
             factsExpanded: Bool = false,
+            audit: WeeklyAssistantAudit? = nil,
+            height: CGFloat = 700,
         ) -> some View {
             WeeklyRhythmView(
-                model: .preview(state.input),
+                model: .preview(state.input, audit: audit),
                 calendar: state.input.calendar,
                 increaseContrastOverride: increaseContrast,
                 reduceMotionOverride: reduceMotion,
@@ -68,7 +78,21 @@
             )
             .environment(\.dsTextScale, textScale)
             .environment(\._colorSchemeContrast, increaseContrast ? .increased : .standard)
-            .frame(width: 1000, height: 700)
+            .frame(width: 1000, height: height)
+        }
+
+        private var snapshotAudit: WeeklyAssistantAudit {
+            WeeklyAssistantAudit(
+                proposedRuleCount: 4,
+                addedRuleCount: 1,
+                pendingRuleCount: 1,
+                snoozedRuleCount: 1,
+                declinedRuleCount: 1,
+                preventedRedundantPromptCount: 3,
+                supportingEvidenceCount: 8,
+                rulesWithoutRecordedTriggers: 2,
+                recordedRowCount: 4,
+            )
         }
     }
 

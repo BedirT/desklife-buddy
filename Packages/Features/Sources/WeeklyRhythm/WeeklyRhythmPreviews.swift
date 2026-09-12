@@ -55,10 +55,24 @@ import SwiftUI
     .frame(width: 1000, height: 700)
 }
 
-#Preview("Query failed") {
+#Preview("WK-05 · Assistant audit") {
     WeeklyRhythmView(
-        model: .preview(state: .failed),
+        model: .preview(
+            WeeklyRhythmFixtures.populated,
+            audit: WeeklyAssistantAudit(
+                proposedRuleCount: 4,
+                addedRuleCount: 1,
+                pendingRuleCount: 1,
+                snoozedRuleCount: 1,
+                declinedRuleCount: 1,
+                preventedRedundantPromptCount: 3,
+                supportingEvidenceCount: 8,
+                rulesWithoutRecordedTriggers: 2,
+                recordedRowCount: 4,
+            ),
+        ),
+        calendar: WeeklyRhythmFixtures.populated.calendar,
         arrivalPresentation: .settled,
     )
-    .frame(width: 1000, height: 700)
+    .frame(width: 1000, height: 1000)
 }

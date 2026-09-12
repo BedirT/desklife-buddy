@@ -14,6 +14,7 @@
             textScale: DSTextScale = .standard,
             width: CGFloat = 1000,
             height: CGFloat = 700,
+            rules: TrustCenterRulesSnapshot? = nil,
         ) -> some View {
             SettingsFeatureView(
                 model: .preview(modelState),
@@ -21,6 +22,7 @@
                 increaseContrastOverride: increaseContrast,
                 deterministicSplitLayout: true,
                 trustCenterSnapshot: .preview(trustState),
+                trustCenterRulesSnapshot: rules,
             )
             .frame(width: width, height: height)
             .environment(\._colorSchemeContrast, increaseContrast ? .increased : .standard)
@@ -63,6 +65,29 @@
 
         @Test func receipts() {
             assertScreenSnapshot(of: screen(.trustCenterReceipts, .receipts))
+        }
+
+        @Test func proposedRules() {
+            // Taller exact-size render: four rule rows sit below the
+            // receipts list. Baselines: proposedRules.light/dark.png.
+            assertScreenSnapshot(
+                of: screen(
+                    .trustCenterReceipts,
+                    .receipts,
+                    height: 2300,
+                    rules: .previewMixed(),
+                ),
+                layout: .fixed(width: 1000, height: 2300),
+            )
+        }
+
+        @Test func proposedRulesEmpty() {
+            // Taller exact-size render: the empty rules section sits
+            // below the receipts list. Baselines: proposedRulesEmpty.light/dark.png.
+            assertScreenSnapshot(
+                of: screen(.trustCenterReceipts, .receipts, height: 2000, rules: .empty),
+                layout: .fixed(width: 1000, height: 2000),
+            )
         }
 
         @Test func empty() {

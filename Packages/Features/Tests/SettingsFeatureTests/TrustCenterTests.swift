@@ -309,6 +309,16 @@ struct TrustCenterTests {
         ]
         #expect(Set(rows.map(\.rowIdentifier)).count == 3)
     }
+
+    @Test("Cooldown durations use singular templates for a count of one")
+    func cooldownDurationSingular() {
+        #expect(TrustCenterRulesL10n.cooldownDuration(3600) == "1 hour")
+        #expect(TrustCenterRulesL10n.cooldownDuration(7200) == "2 hours")
+        #expect(TrustCenterRulesL10n.cooldownDuration(60) == "1 minute")
+        #expect(TrustCenterRulesL10n.cooldownDuration(300) == "5 minutes")
+        #expect(TrustCenterRulesL10n.cooldownDuration(1) == "1 second")
+        #expect(TrustCenterRulesL10n.cooldownDuration(45) == "45 seconds")
+    }
 }
 
 private func trustCenterFieldLabels(_ value: some Any) -> [String] {

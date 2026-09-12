@@ -1,24 +1,34 @@
 import Domain
 import Observation
 
-/// Narrow boundary for an explicit Weekly read and its Settings route.
+/// Narrow boundary for an explicit Weekly read and its Settings routes.
 public struct WeeklyRhythmClient {
     private let loadReport: () async throws -> WeeklyRhythmReport
+    private let loadAssistantAudit: () async -> WeeklyAssistantAudit?
     private let openSchedule: () -> Void
     private let openHistory: () -> Void
+    private let openRules: () -> Void
 
     public init(
         load: @escaping () async throws -> WeeklyRhythmReport,
         openScheduleSettings: @escaping () -> Void,
         openHistorySettings: @escaping () -> Void,
+        loadAssistantAudit: @escaping () async -> WeeklyAssistantAudit? = { nil },
+        openRuleSettings: @escaping () -> Void = {},
     ) {
         loadReport = load
+        self.loadAssistantAudit = loadAssistantAudit
         openSchedule = openScheduleSettings
         openHistory = openHistorySettings
+        openRules = openRuleSettings
     }
 
     func load() async throws -> WeeklyRhythmReport {
         try await loadReport()
+    }
+
+    func loadAudit() async -> WeeklyAssistantAudit? {
+        await loadAssistantAudit()
     }
 
     func openScheduleSettings() {
@@ -27,6 +37,10 @@ public struct WeeklyRhythmClient {
 
     func openHistorySettings() {
         openHistory()
+    }
+
+    func openRuleSettings() {
+        openRules()
     }
 }
 
@@ -48,19 +62,22 @@ public final class WeeklyRhythmModel {
         self.client = client
     }
 
-    public var report: WeeklyRhythmReport? {
-        guard case let .loaded(report) = state else { return nil }
-        return report
-    }
+    public private(set) var audit: WeeklyAssistantAudit?
 
     public func load() async {
         guard state != .loading else { return }
         state = .loading
         do {
             state = try await .loaded(client.load())
+            audit = await client.loadAudit()
         } catch {
             state = .failed
         }
+    }
+
+    public var report: WeeklyRhythmReport? {
+        guard case let .loaded(report) = state else { return nil }
+        return report
     }
 
     public func retry() async {
@@ -76,7 +93,15 @@ public final class WeeklyRhythmModel {
         client.openHistorySettings()
     }
 
+    public func openRuleSettings() {
+        client.openRuleSettings()
+    }
+
     public static func preview(_ input: WeeklyRhythmProjectionInput) -> WeeklyRhythmModel {
+        preview(input, audit: nil)
+    }
+
+    public static func preview(_ input: WeeklyRhythmProjectionInput, audit: WeeklyAssistantAudit?) -> WeeklyRhythmModel {
         let report = WeeklyRhythmProjection.project(input)
         let model = WeeklyRhythmModel(client: WeeklyRhythmClient(
             load: { report },
@@ -84,6 +109,7 @@ public final class WeeklyRhythmModel {
             openHistorySettings: {},
         ))
         model.state = .loaded(report)
+        model.audit = audit
         return model
     }
 

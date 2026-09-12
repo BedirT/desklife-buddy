@@ -89,7 +89,54 @@ enum WeeklyRhythmL10n {
         "weekly.cell.empty_accessibility",
         default: "no retained active use",
     )
-
+    static let auditTitle = string(
+        "weekly.assistant_audit.title",
+        default: "Assistant audit",
+    )
+    static let auditDetail = string(
+        "weekly.assistant_audit.detail",
+        default: "What the assistant recorded and held back. Counts only.",
+    )
+    static let auditProposedRules = string(
+        "weekly.assistant_audit.proposed",
+        default: "Proposed rules",
+    )
+    static let auditPendingRules = string(
+        "weekly.assistant_audit.pending",
+        default: "Rules awaiting a decision",
+    )
+    static let auditAddedRules = string(
+        "weekly.assistant_audit.added",
+        default: "Added rules",
+    )
+    static let auditSnoozedRules = string(
+        "weekly.assistant_audit.snoozed",
+        default: "Rules set aside for now",
+    )
+    static let auditDeclinedRules = string(
+        "weekly.assistant_audit.declined",
+        default: "Rules declined",
+    )
+    static let auditPreventedPrompts = string(
+        "weekly.assistant_audit.prevented",
+        default: "Redundant prompts not shown",
+    )
+    static let auditSupportingEvidence = string(
+        "weekly.assistant_audit.evidence",
+        default: "Supporting records",
+    )
+    static let auditUnusedRules = string(
+        "weekly.assistant_audit.unused",
+        default: "Rules with no recorded triggers",
+    )
+    static let auditRecordedRows = string(
+        "weekly.assistant_audit.recorded_rows",
+        default: "Recorded rows, counts and codes only",
+    )
+    static let auditReviewRules = string(
+        "weekly.assistant_audit.action",
+        default: "Review proposed rules",
+    )
     static func daypart(_ daypart: WeeklyDaypart) -> String {
         switch daypart {
         case .overnight: string("weekly.daypart.overnight", default: "Overnight")
@@ -149,6 +196,15 @@ enum WeeklyRhythmL10n {
         default:
             eventTitle(fact.kind)
         }
+    }
+
+    static func auditRowAccessibility(label: String, count: Int) -> String {
+        format(
+            "weekly.assistant_audit.row.accessibility",
+            default: "%@, %d",
+            label,
+            count,
+        )
     }
 
     static func contextDetail(_ fact: WeeklyContextFact) -> String {

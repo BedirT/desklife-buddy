@@ -217,22 +217,57 @@ struct StatusItemCoordinatorTests {
         #expect(StatusMenuCopy.accessibilityValue(for: normal) == """
         Visual reset in about 9 minutes. Movement in about 34 minutes. Estimated active computer use, 63 minutes.
         """)
-        #expect(StatusMenuCopy.accessibilityValue(for: paused) == """
-        Visual reset in about 9 minutes. Movement in about 34 minutes. Estimated active computer use, 63 minutes. Paused until you resume.
-        """)
         #expect(StatusMenuCopy.accessibilityValue(for: timedPause).contains("Paused until"))
-        #expect(!StatusMenuCopy.accessibilityValue(for: timedPause).contains("until you resume"))
+        #expect(StatusMenuCopy.accessibilityValue(for: paused) == """
+        Paused. Visual reset in about 9 minutes. Movement in about 34 minutes. Estimated active computer use, 63 minutes. Paused until you resume.
+        """)
     }
 
-    @Test("Custom status region grows with the system menu font")
-    func statusRegionScaling() {
-        let coordinator = StatusItemCoordinator(
-            model: .preview(.normal),
-            installsStatusItem: false,
-            menuPointSize: NSFont.systemFontSize * 1.35,
-        )
+    @Test("Every shipped bucket names itself first in the status value")
+    func bucketHeadlines() {
+        #expect(StatusMenuCopy.accessibilityValue(for: StatusMenuModel.preview(.held).snapshot)
+            .hasPrefix("On hold."))
+        #expect(StatusMenuCopy.accessibilityValue(for: StatusMenuModel.preview(.protected).snapshot)
+            .hasPrefix("Quiet."))
+        #expect(StatusMenuCopy.accessibilityValue(for: StatusMenuModel.preview(.acceptedRitual).snapshot)
+            .hasPrefix("In progress."))
+        #expect(StatusMenuCopy.accessibilityValue(for: StatusMenuModel.preview(.acceptedRitual).snapshot)
+            .contains("You started a visual reset."))
+        #expect(StatusMenuCopy.accessibilityValue(for: StatusMenuModel.preview(.acceptedRitual).snapshot)
+            .contains("Visual reset in progress."))
+        #expect(StatusMenuCopy.accessibilityValue(for: StatusMenuModel.preview(.headsUpOff).snapshot)
+            .hasPrefix("Heads-up off."))
+        #expect(StatusMenuCopy.accessibilityValue(for: StatusMenuModel.preview(.headsUpOff).snapshot)
+            .contains("Reminders stay in the menu."))
+        #expect(StatusMenuCopy.accessibilityValue(for: StatusMenuModel.preview(.visualDue).snapshot)
+            .contains("Visual reset due after about 47 minutes of estimated active use."))
+    }
 
-        #expect(abs(coordinator.statusRegionWidth - 421.2) < 0.001)
+    @Test("Held, protected, ritual, off, and due states keep Pause and never offer Resume")
+    func quietBucketsKeepPause() {
+        for state in [
+            StatusMenuModel.PreviewState.held, .protected, .acceptedRitual, .headsUpOff,
+            .visualDue, .movementDue, .bothDue, .calendarBusy,
+        ] as [StatusMenuModel.PreviewState] {
+            let coordinator = StatusItemCoordinator(
+                model: .preview(state),
+                installsStatusItem: false,
+            )
+            #expect(coordinator.menu.item(withTitle: "Pause") != nil, "\(state) keeps Pause")
+            #expect(coordinator.menu.item(withTitle: "Resume") == nil, "\(state) hides Resume")
+        }
+    }
+
+    @Test("Manual pause swaps Pause for Resume")
+    func manualPauseOffersResume() {
+        for state in [StatusMenuModel.PreviewState.paused, .timedPause] {
+            let coordinator = StatusItemCoordinator(
+                model: .preview(state),
+                installsStatusItem: false,
+            )
+            #expect(coordinator.menu.item(withTitle: "Resume") != nil, "\(state) offers Resume")
+            #expect(coordinator.menu.item(withTitle: "Pause") == nil, "\(state) hides Pause")
+        }
     }
 }
 

@@ -33,7 +33,57 @@ enum StatusMenuL10n {
     static let weeklyRhythm = string("status_menu.weekly_rhythm", default: "Weekly rhythm…")
     static let settings = string("status_menu.settings", default: "Settings…")
     static let quit = string("status_menu.quit", default: "Quit")
+    static let statePaused = string("status_menu.state.paused", default: "Paused")
+    static let stateOnHold = string("status_menu.state.on_hold", default: "On hold")
+    static let stateQuiet = string("status_menu.state.quiet", default: "Quiet")
+    static let stateInProgress = string("status_menu.state.in_progress", default: "In progress")
+    static let stateHeadsUpOff = string("status_menu.state.heads_up_off", default: "Heads-up off")
+    static let countingPaused = string(
+        "status_menu.state.counting_paused",
+        default: "Counting is paused.",
+    )
+    static let countingContinues = string(
+        "status_menu.state.counting_continues",
+        default: "Counting continues. Reminders resume on their own.",
+    )
+    static let headsUpOffDetail = string(
+        "status_menu.state.heads_up_off_detail",
+        default: "Reminders stay in the menu. Turn heads-up back on in Settings.",
+    )
+    static let ritualVisualStarted = string(
+        "status_menu.ritual.visual_started",
+        default: "You started a visual reset.",
+    )
+    static let ritualMovementStarted = string(
+        "status_menu.ritual.movement_started",
+        default: "You started movement.",
+    )
+    static let ritualMergedStarted = string(
+        "status_menu.ritual.merged_started",
+        default: "You started a break.",
+    )
+    static let clockInProgress = string("status_menu.clock.in_progress", default: "In progress")
+    static let dockVisualDue = string("status_menu.dock.visual_due", default: "Visual reset due")
+    static let dockMovementDue = string("status_menu.dock.movement_due", default: "Movement due")
+    static let dockBothDue = string("status_menu.dock.both_due", default: "Visual reset and movement due")
+    static let dockHeadsUpOff = string(
+        "status_menu.dock.heads_up_off",
+        default: "Heads-up off (menu only)",
+    )
     static let accessibilityLabel = string("status_menu.accessibility_label", default: "Break status")
+
+    static func onHoldDetail(_ reason: String) -> String {
+        format("status_menu.state.on_hold_format", default: "On hold: %@", reason)
+    }
+
+    static func whyNow(label: String, minutes: Int) -> String {
+        format(
+            "status_menu.why_now_format",
+            default: "%@ due after about %d minutes of estimated active use.",
+            label,
+            minutes,
+        )
+    }
     static func next(aboutMinutes: Int) -> String {
         format("status_menu.next_format", default: "Next: about %d minutes", aboutMinutes)
     }
@@ -93,12 +143,23 @@ enum StatusMenuL10n {
         }
     }
 
-    static func accessibilityClock(_ summary: StatusClockSummary) -> String {
-        let label = switch summary.opportunity {
+    static func clockLabel(_ opportunity: OpportunityType) -> String {
+        switch opportunity {
         case .visual: visualReset
         case .movement: movement
         case .positionChange: positionChange
         case .recovery: recoverySuggestion
+        }
+    }
+
+    static func accessibilityClock(_ summary: StatusClockSummary) -> String {
+        let label = clockLabel(summary.opportunity)
+        if summary.isRunning {
+            return format(
+                "status_menu.accessibility_in_progress_format",
+                default: "%@ in progress.",
+                label,
+            )
         }
         return switch summary.timing {
         case let .next(aboutMinutes):
@@ -168,8 +229,95 @@ public enum StatusMenuCopy {
     public static let quit = StatusMenuL10n.quit
     public static let accessibilityLabel = StatusMenuL10n.accessibilityLabel
 
+    /// Text headline for the state bucket, or nil when the two clock rows
+    /// already tell the story (operating and plain due states).
+    public static func stateHeadline(for snapshot: StatusMenuSnapshot) -> String? {
+        switch snapshot.glyph {
+        case .paused: StatusMenuL10n.statePaused
+        case .held: StatusMenuL10n.stateOnHold
+        case .protected: StatusMenuL10n.stateQuiet
+        case .acceptedRitual: StatusMenuL10n.stateInProgress
+        case .degraded: StatusMenuL10n.stateHeadsUpOff
+        case .operating, .visualDue, .movementDue, .bothDue: nil
+        }
+    }
+
+    /// What counting does under a suppression reason. Mirrors
+    /// SuppressionReason's accumulation policy; the switch is exhaustive so
+    /// a new reason fails to compile here, not silently.
+    public static func countingLine(for reason: SuppressionReason) -> String {
+        switch reason {
+        case .manualPause, .systemInactiveOrLocked, .outsideWorkingHours:
+            StatusMenuL10n.countingPaused
+        case .explicitPresentationMode, .focusFilter, .calendarBusy,
+             .excludedApplication, .userDeclaredMeetingOrCall,
+             .userDeclaredScreenSharingOrPresentation, .userSelectedTimedTask,
+             .snooze, .lowFrictionWait:
+            StatusMenuL10n.countingContinues
+        }
+    }
+
+    /// What changed: names the accepted ritual that is running.
+    public static func ritualLine(for snapshot: StatusMenuSnapshot) -> String? {
+        guard snapshot.glyph == .acceptedRitual else { return nil }
+        let visual = snapshot.visual.isRunning
+        let movement = snapshot.movement.isRunning
+        if visual, !movement {
+            return StatusMenuL10n.ritualVisualStarted
+        }
+        if movement, !visual {
+            return StatusMenuL10n.ritualMovementStarted
+        }
+        return StatusMenuL10n.ritualMergedStarted
+    }
+
+    /// Why now: one line per due clock that is still waiting, naming the
+    /// counted minutes behind it. Suppressed clocks stay quiet instead.
+    public static func whyNowLines(for snapshot: StatusMenuSnapshot) -> [String] {
+        guard snapshot.activeSuppression == nil else { return [] }
+        return [snapshot.visual, snapshot.movement].compactMap { summary in
+            guard summary.timing == .due, !summary.isRunning else { return nil }
+            return StatusMenuL10n.whyNow(
+                label: StatusMenuL10n.clockLabel(summary.opportunity),
+                minutes: summary.activeUseMinutes,
+            )
+        }
+    }
+
+    /// Dock parity line: the same truth as the region headline, shortened to
+    /// one menu item. Nil only for plain operating, which keeps today's menu.
+    public static func dockStateTitle(for snapshot: StatusMenuSnapshot) -> String? {
+        switch snapshot.glyph {
+        case .operating: return nil
+        case .paused:
+            guard let reason = snapshot.activeSuppression else { return StatusMenuL10n.statePaused }
+            return StatusMenuL10n.suppression(reason, manualPause: snapshot.manualPause)
+        case .held:
+            guard let reason = snapshot.activeSuppression else { return StatusMenuL10n.stateOnHold }
+            return StatusMenuL10n.onHoldDetail(StatusMenuL10n.suppression(
+                reason,
+                manualPause: snapshot.manualPause,
+            ))
+        case .protected:
+            // Protected reasons name the quiet themselves ("Quiet during ..."),
+            // so the Dock line stays verbatim instead of stuttering a prefix.
+            guard let reason = snapshot.activeSuppression else { return StatusMenuL10n.stateQuiet }
+            return StatusMenuL10n.suppression(reason, manualPause: snapshot.manualPause)
+        case .acceptedRitual:
+            return ritualLine(for: snapshot) ?? StatusMenuL10n.ritualMergedStarted
+        case .degraded: return StatusMenuL10n.dockHeadsUpOff
+        case .visualDue: return StatusMenuL10n.dockVisualDue
+        case .movementDue: return StatusMenuL10n.dockMovementDue
+        case .bothDue: return StatusMenuL10n.dockBothDue
+        }
+    }
+
     public static func accessibilityValue(for snapshot: StatusMenuSnapshot) -> String {
-        var components = [
+        var components: [String] = []
+        if let headline = stateHeadline(for: snapshot) {
+            components.append(headline + ".")
+        }
+        components += [
             StatusMenuL10n.accessibilityClock(snapshot.visual),
             StatusMenuL10n.accessibilityClock(snapshot.movement),
             StatusMenuL10n.accessibilityEstimatedActiveUse(
@@ -184,6 +332,13 @@ public enum StatusMenuCopy {
                 ) + ".",
             )
         }
+        if let ritual = ritualLine(for: snapshot) {
+            components.append(ritual)
+        }
+        if snapshot.glyph == .degraded {
+            components.append(StatusMenuL10n.headsUpOffDetail)
+        }
+        components += whyNowLines(for: snapshot)
         return components.joined(separator: " ")
     }
 }

@@ -152,10 +152,37 @@ public struct StatusMenuStatusRegion: View {
                 .font(supportingFont)
                 .foregroundStyle(Color.dsMenuTextSecondary)
 
+            if let headline = StatusMenuCopy.stateHeadline(for: model.snapshot) {
+                Text(headline)
+                    .font(labelFont)
+                    .foregroundStyle(Color.dsMenuTextPrimary)
+            }
             if let reason = model.snapshot.activeSuppression {
                 Text(StatusMenuL10n.suppression(reason, manualPause: model.snapshot.manualPause))
                     .font(labelFont)
                     .foregroundStyle(Color.dsMenuTextPrimary)
+                Text(StatusMenuCopy.countingLine(for: reason))
+                    .font(supportingFont)
+                    .foregroundStyle(Color.dsMenuTextSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if let ritual = StatusMenuCopy.ritualLine(for: model.snapshot) {
+                Text(ritual)
+                    .font(supportingFont)
+                    .foregroundStyle(Color.dsMenuTextSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if model.snapshot.glyph == .degraded {
+                Text(StatusMenuL10n.headsUpOffDetail)
+                    .font(supportingFont)
+                    .foregroundStyle(Color.dsMenuTextSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            ForEach(StatusMenuCopy.whyNowLines(for: model.snapshot), id: \.self) { line in
+                Text(line)
+                    .font(supportingFont)
+                    .foregroundStyle(Color.dsMenuTextSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(DSSpacing.lg)
@@ -166,12 +193,12 @@ public struct StatusMenuStatusRegion: View {
     private func clockRow(_ summary: StatusClockSummary) -> some View {
         VStack(alignment: .leading, spacing: DSSpacing.xs) {
             HStack(alignment: .firstTextBaseline) {
-                Text(label(for: summary.opportunity))
+                Text(StatusMenuL10n.clockLabel(summary.opportunity))
                     .font(labelFont)
                     .foregroundStyle(Color.dsMenuTextPrimary)
                     .lineLimit(1)
                 Spacer()
-                Text(timing(summary.timing))
+                Text(rowTiming(summary))
                     .font(supportingFont)
                     .foregroundStyle(Color.dsMenuTextSecondary)
                     .lineLimit(1)
@@ -215,13 +242,11 @@ public struct StatusMenuStatusRegion: View {
         }
     }
 
-    private func label(for opportunity: OpportunityType) -> String {
-        switch opportunity {
-        case .visual: StatusMenuL10n.visualReset
-        case .movement: StatusMenuL10n.movement
-        case .positionChange: StatusMenuL10n.positionChange
-        case .recovery: StatusMenuL10n.recoverySuggestion
+    private func rowTiming(_ summary: StatusClockSummary) -> String {
+        if summary.isRunning {
+            return StatusMenuL10n.clockInProgress
         }
+        return timing(summary.timing)
     }
 
     private func timing(_ timing: StatusClockTiming) -> String {
@@ -258,6 +283,22 @@ public struct StatusMenuStatusRegion: View {
 
 #Preview("Calendar busy") {
     StatusMenuView(model: .preview(.calendarBusy))
+}
+
+#Preview("On hold") {
+    StatusMenuView(model: .preview(.held))
+}
+
+#Preview("Quiet (protected)") {
+    StatusMenuView(model: .preview(.protected))
+}
+
+#Preview("Ritual in progress") {
+    StatusMenuView(model: .preview(.acceptedRitual))
+}
+
+#Preview("Heads-up off") {
+    StatusMenuView(model: .preview(.headsUpOff))
 }
 
 #Preview("Live heads-up") {

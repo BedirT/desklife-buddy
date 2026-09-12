@@ -6041,6 +6041,196 @@
         }
       }
     },
+    "status_menu.state.paused": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paused"
+          }
+        }
+      }
+    },
+    "status_menu.state.on_hold": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On hold"
+          }
+        }
+      }
+    },
+    "status_menu.state.quiet": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quiet"
+          }
+        }
+      }
+    },
+    "status_menu.state.in_progress": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In progress"
+          }
+        }
+      }
+    },
+    "status_menu.state.heads_up_off": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heads-up off"
+          }
+        }
+      }
+    },
+    "status_menu.state.counting_paused": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Counting is paused."
+          }
+        }
+      }
+    },
+    "status_menu.state.counting_continues": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Counting continues. Reminders resume on their own."
+          }
+        }
+      }
+    },
+    "status_menu.state.heads_up_off_detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reminders stay in the menu. Turn heads-up back on in Settings."
+          }
+        }
+      }
+    },
+    "status_menu.ritual.visual_started": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You started a visual reset."
+          }
+        }
+      }
+    },
+    "status_menu.ritual.movement_started": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You started movement."
+          }
+        }
+      }
+    },
+    "status_menu.ritual.merged_started": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You started a break."
+          }
+        }
+      }
+    },
+    "status_menu.clock.in_progress": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In progress"
+          }
+        }
+      }
+    },
+    "status_menu.dock.visual_due": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual reset due"
+          }
+        }
+      }
+    },
+    "status_menu.dock.movement_due": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement due"
+          }
+        }
+      }
+    },
+    "status_menu.dock.both_due": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual reset and movement due"
+          }
+        }
+      }
+    },
+    "status_menu.dock.heads_up_off": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heads-up off (menu only)"
+          }
+        }
+      }
+    },
+    "status_menu.state.on_hold_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On hold: %@"
+          }
+        }
+      }
+    },
+    "status_menu.why_now_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ due after about %d minutes of estimated active use."
+          }
+        }
+      }
+    },
+    "status_menu.accessibility_in_progress_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ in progress."
+          }
+        }
+      }
+    },
     "status_menu.accessibility_next_format": {
       "localizations": {
         "en": {

@@ -12,6 +12,10 @@ final class DockMenuController: NSObject {
     func makeMenu(snapshot: StatusMenuSnapshot) -> NSMenu {
         let menu = NSMenu()
         menu.autoenablesItems = false
+        if let stateTitle = StatusMenuCopy.dockStateTitle(for: snapshot) {
+            menu.addItem(stateItem(stateTitle))
+            menu.addItem(.separator())
+        }
         menu.addItem(actionItem(StatusMenuCopy.startVisualReset, action: .startVisualReset))
         menu.addItem(submenuItem(
             StatusMenuCopy.startMovement,
@@ -54,6 +58,15 @@ final class DockMenuController: NSObject {
 }
 
 private extension DockMenuController {
+    /// Disabled truth line: the same state the menu-bar region headlines,
+    /// shortened to one item. Disabled so it never routes, steals keyboard
+    /// focus, or fires; VoiceOver still announces it.
+    func stateItem(_ title: String) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.isEnabled = false
+        return item
+    }
+
     func actionItem(_ title: String, action: StatusMenuAction) -> NSMenuItem {
         let item = NSMenuItem(title: title, action: #selector(activateMenuItem(_:)), keyEquivalent: "")
         item.target = self

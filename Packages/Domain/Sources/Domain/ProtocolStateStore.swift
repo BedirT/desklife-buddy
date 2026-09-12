@@ -28,6 +28,12 @@ public struct ProtocolState: Equatable, Sendable {
     public let recoveryLastObservedAt: Date?
     public let notAppropriateOpportunities: Set<OpportunityType>
     public let headsUpDeliveryState: HeadsUpDeliveryState
+    /// Crash-replay fence/dedup authority from the action reducer. The engine
+    /// snapshot below always carries an empty fence: the coordinator
+    /// transaction boundary overlays `actionReducer.fenceState` here before
+    /// persisting (Story 2.6 wiring), so a committed ActionID resubmitted
+    /// post-restore replays instead of recommitting.
+    public var coordinatorFence: CoordinatorFenceState
 
     /// Creates a state snapshot from two independent opportunity clocks.
     public init(
@@ -40,6 +46,7 @@ public struct ProtocolState: Equatable, Sendable {
         recoveryLastObservedAt: Date? = nil,
         notAppropriateOpportunities: Set<OpportunityType> = [],
         headsUpDeliveryState: HeadsUpDeliveryState = HeadsUpDeliveryState(),
+        coordinatorFence: CoordinatorFenceState = CoordinatorFenceState(),
     ) {
         self.profileID = profileID
         self.visualClock = visualClock
@@ -52,6 +59,7 @@ public struct ProtocolState: Equatable, Sendable {
             notAppropriateOpportunities.filter(\.supportsNotAppropriateSuppression),
         )
         self.headsUpDeliveryState = headsUpDeliveryState
+        self.coordinatorFence = coordinatorFence
     }
 }
 

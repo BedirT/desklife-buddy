@@ -152,6 +152,42 @@ check_config "entitlement" 'com\.apple\.security\.device\.camera|com\.apple\.sec
 # Privacy usage-description keys and transport-security exceptions.
 check_config "privacy-key" 'NSCameraUsageDescription|NSMicrophoneUsageDescription|NSSpeechRecognitionUsageDescription|NSHealthShareUsageDescription|NSHealthUpdateUsageDescription|NSLocation(TemporaryUsageDescriptionDictionary|(WhenInUse|Always|AlwaysAndWhenInUse)?UsageDescription)|NSMotionUsageDescription|NSPhotoLibrary(Add)?UsageDescription|NSAppTransportSecurity'
 
+# 11. Evidence confinement (Epic 3 story 3): Evidence* and Fused* types are
+# Class 0 (memory-only, never Codable) and must never reach App/AppTests
+# targets or Domain persistence/export/transport files. Domain's own
+# Evidence*.swift definitions and every *Tests* tree (fakes live test-side)
+# are out of scope. Story 4 (closed firewall) will consume the bus from
+# named Domain files: those files carry a same-line
+# `// RAWGUARD-ALLOW: <reason>` exemption, like every other category above.
+evidence_pattern='EvidenceAtom(ID)?|EvidenceBus|EvidenceFusion|EvidenceProposal(Error)?|EvidenceAdmission(Rejection)?|EvidenceProvenance|EvidenceKind|EvidenceSource|EvidenceQuality|EvidenceConfidence|EvidenceCoverage|EvidenceReading|EvidenceFailureReason|EvidenceIndependenceGroup|FusedReading|FusedAssessment'
+evidence_files=()
+for dir in App AppTests; do
+  [[ -d "$scan_root/$dir" ]] || continue
+  while IFS= read -r found; do
+    evidence_files+=("$found")
+  done < <(find "$scan_root/$dir" \
+    \( -path '*/.build' -o -path '*/DerivedData' -o -path '*/artifacts' -o -path '*__Snapshots__*' \) -prune \
+    -o -type f -name '*.swift' -print 2>/dev/null)
+done
+if [[ -d "$scan_root/Packages" ]]; then
+  while IFS= read -r found; do
+    case "$found" in
+      */Sources/Domain/Evidence*.swift) continue ;;
+      */Tests/*|*Tests.swift) continue ;;
+      *__Snapshots__*) continue ;;
+    esac
+    evidence_files+=("$found")
+  done < <(find "$scan_root/Packages" \
+    \( -path '*/.build' -o -path '*/DerivedData' -o -path '*/artifacts' \) -prune \
+    -o -type f -name '*.swift' -print 2>/dev/null)
+fi
+if ((${#evidence_files[@]})); then
+  hits=""
+  if hits="$(rg -n --with-filename --no-heading -e "$evidence_pattern" "${evidence_files[@]}" 2>/dev/null)"; then
+    collect "evidence-confinement" "$hits"
+  fi
+fi
+
 if ((${#violations[@]})); then
   printf 'Raw import guard violations:\n' >&2
   for violation in "${violations[@]}"; do

@@ -2,11 +2,19 @@
 
 ## 1. Intended purpose
 
-Proposed launch intended purpose:
+Canonical intended purpose for launch and every optional-capability prototype:
 
-> The app supports general wellness by reminding adults to take optional visual and movement breaks during computer use, offering adaptable break activities, and helping users reflect on their work-break routine.
+> The app supports adult general wellness by helping people plan optional visual resets,
+> movement, position variety, and desk-work routines; understand and adjust when
+> reminders appear; and, when individually enabled, use local contextual or
+> sensor-derived observations to make those routines quieter and more personally useful.
 
-It does not diagnose, prevent, monitor, predict, treat, or mitigate a disease, disorder, injury, or medical condition. It does not replace professional care or broader physical-activity recommendations.
+It is a routine and interruption assistant, not a health monitor. It does not
+diagnose, screen for, prevent, monitor, predict, treat, or mitigate a disease,
+disorder, injury, symptom, physiological state, or medical condition. It does not
+replace professional care, an eye examination, ergonomic assessment, or broader
+physical-activity recommendations. Camera, motion, HealthKit, environment,
+self-report, companion, and model inputs do not expand this intended purpose.
 
 This exact intended purpose must remain consistent across:
 
@@ -356,3 +364,62 @@ Flag for manual review:
 - compliance, noncompliant, failure, punishment.
 
 A flag does not automatically ban every occurrence; it requires context review.
+
+## 13. Optional-capability copy grammar
+
+Optional capability copy names the evidence chain rather than implying hidden
+understanding. Every sentence that describes sensing or an effect uses this
+grammar:
+
+`source + observation/estimate + interval or freshness + uncertainty when material + bounded effect`
+
+Examples:
+
+- `Your Watch sensed walking during this break. Future timing restarted.`
+- `Likely in a call from the signals you enabled. Reminders held until 2:30 PM.`
+- `You look closer than your saved comfortable range. This is a relative estimate.`
+- `Fewer complete blinks were visible during recent clear samples.`
+- `The connected sensor reports 35% relative humidity.`
+- `You reported lower eye comfort this afternoon.`
+- `An on-device model drafted this explanation. It did not change your schedule.`
+
+Do not drop the source (`movement sensed`), turn an inference into certainty
+(`meeting detected`), turn non-detection into a negative fact (`no movement`),
+turn a schedule change into completion (`break verified`), or turn a personal
+baseline into a universal threshold (`unsafe distance`). Technical inspector
+confidence values are measurement metadata, not health scores.
+
+### Capability claim boundary
+
+| Capability | Permitted claim class | Required qualifiers | Prohibited implication | Register |
+|---|---|---|---|---|
+| Camera / face presence | A after technical proof | active source, enabled observation, sample quality | identity, attention, emotion, health understanding | C052-C053 |
+| Relative distance | A after measurement proof | personal saved range, relative estimate, fresh calibration | exact universal safe distance, eye risk | C054-C055 |
+| Position variety | A after representative proof | visible variation, accepted shapes, unknown state | good/bad posture, spine or pain inference | C056-C057 |
+| Blink sampling | A after measurement proof | recent clear visible samples, estimate | dry eye, symptom cause, complete continuous monitoring | C058-C059 |
+| Motion | A after movement-mode proof | source, supported class, interval | negative judgment from no signal, universal movement verification | C060-C061 |
+| HealthKit | A for dated derived facts | iPhone source, type, age, permission | current need, completion, diagnosis, direct Mac access | C062-C063 |
+| Environment | A for raw calibrated fact | accessory, unit, sample time, calibration | symptom cause, treatment, safety verdict | C064-C065 |
+| Subjective report | A for user declaration | `you reported`, scale, time window | objective measurement, causal improvement | C066-C067 |
+| Companion continuity | A after offline proof | device, connection state, local effect | universal liveness or agreement | C068-C069 |
+| Foundation Models | A for disclosed drafting | on-device availability, shown inputs, proposals only | body knowledge, medical advice, policy authority | C070-C071 |
+| Context / hold | B inference | `likely`, reason, expiry, correction | universal meeting detection or productivity judgment | C072-C073 |
+| Automatic schedule effect | A for audited decision | observation, exact effect, undo; explicitly no completion | verified break or health benefit | C074-C075 |
+| Strict local | A after no-egress proof | exact process/device boundary and enabled exceptions | absolute never-leaves-device promise | C076-C077 |
+| Sensor-free parity | A after accessibility proof | same schedule effect and visible status | inferior or punitive manual route | C078 |
+| Outcome | C until dossier graduates | version, population, comparator, endpoint | score, causality from engagement or completion | C079-C080 |
+
+## 14. Capability review and rollback
+
+Each optional capability requires a version-bound claims dossier before Shadow,
+Suggest, or automatic behavior. The dossier includes intended value, measurement
+construct, allowed copy, prohibited copy, foreseeable misreading, population and
+condition limits, exact product version, and rollback copy. A technical detector
+may graduate while its health-outcome claim remains Class C.
+
+Claims review fails when any state hides active sensing, omits material
+uncertainty, labels a self-report as measurement, treats a timer or schedule
+decision as an outcome, ranks the person, or makes declined sensing sound like a
+less healthy choice. A claims failure immediately removes the affected public
+copy and demotes automatic behavior to Shadow or Off; it never silently swaps in
+a stronger claim.

@@ -7,7 +7,7 @@
   "counts": {
     "source_records": 80,
     "evidence_ledger_rows": 60,
-    "claims_register_rows": 50,
+    "claims_register_rows": 80,
     "files_excluding_manifest": 22
   },
   "authoritative_order": [
@@ -36,8 +36,8 @@
     },
     {
       "path": "03_PRODUCT_HEALTH_PROTOCOL_SPEC.md",
-      "bytes": 12050,
-      "sha256": "bd569a2741d320fc9eab5180093005acead474d7de1c1c74dcf1197512bcd3a7"
+      "bytes": 46461,
+      "sha256": "ad7345a1aa673cee6e7bf8fbcb6789d7607478dbf47d022c149c6a902b5bd9d3"
     },
     {
       "path": "04_BREAK_AND_MOVEMENT_CONTENT_LIBRARY.md",
@@ -56,13 +56,13 @@
     },
     {
       "path": "07_PRIVACY_AND_DATA_SPEC.md",
-      "bytes": 10051,
-      "sha256": "391c31d3501f04aa5b817b2195026a654d5c3f05bf107f75b58e3da4437fa6e2"
+      "bytes": 30160,
+      "sha256": "204f1421be92734b9339064aa9d1993bc30cc7f586d64d9a99229a79faff5cd7"
     },
     {
       "path": "08_CLAIMS_SAFETY_REGULATORY_REGISTER.md",
-      "bytes": 11746,
-      "sha256": "dcdbd4a02e7eafb542cd12aa01c82744dc7831cbb4d85a8a40283101363aa1c4"
+      "bytes": 16634,
+      "sha256": "53cd6236ec68ebc0df34fdbdad7449cca99041ad0844ad05afe054c52389149e"
     },
     {
       "path": "09_COMPETITOR_AND_PATTERN_AUDIT.md",
@@ -71,8 +71,8 @@
     },
     {
       "path": "10_VALIDATION_AND_EXPERIMENT_PLAN.md",
-      "bytes": 10561,
-      "sha256": "14b28caadb4e22b02e766640af24df994cbaa7203a1a51145cfee7d6eeece19f"
+      "bytes": 24241,
+      "sha256": "4c164cf739d38d392b65f4e4d9f0be6cf5efba2aa12237652296176bd72ba409"
     },
     {
       "path": "11_EVIDENCE_LEDGER.csv",
@@ -86,8 +86,8 @@
     },
     {
       "path": "13_AGENT_HANDOFF_PROMPT.md",
-      "bytes": 7400,
-      "sha256": "38ea030ebac24dde9788eb05cf3564c7f3d20feeb3c142743b7a2c20c39484bc"
+      "bytes": 7598,
+      "sha256": "ca59e0bec9fb08bc8376e038d5fac81c5646fd4cf001fba0fb7882ae978939e4"
     },
     {
       "path": "14_OPEN_QUESTIONS_AND_VERSIONING.md",
@@ -101,18 +101,18 @@
     },
     {
       "path": "README.md",
-      "bytes": 8608,
-      "sha256": "f753af48931fb166229a4d5d50c072c46b3e863c7959bf0514f5b147686bb144"
+      "bytes": 9302,
+      "sha256": "d444a784218d0b6f0b3e065257614ec2946850d51f2c194ff340671a8a936361"
     },
     {
       "path": "machine-readable/claims_register.csv",
-      "bytes": 6226,
-      "sha256": "6fb399ba22fa7f46bbb2c3aef24772f01b1216d5557b95e6ec7889016aaeeb91"
+      "bytes": 11791,
+      "sha256": "8e76a3800094a312d0c48462b4e6ac8769f4693bc2e02c78e31c66e8481f7f3b"
     },
     {
       "path": "machine-readable/event_schema.json",
-      "bytes": 5373,
-      "sha256": "e406df5d5ecd4eea2967efb45b9f7df7a925b4681676e226e16180b8c80364e4"
+      "bytes": 6658,
+      "sha256": "8eac7fd12e4d7171da04a2fc2f79ee5b13351131e937f20b00684cacf7b3a08e"
     },
     {
       "path": "machine-readable/evidence_scale.json",
@@ -121,8 +121,8 @@
     },
     {
       "path": "machine-readable/product_protocol.yaml",
-      "bytes": 4320,
-      "sha256": "02b6493a050b92c88c9c29cd291ac2800c85c824b808415382420ac356f51279"
+      "bytes": 19605,
+      "sha256": "1f87327c40ccc7ac2991697316192de5fce516c68f005ccc6460a6f185708298"
     },
     {
       "path": "machine-readable/sources.csv",

@@ -257,7 +257,7 @@ struct MotionHardwareVocabularyTests {
     func registryAdmitsMotionHardware() throws {
         let registry = SensingProviderRegistry.compiled
         #expect(registry.contains(.motionHardware))
-        #expect(registry.providerCount == 4)
+        #expect(registry.providerCount == 7)
         #expect(try registry.descriptor(for: .motionHardware).id == .motionHardware)
     }
 

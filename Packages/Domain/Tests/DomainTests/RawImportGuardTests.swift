@@ -171,4 +171,45 @@ struct RawImportGuardTests {
             "Guard must name the allowlisted tooling path",
         )
     }
+
+    // MARK: - Epic 5 story S3 content retention (no exemptions)
+
+    @Test("Guard trips on per-window text retention in product code")
+    func tripsOnWindowTextRetention() throws {
+        try Self.expectContentTrip(token: "window" + "Title", sentinel: "S3WindowTextSentinel")
+    }
+
+    @Test("Guard trips on calendar guest-list retention in product code")
+    func tripsOnGuestListRetention() throws {
+        try Self.expectContentTrip(token: "attend" + "eeNames", sentinel: "S3GuestListSentinel")
+    }
+
+    @Test("Guard trips on device-identity retention in product code")
+    func tripsOnDeviceIdentityRetention() throws {
+        try Self.expectContentTrip(token: "unique" + "ID", sentinel: "S3DeviceIdentitySentinel")
+    }
+
+    @Test("Guard trips on calendar-store import in product code")
+    func tripsOnCalendarStoreImport() throws {
+        try Self.expectContentTrip(token: "Event" + "Kit", sentinel: "S3CalendarStoreSentinel")
+    }
+
+    private static func expectContentTrip(token: String, sentinel: String) throws {
+        let scanRoot = try Self.freshScanRoot()
+        defer { try? FileManager.default.removeItem(at: scanRoot) }
+        // The S3 adapters ship under App/ContextAdapters: plant the probe
+        // on that surface.
+        try Self.writeProbe(
+            token: token,
+            sentinel: sentinel,
+            at: "App/ContextAdapters/S3Probe.swift",
+            under: scanRoot,
+        )
+        let result = try Self.runGuard(scanRoot: scanRoot)
+        #expect(result.exitCode != 0, "S3 content token did not trip the guard")
+        #expect(
+            result.output.contains("App/ContextAdapters/S3Probe.swift"),
+            "Guard output names the violating surface file:\n\(result.output)",
+        )
+    }
 }

@@ -18,6 +18,9 @@ private struct FusionFixture {
     var motionLease: SensingProviderLease
     var ambientLease: SensingProviderLease
     var hardwareLease: SensingProviderLease
+    var frontmostLease: SensingProviderLease
+    var mediaLease: SensingProviderLease
+    var focusLease: SensingProviderLease
 }
 
 private func fusionFixture(capacity: Int = 8) throws -> FusionFixture {
@@ -35,12 +38,18 @@ private func fusionFixture(capacity: Int = 8) throws -> FusionFixture {
     let motion = try issue(.fakeMotion)
     let ambient = try issue(.fakeAmbient)
     let hardware = try issue(.motionHardware)
+    let frontmost = try issue(.frontmostApp)
+    let media = try issue(.mediaDevice)
+    let focus = try issue(.focusFilter)
     return FusionFixture(
         bus: EvidenceBus(capacity: capacity, authority: authority),
         presenceLease: presence,
         motionLease: motion,
         ambientLease: ambient,
         hardwareLease: hardware,
+        frontmostLease: frontmost,
+        mediaLease: media,
+        focusLease: focus,
     )
 }
 
@@ -77,6 +86,9 @@ private func fuseAdmit(
     case .fakeMotion: fixture.motionLease
     case .fakeAmbient: fixture.ambientLease
     case .motionHardware: fixture.hardwareLease
+    case .frontmostApp: fixture.frontmostLease
+    case .mediaDevice: fixture.mediaLease
+    case .focusFilter: fixture.focusLease
     }
     return fixture.bus.admit(
         proposal,

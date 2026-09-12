@@ -8,7 +8,9 @@
 #     broker deadline, kill-switch presence; (c) resource numbers — governor
 #     budget table plus per-run suite timings honestly labeled as CI timings,
 #     never energy claims; (d) SBOM generation from the dependency-free SPM
-#     packages; (e) benchmark scaffolding entry for future owner hardware runs.
+#     packages; (e) benchmark scaffolding entry for future owner hardware runs;
+#     (f) Epic 15 trust baseline — data-flow doc, firewall/fusion/ledger cards,
+#     Stop/Delete doc, and dependency/license inventory presence + anchor checks.
 #
 # Fails closed (nonzero exit) on any owned check failing or on any drift
 # between the dossier status file and what was collected. Owner-gated
@@ -50,6 +52,12 @@ owned_ids=(
   resource-governor-budgets
   sbom-generated
   benchmark-harness
+  trust-data-flow-doc
+  trust-firewall-card
+  trust-fusion-card
+  trust-ledger-card
+  trust-stop-delete-doc
+  trust-dependency-inventory
 )
 pending_ids=(
   tcc-physical-prompt-evidence
@@ -57,6 +65,7 @@ pending_ids=(
   resource-suite-timings
   resource-energy-thermal
   benchmark-owner-hardware-run
+  trust-release-scope-selection
 )
 
 usage() {
@@ -386,6 +395,58 @@ if [[ -f "$schema_path" ]] \
 else
   failures+=("benchmark-harness: dossier schema missing or version drift")
 fi
+# 11b. Trust baseline docs (Epic 15 framework baseline): each doc exists
+# under docs/certification and carries its collector anchor plus the
+# source vocabulary it documents. Presence + anchor + vocabulary only;
+# no measurements are asserted here.
+cert_dir="$scan_root/docs/certification"
+trust_doc_ok() {
+  local file="$1" anchor="$2" token="$3"
+  [[ -s "$cert_dir/$file" ]] \
+    && grep -q -F "$anchor" "$cert_dir/$file" 2>/dev/null \
+    && grep -q -F "$token" "$cert_dir/$file" 2>/dev/null
+}
+if trust_doc_ok "data-flow.md" "trust-data-flow-doc v1" "ClosedPolicyFirewall"; then
+  record_pass "trust-data-flow-doc (data-flow.md anchored)"
+else
+  failures+=("trust-data-flow-doc: docs/certification/data-flow.md missing, unanchored, or off-vocabulary")
+fi
+if trust_doc_ok "firewall-card.md" "trust-firewall-card v1" "ClosedPolicyFirewall"; then
+  record_pass "trust-firewall-card (firewall-card.md anchored)"
+else
+  failures+=("trust-firewall-card: docs/certification/firewall-card.md missing, unanchored, or off-vocabulary")
+fi
+if trust_doc_ok "fusion-card.md" "trust-fusion-card v1" "EvidenceFusion"; then
+  record_pass "trust-fusion-card (fusion-card.md anchored)"
+else
+  failures+=("trust-fusion-card: docs/certification/fusion-card.md missing, unanchored, or off-vocabulary")
+fi
+if trust_doc_ok "ledger-card.md" "trust-ledger-card v1" "LedgerIdentity"; then
+  record_pass "trust-ledger-card (ledger-card.md anchored)"
+else
+  failures+=("trust-ledger-card: docs/certification/ledger-card.md missing, unanchored, or off-vocabulary")
+fi
+if trust_doc_ok "stop-delete.md" "trust-stop-delete-doc v1" "engageKillSwitch"; then
+  record_pass "trust-stop-delete-doc (stop-delete.md anchored)"
+else
+  failures+=("trust-stop-delete-doc: docs/certification/stop-delete.md missing, unanchored, or off-vocabulary")
+fi
+
+# 11c. Dependency/license inventory cross-check: this file exists and is
+# anchored, the four manifests still declare zero remote .package(url:)
+# dependencies, and the file's remote total still reads 0.
+if [[ -s "$cert_dir/dependency-license-inventory.md" ]] \
+  && grep -q -F "trust-dependency-inventory v1" "$cert_dir/dependency-license-inventory.md" 2>/dev/null \
+  && ! grep -rn '\.package(url:' "$scan_root/Packages/Domain/Package.swift" "$scan_root/Packages/Features/Package.swift" "$scan_root/Packages/DesignSystem/Package.swift" "$scan_root/Packages/TestSupport/Package.swift" 2>/dev/null | grep -q . \
+  && grep -q -F "Total remote dependencies: **0**" "$cert_dir/dependency-license-inventory.md" 2>/dev/null; then
+  record_pass "trust-dependency-inventory (inventory anchored, 0 remotes re-verified)"
+else
+  failures+=("trust-dependency-inventory: inventory missing, unanchored, or remote-dependency drift")
+fi
+
+# 11d. Release-scope selection is owner-gated: reported, never failed.
+# The exact missing input lives in the dossier entry's missingInput.
+echo "  pending-owner: trust-release-scope-selection (no owner release-scope selection; see missingInput)"
 
 # 12. Suite timings (per-run, honestly labeled): when an xcresult exists,
 # summarize it as CI wall-clock timings — never energy claims. Absence is a

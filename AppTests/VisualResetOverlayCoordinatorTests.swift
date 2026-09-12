@@ -219,7 +219,6 @@ struct VisualResetOverlayCoordinatorTests {
         #expect(harness.panels[0].model.remainingSeconds == 19)
     }
 
-
     @Test("Only the interactive display routes Escape and restores once")
     func onlyInteractiveEscapeClosesAll() {
         let harness = OverlayHarness(displays: [display(1, isMain: true), display(2)])

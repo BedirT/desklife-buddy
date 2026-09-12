@@ -65,13 +65,13 @@ public struct OpportunityActionReducer: Sendable {
     /// re-applied: the snapshot only re-arms dedup and fences so a
     /// resubmitted ActionID replays instead of recommitting.
     public init(fenceState: CoordinatorFenceState) {
-        self.generation = fenceState.generation
-        self.globalRevision = fenceState.globalRevision
-        self.opportunityRevisions = fenceState.opportunityRevisions
-        self.projectionEpochs = fenceState.projectionEpochs
-        self.fencedEpochs = fenceState.fencedEpochs
-        self.committedActions = fenceState.committedActions
-        self.mergedSessions = fenceState.mergedSessions
+        generation = fenceState.generation
+        globalRevision = fenceState.globalRevision
+        opportunityRevisions = fenceState.opportunityRevisions
+        projectionEpochs = fenceState.projectionEpochs
+        fencedEpochs = fenceState.fencedEpochs
+        committedActions = fenceState.committedActions
+        mergedSessions = fenceState.mergedSessions
     }
 
     /// Captures the restart-safe fence/dedup subset for persistence: the
@@ -112,7 +112,6 @@ public struct OpportunityActionReducer: Sendable {
             self.revision = revision
         }
     }
-
 
     public func mergedSession(for opportunity: OpportunityID) -> OpportunityMergedSession? {
         mergedSessions[opportunity]
@@ -167,7 +166,7 @@ public struct OpportunityActionReducer: Sendable {
         // revalidates against the fenced successor, so simultaneous
         // candidates converge no matter the arrival order.
         var remaining = valid
-        let terminals = valid.filter { $0.kind.isTerminal }.sorted(by: terminalOrder(_:_:))
+        let terminals = valid.filter(\.kind.isTerminal).sorted(by: terminalOrder(_:_:))
         if let winner = terminals.first {
             receipts.append(commit(winner, on: &engine))
             for loser in valid where loser.action != winner.action && loser.kind.isTerminal {
@@ -224,188 +223,13 @@ public struct OpportunityActionReducer: Sendable {
     public mutating func noteSessionRotation() {
         generation = generation.advanced()
     }
-
 }
 
-/// Restart-safe fence/dedup snapshot for the coordinator (Story 2.5).
-///
-/// This is the exact crash-replay authority the contract requires to
-/// survive restore: the generation (the causal clock; not elapsed time),
-/// global and opportunity revisions, bound projection epochs, fenced epochs,
-/// committed ActionIDs with their auditable receipts (authorship device +
-/// gap-free counter ride along, never regenerated), and merged sessions. It
-/// carries no clocks, no wall-time anchors, and no Class 0 candidate
-/// buffers.
-public struct CoordinatorFenceState: Equatable, Sendable {
-    public var generation: CoordinatorGeneration
-    public var globalRevision: UInt64
-    public var opportunityRevisions: [OpportunityID: UInt64]
-    public var projectionEpochs: [OpportunityID: ProjectionEpochID]
-    public var fencedEpochs: Set<ProjectionEpochID>
-    public var committedActions: [ActionID: OpportunityActionReceipt]
-    public var mergedSessions: [OpportunityID: OpportunityActionReducer.OpportunityMergedSession]
-
-    public init(
-        generation: CoordinatorGeneration = CoordinatorGeneration(0),
-        globalRevision: UInt64 = 0,
-        opportunityRevisions: [OpportunityID: UInt64] = [:],
-        projectionEpochs: [OpportunityID: ProjectionEpochID] = [:],
-        fencedEpochs: Set<ProjectionEpochID> = [],
-        committedActions: [ActionID: OpportunityActionReceipt] = [:],
-        mergedSessions: [OpportunityID: OpportunityActionReducer.OpportunityMergedSession] = [:],
-    ) {
-        self.generation = generation
-        self.globalRevision = globalRevision
-        self.opportunityRevisions = opportunityRevisions
-        self.projectionEpochs = projectionEpochs
-        self.fencedEpochs = fencedEpochs
-        self.committedActions = committedActions
-        self.mergedSessions = mergedSessions
-    }
-}
-
-extension CoordinatorFenceState: Codable {
-    private enum CodingKeys: String, CodingKey {
-        case generation
-        case globalRevision
-        case opportunityRevisions
-        case projectionEpochs
-        case fencedEpochs
-        case committedActions
-        case mergedSessions
-    }
-
-    private struct OpportunityRevisionRecord: Codable {
-        var opportunity: OpportunityID
-        var revision: UInt64
-    }
-
-    private struct ProjectionEpochRecord: Codable {
-        var opportunity: OpportunityID
-        var epoch: ProjectionEpochID
-    }
-
-    private struct CommittedActionRecord: Codable {
-        var action: ActionID
-        var receipt: OpportunityActionReceipt
-    }
-
-    private struct MergedSessionRecord: Codable {
-        var opportunity: OpportunityID
-        var session: OpportunityActionReducer.OpportunityMergedSession
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        generation = try container.decode(CoordinatorGeneration.self, forKey: .generation)
-        globalRevision = try container.decode(UInt64.self, forKey: .globalRevision)
-        let revisions = try container.decode([OpportunityRevisionRecord].self, forKey: .opportunityRevisions)
-        opportunityRevisions = try Self.uniquelyKeyed(
-            revisions,
-            key: \.opportunity,
-            value: \.revision,
-            forKey: .opportunityRevisions,
-            codingPath: container.codingPath,
-        )
-        let epochs = try container.decode([ProjectionEpochRecord].self, forKey: .projectionEpochs)
-        projectionEpochs = try Self.uniquelyKeyed(
-            epochs,
-            key: \.opportunity,
-            value: \.epoch,
-            forKey: .projectionEpochs,
-            codingPath: container.codingPath,
-        )
-        fencedEpochs = Set(try container.decode([ProjectionEpochID].self, forKey: .fencedEpochs))
-        let actions = try container.decode([CommittedActionRecord].self, forKey: .committedActions)
-        committedActions = try Self.uniquelyKeyed(
-            actions,
-            key: \.action,
-            value: \.receipt,
-            forKey: .committedActions,
-            codingPath: container.codingPath,
-        )
-        let sessions = try container.decode([MergedSessionRecord].self, forKey: .mergedSessions)
-        mergedSessions = try Self.uniquelyKeyed(
-            sessions,
-            key: \.opportunity,
-            value: \.session,
-            forKey: .mergedSessions,
-            codingPath: container.codingPath,
-        )
-    }
-
-    /// Builds a keyed map from decoded records, failing closed on duplicates.
-    /// A tampered payload carrying two records for one key throws
-    /// `DecodingError.dataCorrupted` (surfaced as invalidCoordinatorFenceState
-    /// at the store boundary) instead of trapping in
-    /// `Dictionary(uniqueKeysWithValues:)` on the launch path.
-    private static func uniquelyKeyed<Record, Key: Hashable, Value>(
-        _ records: [Record],
-        key keyPath: KeyPath<Record, Key>,
-        value valuePath: KeyPath<Record, Value>,
-        forKey codingKey: CodingKeys,
-        codingPath: [CodingKey],
-    ) throws -> [Key: Value] {
-        var map: [Key: Value] = [:]
-        map.reserveCapacity(records.count)
-        for record in records {
-            let key = record[keyPath: keyPath]
-            guard map[key] == nil else {
-                throw DecodingError.dataCorrupted(DecodingError.Context(
-                    codingPath: codingPath + [codingKey],
-                    debugDescription: "Duplicate coordinator fence record for one key.",
-                ))
-            }
-            map[key] = record[keyPath: valuePath]
-        }
-        return map
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(generation, forKey: .generation)
-        try container.encode(globalRevision, forKey: .globalRevision)
-        try container.encode(
-            opportunityRevisions
-                .sorted { $0.key.uuid.uuidString < $1.key.uuid.uuidString }
-                .map { OpportunityRevisionRecord(opportunity: $0.key, revision: $0.value) },
-            forKey: .opportunityRevisions,
-        )
-        try container.encode(
-            projectionEpochs
-                .sorted { $0.key.uuid.uuidString < $1.key.uuid.uuidString }
-                .map { ProjectionEpochRecord(opportunity: $0.key, epoch: $0.value) },
-            forKey: .projectionEpochs,
-        )
-        try container.encode(
-            fencedEpochs.sorted { $0.uuid.uuidString < $1.uuid.uuidString },
-            forKey: .fencedEpochs,
-        )
-        try container.encode(
-            committedActions
-                .sorted {
-                    if $0.key.deviceID.uuid.uuidString != $1.key.deviceID.uuid.uuidString {
-                        return $0.key.deviceID.uuid.uuidString < $1.key.deviceID.uuid.uuidString
-                    }
-                    if $0.key.counter != $1.key.counter { return $0.key.counter < $1.key.counter }
-                    return $0.key.uuid.uuidString < $1.key.uuid.uuidString
-                }
-                .map { CommittedActionRecord(action: $0.key, receipt: $0.value) },
-            forKey: .committedActions,
-        )
-        try container.encode(
-            mergedSessions
-                .sorted { $0.key.uuid.uuidString < $1.key.uuid.uuidString }
-                .map { MergedSessionRecord(opportunity: $0.key, session: $0.value) },
-            forKey: .mergedSessions,
-        )
-    }
-}
+// Fence snapshot lives in CoordinatorFenceState.swift (Story 2.5).
 
 // MARK: - Validation
 
 extension OpportunityActionReducer {
-
     private enum ValidationFailure: Equatable {
         case staleGeneration
         case staleRevision(String)
@@ -444,7 +268,9 @@ extension OpportunityActionReducer {
         }
         if needsGlobalLease {
             guard envelope.originRevision == globalRevision else {
-                return .staleRevision("The action originated from global revision \(envelope.originRevision) past \(globalRevision).")
+                return .staleRevision(
+                    "The action originated from global revision \(envelope.originRevision) past \(globalRevision).",
+                )
             }
             return validateGlobalPayload(envelope)
         }
@@ -465,7 +291,9 @@ extension OpportunityActionReducer {
             return .staleRevision("The action names a projection epoch that is no longer bound.")
         }
         guard envelope.originRevision == opportunityRevisions[opportunityID, default: 0] else {
-            return .staleRevision("The action originated from opportunity revision \(envelope.originRevision) past \(opportunityRevisions[opportunityID, default: 0]).")
+            return .staleRevision(
+                "The action originated from opportunity revision \(envelope.originRevision) past \(opportunityRevisions[opportunityID, default: 0]).",
+            )
         }
         return validateOpportunityPayload(envelope, opportunityID: opportunityID)
     }
@@ -498,7 +326,9 @@ extension OpportunityActionReducer {
             switch envelope.scope {
             case .visual, .movement: break
             default:
-                return .invalidPayload("Only single-clock scopes can snooze in v1; merged snooze needs per-clock deadlines.")
+                return .invalidPayload(
+                    "Only single-clock scopes can snooze in v1; merged snooze needs per-clock deadlines.",
+                )
             }
             guard envelope.payload.selectedSnoozeSeconds != nil,
                   envelope.payload.referenceDate != nil
@@ -793,30 +623,140 @@ private struct RecordedEffectSpec: Sendable {
 private let recordedEffectSpecs: [OpportunityActionKind: RecordedEffectSpec] = [
     .nowAcceptVisual: RecordedEffectSpec(event: .breakStarted, opportunity: .visual, source: .user, usesDuration: true),
     .mergedAccept: RecordedEffectSpec(event: .breakStarted, opportunity: .visual, source: .user, usesDuration: true),
-    .nowAcceptRecovery: RecordedEffectSpec(event: .breakStarted, opportunity: .recovery, source: .user, usesDuration: false),
-    .visualTimerFinished: RecordedEffectSpec(event: .timerFinished, opportunity: .visual, source: .localTimer, usesDuration: false),
-    .mergedVisualSegmentFinished: RecordedEffectSpec(event: .timerFinished, opportunity: .visual, source: .localTimer, usesDuration: false),
-    .visualDoneEarly: RecordedEffectSpec(event: .userDeclaredCompleted, opportunity: .visual, source: .user, usesDuration: false),
-    .mergedVisualSegmentDoneEarly: RecordedEffectSpec(event: .userDeclaredCompleted, opportunity: .visual, source: .user, usesDuration: false),
+    .nowAcceptRecovery: RecordedEffectSpec(
+        event: .breakStarted,
+        opportunity: .recovery,
+        source: .user,
+        usesDuration: false,
+    ),
+    .visualTimerFinished: RecordedEffectSpec(
+        event: .timerFinished,
+        opportunity: .visual,
+        source: .localTimer,
+        usesDuration: false,
+    ),
+    .mergedVisualSegmentFinished: RecordedEffectSpec(
+        event: .timerFinished,
+        opportunity: .visual,
+        source: .localTimer,
+        usesDuration: false,
+    ),
+    .visualDoneEarly: RecordedEffectSpec(
+        event: .userDeclaredCompleted,
+        opportunity: .visual,
+        source: .user,
+        usesDuration: false,
+    ),
+    .mergedVisualSegmentDoneEarly: RecordedEffectSpec(
+        event: .userDeclaredCompleted,
+        opportunity: .visual,
+        source: .user,
+        usesDuration: false,
+    ),
     .visualSkip: RecordedEffectSpec(event: .skipped, opportunity: .visual, source: .user, usesDuration: false),
     .visualEscape: RecordedEffectSpec(event: .skipped, opportunity: .visual, source: .user, usesDuration: false),
-    .movementTimerFinished: RecordedEffectSpec(event: .timerFinished, opportunity: .movement, source: .localTimer, usesDuration: true),
-    .mergedMovementTimerFinished: RecordedEffectSpec(event: .timerFinished, opportunity: .movement, source: .localTimer, usesDuration: true),
-    .movementDoneEarly: RecordedEffectSpec(event: .userDeclaredCompleted, opportunity: .movement, source: .user, usesDuration: true),
-    .mergedMovementDoneEarly: RecordedEffectSpec(event: .userDeclaredCompleted, opportunity: .movement, source: .user, usesDuration: true),
-    .movementAlreadyMoved: RecordedEffectSpec(event: .userDeclaredAlreadyMoved, opportunity: .movement, source: .user, usesDuration: false),
-    .mergedMovementAlreadyMoved: RecordedEffectSpec(event: .userDeclaredAlreadyMoved, opportunity: .movement, source: .user, usesDuration: false),
-    .movementPositionChangedOffered: RecordedEffectSpec(event: .positionChanged, opportunity: .movement, source: .user, usesDuration: false),
-    .movementPositionChangedRunning: RecordedEffectSpec(event: .positionChanged, opportunity: .movement, source: .user, usesDuration: false),
-    .mergedMovementPositionChanged: RecordedEffectSpec(event: .positionChanged, opportunity: .movement, source: .user, usesDuration: false),
-    .movementSkipOffered: RecordedEffectSpec(event: .skipped, opportunity: .movement, source: .user, usesDuration: false),
-    .movementSkipRunning: RecordedEffectSpec(event: .skipped, opportunity: .movement, source: .user, usesDuration: false),
-    .movementEscapeOffered: RecordedEffectSpec(event: .skipped, opportunity: .movement, source: .user, usesDuration: false),
-    .movementEscapeRunning: RecordedEffectSpec(event: .skipped, opportunity: .movement, source: .user, usesDuration: false),
-    .mergedMovementSkip: RecordedEffectSpec(event: .skipped, opportunity: .movement, source: .user, usesDuration: false),
-    .mergedEscapeDuringMovement: RecordedEffectSpec(event: .skipped, opportunity: .movement, source: .user, usesDuration: false),
-    .positionChanged: RecordedEffectSpec(event: .positionChanged, opportunity: .positionChange, source: .user, usesDuration: false),
-    .positionSkip: RecordedEffectSpec(event: .skipped, opportunity: .positionChange, source: .user, usesDuration: false),
+    .movementTimerFinished: RecordedEffectSpec(
+        event: .timerFinished,
+        opportunity: .movement,
+        source: .localTimer,
+        usesDuration: true,
+    ),
+    .mergedMovementTimerFinished: RecordedEffectSpec(
+        event: .timerFinished,
+        opportunity: .movement,
+        source: .localTimer,
+        usesDuration: true,
+    ),
+    .movementDoneEarly: RecordedEffectSpec(
+        event: .userDeclaredCompleted,
+        opportunity: .movement,
+        source: .user,
+        usesDuration: true,
+    ),
+    .mergedMovementDoneEarly: RecordedEffectSpec(
+        event: .userDeclaredCompleted,
+        opportunity: .movement,
+        source: .user,
+        usesDuration: true,
+    ),
+    .movementAlreadyMoved: RecordedEffectSpec(
+        event: .userDeclaredAlreadyMoved,
+        opportunity: .movement,
+        source: .user,
+        usesDuration: false,
+    ),
+    .mergedMovementAlreadyMoved: RecordedEffectSpec(
+        event: .userDeclaredAlreadyMoved,
+        opportunity: .movement,
+        source: .user,
+        usesDuration: false,
+    ),
+    .movementPositionChangedOffered: RecordedEffectSpec(
+        event: .positionChanged,
+        opportunity: .movement,
+        source: .user,
+        usesDuration: false,
+    ),
+    .movementPositionChangedRunning: RecordedEffectSpec(
+        event: .positionChanged,
+        opportunity: .movement,
+        source: .user,
+        usesDuration: false,
+    ),
+    .mergedMovementPositionChanged: RecordedEffectSpec(
+        event: .positionChanged,
+        opportunity: .movement,
+        source: .user,
+        usesDuration: false,
+    ),
+    .movementSkipOffered: RecordedEffectSpec(
+        event: .skipped,
+        opportunity: .movement,
+        source: .user,
+        usesDuration: false,
+    ),
+    .movementSkipRunning: RecordedEffectSpec(
+        event: .skipped,
+        opportunity: .movement,
+        source: .user,
+        usesDuration: false,
+    ),
+    .movementEscapeOffered: RecordedEffectSpec(
+        event: .skipped,
+        opportunity: .movement,
+        source: .user,
+        usesDuration: false,
+    ),
+    .movementEscapeRunning: RecordedEffectSpec(
+        event: .skipped,
+        opportunity: .movement,
+        source: .user,
+        usesDuration: false,
+    ),
+    .mergedMovementSkip: RecordedEffectSpec(
+        event: .skipped,
+        opportunity: .movement,
+        source: .user,
+        usesDuration: false,
+    ),
+    .mergedEscapeDuringMovement: RecordedEffectSpec(
+        event: .skipped,
+        opportunity: .movement,
+        source: .user,
+        usesDuration: false,
+    ),
+    .positionChanged: RecordedEffectSpec(
+        event: .positionChanged,
+        opportunity: .positionChange,
+        source: .user,
+        usesDuration: false,
+    ),
+    .positionSkip: RecordedEffectSpec(
+        event: .skipped,
+        opportunity: .positionChange,
+        source: .user,
+        usesDuration: false,
+    ),
 ]
 
 /// The 20 kinds that commit identity, rank, and fence with no fact and no
@@ -888,8 +828,8 @@ extension LeaseScope {
     /// revokes predecessor leases.
     var scopeRevision: UInt64 {
         switch self {
-        case let .opportunity(_, revision): return revision
-        case let .global(_, revision): return revision
+        case let .opportunity(_, revision): revision
+        case let .global(_, revision): revision
         }
     }
 }

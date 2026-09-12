@@ -136,6 +136,10 @@ struct SettingsAuthoritativeStateTests {
     func customUsesRetainedConfigurationBase() async throws {
         let catalog = try SettingsScheduleCatalog.fixture()
         let timings = try fixtureConfiguration(visual: 41, movement: 83)
+        // Story-2.4 threshold ordering (ProtocolConfiguration.swift:92):
+        // longIdleResetSeconds <= extendedUnavailableThresholdSeconds, so the
+        // extended edge stays reachable. Keep the distinctive 987 s long-idle
+        // value and pin the extended threshold at the same bound.
         let retained = try ProtocolConfiguration(
             visual: timings.visual,
             movement: timings.movement,
@@ -143,6 +147,7 @@ struct SettingsAuthoritativeStateTests {
                 recentInputWindowSeconds: 12,
                 longIdleResetSeconds: 987,
                 wakeUnlockGraceSeconds: 34,
+                extendedUnavailableThresholdSeconds: 987,
             ),
             delivery: OpportunityDeliveryConfiguration(
                 waitForLowFrictionMoment: false,

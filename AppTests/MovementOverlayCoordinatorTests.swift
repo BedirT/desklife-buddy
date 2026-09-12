@@ -436,7 +436,10 @@ struct MovementPanelTests {
             ("p", UInt16(35), .positionChanged),
         ] {
             let clock = MovementPanelTestClock()
-            let model = try MovementModel(durations: MovementDurations.projected(from: movementSchedule()), now: { clock.value })
+            let model = try MovementModel(
+                durations: MovementDurations.projected(from: movementSchedule()),
+                now: { clock.value },
+            )
             let panel = MovementPanel(
                 displayID: .direct(1),
                 frame: CGRect(x: 0, y: 0, width: 800, height: 600),

@@ -10,7 +10,7 @@ public enum OpportunityCoordinatorCommand: Equatable, Sendable {
     case observe(
         sample: ActivitySample,
         activeSuppressions: Set<SuppressionReason>,
-        isLowFrictionMoment: Bool
+        isLowFrictionMoment: Bool,
     )
 
     /// Applies one canonical event (`ProtocolEngine.record`).
@@ -18,7 +18,7 @@ public enum OpportunityCoordinatorCommand: Equatable, Sendable {
         kind: OpportunityEventKind,
         opportunity: OpportunityType?,
         selectedDurationSeconds: TimeInterval?,
-        source: OpportunityEventSource
+        source: OpportunityEventSource,
     )
 
     /// Records a validated snooze (`ProtocolEngine.snooze`).

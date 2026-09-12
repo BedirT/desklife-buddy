@@ -214,14 +214,14 @@ struct CoordinatorFenceStateSerializationTests {
         // baseline"; "without a wall-clock catch-up anchor"). The runway is
         // anchored to monotonic uptime, which dies with the process, so only
         // counters persist.
-        var engine = ProtocolEngine(configuration: try fenceCourtesyConfiguration())
+        var engine = try ProtocolEngine(configuration: fenceCourtesyConfiguration())
         _ = engine.observe(.active(uptimeSeconds: 0, secondsSinceInput: 0))
         _ = engine.observe(.active(uptimeSeconds: 10, secondsSinceInput: 0))
         let away = engine.observe(.active(uptimeSeconds: 310, secondsSinceInput: 300))
         #expect(away.events.map(\.kind) == [.likelyNaturalInterruption])
 
         let saved = engine.state
-        var relaunched = ProtocolEngine(configuration: try fenceCourtesyConfiguration(), state: saved)
+        var relaunched = try ProtocolEngine(configuration: fenceCourtesyConfiguration(), state: saved)
         #expect(relaunched.state.visualClock == saved.visualClock)
         #expect(relaunched.state.movementClock == saved.movementClock)
 
@@ -266,7 +266,7 @@ struct CoordinatorFenceStateSerializationTests {
             revision: 1,
         )
         #expect(reducer.reduce(merged, on: &engine, atTicks: 1000).outcome == .committed)
-        let valid = String(decoding: try JSONEncoder().encode(reducer.fenceState), as: UTF8.self)
+        let valid = try String(decoding: JSONEncoder().encode(reducer.fenceState), as: UTF8.self)
 
         // Every keyed map in the fence fails closed: a second record for
         // one key decodes to a thrown error, never a launch-path trap in
@@ -282,6 +282,7 @@ struct CoordinatorFenceStateSerializationTests {
         }
     }
 }
+
 // MARK: - Harness (deterministic owner-named fixtures; all identity injected)
 
 /// Duplicates the first element of the JSON array under `arrayKey`, returning
@@ -424,7 +425,7 @@ private func fenceTestEnvelope(
     revision: UInt64 = 0,
     payload: OpportunityActionPayload = OpportunityActionPayload(),
 ) throws -> OpportunityActionEnvelope {
-    OpportunityActionEnvelope(
+    try OpportunityActionEnvelope(
         action: ActionID(uuid: UUID(uuidString: actionUUID)!, deviceID: fenceTestDevice, counter: counter),
         kind: kind,
         scope: scope,
@@ -434,7 +435,7 @@ private func fenceTestEnvelope(
         originPhase: originPhase,
         segmentID: nil,
         causalParents: [],
-        lease: try fenceTestLease(revision: revision, generation: generation, projectionEpoch: projectionEpoch),
+        lease: fenceTestLease(revision: revision, generation: generation, projectionEpoch: projectionEpoch),
         payload: payload,
     )
 }

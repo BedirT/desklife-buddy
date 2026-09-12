@@ -46,6 +46,7 @@ extension ProtocolRuntime {
             throw error
         }
     }
+
     func pendingActionOpening(
         _ action: HeadsUpPendingAction,
     ) -> (drafts: [OpportunityEventDraft], nextSession: LifecycleSession?) {

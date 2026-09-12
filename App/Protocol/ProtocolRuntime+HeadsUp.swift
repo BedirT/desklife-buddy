@@ -186,10 +186,10 @@ extension ProtocolRuntime {
                 restoreCoordinator(checkpoint)
                 throw error
             }
+        }
     }
 }
 
-}
 extension ProtocolRuntime {
     func reduceHeadsUpObservation(
         in candidate: inout ProtocolEngine,

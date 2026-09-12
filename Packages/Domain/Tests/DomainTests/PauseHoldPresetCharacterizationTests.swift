@@ -132,7 +132,7 @@ struct PauseHoldPresetCharacterizationTests {
             (#"{"kind":"frequent_movement"}"#, ScheduleProfile.frequentMovement),
             (
                 #"{"kind":"research_informed_high_frequency"}"#,
-                ScheduleProfile.researchInformedHighFrequency
+                ScheduleProfile.researchInformedHighFrequency,
             ),
         ] as [(String, ScheduleProfile)] {
             let decoded = try decoder.decode(

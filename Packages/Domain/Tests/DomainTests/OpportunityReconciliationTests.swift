@@ -19,40 +19,40 @@ private let reconcileEpoch = ProjectionEpochID(uuid: UUID(uuidString: "00000000-
 
 private func reconcileConfiguration() throws -> ProtocolConfiguration {
     try ProtocolConfiguration(
-            visual: OpportunitySchedule(
-                softDueSeconds: 10,
-                targetSeconds: 20,
-                latestPreferredSeconds: 30,
-                durationOptionsSeconds: [5],
-            ),
-            movement: OpportunitySchedule(
-                softDueSeconds: 15,
-                targetSeconds: 50,
-                latestPreferredSeconds: 60,
-                durationOptionsSeconds: [300, 120],
-            ),
-            activityEstimator: ActivityEstimatorConfiguration(
-                recentInputWindowSeconds: 60,
-                longIdleResetSeconds: 300,
-                wakeUnlockGraceSeconds: 90,
-            ),
-            delivery: OpportunityDeliveryConfiguration(
-                waitForLowFrictionMoment: false,
-                mergeWindowSeconds: 5,
-                headsUpDefault: true,
-                headsUpSecondsBeforeTarget: 2,
-                snoozeOptionsSeconds: [300, 600, 900],
-                maximumRepeatedEscalations: 1,
-                lockoutAllowed: false,
-            ),
-        )
+        visual: OpportunitySchedule(
+            softDueSeconds: 10,
+            targetSeconds: 20,
+            latestPreferredSeconds: 30,
+            durationOptionsSeconds: [5],
+        ),
+        movement: OpportunitySchedule(
+            softDueSeconds: 15,
+            targetSeconds: 50,
+            latestPreferredSeconds: 60,
+            durationOptionsSeconds: [300, 120],
+        ),
+        activityEstimator: ActivityEstimatorConfiguration(
+            recentInputWindowSeconds: 60,
+            longIdleResetSeconds: 300,
+            wakeUnlockGraceSeconds: 90,
+        ),
+        delivery: OpportunityDeliveryConfiguration(
+            waitForLowFrictionMoment: false,
+            mergeWindowSeconds: 5,
+            headsUpDefault: true,
+            headsUpSecondsBeforeTarget: 2,
+            snoozeOptionsSeconds: [300, 600, 900],
+            maximumRepeatedEscalations: 1,
+            lockoutAllowed: false,
+        ),
+    )
 }
 
 // MARK: - Harness
 
 private func runningMergedEngine() throws -> ProtocolEngine {
-    ProtocolEngine(
-        configuration: try reconcileConfiguration(),
+    try ProtocolEngine(
+        configuration: reconcileConfiguration(),
         visualClock: OpportunityClockState(cycleID: 1, accumulatedActiveUseSeconds: 0, phase: .accumulating),
         movementClock: OpportunityClockState(
             accumulatedActiveUseSeconds: 3600,
@@ -108,7 +108,6 @@ private func makeCandidate(
 
 @Suite("Opportunity reconciliation: terminal rank")
 struct OpportunityTerminalRankTests {
-
     // MARK: - Terminal claim rank
 
     @Test("Terminal claim rank orders skip before timer finish")
@@ -146,7 +145,7 @@ struct OpportunityTerminalRankTests {
             #expect(committed.count == 1)
             #expect(committed.first?.facts.map(\.kind) == [.skipped])
             #expect(committed.first?.actionID.uuid.uuidString == "00000000-0000-0000-0000-00000000C001")
-            #expect(receipts.filter { $0.outcome != .committed }.count == 1)
+            #expect(receipts.count(where: { $0.outcome != .committed }) == 1)
         }
     }
 
@@ -229,15 +228,15 @@ private struct VisualExitFlow {
 }
 
 private func makeVisualExitFlow() throws -> VisualExitFlow {
-    var engine = ProtocolEngine(
-        configuration: try reconcileConfiguration(),
+    var engine = try ProtocolEngine(
+        configuration: reconcileConfiguration(),
         visualClock: OpportunityClockState(accumulatedActiveUseSeconds: 1500, phase: .running),
         movementClock: OpportunityClockState(accumulatedActiveUseSeconds: 3600, phase: .readyToPresent),
     )
     var reducer = OpportunityActionReducer()
     var acceptPayload = OpportunityActionPayload()
     acceptPayload.selectedDurationSeconds = 5
-    let accept = OpportunityActionEnvelope(
+    let accept = try OpportunityActionEnvelope(
         action: ActionID(
             uuid: UUID(uuidString: "00000000-0000-0000-0000-00000000C060")!,
             deviceID: reconcileDeviceA,
@@ -251,7 +250,7 @@ private func makeVisualExitFlow() throws -> VisualExitFlow {
         originPhase: .offered,
         segmentID: nil,
         causalParents: [],
-        lease: try OpportunityLease(
+        lease: OpportunityLease(
             scope: .opportunity(id: reconcileOpportunity, revision: 0),
             generation: CoordinatorGeneration(0),
             grantedDeviceID: reconcileDeviceA,
@@ -262,7 +261,7 @@ private func makeVisualExitFlow() throws -> VisualExitFlow {
         payload: acceptPayload,
     )
     let accepted = reducer.reduce(accept, on: &engine, atTicks: 1010)
-    let segmentExit = OpportunityActionEnvelope(
+    let segmentExit = try OpportunityActionEnvelope(
         action: ActionID(
             uuid: UUID(uuidString: "00000000-0000-0000-0000-00000000C061")!,
             deviceID: reconcileDeviceA,
@@ -276,7 +275,7 @@ private func makeVisualExitFlow() throws -> VisualExitFlow {
         originPhase: .running,
         segmentID: MergedSegmentID.visual(for: reconcileOpportunity),
         causalParents: [accepted.actionID],
-        lease: try OpportunityLease(
+        lease: OpportunityLease(
             scope: .opportunity(id: reconcileOpportunity, revision: 1),
             generation: CoordinatorGeneration(0),
             grantedDeviceID: reconcileDeviceA,
@@ -289,7 +288,7 @@ private func makeVisualExitFlow() throws -> VisualExitFlow {
     let exited = reducer.reduce(segmentExit, on: &engine, atTicks: 1011)
     var joinPayload = OpportunityActionPayload()
     joinPayload.selectedDurationSeconds = 300
-    let movementJoin = OpportunityActionEnvelope(
+    let movementJoin = try OpportunityActionEnvelope(
         action: ActionID(
             uuid: UUID(uuidString: "00000000-0000-0000-0000-00000000C062")!,
             deviceID: reconcileDeviceA,
@@ -303,7 +302,7 @@ private func makeVisualExitFlow() throws -> VisualExitFlow {
         originPhase: .running,
         segmentID: MergedSegmentID.movement(for: reconcileOpportunity),
         causalParents: [exited.actionID],
-        lease: try OpportunityLease(
+        lease: OpportunityLease(
             scope: .opportunity(id: reconcileOpportunity, revision: 2),
             generation: CoordinatorGeneration(0),
             grantedDeviceID: reconcileDeviceA,
@@ -332,7 +331,7 @@ private func makeVisualExitFlow() throws -> VisualExitFlow {
 struct OpportunityNonterminalKeyTests {
     @Test("One winner applies per conflict key in canonical order")
     func oneWinnerPerConflictKey() throws {
-        var engine = ProtocolEngine(configuration: try reconcileConfiguration())
+        var engine = try ProtocolEngine(configuration: reconcileConfiguration())
         var reducer = OpportunityActionReducer()
         var pausePayload = OpportunityActionPayload()
         pausePayload.pauseRecordID = UUID(uuidString: "00000000-0000-0000-0000-00000000D001")!
@@ -377,14 +376,14 @@ struct OpportunityNonterminalKeyTests {
             on: &engine,
             atTicks: 1010,
         )
-        #expect(receipts.filter { $0.outcome == .committed }.count == 1)
+        #expect(receipts.count(where: { $0.outcome == .committed }) == 1)
         #expect(receipts.first(where: { $0.outcome == .committed })?.actionID.uuid.uuidString
             == "00000000-0000-0000-0000-00000000C031")
     }
 
     @Test("Compatible disjoint keys all commit in one transaction")
     func disjointKeysAllCommit() throws {
-        var engine = ProtocolEngine(configuration: try reconcileConfiguration())
+        var engine = try ProtocolEngine(configuration: reconcileConfiguration())
         var reducer = OpportunityActionReducer()
         var pausePayload = OpportunityActionPayload()
         pausePayload.pauseRecordID = UUID(uuidString: "00000000-0000-0000-0000-00000000D001")!
@@ -417,10 +416,10 @@ struct OpportunityNonterminalKeyTests {
                 payload: payload,
             )
         }
-        let receipts = reducer.reduceAll(
+        let receipts = try reducer.reduceAll(
             [
-                try globalAction(.pauseStart, uuid: "00000000-0000-0000-0000-00000000C040", payload: pausePayload),
-                try globalAction(.holdBegin, uuid: "00000000-0000-0000-0000-00000000C041", payload: holdPayload),
+                globalAction(.pauseStart, uuid: "00000000-0000-0000-0000-00000000C040", payload: pausePayload),
+                globalAction(.holdBegin, uuid: "00000000-0000-0000-0000-00000000C041", payload: holdPayload),
             ],
             on: &engine,
             atTicks: 1010,
@@ -433,8 +432,8 @@ struct OpportunityNonterminalKeyTests {
 
     @Test("A movement accept cannot consume a segment before its creation")
     func segmentGuardRequiresCreation() throws {
-        var engine = ProtocolEngine(
-            configuration: try reconcileConfiguration(),
+        var engine = try ProtocolEngine(
+            configuration: reconcileConfiguration(),
             visualClock: OpportunityClockState(accumulatedActiveUseSeconds: 1500, phase: .readyToPresent),
             movementClock: OpportunityClockState(accumulatedActiveUseSeconds: 3600, phase: .readyToPresent),
         )
@@ -497,7 +496,7 @@ struct OpportunityNonterminalKeyTests {
         #expect(closed.outcome == .committed)
         #expect(closed.facts.map(\.kind) == [.userDeclaredCompleted])
         let terminalKinds = [flow.accept.kind, flow.segmentExit.kind, flow.movementJoin.kind, close.kind]
-            .filter { $0.isTerminal }
+            .filter(\.isTerminal)
         #expect(terminalKinds == [.mergedMovementDoneEarly])
         // A fenced epoch authorizes nothing further under it.
         let late = try makeCandidate(

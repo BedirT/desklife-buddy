@@ -92,7 +92,7 @@ func fenceFixtureEnvelope(
     revision: UInt64 = 0,
     payload: OpportunityActionPayload = OpportunityActionPayload(),
 ) throws -> OpportunityActionEnvelope {
-    OpportunityActionEnvelope(
+    try OpportunityActionEnvelope(
         action: ActionID(uuid: UUID(uuidString: actionUUID)!, deviceID: device, counter: counter),
         kind: kind,
         scope: scope,
@@ -102,7 +102,7 @@ func fenceFixtureEnvelope(
         originPhase: .offered,
         segmentID: nil,
         causalParents: [],
-        lease: try fenceFixtureLease(
+        lease: fenceFixtureLease(
             revision: revision,
             generation: generation,
             projectionEpoch: projectionEpoch,

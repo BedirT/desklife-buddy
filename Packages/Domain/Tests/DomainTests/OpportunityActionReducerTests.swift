@@ -17,43 +17,42 @@ private let actionGlobal = GlobalStateID(UUID(uuidString: "00000000-0000-0000-00
 private let actionDevice = DeviceID(uuid: UUID(uuidString: "00000000-0000-0000-0000-0000000000D1")!)
 private let actionEpoch = ProjectionEpochID(uuid: UUID(uuidString: "00000000-0000-0000-0000-00000000E001")!)
 
-
 private func actionConfiguration() throws -> ProtocolConfiguration {
     try ProtocolConfiguration(
-            visual: OpportunitySchedule(
-                softDueSeconds: 10,
-                targetSeconds: 20,
-                latestPreferredSeconds: 30,
-                durationOptionsSeconds: [5],
-            ),
-            movement: OpportunitySchedule(
-                softDueSeconds: 15,
-                targetSeconds: 50,
-                latestPreferredSeconds: 60,
-                durationOptionsSeconds: [300, 120],
-            ),
-            activityEstimator: ActivityEstimatorConfiguration(
-                recentInputWindowSeconds: 60,
-                longIdleResetSeconds: 300,
-                wakeUnlockGraceSeconds: 90,
-            ),
-            delivery: OpportunityDeliveryConfiguration(
-                waitForLowFrictionMoment: false,
-                mergeWindowSeconds: 5,
-                headsUpDefault: true,
-                headsUpSecondsBeforeTarget: 2,
-                snoozeOptionsSeconds: [300, 600, 900],
-                maximumRepeatedEscalations: 1,
-                lockoutAllowed: false,
-            ),
-        )
+        visual: OpportunitySchedule(
+            softDueSeconds: 10,
+            targetSeconds: 20,
+            latestPreferredSeconds: 30,
+            durationOptionsSeconds: [5],
+        ),
+        movement: OpportunitySchedule(
+            softDueSeconds: 15,
+            targetSeconds: 50,
+            latestPreferredSeconds: 60,
+            durationOptionsSeconds: [300, 120],
+        ),
+        activityEstimator: ActivityEstimatorConfiguration(
+            recentInputWindowSeconds: 60,
+            longIdleResetSeconds: 300,
+            wakeUnlockGraceSeconds: 90,
+        ),
+        delivery: OpportunityDeliveryConfiguration(
+            waitForLowFrictionMoment: false,
+            mergeWindowSeconds: 5,
+            headsUpDefault: true,
+            headsUpSecondsBeforeTarget: 2,
+            snoozeOptionsSeconds: [300, 600, 900],
+            maximumRepeatedEscalations: 1,
+            lockoutAllowed: false,
+        ),
+    )
 }
 
 // MARK: - Harness
 
 private func dueEngine() throws -> ProtocolEngine {
-    ProtocolEngine(
-        configuration: try actionConfiguration(),
+    try ProtocolEngine(
+        configuration: actionConfiguration(),
         visualClock: OpportunityClockState(
             accumulatedActiveUseSeconds: 1500,
             phase: .readyToPresent,
@@ -93,7 +92,7 @@ private func makeEnvelope(
     lease: OpportunityLease? = nil,
     payload: OpportunityActionPayload = OpportunityActionPayload(),
 ) throws -> OpportunityActionEnvelope {
-    OpportunityActionEnvelope(
+    try OpportunityActionEnvelope(
         action: ActionID(
             uuid: UUID(uuidString: actionUUID)!,
             deviceID: actionDevice,
@@ -107,11 +106,11 @@ private func makeEnvelope(
         originPhase: originPhase,
         segmentID: nil,
         causalParents: [],
-        lease: lease ?? (try makeLease(
+        lease: lease ?? makeLease(
             scope: .opportunity(id: actionOpportunity, revision: revision),
             generation: generation,
             projectionEpoch: actionEpoch,
-        )),
+        ),
         payload: payload,
     )
 }
@@ -126,13 +125,12 @@ private func durationPayload(_ seconds: TimeInterval) -> OpportunityActionPayloa
 
 @Suite("Canonical opportunity-action reducer: movement")
 struct OpportunityActionMovementTests {
-
     @Test("Opening a movement duration choice emits no breakStarted")
     func openingChoiceEmitsNoFact() throws {
         var engine = try dueEngine()
         var reducer = OpportunityActionReducer()
-        let receipt = reducer.reduce(
-            try makeEnvelope(
+        let receipt = try reducer.reduce(
+            makeEnvelope(
                 .nowOpenMovementOffer,
                 scope: .movement(cycle: ClockCycleID(scope: .movement, rawValue: 0)),
             ),
@@ -149,8 +147,8 @@ struct OpportunityActionMovementTests {
     func selectionEmitsExactlyOneFact() throws {
         var engine = try dueEngine()
         var reducer = OpportunityActionReducer()
-        let receipt = reducer.reduce(
-            try makeEnvelope(
+        let receipt = try reducer.reduce(
+            makeEnvelope(
                 .nowAcceptMovement,
                 scope: .movement(cycle: ClockCycleID(scope: .movement, rawValue: 0)),
                 payload: durationPayload(300),
@@ -175,8 +173,8 @@ struct OpportunityActionMovementTests {
     func unsupportedDurationIsNoOp() throws {
         var engine = try dueEngine()
         var reducer = OpportunityActionReducer()
-        let receipt = reducer.reduce(
-            try makeEnvelope(
+        let receipt = try reducer.reduce(
+            makeEnvelope(
                 .nowAcceptMovement,
                 scope: .movement(cycle: ClockCycleID(scope: .movement, rawValue: 0)),
                 payload: durationPayload(240),
@@ -195,8 +193,8 @@ struct OpportunityActionMovementTests {
     func visualTimerFinishFreshensVisual() throws {
         var engine = try dueEngine()
         var reducer = OpportunityActionReducer()
-        let receipt = reducer.reduce(
-            try makeEnvelope(
+        let receipt = try reducer.reduce(
+            makeEnvelope(
                 .visualTimerFinished,
                 scope: .visual(cycle: ClockCycleID(scope: .visual, rawValue: 0)),
                 originPhase: .running,
@@ -214,8 +212,8 @@ struct OpportunityActionMovementTests {
     func movementDoneEarlyKeepsVisual() throws {
         var engine = try dueEngine()
         var reducer = OpportunityActionReducer()
-        let receipt = reducer.reduce(
-            try makeEnvelope(
+        let receipt = try reducer.reduce(
+            makeEnvelope(
                 .movementDoneEarly,
                 scope: .movement(cycle: ClockCycleID(scope: .movement, rawValue: 0)),
                 originPhase: .running,
@@ -232,14 +230,14 @@ struct OpportunityActionMovementTests {
 
     @Test("Movement timer finish keeps movement accrual and freshens visual")
     func movementTimerFinishPreservesMovementAccrual() throws {
-        var engine = ProtocolEngine(
-            configuration: try actionConfiguration(),
+        var engine = try ProtocolEngine(
+            configuration: actionConfiguration(),
             visualClock: OpportunityClockState(accumulatedActiveUseSeconds: 0, phase: .accumulating),
             movementClock: OpportunityClockState(accumulatedActiveUseSeconds: 3600, phase: .running),
         )
         var reducer = OpportunityActionReducer()
-        let receipt = reducer.reduce(
-            try makeEnvelope(
+        let receipt = try reducer.reduce(
+            makeEnvelope(
                 .movementTimerFinished,
                 scope: .movement(cycle: ClockCycleID(scope: .movement, rawValue: 0)),
                 originPhase: .running,
@@ -259,8 +257,8 @@ struct OpportunityActionMovementTests {
     func alreadyMovedKeepsVisual() throws {
         var engine = try dueEngine()
         var reducer = OpportunityActionReducer()
-        let receipt = reducer.reduce(
-            try makeEnvelope(
+        let receipt = try reducer.reduce(
+            makeEnvelope(
                 .movementAlreadyMoved,
                 scope: .movement(cycle: ClockCycleID(scope: .movement, rawValue: 0)),
                 originPhase: .running,
@@ -276,14 +274,14 @@ struct OpportunityActionMovementTests {
 
     @Test("Position change preserves the due movement clock")
     func positionChangePreservesMovement() throws {
-        var engine = ProtocolEngine(
-            configuration: try actionConfiguration(),
+        var engine = try ProtocolEngine(
+            configuration: actionConfiguration(),
             visualClock: OpportunityClockState(accumulatedActiveUseSeconds: 0, phase: .accumulating),
             movementClock: OpportunityClockState(accumulatedActiveUseSeconds: 3600, phase: .running),
         )
         var reducer = OpportunityActionReducer()
-        let receipt = reducer.reduce(
-            try makeEnvelope(
+        let receipt = try reducer.reduce(
+            makeEnvelope(
                 .movementPositionChangedRunning,
                 scope: .movement(cycle: ClockCycleID(scope: .movement, rawValue: 0)),
                 originPhase: .running,
@@ -301,8 +299,8 @@ struct OpportunityActionMovementTests {
     func standaloneAndMergedShareEffects() throws {
         var standalone = try dueEngine()
         var standaloneReducer = OpportunityActionReducer()
-        let standaloneReceipt = standaloneReducer.reduce(
-            try makeEnvelope(
+        let standaloneReceipt = try standaloneReducer.reduce(
+            makeEnvelope(
                 .movementDoneEarly,
                 scope: .movement(cycle: ClockCycleID(scope: .movement, rawValue: 0)),
                 originPhase: .running,
@@ -314,8 +312,8 @@ struct OpportunityActionMovementTests {
 
         var merged = try dueEngine()
         var mergedReducer = OpportunityActionReducer()
-        let mergedReceipt = mergedReducer.reduce(
-            try makeEnvelope(
+        let mergedReceipt = try mergedReducer.reduce(
+            makeEnvelope(
                 .mergedMovementDoneEarly,
                 scope: .merged(
                     visualCycle: ClockCycleID(scope: .visual, rawValue: 0),
@@ -373,8 +371,8 @@ struct OpportunityActionStalenessTests {
         reducer.noteSessionRotation()
         #expect(reducer.generation == CoordinatorGeneration(1))
 
-        let stale = reducer.reduce(
-            try makeEnvelope(
+        let stale = try reducer.reduce(
+            makeEnvelope(
                 .visualDoneEarly,
                 scope: .visual(cycle: ClockCycleID(scope: .visual, rawValue: 0)),
                 originPhase: .running,
@@ -386,8 +384,8 @@ struct OpportunityActionStalenessTests {
         #expect(stale.facts.isEmpty)
         #expect(engine.visualClock.accumulatedActiveUseSeconds == 1500)
 
-        let fresh = reducer.reduce(
-            try makeEnvelope(
+        let fresh = try reducer.reduce(
+            makeEnvelope(
                 .visualDoneEarly,
                 scope: .visual(cycle: ClockCycleID(scope: .visual, rawValue: 0)),
                 actionUUID: "00000000-0000-0000-0000-00000000A002",
@@ -407,8 +405,8 @@ struct OpportunityActionStalenessTests {
     func duplicateReplaysOriginalReceipt() throws {
         var engine = try dueEngine()
         var reducer = OpportunityActionReducer()
-        let first = reducer.reduce(
-            try makeEnvelope(
+        let first = try reducer.reduce(
+            makeEnvelope(
                 .visualDoneEarly,
                 scope: .visual(cycle: ClockCycleID(scope: .visual, rawValue: 0)),
                 originPhase: .running,
@@ -417,8 +415,8 @@ struct OpportunityActionStalenessTests {
             atTicks: 1010,
         )
         #expect(first.outcome == .committed)
-        let second = reducer.reduce(
-            try makeEnvelope(
+        let second = try reducer.reduce(
+            makeEnvelope(
                 .visualDoneEarly,
                 scope: .visual(cycle: ClockCycleID(scope: .visual, rawValue: 0)),
                 originPhase: .running,
@@ -435,8 +433,8 @@ struct OpportunityActionStalenessTests {
     func staleRevisionIsNoOp() throws {
         var engine = try dueEngine()
         var reducer = OpportunityActionReducer()
-        _ = reducer.reduce(
-            try makeEnvelope(
+        _ = try reducer.reduce(
+            makeEnvelope(
                 .nowAcceptVisual,
                 scope: .visual(cycle: ClockCycleID(scope: .visual, rawValue: 0)),
                 payload: durationPayload(5),
@@ -444,8 +442,8 @@ struct OpportunityActionStalenessTests {
             on: &engine,
             atTicks: 1010,
         )
-        let stale = reducer.reduce(
-            try makeEnvelope(
+        let stale = try reducer.reduce(
+            makeEnvelope(
                 .visualDoneEarly,
                 scope: .visual(cycle: ClockCycleID(scope: .visual, rawValue: 0)),
                 revision: 0,
@@ -465,8 +463,8 @@ struct OpportunityActionStalenessTests {
         var engine = try dueEngine()
         var reducer = OpportunityActionReducer()
         let globalLease = try makeLease(scope: .global(id: actionGlobal, revision: 8))
-        let receipt = reducer.reduce(
-            try makeEnvelope(
+        let receipt = try reducer.reduce(
+            makeEnvelope(
                 .nowAcceptVisual,
                 scope: .visual(cycle: ClockCycleID(scope: .visual, rawValue: 0)),
                 lease: globalLease,
@@ -489,8 +487,8 @@ struct OpportunityActionStalenessTests {
             grantedTicks: 900,
             expiryTicks: 990,
         )
-        let receipt = reducer.reduce(
-            try makeEnvelope(
+        let receipt = try reducer.reduce(
+            makeEnvelope(
                 .nowAcceptVisual,
                 scope: .visual(cycle: ClockCycleID(scope: .visual, rawValue: 0)),
                 lease: expired,
@@ -507,8 +505,8 @@ struct OpportunityActionStalenessTests {
     func oldRevisionLeaseFailsWithFreshEnvelope() throws {
         var engine = try dueEngine()
         var reducer = OpportunityActionReducer()
-        _ = reducer.reduce(
-            try makeEnvelope(
+        _ = try reducer.reduce(
+            makeEnvelope(
                 .nowAcceptVisual,
                 scope: .visual(cycle: ClockCycleID(scope: .visual, rawValue: 0)),
                 payload: durationPayload(5),
@@ -520,8 +518,8 @@ struct OpportunityActionStalenessTests {
             scope: .opportunity(id: actionOpportunity, revision: 0),
             projectionEpoch: actionEpoch,
         )
-        let receipt = reducer.reduce(
-            try makeEnvelope(
+        let receipt = try reducer.reduce(
+            makeEnvelope(
                 .visualDoneEarly,
                 scope: .visual(cycle: ClockCycleID(scope: .visual, rawValue: 0)),
                 revision: 1,
@@ -544,7 +542,7 @@ struct OpportunityActionStalenessTests {
         var reducer = OpportunityActionReducer()
         var pausePayload = OpportunityActionPayload()
         pausePayload.pauseRecordID = UUID(uuidString: "00000000-0000-0000-0000-00000000D001")!
-        _ = reducer.reduce(
+        _ = try reducer.reduce(
             OpportunityActionEnvelope(
                 action: ActionID(
                     uuid: UUID(uuidString: "00000000-0000-0000-0000-00000000A010")!,
@@ -559,7 +557,7 @@ struct OpportunityActionStalenessTests {
                 originPhase: nil,
                 segmentID: nil,
                 causalParents: [],
-                lease: try makeLease(scope: .global(id: actionGlobal, revision: 0)),
+                lease: makeLease(scope: .global(id: actionGlobal, revision: 0)),
                 payload: pausePayload,
             ),
             on: &engine,
@@ -601,8 +599,8 @@ struct OpportunityActionStalenessTests {
                 uuid: UUID(uuidString: "00000000-0000-0000-0000-00000000E002")!,
             ),
         )
-        let receipt = reducer.reduce(
-            try makeEnvelope(
+        let receipt = try reducer.reduce(
+            makeEnvelope(
                 .nowAcceptVisual,
                 scope: .visual(cycle: ClockCycleID(scope: .visual, rawValue: 0)),
                 lease: foreignLease,
@@ -659,9 +657,9 @@ struct OpportunityActionGlobalTests {
 struct OpportunityActionCoordinatorTests {
     @Test("The coordinator seam keeps reducer state across dispatches")
     func coordinatorSeamKeepsReducerState() throws {
-        var coordinator = OpportunityCoordinator(engine: try dueEngine())
-        let first = coordinator.dispatchAction(
-            try makeEnvelope(
+        var coordinator = try OpportunityCoordinator(engine: dueEngine())
+        let first = try coordinator.dispatchAction(
+            makeEnvelope(
                 .nowAcceptVisual,
                 scope: .visual(cycle: ClockCycleID(scope: .visual, rawValue: 0)),
                 payload: durationPayload(5),
@@ -672,8 +670,8 @@ struct OpportunityActionCoordinatorTests {
         #expect(first.receipt.facts.map(\.kind) == [.breakStarted])
         #expect(coordinator.engine.visualClock.phase == .running)
 
-        let stale = coordinator.dispatchAction(
-            try makeEnvelope(
+        let stale = try coordinator.dispatchAction(
+            makeEnvelope(
                 .visualDoneEarly,
                 scope: .visual(cycle: ClockCycleID(scope: .visual, rawValue: 0)),
                 revision: 0,
@@ -690,7 +688,7 @@ struct OpportunityActionCoordinatorTests {
 
     @Test("A dispatched interruption advances the action generation through the coordinator")
     func coordinatorRotationAdvancesGeneration() throws {
-        var coordinator = OpportunityCoordinator(engine: try dueEngine())
+        var coordinator = try OpportunityCoordinator(engine: dueEngine())
         #expect(coordinator.actionReducer.generation == CoordinatorGeneration(0))
         _ = coordinator.dispatch(.observe(
             sample: .active(uptimeSeconds: 0, secondsSinceInput: 0),
@@ -710,8 +708,8 @@ struct OpportunityActionCoordinatorTests {
         #expect(away.events.map(\.kind) == [.likelyNaturalInterruption])
         #expect(coordinator.actionReducer.generation == CoordinatorGeneration(1))
 
-        let stale = coordinator.dispatchAction(
-            try makeEnvelope(
+        let stale = try coordinator.dispatchAction(
+            makeEnvelope(
                 .visualDoneEarly,
                 scope: .visual(cycle: ClockCycleID(scope: .visual, rawValue: 0)),
                 originPhase: .running,
@@ -721,8 +719,8 @@ struct OpportunityActionCoordinatorTests {
         #expect(stale.receipt.outcome == .rejectedStaleGeneration)
         #expect(stale.receipt.facts.isEmpty)
 
-        let fresh = coordinator.dispatchAction(
-            try makeEnvelope(
+        let fresh = try coordinator.dispatchAction(
+            makeEnvelope(
                 .movementDoneEarly,
                 scope: .movement(cycle: ClockCycleID(scope: .movement, rawValue: 0)),
                 actionUUID: "00000000-0000-0000-0000-00000000A020",
@@ -736,5 +734,4 @@ struct OpportunityActionCoordinatorTests {
         #expect(fresh.receipt.outcome == .committed)
         #expect(fresh.receipt.facts.map(\.kind) == [.userDeclaredCompleted])
     }
-
 }

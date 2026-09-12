@@ -283,6 +283,7 @@ struct SettingsHistoryTests {
             "StoredLedgerCorrection",
             "StoredLedgerConsentReceipt",
             "StoredLedgerCompanionAction",
+            "StoredRuleProposal",
         ])
     }
 

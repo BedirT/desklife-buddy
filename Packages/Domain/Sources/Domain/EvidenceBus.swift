@@ -81,7 +81,7 @@ public struct EvidenceBus: Sendable {
         originRevision: UInt64,
         epoch: ProjectionEpochID,
         presentingDeviceID: DeviceID,
-        atTicks ticks: TimeInterval
+        atTicks ticks: TimeInterval,
     ) -> EvidenceAdmission {
         if let rejection = authority.validate(
             lease,
@@ -89,7 +89,7 @@ public struct EvidenceBus: Sendable {
             originRevision: originRevision,
             epoch: epoch,
             presentingDeviceID: presentingDeviceID,
-            atTicks: ticks
+            atTicks: ticks,
         ) {
             return .rejected(.leaseRejected(rejection))
         }
@@ -121,8 +121,8 @@ public struct EvidenceBus: Sendable {
                 originRevision: originRevision,
                 epoch: epoch,
                 presentingDeviceID: presentingDeviceID,
-                admittedTicks: ticks
-            )
+                admittedTicks: ticks,
+            ),
         )
         nextSequence &+= 1
         atoms.append(atom)

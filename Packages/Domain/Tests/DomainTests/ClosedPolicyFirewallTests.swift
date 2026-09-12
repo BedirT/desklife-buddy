@@ -23,29 +23,29 @@ private let fwFirewallIDOther = UUID(uuidString: "22222222-0000-0000-0000-000000
 
 private func firewallConfiguration(
     visualSoft: TimeInterval = 997,
-    visualTarget: TimeInterval = 1_009,
-    visualLatest: TimeInterval = 1_061,
-    movementSoft: TimeInterval = 2_000,
-    movementTarget: TimeInterval = 2_100,
-    movementLatest: TimeInterval = 2_300
+    visualTarget: TimeInterval = 1009,
+    visualLatest: TimeInterval = 1061,
+    movementSoft: TimeInterval = 2000,
+    movementTarget: TimeInterval = 2100,
+    movementLatest: TimeInterval = 2300,
 ) throws -> ProtocolConfiguration {
     try ProtocolConfiguration(
         visual: OpportunitySchedule(
             softDueSeconds: visualSoft,
             targetSeconds: visualTarget,
             latestPreferredSeconds: visualLatest,
-            durationOptionsSeconds: [5]
+            durationOptionsSeconds: [5],
         ),
         movement: OpportunitySchedule(
             softDueSeconds: movementSoft,
             targetSeconds: movementTarget,
             latestPreferredSeconds: movementLatest,
-            durationOptionsSeconds: [300]
+            durationOptionsSeconds: [300],
         ),
         activityEstimator: ActivityEstimatorConfiguration(
             recentInputWindowSeconds: 60,
             longIdleResetSeconds: 300,
-            wakeUnlockGraceSeconds: 90
+            wakeUnlockGraceSeconds: 90,
         ),
         delivery: OpportunityDeliveryConfiguration(
             waitForLowFrictionMoment: false,
@@ -54,8 +54,8 @@ private func firewallConfiguration(
             headsUpSecondsBeforeTarget: 2,
             snoozeOptionsSeconds: [300, 600, 900],
             maximumRepeatedEscalations: 1,
-            lockoutAllowed: false
-        )
+            lockoutAllowed: false,
+        ),
     )
 }
 
@@ -67,10 +67,11 @@ private struct FirewallHarness {
     var coordinator: OpportunityCoordinator
     var firewall: ClosedPolicyFirewall
 }
+
 private func firewallHarness(
     configuration: ProtocolConfiguration? = nil,
     leaseLifetime: TimeInterval = 60,
-    firewallID: UUID = fwFirewallID
+    firewallID: UUID = fwFirewallID,
 ) throws -> FirewallHarness {
     let configuration = try configuration ?? firewallConfiguration()
     var authority = SensingLeaseAuthority()
@@ -80,7 +81,7 @@ private func firewallHarness(
             epoch: fwEpoch,
             device: fwSensingDevice,
             lifetimeSeconds: leaseLifetime,
-            atTicks: 1_000
+            atTicks: 1000,
         )
     }
     let presence = try issue(.fakePresence)
@@ -93,7 +94,7 @@ private func firewallHarness(
         deviceID: fwDevice,
         firewallID: firewallID,
         actionSeed: fwActionSeed,
-        decisionSeed: fwDecisionSeed
+        decisionSeed: fwDecisionSeed,
     )
     let coordinator = OpportunityCoordinator(engine: ProtocolEngine(configuration: configuration))
     return FirewallHarness(
@@ -102,7 +103,7 @@ private func firewallHarness(
         motionLease: motion,
         ambientLease: ambient,
         coordinator: coordinator,
-        firewall: firewall
+        firewall: firewall,
     )
 }
 
@@ -112,8 +113,8 @@ private func firewallProposal(
     quality: EvidenceQuality = .full,
     confidence: EvidenceConfidence = .medium,
     group: EvidenceIndependenceGroup = .fakeAlpha,
-    observed: TimeInterval = 1_000,
-    ttl: TimeInterval = 60
+    observed: TimeInterval = 1000,
+    ttl: TimeInterval = 60,
 ) throws -> EvidenceProposal {
     let source: EvidenceSource =
         switch kind {
@@ -130,7 +131,7 @@ private func firewallProposal(
         coverage: .full,
         independenceGroup: group,
         observedTicks: observed,
-        timeToLiveSeconds: ttl
+        timeToLiveSeconds: ttl,
     )
 }
 
@@ -141,9 +142,9 @@ private func firewallAdmit(
     quality: EvidenceQuality = .full,
     confidence: EvidenceConfidence = .medium,
     group: EvidenceIndependenceGroup = .fakeAlpha,
-    observed: TimeInterval = 1_000,
+    observed: TimeInterval = 1000,
     ttl: TimeInterval = 60,
-    atTicks: TimeInterval = 1_010
+    atTicks: TimeInterval = 1010,
 ) throws {
     let proposal = try firewallProposal(
         kind: kind,
@@ -152,7 +153,7 @@ private func firewallAdmit(
         confidence: confidence,
         group: group,
         observed: observed,
-        ttl: ttl
+        ttl: ttl,
     )
     let lease =
         switch kind {
@@ -168,8 +169,8 @@ private func firewallAdmit(
             originRevision: 0,
             epoch: fwEpoch,
             presentingDeviceID: fwSensingDevice,
-            atTicks: atTicks
-        ) == .admitted
+            atTicks: atTicks,
+        ) == .admitted,
     )
 }
 
@@ -191,7 +192,7 @@ struct ClosedPolicyFirewallAllowlistTests {
             #expect(
                 ClosedPolicyFirewall.isEmittable(kind)
                     == ClosedPolicyFirewall.emittableKinds.contains(kind),
-                "allowlist disagrees with itself on \(kind.rawValue)"
+                "allowlist disagrees with itself on \(kind.rawValue)",
             )
         }
         #expect(OpportunityActionKind.allCases.filter(ClosedPolicyFirewall.isEmittable).count == 3)
@@ -234,7 +235,7 @@ struct ClosedPolicyFirewallAllowlistTests {
             let data = Data(#""\#(spelling)""#.utf8)
             #expect(
                 throws: (any Error).self,
-                "unregistered spelling \(spelling) must not decode"
+                "unregistered spelling \(spelling) must not decode",
             ) {
                 _ = try JSONDecoder().decode(OpportunityActionKind.self, from: data)
             }
@@ -248,7 +249,7 @@ struct ClosedPolicyFirewallAllowlistTests {
         let restart = FirewallPlan.restart(leaseLifeSeconds: 60)
         let release = FirewallPlan.release(
             hold: DecisionID(UUID(uuidString: "00000000-0000-0000-0000-00000000d101")!),
-            leaseLifeSeconds: 60
+            leaseLifeSeconds: 60,
         )
         #expect(hold.actionKind == .holdBegin)
         #expect(restart.actionKind == .sensorStrongMovementRestart)
@@ -267,7 +268,7 @@ struct ClosedPolicyFirewallRetirementTests {
         try firewallAdmit(harness: &harness, kind: .presence, confidence: .high)
         harness.firewall.noteSensingRotation()
         let before = harness.coordinator.state
-        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1_020) == nil)
+        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1020) == nil)
         #expect(harness.coordinator.state == before)
         #expect(harness.coordinator.actionReducer.globalRevision == 0)
     }
@@ -277,7 +278,7 @@ struct ClosedPolicyFirewallRetirementTests {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .presence, confidence: .high)
         harness.firewall.advanceSensingRevision(for: .fakePresence)
-        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1_020) == nil)
+        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1020) == nil)
     }
 
     @Test("Epoch fencing retires every lease bound to the epoch")
@@ -285,7 +286,7 @@ struct ClosedPolicyFirewallRetirementTests {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .presence, confidence: .high)
         harness.firewall.fenceSensingEpoch(fwEpoch)
-        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1_020) == nil)
+        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1020) == nil)
     }
 }
 
@@ -302,7 +303,7 @@ struct ClosedPolicyFirewallSilenceTests {
     func missingEmitsNothing() throws {
         var harness = try firewallHarness()
         let before = harness.coordinator.state
-        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1_020) == nil)
+        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1020) == nil)
         #expect(harness.coordinator.state == before)
     }
 
@@ -311,7 +312,7 @@ struct ClosedPolicyFirewallSilenceTests {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .presence)
         let before = harness.coordinator.state
-        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 2_000) == nil)
+        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 2000) == nil)
         #expect(harness.coordinator.state == before)
     }
 
@@ -320,7 +321,7 @@ struct ClosedPolicyFirewallSilenceTests {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .presence, quality: .denied)
         let before = harness.coordinator.state
-        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1_020) == nil)
+        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1020) == nil)
         #expect(harness.coordinator.state == before)
     }
 
@@ -329,7 +330,7 @@ struct ClosedPolicyFirewallSilenceTests {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .presence, quality: .degraded)
         let before = harness.coordinator.state
-        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1_020) == nil)
+        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1020) == nil)
         #expect(harness.coordinator.state == before)
     }
 
@@ -339,7 +340,7 @@ struct ClosedPolicyFirewallSilenceTests {
         try firewallAdmit(harness: &harness, kind: .presence, reading: .present, group: .fakeAlpha)
         try firewallAdmit(harness: &harness, kind: .presence, reading: .absent, group: .fakeBeta)
         let before = harness.coordinator.state
-        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1_020) == nil)
+        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1020) == nil)
         #expect(harness.coordinator.state == before)
     }
 
@@ -349,7 +350,7 @@ struct ClosedPolicyFirewallSilenceTests {
         try firewallAdmit(harness: &harness, kind: .presence)
         harness.firewall.revokeSensingLease(harness.presenceLease)
         let before = harness.coordinator.state
-        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1_020) == nil)
+        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1020) == nil)
         #expect(harness.coordinator.state == before)
     }
 
@@ -360,10 +361,10 @@ struct ClosedPolicyFirewallSilenceTests {
             harness: &harness,
             kind: .presence,
             reading: .absent,
-            confidence: .high
+            confidence: .high,
         )
         let before = harness.coordinator.state
-        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1_020) == nil)
+        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1020) == nil)
         #expect(harness.coordinator.state == before)
     }
 }
@@ -376,7 +377,7 @@ struct ClosedPolicyFirewallWeakTests {
     func weakPresenceShiftIsWindowBounded() throws {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .presence, confidence: .low)
-        guard let dispatch = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1_020)
+        guard let dispatch = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1020)
         else {
             Issue.record("weak qualified presence must emit")
             return
@@ -393,11 +394,11 @@ struct ClosedPolicyFirewallWeakTests {
         let narrow = try firewallConfiguration(
             visualSoft: 500,
             visualTarget: 505,
-            visualLatest: 1_032
+            visualLatest: 1032,
         )
         var harness = try firewallHarness(configuration: narrow)
         try firewallAdmit(harness: &harness, kind: .presence, confidence: .low)
-        guard let dispatch = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1_020)
+        guard let dispatch = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1020)
         else {
             Issue.record("weak qualified presence must emit under the narrow schedule")
             return
@@ -408,21 +409,21 @@ struct ClosedPolicyFirewallWeakTests {
 
     @Test("One firewall reads each coordinator engine's live window")
     func shiftCapFollowsEachEngine() throws {
-        let wide = try firewallConfiguration(visualLatest: 1_320)
+        let wide = try firewallConfiguration(visualLatest: 1320)
         let narrow = try firewallConfiguration(
             visualSoft: 500,
             visualTarget: 505,
-            visualLatest: 1_032
+            visualLatest: 1032,
         )
         var wideHarness = try firewallHarness(configuration: wide)
         var narrowHarness = try firewallHarness(configuration: narrow)
         try firewallAdmit(harness: &wideHarness, kind: .presence, confidence: .low)
         try firewallAdmit(harness: &narrowHarness, kind: .presence, confidence: .low)
         let wideDispatch = try #require(
-            wideHarness.firewall.evaluateDispatch(.presence, on: &wideHarness.coordinator, atTicks: 1_020)
+            wideHarness.firewall.evaluateDispatch(.presence, on: &wideHarness.coordinator, atTicks: 1020),
         )
         let narrowDispatch = try #require(
-            narrowHarness.firewall.evaluateDispatch(.presence, on: &narrowHarness.coordinator, atTicks: 1_020)
+            narrowHarness.firewall.evaluateDispatch(.presence, on: &narrowHarness.coordinator, atTicks: 1020),
         )
         // latest - now is 300 s vs 12 s; remaining evidence life is 40 s either way.
         #expect(wideDispatch.decision.effect == .shift(deferralSeconds: 40))
@@ -433,7 +434,7 @@ struct ClosedPolicyFirewallWeakTests {
     func oneSecondBelowLatestShiftsOne() throws {
         var harness = try firewallHarness(leaseLifetime: 90)
         try firewallAdmit(harness: &harness, kind: .presence, confidence: .low, ttl: 120)
-        guard let dispatch = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1_060)
+        guard let dispatch = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1060)
         else {
             Issue.record("weak qualified presence must emit one second below latest")
             return
@@ -447,7 +448,7 @@ struct ClosedPolicyFirewallWeakTests {
     func atLatestWeakPresenceQuiets() throws {
         var harness = try firewallHarness(leaseLifetime: 90)
         try firewallAdmit(harness: &harness, kind: .presence, confidence: .low, ttl: 120)
-        guard let dispatch = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1_061)
+        guard let dispatch = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1061)
         else {
             Issue.record("weak qualified presence must emit at latest")
             return
@@ -461,13 +462,13 @@ struct ClosedPolicyFirewallWeakTests {
     func repeatEvaluationSustainsSingleHold() throws {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .presence, confidence: .low)
-        guard harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1_020) != nil
+        guard harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1020) != nil
         else {
             Issue.record("weak qualified presence must emit first")
             return
         }
         #expect(harness.coordinator.actionReducer.globalRevision == 1)
-        #expect(harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1_020) == nil)
+        #expect(harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1020) == nil)
         #expect(harness.coordinator.actionReducer.globalRevision == 1)
     }
 
@@ -476,11 +477,11 @@ struct ClosedPolicyFirewallWeakTests {
         let degenerate = try firewallConfiguration(
             visualSoft: 500,
             visualTarget: 500,
-            visualLatest: 500
+            visualLatest: 500,
         )
         var harness = try firewallHarness(configuration: degenerate)
         try firewallAdmit(harness: &harness, kind: .presence, confidence: .low)
-        guard let dispatch = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1_020)
+        guard let dispatch = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1020)
         else {
             Issue.record("weak qualified presence must emit under the degenerate schedule")
             return
@@ -496,11 +497,11 @@ struct ClosedPolicyFirewallWeakTests {
         let config = try firewallConfiguration(
             movementSoft: 700,
             movementTarget: 705,
-            movementLatest: 1_032
+            movementLatest: 1032,
         )
         var harness = try firewallHarness(configuration: config)
         try firewallAdmit(harness: &harness, kind: .motion, confidence: .low)
-        guard let dispatch = harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1_020)
+        guard let dispatch = harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1020)
         else {
             Issue.record("weak qualified motion must emit")
             return
@@ -517,7 +518,7 @@ struct ClosedPolicyFirewallWeakTests {
     func weakAbsenceNeverReleases() throws {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .presence, confidence: .low)
-        guard harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1_020) != nil
+        guard harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1020) != nil
         else {
             Issue.record("weak qualified presence must emit first")
             return
@@ -528,9 +529,9 @@ struct ClosedPolicyFirewallWeakTests {
             reading: .absent,
             confidence: .low,
             group: .fakeBeta,
-            atTicks: 1_021
+            atTicks: 1021,
         )
-        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1_022) == nil)
+        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1022) == nil)
     }
 }
 
@@ -542,7 +543,7 @@ struct ClosedPolicyFirewallStrongTests {
     func strongMotionRestarts() throws {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .motion, confidence: .high)
-        guard let dispatch = harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1_020)
+        guard let dispatch = harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1020)
         else {
             Issue.record("strong motion must emit")
             return
@@ -556,19 +557,19 @@ struct ClosedPolicyFirewallStrongTests {
         #expect(provenance.confidence == .high)
         #expect(provenance.supportingGroups == 1)
         #expect(provenance.provider == .fakeMotion)
-        #expect(provenance.evidenceAdmittedTicks == 1_010)
-        #expect(provenance.evidenceExpiryTicks == 1_060)
-        #expect(provenance.evaluatedTicks == 1_020)
-        #expect(provenance.softDueSeconds == 2_000)
-        #expect(provenance.targetSeconds == 2_100)
-        #expect(provenance.latestPreferredSeconds == 2_300)
+        #expect(provenance.evidenceAdmittedTicks == 1010)
+        #expect(provenance.evidenceExpiryTicks == 1060)
+        #expect(provenance.evaluatedTicks == 1020)
+        #expect(provenance.softDueSeconds == 2000)
+        #expect(provenance.targetSeconds == 2100)
+        #expect(provenance.latestPreferredSeconds == 2300)
     }
 
     @Test("Medium motion counts as strong and restarts")
     func mediumMotionRestarts() throws {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .motion, confidence: .medium)
-        let dispatch = harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1_020)
+        let dispatch = harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1020)
         #expect(dispatch?.decision.envelope.kind == .sensorStrongMovementRestart)
         #expect(dispatch?.receipt.outcome == .committed)
         #expect(dispatch?.receipt.facts.isEmpty == true)
@@ -578,7 +579,7 @@ struct ClosedPolicyFirewallStrongTests {
     func strongPresenceHolds() throws {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .presence, confidence: .high)
-        guard let dispatch = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1_020)
+        guard let dispatch = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1020)
         else {
             Issue.record("strong presence must emit")
             return
@@ -593,7 +594,7 @@ struct ClosedPolicyFirewallStrongTests {
     func strongAbsenceReleasesOwnHold() throws {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .presence, confidence: .low)
-        guard let hold = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1_020)
+        guard let hold = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1020)
         else {
             Issue.record("weak qualified presence must emit first")
             return
@@ -604,9 +605,9 @@ struct ClosedPolicyFirewallStrongTests {
             kind: .presence,
             reading: .absent,
             confidence: .high,
-            atTicks: 1_021
+            atTicks: 1021,
         )
-        guard let release = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1_022)
+        guard let release = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1022)
         else {
             Issue.record("strong absence must release the outstanding hold")
             return
@@ -617,14 +618,14 @@ struct ClosedPolicyFirewallStrongTests {
         #expect(release.receipt.outcome == .committed)
         #expect(release.receipt.facts.isEmpty)
         // The hold is consumed: a further strong absence emits nothing.
-        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1_023) == nil)
+        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1023) == nil)
     }
 
     @Test("Cross-kind absence never releases another kind's hold")
     func crossKindAbsenceNeverReleases() throws {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .presence, confidence: .low)
-        guard harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1_020) != nil
+        guard harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1020) != nil
         else {
             Issue.record("weak qualified presence must emit first")
             return
@@ -634,19 +635,19 @@ struct ClosedPolicyFirewallStrongTests {
             kind: .motion,
             reading: .absent,
             confidence: .high,
-            atTicks: 1_021
+            atTicks: 1021,
         )
         // Strong motion absence has no motion hold to release and must not touch presence.
-        #expect(harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1_022) == nil)
+        #expect(harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1022) == nil)
         // The presence hold is still outstanding: same-kind absence releases it.
         try firewallAdmit(
             harness: &harness,
             kind: .presence,
             reading: .absent,
             confidence: .high,
-            atTicks: 1_023
+            atTicks: 1023,
         )
-        guard let release = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1_024)
+        guard let release = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1024)
         else {
             Issue.record("same-kind absence must still release the presence hold")
             return
@@ -659,14 +660,14 @@ struct ClosedPolicyFirewallStrongTests {
     func expiredHoldAutoReleases() throws {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .presence, confidence: .low)
-        guard let hold = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1_020)
+        guard let hold = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1020)
         else {
             Issue.record("weak qualified presence must emit first")
             return
         }
         // The shift horizon is 40 s, so the hold deadline is 1060.
         #expect(hold.decision.effect == .shift(deferralSeconds: 40))
-        guard let auto = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1_060)
+        guard let auto = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1060)
         else {
             Issue.record("the expired hold must auto-release")
             return
@@ -676,10 +677,10 @@ struct ClosedPolicyFirewallStrongTests {
         #expect(auto.decision.envelope.payload.holdDecisionID == hold.decision.envelope.payload.holdDecisionID)
         #expect(auto.receipt.outcome == .committed)
         let lease = try #require(auto.decision.envelope.lease)
-        #expect(lease.grantedTicks == 1_060)
-        #expect(lease.expiryTicks == 1_061)
+        #expect(lease.grantedTicks == 1060)
+        #expect(lease.expiryTicks == 1061)
         // The ledger is empty and the input is spent: nothing further emits.
-        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1_061) == nil)
+        #expect(harness.firewall.evaluate(.presence, on: &harness.coordinator, atTicks: 1061) == nil)
     }
 
     @Test("The outbound lease dies with the atom when the atom is shorter")
@@ -689,11 +690,11 @@ struct ClosedPolicyFirewallStrongTests {
             harness: &harness,
             kind: .motion,
             confidence: .high,
-            observed: 1_000,
+            observed: 1000,
             ttl: 60,
-            atTicks: 1_010
+            atTicks: 1010,
         )
-        guard let dispatch = harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1_020)
+        guard let dispatch = harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1020)
         else {
             Issue.record("strong motion must emit")
             return
@@ -701,9 +702,9 @@ struct ClosedPolicyFirewallStrongTests {
         let lease = try #require(dispatch.decision.envelope.lease)
         #expect(lease.scope == .global(id: fwGlobal, revision: 0))
         #expect(lease.generation == CoordinatorGeneration(0))
-        #expect(lease.grantedTicks == 1_020)
+        #expect(lease.grantedTicks == 1020)
         // Atom TTL runs through 1060; the sensing lease runs through 1090.
-        #expect(lease.expiryTicks == 1_060)
+        #expect(lease.expiryTicks == 1060)
         #expect(dispatch.receipt.globalRevision == harness.coordinator.actionReducer.globalRevision)
     }
 
@@ -714,19 +715,19 @@ struct ClosedPolicyFirewallStrongTests {
             harness: &harness,
             kind: .motion,
             confidence: .high,
-            observed: 1_000,
+            observed: 1000,
             ttl: 300,
-            atTicks: 1_010
+            atTicks: 1010,
         )
-        guard let dispatch = harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1_020)
+        guard let dispatch = harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1020)
         else {
             Issue.record("strong motion must emit")
             return
         }
         let lease = try #require(dispatch.decision.envelope.lease)
-        #expect(lease.grantedTicks == 1_020)
+        #expect(lease.grantedTicks == 1020)
         // Atom TTL runs through 1300; the sensing lease runs through 1060.
-        #expect(lease.expiryTicks == 1_060)
+        #expect(lease.expiryTicks == 1060)
         #expect(lease.expiryTicks - lease.grantedTicks <= OpportunityLease.maximumLifetimeSeconds)
     }
 
@@ -734,15 +735,15 @@ struct ClosedPolicyFirewallStrongTests {
     func publicReceiptCarriesNoFusedContent() throws {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .motion, confidence: .high)
-        guard let receipt = harness.firewall.evaluate(.motion, on: &harness.coordinator, atTicks: 1_020)
+        guard let receipt = harness.firewall.evaluate(.motion, on: &harness.coordinator, atTicks: 1020)
         else {
             Issue.record("strong motion must emit a public receipt")
             return
         }
         #expect(receipt.kind == .sensorStrongMovementRestart)
         #expect(receipt.effect == .restart)
-        #expect(receipt.leaseGrantedTicks == 1_020)
-        #expect(receipt.evaluatedTicks == 1_020)
+        #expect(receipt.leaseGrantedTicks == 1020)
+        #expect(receipt.evaluatedTicks == 1020)
         #expect(!receipt.assessmentDigest.isEmpty)
         let labels = Set(Mirror(reflecting: receipt).children.compactMap(\.label))
         #expect(labels == [
@@ -761,12 +762,12 @@ struct ClosedPolicyFirewallStrongTests {
         var second = try firewallHarness()
         try firewallAdmit(harness: &first, kind: .motion, confidence: .high)
         try firewallAdmit(harness: &second, kind: .motion, confidence: .high)
-        let firstReceipt = try #require(first.firewall.evaluate(.motion, on: &first.coordinator, atTicks: 1_020))
-        let secondReceipt = try #require(second.firewall.evaluate(.motion, on: &second.coordinator, atTicks: 1_020))
+        let firstReceipt = try #require(first.firewall.evaluate(.motion, on: &first.coordinator, atTicks: 1020))
+        let secondReceipt = try #require(second.firewall.evaluate(.motion, on: &second.coordinator, atTicks: 1020))
         #expect(firstReceipt.assessmentDigest == secondReceipt.assessmentDigest)
         var third = try firewallHarness()
         try firewallAdmit(harness: &third, kind: .motion, confidence: .medium)
-        let thirdReceipt = try #require(third.firewall.evaluate(.motion, on: &third.coordinator, atTicks: 1_020))
+        let thirdReceipt = try #require(third.firewall.evaluate(.motion, on: &third.coordinator, atTicks: 1020))
         #expect(thirdReceipt.assessmentDigest != firstReceipt.assessmentDigest)
     }
 
@@ -777,10 +778,10 @@ struct ClosedPolicyFirewallStrongTests {
         try firewallAdmit(harness: &first, kind: .motion, confidence: .high)
         try firewallAdmit(harness: &second, kind: .motion, confidence: .high)
         let firstDispatch = try #require(
-            first.firewall.evaluateDispatch(.motion, on: &first.coordinator, atTicks: 1_020)
+            first.firewall.evaluateDispatch(.motion, on: &first.coordinator, atTicks: 1020),
         )
         let secondDispatch = try #require(
-            second.firewall.evaluateDispatch(.motion, on: &second.coordinator, atTicks: 1_020)
+            second.firewall.evaluateDispatch(.motion, on: &second.coordinator, atTicks: 1020),
         )
         #expect(firstDispatch.decision.envelope.action.uuid != secondDispatch.decision.envelope.action.uuid)
         #expect(firstDispatch.decision.envelope.action != secondDispatch.decision.envelope.action)
@@ -790,12 +791,12 @@ struct ClosedPolicyFirewallStrongTests {
     func dispatchedCommandsReplay() throws {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .motion, confidence: .high)
-        guard let dispatch = harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1_020)
+        guard let dispatch = harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1020)
         else {
             Issue.record("strong motion must emit")
             return
         }
-        let replay = harness.coordinator.dispatchAction(dispatch.decision.envelope, atTicks: 1_020)
+        let replay = harness.coordinator.dispatchAction(dispatch.decision.envelope, atTicks: 1020)
         #expect(replay.receipt.outcome == .duplicateReplay)
         #expect(replay.receipt.actionID == dispatch.decision.envelope.action)
         #expect(replay.receipt.facts == dispatch.receipt.facts)
@@ -805,7 +806,7 @@ struct ClosedPolicyFirewallStrongTests {
     func repeatEvaluationEmitsSingleRestart() throws {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .motion, confidence: .high)
-        guard let first = harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1_020)
+        guard let first = harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1020)
         else {
             Issue.record("strong motion must emit first")
             return
@@ -813,18 +814,18 @@ struct ClosedPolicyFirewallStrongTests {
         #expect(first.decision.envelope.kind == .sensorStrongMovementRestart)
         #expect(harness.coordinator.actionReducer.globalRevision == 1)
         // Same live representative, no new admission: nothing re-emits.
-        #expect(harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1_020) == nil)
+        #expect(harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1020) == nil)
         #expect(harness.coordinator.actionReducer.globalRevision == 1)
         // A new admission supersedes the representative: the restart routes again.
         try firewallAdmit(
             harness: &harness,
             kind: .motion,
             confidence: .high,
-            observed: 1_021,
+            observed: 1021,
             ttl: 60,
-            atTicks: 1_022
+            atTicks: 1022,
         )
-        guard let second = harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1_023)
+        guard let second = harness.firewall.evaluateDispatch(.motion, on: &harness.coordinator, atTicks: 1023)
         else {
             Issue.record("a superseding admission must restart again")
             return
@@ -841,8 +842,8 @@ struct ClosedPolicyFirewallStrongTests {
         var second = try firewallHarness()
         try firewallAdmit(harness: &first, kind: .motion, confidence: .high)
         try firewallAdmit(harness: &second, kind: .motion, confidence: .high)
-        let firstDispatch = first.firewall.evaluateDispatch(.motion, on: &first.coordinator, atTicks: 1_020)
-        let secondDispatch = second.firewall.evaluateDispatch(.motion, on: &second.coordinator, atTicks: 1_020)
+        let firstDispatch = first.firewall.evaluateDispatch(.motion, on: &first.coordinator, atTicks: 1020)
+        let secondDispatch = second.firewall.evaluateDispatch(.motion, on: &second.coordinator, atTicks: 1020)
         let firstEnvelope = try #require(firstDispatch?.decision.envelope)
         let secondEnvelope = try #require(secondDispatch?.decision.envelope)
         #expect(firstEnvelope == secondEnvelope)
@@ -856,7 +857,7 @@ struct ClosedPolicyFirewallRouteTests {
     @Test("The firewall implementation never touches the unfenced entry point")
     func firewallSourceAvoidsUnfencedEntryPoint() throws {
         var url = URL(fileURLWithPath: #filePath)
-        for _ in 0..<3 {
+        for _ in 0 ..< 3 {
             url.deleteLastPathComponent()
         }
         url.append(path: "Sources/Domain/ClosedPolicyFirewall.swift", directoryHint: .notDirectory)
@@ -866,7 +867,7 @@ struct ClosedPolicyFirewallRouteTests {
             .replacingOccurrences(of: "FirewallDispatch", with: "")
         #expect(
             withoutFenced.range(of: #"\b[Dd]ispatch\w*"#, options: .regularExpression) == nil,
-            "ClosedPolicyFirewall must route only through the fenced entry point"
+            "ClosedPolicyFirewall must route only through the fenced entry point",
         )
     }
 
@@ -874,14 +875,14 @@ struct ClosedPolicyFirewallRouteTests {
     func replayProvesFencedPath() throws {
         var harness = try firewallHarness()
         try firewallAdmit(harness: &harness, kind: .presence, confidence: .low)
-        guard let dispatch = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1_020)
+        guard let dispatch = harness.firewall.evaluateDispatch(.presence, on: &harness.coordinator, atTicks: 1020)
         else {
             Issue.record("weak qualified presence must emit")
             return
         }
         // Only the fenced reducer dedupes ActionIDs; the unfenced path has no
         // replay outcome, so a duplicate replay proves which route was taken.
-        let replay = harness.coordinator.dispatchAction(dispatch.decision.envelope, atTicks: 1_020)
+        let replay = harness.coordinator.dispatchAction(dispatch.decision.envelope, atTicks: 1020)
         #expect(replay.receipt.outcome == .duplicateReplay)
     }
 }

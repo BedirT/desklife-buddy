@@ -29,7 +29,7 @@ private func issuedLease(
     authority: inout SensingLeaseAuthority,
     epoch: ProjectionEpochID = sensingEpochA,
     device: DeviceID = sensingDeviceA,
-    atTicks ticks: TimeInterval = 1_000,
+    atTicks ticks: TimeInterval = 1000,
     lifetime: TimeInterval = 60,
 ) throws -> SensingProviderLease {
     try authority.issue(
@@ -47,7 +47,7 @@ private func acceptedValidation(
     originRevision: UInt64 = 0,
     epoch: ProjectionEpochID = sensingEpochA,
     device: DeviceID = sensingDeviceA,
-    atTicks ticks: TimeInterval = 1_010,
+    atTicks ticks: TimeInterval = 1010,
 ) -> SensingLeaseRejection? {
     // Validation prunes expired entries, so it mutates: verdicts run against
     // a copy, and pruning is pinned through explicit variables instead.
@@ -72,8 +72,8 @@ struct SensingProviderLeaseTests {
         #expect(lease.generation == .initial)
         #expect(lease.epoch == sensingEpochA)
         #expect(lease.grantedDeviceID == sensingDeviceA)
-        #expect(lease.grantedTicks == 1_000)
-        #expect(lease.expiryTicks == 1_060)
+        #expect(lease.grantedTicks == 1000)
+        #expect(lease.expiryTicks == 1060)
         #expect(acceptedValidation(authority: authority, lease: lease) == nil)
     }
 
@@ -82,22 +82,22 @@ struct SensingProviderLeaseTests {
         var authority = try sensingAuthority()
         let lease = try issuedLease(authority: &authority)
         #expect(lease.isLive(atTicks: 999.999) == false)
-        #expect(lease.isLive(atTicks: 1_000) == true)
-        #expect(lease.isLive(atTicks: 1_059.999) == true)
-        #expect(lease.isLive(atTicks: 1_060) == false)
-        #expect(acceptedValidation(authority: authority, lease: lease, atTicks: 1_060) == .notLive)
+        #expect(lease.isLive(atTicks: 1000) == true)
+        #expect(lease.isLive(atTicks: 1059.999) == true)
+        #expect(lease.isLive(atTicks: 1060) == false)
+        #expect(acceptedValidation(authority: authority, lease: lease, atTicks: 1060) == .notLive)
     }
 
     @Test("Lifetime over 90 seconds and non-positive lifetimes are refused")
     func lifetimeBoundsRefused() throws {
         var authority = try sensingAuthority()
-        #expect(throws: SensingProviderLeaseError.lifetimeExceedsMaximum(grantedTicks: 1_000, expiryTicks: 1_091)) {
+        #expect(throws: SensingProviderLeaseError.lifetimeExceedsMaximum(grantedTicks: 1000, expiryTicks: 1091)) {
             try authority.issue(
                 provider: .fakePresence,
                 epoch: sensingEpochA,
                 device: sensingDeviceA,
                 lifetimeSeconds: 91,
-                atTicks: 1_000,
+                atTicks: 1000,
             )
         }
         #expect(throws: SensingProviderLeaseError.expiryNotAfterGrant) {
@@ -106,7 +106,7 @@ struct SensingProviderLeaseTests {
                 epoch: sensingEpochA,
                 device: sensingDeviceA,
                 lifetimeSeconds: 0,
-                atTicks: 1_000,
+                atTicks: 1000,
             )
         }
     }
@@ -120,7 +120,7 @@ struct SensingProviderLeaseTests {
                 epoch: sensingEpochA,
                 device: sensingDeviceA,
                 lifetimeSeconds: 60,
-                atTicks: 1_000,
+                atTicks: 1000,
             )
         }
     }
@@ -135,9 +135,9 @@ struct SensingProviderLeaseTests {
         // Stage two: the spent origin no longer matches the frontier either.
         #expect(acceptedValidation(authority: authority, lease: lease, originRevision: 0) == .staleRevision)
         // A fresh lease for the new frontier validates.
-        let fresh = try issuedLease(authority: &authority, atTicks: 1_010)
+        let fresh = try issuedLease(authority: &authority, atTicks: 1010)
         #expect(fresh.scope == .provider(id: .fakePresence, revision: 1))
-        #expect(acceptedValidation(authority: authority, lease: fresh, originRevision: 1, atTicks: 1_020) == nil)
+        #expect(acceptedValidation(authority: authority, lease: fresh, originRevision: 1, atTicks: 1020) == nil)
     }
 
     @Test("Generation rotation revokes prior-generation leases")
@@ -173,7 +173,7 @@ struct SensingProviderLeaseTests {
                 epoch: sensingEpochB,
                 device: sensingDeviceA,
                 lifetimeSeconds: 60,
-                atTicks: 1_001,
+                atTicks: 1001,
             )
         }
     }
@@ -189,7 +189,7 @@ struct SensingProviderLeaseTests {
                 epoch: sensingEpochA,
                 device: sensingDeviceA,
                 lifetimeSeconds: 60,
-                atTicks: 1_010,
+                atTicks: 1010,
             )
         }
     }
@@ -204,11 +204,10 @@ struct SensingProviderLeaseTests {
                 epoch: zero,
                 device: sensingDeviceA,
                 lifetimeSeconds: 60,
-                atTicks: 1_000,
+                atTicks: 1000,
             )
         }
     }
-
 
     @Test("Presenting device must equal the granted device")
     func deviceMismatchRejected() throws {
@@ -227,7 +226,7 @@ struct SensingProviderLeaseTests {
             originRevision: 0,
             epoch: sensingEpochA,
             presentingDeviceID: sensingDeviceA,
-            atTicks: 1_010,
+            atTicks: 1010,
         )
         #expect(rejection == .providerMismatch)
     }
@@ -250,7 +249,7 @@ struct SensingLeaseRevocationTests {
         let lease = try issuedLease(authority: &authority)
         authority.revoke(lease)
         // Replay at a later tick inside the original live window.
-        #expect(acceptedValidation(authority: authority, lease: lease, atTicks: 1_030) == .explicitlyRevoked)
+        #expect(acceptedValidation(authority: authority, lease: lease, atTicks: 1030) == .explicitlyRevoked)
         // Replay after the frontier moved: still rejected, never resurrected.
         authority.advanceRevision(for: .fakePresence)
         let replayed = authority.validate(
@@ -259,7 +258,7 @@ struct SensingLeaseRevocationTests {
             originRevision: 1,
             epoch: sensingEpochA,
             presentingDeviceID: sensingDeviceA,
-            atTicks: 1_040,
+            atTicks: 1040,
         )
         #expect(replayed == .explicitlyRevoked)
     }
@@ -267,11 +266,11 @@ struct SensingLeaseRevocationTests {
     @Test("Revoking one lease leaves sibling leases live")
     func revokeIsPerLease() throws {
         var authority = try sensingAuthority()
-        let first = try issuedLease(authority: &authority, atTicks: 1_000)
-        let second = try issuedLease(authority: &authority, atTicks: 1_001)
+        let first = try issuedLease(authority: &authority, atTicks: 1000)
+        let second = try issuedLease(authority: &authority, atTicks: 1001)
         authority.revoke(first)
-        #expect(acceptedValidation(authority: authority, lease: first, atTicks: 1_010) == .explicitlyRevoked)
-        #expect(acceptedValidation(authority: authority, lease: second, atTicks: 1_010) == nil)
+        #expect(acceptedValidation(authority: authority, lease: first, atTicks: 1010) == .explicitlyRevoked)
+        #expect(acceptedValidation(authority: authority, lease: second, atTicks: 1010) == nil)
     }
 }
 
@@ -284,8 +283,8 @@ struct SensingLeaseProvenanceTests {
             scope: .provider(id: .fakePresence, revision: 0),
             generation: .initial,
             grantedDeviceID: sensingDeviceA,
-            grantedTicks: 1_000,
-            expiryTicks: 1_060,
+            grantedTicks: 1000,
+            expiryTicks: 1060,
             epoch: sensingEpochA,
         )
         #expect(acceptedValidation(authority: authority, lease: forged) == .notIssued)
@@ -305,8 +304,8 @@ struct SensingLeaseProvenanceTests {
     @Test("Expired entries are pruned from both tracking sets")
     func expiredEntriesPruned() throws {
         var authority = try sensingAuthority()
-        let first = try issuedLease(authority: &authority, atTicks: 1_000)
-        let second = try issuedLease(authority: &authority, atTicks: 1_001)
+        let first = try issuedLease(authority: &authority, atTicks: 1000)
+        let second = try issuedLease(authority: &authority, atTicks: 1001)
         authority.revoke(first)
         #expect(authority.issuedCount == 1)
         #expect(authority.revokedCount == 1)
@@ -316,7 +315,7 @@ struct SensingLeaseProvenanceTests {
             originRevision: 0,
             epoch: sensingEpochA,
             presentingDeviceID: sensingDeviceA,
-            atTicks: 2_000,
+            atTicks: 2000,
         )
         #expect(verdict == .notLive)
         #expect(authority.issuedCount == 0)
@@ -329,12 +328,12 @@ struct SensingLeaseRotationTests {
     @Test("Rotation clears bindings so a new epoch binds after a fence")
     func rotationRebindsNewEpochAfterFence() throws {
         var authority = try sensingAuthority()
-        let first = try issuedLease(authority: &authority, atTicks: 1_000)
+        let first = try issuedLease(authority: &authority, atTicks: 1000)
         authority.fenceEpoch(sensingEpochA)
         #expect(acceptedValidation(authority: authority, lease: first) == .fencedEpoch)
         authority.noteSessionRotation()
-        let second = try issuedLease(authority: &authority, epoch: sensingEpochB, atTicks: 1_010)
-        #expect(acceptedValidation(authority: authority, lease: second, epoch: sensingEpochB, atTicks: 1_020) == nil)
+        let second = try issuedLease(authority: &authority, epoch: sensingEpochB, atTicks: 1010)
+        #expect(acceptedValidation(authority: authority, lease: second, epoch: sensingEpochB, atTicks: 1020) == nil)
         #expect(acceptedValidation(authority: authority, lease: first) == .staleGeneration)
     }
 
@@ -349,7 +348,7 @@ struct SensingLeaseRotationTests {
                 epoch: sensingEpochB,
                 device: sensingDeviceA,
                 lifetimeSeconds: 60,
-                atTicks: 1_010,
+                atTicks: 1010,
             )
         }
     }
@@ -372,15 +371,15 @@ struct SensingProviderRuntimeClosureTests {
                 epoch: sensingEpochA,
                 device: sensingDeviceA,
                 lifetimeSeconds: 60,
-                atTicks: 1_000,
+                atTicks: 1000,
             )
         }
         let forged = try SensingProviderLease(
             scope: .provider(id: evil, revision: 0),
             generation: .initial,
             grantedDeviceID: sensingDeviceA,
-            grantedTicks: 1_000,
-            expiryTicks: 1_060,
+            grantedTicks: 1000,
+            expiryTicks: 1060,
             epoch: sensingEpochA,
         )
         var copy = authority
@@ -390,7 +389,7 @@ struct SensingProviderRuntimeClosureTests {
             originRevision: 0,
             epoch: sensingEpochA,
             presentingDeviceID: sensingDeviceA,
-            atTicks: 1_010,
+            atTicks: 1010,
         )
         #expect(verdict == .unknownProvider)
     }

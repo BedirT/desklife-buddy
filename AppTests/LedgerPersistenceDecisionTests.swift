@@ -70,6 +70,7 @@ struct LedgerPersistenceDecisionTests {
         let preserved = try store.context.fetch(FetchDescriptor<StoredLedgerCorrection>())
         #expect(preserved.count == 1)
     }
+
     @Test("Consent-receipt rows round-trip every sanitized field")
     func consentReceiptRoundTrip() async throws {
         let store = try SwiftDataLedgerStore(inMemory: true, now: { ledgerTestT0 })
@@ -142,8 +143,8 @@ struct LedgerPersistenceDecisionTests {
         try await store.appendCompanionAction(ledgerCompanionAction())
         let selection = try LedgerExportSelection<LedgerCompanionActionExportField>(selected: [.outcome, .kind])
         #expect(selection.fields == [.kind, .outcome])
-        let text = try #require(String(
-            data: try await store.exportCompanionActions(selected: selection, format: .json),
+        let text = try #require(try await String(
+            data: store.exportCompanionActions(selected: selection, format: .json),
             encoding: .utf8,
         ))
         #expect(!text.contains("causalParents"))
@@ -175,8 +176,8 @@ struct LedgerPersistenceDecisionTests {
         try await store.appendCorrection(ledgerCorrection())
         let selection = try LedgerExportSelection<LedgerCorrectionExportField>(selected: [.generation, .outcome])
         #expect(selection.fields == [.outcome, .generation])
-        let text = try #require(String(
-            data: try await store.exportCorrections(selected: selection, format: .json),
+        let text = try #require(try await String(
+            data: store.exportCorrections(selected: selection, format: .json),
             encoding: .utf8,
         ))
         let outcomeRange = try #require(text.range(of: "\"outcome\""))

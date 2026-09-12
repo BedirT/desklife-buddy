@@ -31,7 +31,7 @@ struct LedgerExportCompletenessTests {
         let record = try LedgerPolicyDecisionRecord(
             id: LedgerIdentity.derive(ledger: .policyDecision, seed: ledgerSeed, counter: 1),
             recordedAt: ledgerT0,
-            actionUUID: LedgerIdentity.derive(ledger: .policyDecision, seed: ledgerSeed, counter: 10_001),
+            actionUUID: LedgerIdentity.derive(ledger: .policyDecision, seed: ledgerSeed, counter: 10001),
             actionDeviceID: ledgerDeviceText,
             actionCounter: 1,
             holdDecisionUUID: LedgerIdentity.derive(ledger: .policyDecision, seed: ledgerSeed, counter: 2),

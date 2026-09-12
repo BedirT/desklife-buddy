@@ -47,7 +47,7 @@ func makeCompanionAction(
 
 @Suite("Consent-receipt ledger")
 struct LedgerConsentReceiptTests {
-    @Test("Appends read back in recorded order with an identifier tiebreak")
+    @Test("Appends read back in recorded order with an insertion-order tiebreak")
     func appendReadOrdering() async throws {
         let store = InMemoryLedgerStores.consentReceipt(now: { ledgerT0 })
         let second = try makeConsentReceipt(counter: 2, recordedAt: ledgerT0.addingTimeInterval(10))
@@ -186,7 +186,10 @@ struct LedgerConsentReceiptTests {
         try await store.append(makeConsentReceipt())
         let selection = try LedgerExportSelection<LedgerConsentReceiptExportField>(selected: [.status, .scope])
         #expect(selection.fields == [.scope, .status])
-        let text = try #require(String(data: try await store.export(selected: selection, format: .json), encoding: .utf8))
+        let text = try #require(try await String(
+            data: store.export(selected: selection, format: .json),
+            encoding: .utf8,
+        ))
         let scopeRange = try #require(text.range(of: "\"scope\""))
         let statusRange = try #require(text.range(of: "\"status\""))
         #expect(scopeRange.lowerBound < statusRange.lowerBound)
@@ -224,7 +227,7 @@ struct LedgerConsentReceiptTests {
 
 @Suite("Companion-action ledger")
 struct LedgerCompanionActionTests {
-    @Test("Appends read back in recorded order with an identifier tiebreak")
+    @Test("Appends read back in recorded order with an insertion-order tiebreak")
     func appendReadOrdering() async throws {
         let store = InMemoryLedgerStores.companionAction(now: { ledgerT0 })
         let second = try makeCompanionAction(counter: 2, recordedAt: ledgerT0.addingTimeInterval(10))
@@ -319,7 +322,10 @@ struct LedgerCompanionActionTests {
     func retentionPruneAndPurge() async throws {
         #expect(LedgerRetention.policy(for: .companionAction) == .thirtyDays)
         let store = InMemoryLedgerStores.companionAction(now: { ledgerT0 })
-        try await store.append(makeCompanionAction(counter: 1, recordedAt: ledgerT0.addingTimeInterval(-31 * ledgerDay)))
+        try await store.append(makeCompanionAction(
+            counter: 1,
+            recordedAt: ledgerT0.addingTimeInterval(-31 * ledgerDay),
+        ))
         #expect(try await store.loadRecords() == [])
         let live = try makeCompanionAction(counter: 2, recordedAt: ledgerT0)
         try await store.append(live)
@@ -340,7 +346,10 @@ struct LedgerCompanionActionTests {
         try await store.append(makeCompanionAction())
         let selection = try LedgerExportSelection<LedgerCompanionActionExportField>(selected: [.outcome, .kind])
         #expect(selection.fields == [.kind, .outcome])
-        let text = try #require(String(data: try await store.export(selected: selection, format: .json), encoding: .utf8))
+        let text = try #require(try await String(
+            data: store.export(selected: selection, format: .json),
+            encoding: .utf8,
+        ))
         let kindRange = try #require(text.range(of: "\"kind\""))
         let outcomeRange = try #require(text.range(of: "\"outcome\""))
         #expect(kindRange.lowerBound < outcomeRange.lowerBound)

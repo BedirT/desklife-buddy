@@ -71,11 +71,11 @@ final class SwiftDataLedgerStore {
                 try saveContext()
                 return
             }
-            context.insert(StoredLedgerObservation(
+            try context.insert(StoredLedgerObservation(
                 id: record.id,
                 schemaVersion: LedgerObservationCodec.schemaVersion,
                 recordedAt: record.recordedAt,
-                payload: try LedgerObservationCodec.encode(record),
+                payload: LedgerObservationCodec.encode(record),
             ))
             try pruneObservations(asOf: now(), policy: retention(for: .observation))
             try saveContext()
@@ -87,17 +87,25 @@ final class SwiftDataLedgerStore {
 
     func loadObservations() async throws -> [LedgerObservationRecord] {
         do {
-            let rows = try context.fetch(FetchDescriptor<StoredLedgerObservation>())
+            let rows = try context
+                .fetch(FetchDescriptor<StoredLedgerObservation>(sortBy: [SortDescriptor(\.recordedAt)]))
             var records: [(StoredLedgerObservation, LedgerObservationRecord)] = []
             for row in rows {
                 try Self.checkRowVersion(row.schemaVersion, ledger: .observation)
-                records.append((row, try LedgerObservationCodec.decode(row.payload)))
+                try records.append((row, LedgerObservationCodec.decode(row.payload)))
             }
-            try pruneLoaded(records.map(\.0), policy: retention(for: .observation), asOf: now(), recordedAt: \.recordedAt)
+            try pruneLoaded(
+                records.map(\.0),
+                policy: retention(for: .observation),
+                asOf: now(),
+                recordedAt: \.recordedAt,
+            )
             try saveContext()
-            return Self.ordered(records.compactMap { row, record in
-                Self.isLive(recordedAt: record.recordedAt, policy: retention(for: .observation), asOf: now()) ? record : nil
-            }, by: { ($0.recordedAt, $0.id.uuidString) })
+            return Self.ordered(records.compactMap { _, record in
+                Self
+                    .isLive(recordedAt: record.recordedAt, policy: retention(for: .observation), asOf: now()) ? record :
+                    nil
+            }, by: \.recordedAt)
         } catch {
             context.rollback()
             throw error
@@ -160,11 +168,11 @@ final class SwiftDataLedgerStore {
                 try saveContext()
                 return
             }
-            context.insert(StoredLedgerAssessment(
+            try context.insert(StoredLedgerAssessment(
                 id: record.id,
                 schemaVersion: LedgerAssessmentCodec.schemaVersion,
                 recordedAt: record.recordedAt,
-                payload: try LedgerAssessmentCodec.encode(record),
+                payload: LedgerAssessmentCodec.encode(record),
             ))
             try pruneAssessments(asOf: now(), policy: retention(for: .assessment))
             try saveContext()
@@ -176,19 +184,25 @@ final class SwiftDataLedgerStore {
 
     func loadAssessments() async throws -> [LedgerAssessmentRecord] {
         do {
-            let rows = try context.fetch(FetchDescriptor<StoredLedgerAssessment>())
+            let rows = try context
+                .fetch(FetchDescriptor<StoredLedgerAssessment>(sortBy: [SortDescriptor(\.recordedAt)]))
             var records: [(StoredLedgerAssessment, LedgerAssessmentRecord)] = []
             for row in rows {
                 try Self.checkRowVersion(row.schemaVersion, ledger: .assessment)
-                records.append((row, try LedgerAssessmentCodec.decode(row.payload)))
+                try records.append((row, LedgerAssessmentCodec.decode(row.payload)))
             }
-            try pruneLoaded(records.map(\.0), policy: retention(for: .assessment), asOf: now(), recordedAt: \.recordedAt)
+            try pruneLoaded(
+                records.map(\.0),
+                policy: retention(for: .assessment),
+                asOf: now(),
+                recordedAt: \.recordedAt,
+            )
             try saveContext()
             let policy = retention(for: .assessment)
             let moment = now()
             return Self.ordered(
                 records.map(\.1).filter { Self.isLive(recordedAt: $0.recordedAt, policy: policy, asOf: moment) },
-                by: { ($0.recordedAt, $0.id.uuidString) },
+                by: \.recordedAt,
             )
         } catch {
             context.rollback()
@@ -252,11 +266,11 @@ final class SwiftDataLedgerStore {
                 try saveContext()
                 return
             }
-            context.insert(StoredLedgerPolicyDecision(
+            try context.insert(StoredLedgerPolicyDecision(
                 id: record.id,
                 schemaVersion: LedgerPolicyDecisionCodec.schemaVersion,
                 recordedAt: record.recordedAt,
-                payload: try LedgerPolicyDecisionCodec.encode(record),
+                payload: LedgerPolicyDecisionCodec.encode(record),
             ))
             try prunePolicyDecisions(asOf: now(), policy: retention(for: .policyDecision))
             try saveContext()
@@ -268,19 +282,25 @@ final class SwiftDataLedgerStore {
 
     func loadPolicyDecisions() async throws -> [LedgerPolicyDecisionRecord] {
         do {
-            let rows = try context.fetch(FetchDescriptor<StoredLedgerPolicyDecision>())
+            let rows = try context
+                .fetch(FetchDescriptor<StoredLedgerPolicyDecision>(sortBy: [SortDescriptor(\.recordedAt)]))
             var records: [(StoredLedgerPolicyDecision, LedgerPolicyDecisionRecord)] = []
             for row in rows {
                 try Self.checkRowVersion(row.schemaVersion, ledger: .policyDecision)
-                records.append((row, try LedgerPolicyDecisionCodec.decode(row.payload)))
+                try records.append((row, LedgerPolicyDecisionCodec.decode(row.payload)))
             }
-            try pruneLoaded(records.map(\.0), policy: retention(for: .policyDecision), asOf: now(), recordedAt: \.recordedAt)
+            try pruneLoaded(
+                records.map(\.0),
+                policy: retention(for: .policyDecision),
+                asOf: now(),
+                recordedAt: \.recordedAt,
+            )
             try saveContext()
             let policy = retention(for: .policyDecision)
             let moment = now()
             return Self.ordered(
                 records.map(\.1).filter { Self.isLive(recordedAt: $0.recordedAt, policy: policy, asOf: moment) },
-                by: { ($0.recordedAt, $0.id.uuidString) },
+                by: \.recordedAt,
             )
         } catch {
             context.rollback()

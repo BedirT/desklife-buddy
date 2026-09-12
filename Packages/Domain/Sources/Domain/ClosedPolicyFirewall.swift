@@ -107,7 +107,7 @@ struct FirewallProvenance: Equatable, Sendable {
             evaluatedTicks: ticks,
             softDueSeconds: softDueSeconds,
             targetSeconds: targetSeconds,
-            latestPreferredSeconds: latestPreferredSeconds
+            latestPreferredSeconds: latestPreferredSeconds,
         )
     }
 }
@@ -166,7 +166,7 @@ enum FirewallPlan {
     /// The caller-visible effect of this plan.
     var effect: FirewallEffect {
         switch self {
-        case .hold(let deferral, _):
+        case let .hold(deferral, _):
             if let deferral {
                 .shift(deferralSeconds: deferral)
             } else {
@@ -182,11 +182,11 @@ enum FirewallPlan {
     /// The coordinator-lease lifetime this plan was qualified with.
     var leaseLifeSeconds: TimeInterval {
         switch self {
-        case .hold(_, let life):
+        case let .hold(_, life):
             life
-        case .restart(let life):
+        case let .restart(life):
             life
-        case .release(_, let life):
+        case let .release(_, life):
             life
         }
     }
@@ -241,8 +241,8 @@ public struct ClosedPolicyFirewall: Sendable {
     private let actionSeed: UUID
     private let decisionSeed: UUID
     private var emissionCounter: UInt64 = 0
-    private var outstandingHolds: [EvidenceKind: OutstandingHold] = [:] // RAWGUARD-ALLOW: closed Domain firewall consumes Class 0 evidence
-    private var emittedRestarts: [EvidenceKind: EvidenceAtomID] = [:] // RAWGUARD-ALLOW: closed Domain firewall consumes Class 0 evidence
+    private var outstandingHolds: [EvidenceKind: OutstandingHold] = [:] // RAWGUARD-ALLOW: firewall
+    private var emittedRestarts: [EvidenceKind: EvidenceAtomID] = [:] // RAWGUARD-ALLOW: firewall
     /// Creates a firewall owning its bus. The schedule always comes from the
     /// coordinator passed to evaluation, never from construction, so a held
     /// copy can never go stale. Stories 6-7 wire this into the live
@@ -253,7 +253,7 @@ public struct ClosedPolicyFirewall: Sendable {
         deviceID: DeviceID,
         firewallID: UUID,
         actionSeed: UUID,
-        decisionSeed: UUID
+        decisionSeed: UUID,
     ) {
         self.bus = bus
         self.globalID = globalID
@@ -273,7 +273,7 @@ public struct ClosedPolicyFirewall: Sendable {
         originRevision: UInt64,
         epoch: ProjectionEpochID,
         presentingDeviceID: DeviceID,
-        atTicks ticks: TimeInterval
+        atTicks ticks: TimeInterval,
     ) -> EvidenceAdmission { // RAWGUARD-ALLOW: closed Domain firewall consumes Class 0 evidence
         bus.admit(
             proposal,
@@ -282,7 +282,7 @@ public struct ClosedPolicyFirewall: Sendable {
             originRevision: originRevision,
             epoch: epoch,
             presentingDeviceID: presentingDeviceID,
-            atTicks: ticks
+            atTicks: ticks,
         )
     }
 
@@ -322,7 +322,7 @@ public struct ClosedPolicyFirewall: Sendable {
     public mutating func evaluate(
         _ kind: EvidenceKind, // RAWGUARD-ALLOW: closed Domain firewall consumes Class 0 evidence
         on coordinator: inout OpportunityCoordinator,
-        atTicks ticks: TimeInterval
+        atTicks ticks: TimeInterval,
     ) -> FirewallReceipt? {
         guard let routed = evaluateDispatch(kind, on: &coordinator, atTicks: ticks) else { return nil }
         guard let lease = routed.decision.envelope.lease else { return nil }
@@ -334,7 +334,7 @@ public struct ClosedPolicyFirewall: Sendable {
             leaseGrantedTicks: lease.grantedTicks,
             leaseExpiryTicks: lease.expiryTicks,
             assessmentDigest: routed.decision.assessmentDigest,
-            evaluatedTicks: ticks
+            evaluatedTicks: ticks,
         )
     }
 
@@ -343,12 +343,13 @@ public struct ClosedPolicyFirewall: Sendable {
     mutating func evaluateDispatch(
         _ kind: EvidenceKind, // RAWGUARD-ALLOW: closed Domain firewall consumes Class 0 evidence
         on coordinator: inout OpportunityCoordinator,
-        atTicks ticks: TimeInterval
+        atTicks ticks: TimeInterval,
     ) -> FirewallDispatch? {
         if let held = outstandingHolds[kind], held.deadlineTicks <= ticks {
             return releaseOutstanding(kind: kind, held: held, coordinator: &coordinator, atTicks: ticks)
         }
-        let assessment: FusedAssessment = EvidenceFusion.fuse(bus, kind: kind, atTicks: ticks) // RAWGUARD-ALLOW: closed Domain firewall consumes Class 0 evidence
+        let assessment: FusedAssessment = EvidenceFusion // RAWGUARD-ALLOW: firewall
+            .fuse(bus, kind: kind, atTicks: ticks)
         guard let representative = assessment.representative else { return nil }
         let remaining = min(representative.expiryTicks, representative.provenance.lease.expiryTicks) - ticks
         guard remaining > 0 else { return nil }
@@ -358,7 +359,7 @@ public struct ClosedPolicyFirewall: Sendable {
             remainingEvidenceSeconds: remaining,
             kind: kind,
             schedule: schedule,
-            atTicks: ticks
+            atTicks: ticks,
         ) else {
             return nil
         }
@@ -372,9 +373,15 @@ public struct ClosedPolicyFirewall: Sendable {
             evaluatedTicks: ticks,
             softDueSeconds: schedule.softDueSeconds,
             targetSeconds: schedule.targetSeconds,
-            latestPreferredSeconds: schedule.latestPreferredSeconds
+            latestPreferredSeconds: schedule.latestPreferredSeconds,
         )
-        guard let routed = route(plan: plan, kind: kind, provenance: provenance, coordinator: &coordinator, atTicks: ticks)
+        guard let routed = route(
+            plan: plan,
+            kind: kind,
+            provenance: provenance,
+            coordinator: &coordinator,
+            atTicks: ticks,
+        )
         else {
             return nil
         }
@@ -394,7 +401,7 @@ public struct ClosedPolicyFirewall: Sendable {
         remainingEvidenceSeconds remaining: TimeInterval,
         kind: EvidenceKind, // RAWGUARD-ALLOW: closed Domain firewall consumes Class 0 evidence
         schedule: OpportunitySchedule,
-        atTicks ticks: TimeInterval
+        atTicks ticks: TimeInterval,
     ) -> FirewallPlan? {
         let leaseLife = min(remaining, OpportunityLease.maximumLifetimeSeconds)
         switch assessment.reading {
@@ -429,18 +436,17 @@ public struct ClosedPolicyFirewall: Sendable {
         kind: EvidenceKind, // RAWGUARD-ALLOW: closed Domain firewall consumes Class 0 evidence
         provenance: FirewallProvenance,
         coordinator: inout OpportunityCoordinator,
-        atTicks ticks: TimeInterval
+        atTicks ticks: TimeInterval,
     ) -> FirewallDispatch? {
         emissionCounter &+= 1
         let counter = emissionCounter
-        let holdID: DecisionID?
-        switch plan {
+        let holdID: DecisionID? = switch plan {
         case .hold:
-            holdID = DecisionID(mintedUUID(from: decisionSeed, counter: counter, role: .decision))
-        case .release(let held, _):
-            holdID = held
+            DecisionID(mintedUUID(from: decisionSeed, counter: counter, role: .decision))
+        case let .release(held, _):
+            held
         case .restart:
-            holdID = nil
+            nil
         }
         guard let envelope = makeEnvelope(
             kind: plan.actionKind,
@@ -448,14 +454,14 @@ public struct ClosedPolicyFirewall: Sendable {
             counter: counter,
             leaseLifeSeconds: plan.leaseLifeSeconds,
             coordinator: coordinator,
-            atTicks: ticks
+            atTicks: ticks,
         ) else {
             return nil
         }
         let output = coordinator.dispatchAction(envelope, atTicks: ticks)
         guard output.receipt.outcome == .committed else { return nil }
         switch plan {
-        case .hold(let deferral, _):
+        case let .hold(deferral, _):
             guard let holdID else { return nil }
             let deadline = ticks + (deferral ?? max(provenance.evidenceExpiryTicks - ticks, 0))
             outstandingHolds[kind] = OutstandingHold(id: holdID, deadlineTicks: deadline, provenance: provenance)
@@ -469,7 +475,7 @@ public struct ClosedPolicyFirewall: Sendable {
             envelope: envelope,
             holdID: holdID,
             provenance: provenance,
-            assessmentDigest: Self.digest(provenance)
+            assessmentDigest: Self.digest(provenance),
         )
         return FirewallDispatch(decision: decision, receipt: output.receipt, presentation: output.presentation)
     }
@@ -482,14 +488,14 @@ public struct ClosedPolicyFirewall: Sendable {
         kind: EvidenceKind, // RAWGUARD-ALLOW: closed Domain firewall consumes Class 0 evidence
         held: OutstandingHold,
         coordinator: inout OpportunityCoordinator,
-        atTicks ticks: TimeInterval
+        atTicks ticks: TimeInterval,
     ) -> FirewallDispatch? {
         route(
             plan: .release(hold: held.id, leaseLifeSeconds: 1),
             kind: kind,
             provenance: held.provenance.resolving(atTicks: ticks),
             coordinator: &coordinator,
-            atTicks: ticks
+            atTicks: ticks,
         )
     }
 
@@ -502,7 +508,7 @@ public struct ClosedPolicyFirewall: Sendable {
         counter: UInt64,
         leaseLifeSeconds: TimeInterval,
         coordinator: OpportunityCoordinator,
-        atTicks ticks: TimeInterval
+        atTicks ticks: TimeInterval,
     ) -> OpportunityActionEnvelope? {
         var payload = OpportunityActionPayload()
         payload.holdDecisionID = holdID
@@ -513,7 +519,7 @@ public struct ClosedPolicyFirewall: Sendable {
             generation: generation,
             grantedDeviceID: deviceID,
             grantedTicks: ticks,
-            expiryTicks: ticks + leaseLifeSeconds
+            expiryTicks: ticks + leaseLifeSeconds,
         ) else {
             return nil
         }
@@ -521,7 +527,7 @@ public struct ClosedPolicyFirewall: Sendable {
             action: ActionID(
                 uuid: mintedUUID(from: actionSeed, counter: counter, role: .action),
                 deviceID: deviceID,
-                counter: counter
+                counter: counter,
             ),
             kind: kind,
             scope: .globalSystem,
@@ -532,7 +538,7 @@ public struct ClosedPolicyFirewall: Sendable {
             segmentID: nil,
             causalParents: [],
             lease: lease,
-            payload: payload
+            payload: payload,
         )
     }
 
@@ -540,7 +546,7 @@ public struct ClosedPolicyFirewall: Sendable {
     /// schedule, every other kind reads the visual schedule.
     private func schedule(
         for kind: EvidenceKind, // RAWGUARD-ALLOW: closed Domain firewall consumes Class 0 evidence
-        configuration: ProtocolConfiguration
+        configuration: ProtocolConfiguration,
     ) -> OpportunitySchedule {
         switch kind {
         case .motion:

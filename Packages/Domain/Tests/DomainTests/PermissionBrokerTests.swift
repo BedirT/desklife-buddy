@@ -16,7 +16,7 @@ import Testing
 /// `PermissionCapability`, `PermissionConsentState`,
 /// `PermissionRevocation`, and `PermissionKillSwitchResult` do not exist.
 private let brokerT0 = Date(timeIntervalSince1970: 1_800_000_000)
-private let brokerTicks: TimeInterval = 1_000
+private let brokerTicks: TimeInterval = 1000
 private let brokerDevice = UUID(uuidString: "44444444-4444-4444-4444-444444444444")!
 private let brokerEpoch = "55555555-5555-5555-5555-555555555555"
 
@@ -233,7 +233,8 @@ struct PermissionBrokerRevocationTests {
         #expect(!broker.isQuiescent(atTicks: lateTicks))
         let completed = broker.drainRevocations(atTicks: lateTicks)
         #expect(completed.count == 1)
-        #expect((completed[0].completedTicks ?? 0) - completed[0].requestedTicks > PermissionBroker.revocationDeadlineTicks)
+        #expect((completed[0].completedTicks ?? 0) - completed[0].requestedTicks > PermissionBroker
+            .revocationDeadlineTicks)
     }
 }
 
@@ -316,11 +317,13 @@ private final class TransientLoadConsentReceiptStore: LedgerConsentReceiptStore 
     let inner: InMemoryLedgerConsentReceiptStore
     init(inner: InMemoryLedgerConsentReceiptStore, loadFailures: Int) {
         self.inner = inner
-        self.remainingLoadFailures = loadFailures
+        remainingLoadFailures = loadFailures
     }
+
     func append(_ record: LedgerConsentReceiptRecord) async throws {
         try await inner.append(record)
     }
+
     func loadRecords() async throws -> [LedgerConsentReceiptRecord] {
         guard remainingLoadFailures == 0 else {
             remainingLoadFailures -= 1
@@ -328,6 +331,7 @@ private final class TransientLoadConsentReceiptStore: LedgerConsentReceiptStore 
         }
         return try await inner.loadRecords()
     }
+
     func deleteAllRecords() async throws {
         try await inner.deleteAllRecords()
     }

@@ -167,7 +167,10 @@ public enum LedgerCompanionActionCodec {
             throw LedgerStoreError.invalidRecord("companion-action envelope")
         }
         guard probe.schemaVersion == schemaVersion else {
-            throw LedgerStoreError.unknownSchemaVersion(ledger: LedgerKind.companionAction.code, version: probe.schemaVersion)
+            throw LedgerStoreError.unknownSchemaVersion(
+                ledger: LedgerKind.companionAction.code,
+                version: probe.schemaVersion,
+            )
         }
         do {
             return try JSONDecoder().decode(Envelope.self, from: data).row
@@ -191,6 +194,9 @@ public protocol LedgerCompanionActionStore {
 /// reused identifiers with different facts are refused.
 public final class InMemoryLedgerCompanionActionStore: LedgerCompanionActionStore {
     private var records: [UUID: LedgerCompanionActionRecord] = [:]
+    /// Insertion sequence for the recorded-at tiebreak in ordered().
+    /// Fake-local memory only: never a row column, never exported.
+    private var insertionOrder: [UUID] = []
     public var retention: HistoryRetentionPolicy
     public var now: () -> Date
     public var saveHook: (() throws -> Void)?
@@ -211,6 +217,7 @@ public final class InMemoryLedgerCompanionActionStore: LedgerCompanionActionStor
         guard retention != .keepNothing else { return }
         try saveHook?()
         records[record.id] = record
+        insertionOrder.append(record.id)
         prune(asOf: now())
     }
 
@@ -222,14 +229,16 @@ public final class InMemoryLedgerCompanionActionStore: LedgerCompanionActionStor
     public func deleteAllRecords() async throws {
         try saveHook?()
         records.removeAll()
+        insertionOrder.removeAll()
     }
 
     @discardableResult
     public func purge(asOf date: Date) async -> Int {
-        let removed = expired(asOf: date)
+        let removed = Set(expired(asOf: date))
         for id in removed {
             records.removeValue(forKey: id)
         }
+        insertionOrder.removeAll { removed.contains($0) }
         return removed.count
     }
 
@@ -250,9 +259,11 @@ public final class InMemoryLedgerCompanionActionStore: LedgerCompanionActionStor
     }
 
     private func prune(asOf date: Date) {
-        for id in expired(asOf: date) {
+        let removed = Set(expired(asOf: date))
+        for id in removed {
             records.removeValue(forKey: id)
         }
+        insertionOrder.removeAll { removed.contains($0) }
     }
 
     private func expired(asOf date: Date) -> [UUID] {
@@ -264,11 +275,14 @@ public final class InMemoryLedgerCompanionActionStore: LedgerCompanionActionStor
     }
 
     private func ordered() -> [LedgerCompanionActionRecord] {
-        records.values.sorted {
+        // Recorded-at order; same-timestamp rows read back in insertion
+        // order, never identifier order, so same-moment appends are stable.
+        let insertionIndex = Dictionary(uniqueKeysWithValues: insertionOrder.enumerated().map { ($1, $0) })
+        return records.values.sorted {
             if $0.recordedAt != $1.recordedAt {
                 return $0.recordedAt < $1.recordedAt
             }
-            return $0.id.uuidString < $1.id.uuidString
+            return (insertionIndex[$0.id] ?? Int.max) < (insertionIndex[$1.id] ?? Int.max)
         }
     }
 }

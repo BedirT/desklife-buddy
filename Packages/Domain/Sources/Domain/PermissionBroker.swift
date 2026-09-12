@@ -135,6 +135,7 @@ public struct PermissionBroker: Sendable {
     /// 90-second sensing-lease maximum.
     public static let consentLeaseSeconds: TimeInterval = 90
 
+    private let identitySeed: UUID
     private let deviceID: String
     private let epochCode: String
     private var states: [PermissionCapability: PermissionConsentState] = [:]
@@ -148,6 +149,7 @@ public struct PermissionBroker: Sendable {
     /// Creates a broker minting receipts for one device and epoch.
     public init(deviceID: UUID, epochCode: String) throws {
         guard !epochCode.isEmpty else { throw PermissionBrokerError.emptyEpochCode }
+        identitySeed = deviceID
         self.deviceID = deviceID.uuidString
         self.epochCode = epochCode
     }
@@ -279,7 +281,8 @@ public struct PermissionBroker: Sendable {
         store: any LedgerConsentReceiptStore,
     ) async throws {
         guard state(for: capability) != .granted else { return }
-        guard !killSwitchEngaged else { throw PermissionBrokerError.grantWhileKillSwitchEngaged(capability: capability) }
+        guard !killSwitchEngaged
+        else { throw PermissionBrokerError.grantWhileKillSwitchEngaged(capability: capability) }
         try await seedRevisions(from: store)
         let (record, revision) = try makeReceipt(
             capability,
@@ -420,6 +423,7 @@ public struct PermissionBroker: Sendable {
             suppression: .manualPause,
         )
     }
+
     /// Disengages the kill switch without restoring any grant: every
     /// revoked capability stays revoked until explicit re-consent, so
     /// resume is never silent.
@@ -434,6 +438,54 @@ public struct PermissionBroker: Sendable {
         return true
     }
 
+    /// Derives one receipt identifier from the device seed, domain-separated
+    /// by capability, scope revision, status, and ticks through the shared
+    /// ledger identity. Same inputs always derive the same identifier, so a
+    /// retried transition is an idempotent replay, never a second row.
+    private func receiptID(
+        capability: PermissionCapability,
+        scopeRevision: UInt64,
+        statusCode: String,
+        grantedTicks: TimeInterval,
+        revokedTicks: TimeInterval?,
+    ) -> UUID {
+        LedgerIdentity.derive(
+            ledger: .consentReceipt,
+            seed: identitySeed,
+            counter: Self.receiptCounter(
+                capability: capability,
+                scopeRevision: scopeRevision,
+                statusCode: statusCode,
+                grantedTicks: grantedTicks,
+                revokedTicks: revokedTicks,
+            ),
+        )
+    }
+
+    /// Folds one receipt's domain fields into the 64-bit ledger-identity
+    /// counter (FNV-1a over the field text with exact tick bit patterns).
+    private static func receiptCounter(
+        capability: PermissionCapability,
+        scopeRevision: UInt64,
+        statusCode: String,
+        grantedTicks: TimeInterval,
+        revokedTicks: TimeInterval?,
+    ) -> UInt64 {
+        let text = [
+            capability.scopeCode,
+            String(scopeRevision),
+            statusCode,
+            String(grantedTicks.bitPattern),
+            revokedTicks.map { String($0.bitPattern) } ?? "-",
+        ].joined(separator: "|")
+        var hash: UInt64 = 0xCBF2_9CE4_8422_2325
+        for byte in text.utf8 {
+            hash ^= UInt64(byte)
+            hash &*= 0x100_0000_01B3
+        }
+        return hash
+    }
+
     private func makeReceipt(
         _ capability: PermissionCapability,
         statusCode: String,
@@ -444,10 +496,20 @@ public struct PermissionBroker: Sendable {
     ) throws -> (LedgerConsentReceiptRecord, UInt64) {
         // Pure construction: the revision commits only after the append
         // succeeds, so a ledger failure can never strand a skipped revision
-        // or a mutated gate.
+        // or a mutated gate. The identifier derives deterministically from
+        // the device seed plus capability, revision, status, and ticks, so
+        // a retried transition replays the identical row (idempotent)
+        // instead of minting a second identity, and a revision bump always
+        // moves to a fresh identifier.
         let revision = (scopeRevisions[capability] ?? 0) + 1
         let record = try LedgerConsentReceiptRecord(
-            id: UUID(),
+            id: receiptID(
+                capability: capability,
+                scopeRevision: revision,
+                statusCode: statusCode,
+                grantedTicks: grantedTicks,
+                revokedTicks: revokedTicks,
+            ),
             recordedAt: recordedAt ?? Date(timeIntervalSince1970: ticks),
             providerCode: capability.providerCode,
             scopeCode: capability.scopeCode,

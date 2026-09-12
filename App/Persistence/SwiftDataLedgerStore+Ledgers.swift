@@ -24,14 +24,14 @@ extension SwiftDataLedgerStore {
             var retained: [LedgerCorrectionRecord] = []
             for row in rows {
                 try Self.checkRowVersion(row.schemaVersion, ledger: .correction)
-                retained.append(try LedgerCorrectionCodec.decode(row.payload))
+                try retained.append(LedgerCorrectionCodec.decode(row.payload))
             }
             try InMemoryLedgerCorrectionStore.checkFrontier(record, against: retained)
-            context.insert(StoredLedgerCorrection(
+            try context.insert(StoredLedgerCorrection(
                 id: record.id,
                 schemaVersion: LedgerCorrectionCodec.schemaVersion,
                 recordedAt: record.recordedAt,
-                payload: try LedgerCorrectionCodec.encode(record),
+                payload: LedgerCorrectionCodec.encode(record),
             ))
             try pruneCorrections(asOf: now(), policy: retention(for: .correction))
             try saveContext()
@@ -43,19 +43,25 @@ extension SwiftDataLedgerStore {
 
     func loadCorrections() async throws -> [LedgerCorrectionRecord] {
         do {
-            let rows = try context.fetch(FetchDescriptor<StoredLedgerCorrection>())
+            let rows = try context
+                .fetch(FetchDescriptor<StoredLedgerCorrection>(sortBy: [SortDescriptor(\.recordedAt)]))
             var records: [(StoredLedgerCorrection, LedgerCorrectionRecord)] = []
             for row in rows {
                 try Self.checkRowVersion(row.schemaVersion, ledger: .correction)
-                records.append((row, try LedgerCorrectionCodec.decode(row.payload)))
+                try records.append((row, LedgerCorrectionCodec.decode(row.payload)))
             }
-            try pruneLoaded(records.map(\.0), policy: retention(for: .correction), asOf: now(), recordedAt: \.recordedAt)
+            try pruneLoaded(
+                records.map(\.0),
+                policy: retention(for: .correction),
+                asOf: now(),
+                recordedAt: \.recordedAt,
+            )
             try saveContext()
             let policy = retention(for: .correction)
             let moment = now()
             return Self.ordered(
                 records.map(\.1).filter { Self.isLive(recordedAt: $0.recordedAt, policy: policy, asOf: moment) },
-                by: { ($0.recordedAt, $0.id.uuidString) },
+                by: \.recordedAt,
             )
         } catch {
             context.rollback()
@@ -122,14 +128,14 @@ extension SwiftDataLedgerStore {
             var retained: [LedgerConsentReceiptRecord] = []
             for row in rows {
                 try Self.checkRowVersion(row.schemaVersion, ledger: .consentReceipt)
-                retained.append(try LedgerConsentReceiptCodec.decode(row.payload))
+                try retained.append(LedgerConsentReceiptCodec.decode(row.payload))
             }
             try InMemoryLedgerConsentReceiptStore.checkFrontier(record, against: retained)
-            context.insert(StoredLedgerConsentReceipt(
+            try context.insert(StoredLedgerConsentReceipt(
                 id: record.id,
                 schemaVersion: LedgerConsentReceiptCodec.schemaVersion,
                 recordedAt: record.recordedAt,
-                payload: try LedgerConsentReceiptCodec.encode(record),
+                payload: LedgerConsentReceiptCodec.encode(record),
             ))
             try pruneConsentReceipts(asOf: now(), policy: retention(for: .consentReceipt))
             try saveContext()
@@ -141,19 +147,25 @@ extension SwiftDataLedgerStore {
 
     func loadConsentReceipts() async throws -> [LedgerConsentReceiptRecord] {
         do {
-            let rows = try context.fetch(FetchDescriptor<StoredLedgerConsentReceipt>())
+            let rows = try context
+                .fetch(FetchDescriptor<StoredLedgerConsentReceipt>(sortBy: [SortDescriptor(\.recordedAt)]))
             var records: [(StoredLedgerConsentReceipt, LedgerConsentReceiptRecord)] = []
             for row in rows {
                 try Self.checkRowVersion(row.schemaVersion, ledger: .consentReceipt)
-                records.append((row, try LedgerConsentReceiptCodec.decode(row.payload)))
+                try records.append((row, LedgerConsentReceiptCodec.decode(row.payload)))
             }
-            try pruneLoaded(records.map(\.0), policy: retention(for: .consentReceipt), asOf: now(), recordedAt: \.recordedAt)
+            try pruneLoaded(
+                records.map(\.0),
+                policy: retention(for: .consentReceipt),
+                asOf: now(),
+                recordedAt: \.recordedAt,
+            )
             try saveContext()
             let policy = retention(for: .consentReceipt)
             let moment = now()
             return Self.ordered(
                 records.map(\.1).filter { Self.isLive(recordedAt: $0.recordedAt, policy: policy, asOf: moment) },
-                by: { ($0.recordedAt, $0.id.uuidString) },
+                by: \.recordedAt,
             )
         } catch {
             context.rollback()
@@ -217,11 +229,11 @@ extension SwiftDataLedgerStore {
                 try saveContext()
                 return
             }
-            context.insert(StoredLedgerCompanionAction(
+            try context.insert(StoredLedgerCompanionAction(
                 id: record.id,
                 schemaVersion: LedgerCompanionActionCodec.schemaVersion,
                 recordedAt: record.recordedAt,
-                payload: try LedgerCompanionActionCodec.encode(record),
+                payload: LedgerCompanionActionCodec.encode(record),
             ))
             try pruneCompanionActions(asOf: now(), policy: retention(for: .companionAction))
             try saveContext()
@@ -233,19 +245,25 @@ extension SwiftDataLedgerStore {
 
     func loadCompanionActions() async throws -> [LedgerCompanionActionRecord] {
         do {
-            let rows = try context.fetch(FetchDescriptor<StoredLedgerCompanionAction>())
+            let rows = try context
+                .fetch(FetchDescriptor<StoredLedgerCompanionAction>(sortBy: [SortDescriptor(\.recordedAt)]))
             var records: [(StoredLedgerCompanionAction, LedgerCompanionActionRecord)] = []
             for row in rows {
                 try Self.checkRowVersion(row.schemaVersion, ledger: .companionAction)
-                records.append((row, try LedgerCompanionActionCodec.decode(row.payload)))
+                try records.append((row, LedgerCompanionActionCodec.decode(row.payload)))
             }
-            try pruneLoaded(records.map(\.0), policy: retention(for: .companionAction), asOf: now(), recordedAt: \.recordedAt)
+            try pruneLoaded(
+                records.map(\.0),
+                policy: retention(for: .companionAction),
+                asOf: now(),
+                recordedAt: \.recordedAt,
+            )
             try saveContext()
             let policy = retention(for: .companionAction)
             let moment = now()
             return Self.ordered(
                 records.map(\.1).filter { Self.isLive(recordedAt: $0.recordedAt, policy: policy, asOf: moment) },
-                by: { ($0.recordedAt, $0.id.uuidString) },
+                by: \.recordedAt,
             )
         } catch {
             context.rollback()
@@ -337,15 +355,19 @@ extension SwiftDataLedgerStore {
         return recordedAt >= date.addingTimeInterval(-policy.retentionDurationSeconds)
     }
 
-    static func ordered<Record>(_ records: [Record], by key: (Record) -> (Date, String)) -> [Record] {
-        records.sorted {
-            let lhs = key($0)
-            let rhs = key($1)
-            if lhs.0 != rhs.0 {
-                return lhs.0 < rhs.0
+    /// Recorded-at order, stable: rows sharing a timestamp keep fetch order,
+    /// and every load fetch sorts by recordedAt with insertion (row-id) order
+    /// for ties, so same-moment appends read back in the order they were
+    /// written.
+    static func ordered<Record>(_ records: [Record], by recordedAt: (Record) -> Date) -> [Record] {
+        records.enumerated().sorted {
+            let lhs = recordedAt($0.element)
+            let rhs = recordedAt($1.element)
+            if lhs != rhs {
+                return lhs < rhs
             }
-            return lhs.1 < rhs.1
-        }
+            return $0.offset < $1.offset
+        }.map(\.element)
     }
 
     static func exportData(

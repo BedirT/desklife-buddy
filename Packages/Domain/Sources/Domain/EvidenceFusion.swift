@@ -27,7 +27,7 @@ public struct FusedAssessment: Equatable, Hashable, Sendable {
         reading: FusedReading,
         confidence: EvidenceConfidence,
         supportingGroups: Int,
-        representative: EvidenceAtom?
+        representative: EvidenceAtom?,
     ) {
         self.reading = reading
         self.confidence = confidence
@@ -70,7 +70,7 @@ public enum EvidenceFusion: Sendable {
     public static func fuse(
         _ bus: EvidenceBus,
         kind: EvidenceKind,
-        atTicks ticks: TimeInterval
+        atTicks ticks: TimeInterval,
     ) -> FusedAssessment {
         var authorityCopy = bus.authority
         let votable = bus.live(atTicks: ticks).filter {
@@ -81,7 +81,7 @@ public enum EvidenceFusion: Sendable {
                 reading: bus.containsEvidence(of: kind) ? .unknown(.stale) : .unknown(.missing),
                 confidence: .low,
                 supportingGroups: 0,
-                representative: nil
+                representative: nil,
             )
         }
         // Canonical sort before combine: one representative per
@@ -92,7 +92,7 @@ public enum EvidenceFusion: Sendable {
         for atom in ordered where seenGroups.insert(atom.independenceGroup).inserted {
             representatives.append(atom)
         }
-        let qualified = representatives.filter { $0.quality.isQualified }
+        let qualified = representatives.filter(\.quality.isQualified)
         guard !qualified.isEmpty else {
             // Closed Unknown precedence: denied outranks degraded, and
             // representative rank already prefers denied (F8), so this is
@@ -102,14 +102,14 @@ public enum EvidenceFusion: Sendable {
                     reading: .unknown(.denied),
                     confidence: .low,
                     supportingGroups: 0,
-                    representative: nil
+                    representative: nil,
                 )
             }
             return FusedAssessment(
                 reading: .unknown(.degraded),
                 confidence: .low,
                 supportingGroups: 0,
-                representative: nil
+                representative: nil,
             )
         }
         let readings = Set(qualified.map(\.reading))
@@ -120,7 +120,7 @@ public enum EvidenceFusion: Sendable {
                 reading: .unknown(.contradictory),
                 confidence: .low,
                 supportingGroups: qualified.count,
-                representative: nil
+                representative: nil,
             )
         }
         // `qualified` preserves canonical order, so the first element is
@@ -130,7 +130,7 @@ public enum EvidenceFusion: Sendable {
             reading: verdict == .present ? .present : .absent,
             confidence: winner.confidence,
             supportingGroups: qualified.count,
-            representative: winner
+            representative: winner,
         )
     }
 
@@ -140,7 +140,7 @@ public enum EvidenceFusion: Sendable {
     private static func isProvenanceLive(
         _ provenance: EvidenceProvenance,
         authority: inout SensingLeaseAuthority,
-        atTicks ticks: TimeInterval
+        atTicks ticks: TimeInterval,
     ) -> Bool {
         authority.validate(
             provenance.lease,
@@ -148,7 +148,7 @@ public enum EvidenceFusion: Sendable {
             originRevision: provenance.originRevision,
             epoch: provenance.epoch,
             presentingDeviceID: provenance.presentingDeviceID,
-            atTicks: ticks
+            atTicks: ticks,
         ) == nil
     }
 

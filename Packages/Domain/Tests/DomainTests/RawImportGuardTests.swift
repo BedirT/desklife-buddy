@@ -13,7 +13,9 @@ struct RawImportGuardTests {
     private static var repositoryRoot: URL {
         var url = URL(fileURLWithPath: #filePath)
         // Packages/Domain/Tests/DomainTests/<this file> -> repository root.
-        for _ in 0 ..< 5 { url.deleteLastPathComponent() }
+        for _ in 0 ..< 5 {
+            url.deleteLastPathComponent()
+        }
         return url
     }
 
@@ -31,7 +33,7 @@ struct RawImportGuardTests {
         let script = guardScript
         #expect(
             FileManager.default.isExecutableFile(atPath: script.path),
-            "Guard script missing: \(script.path)"
+            "Guard script missing: \(script.path)",
         )
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
@@ -47,7 +49,7 @@ struct RawImportGuardTests {
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         return GuardResult(
             exitCode: process.terminationStatus,
-            output: String(data: data, encoding: .utf8) ?? ""
+            output: String(data: data, encoding: .utf8) ?? "",
         )
     }
 
@@ -55,12 +57,12 @@ struct RawImportGuardTests {
         token: String,
         sentinel: String,
         at relativePath: String,
-        under scanRoot: URL
+        under scanRoot: URL,
     ) throws {
         let file = scanRoot.appending(path: relativePath)
         try FileManager.default.createDirectory(
             at: file.deletingLastPathComponent(),
-            withIntermediateDirectories: true
+            withIntermediateDirectories: true,
         )
         let contents = """
         import Foundation
@@ -90,16 +92,16 @@ struct RawImportGuardTests {
             token: smuggleCase.rawClass.probeToken,
             sentinel: smuggleCase.rawClass.sentinelTypeName,
             at: smuggleCase.surface.probePath,
-            under: scanRoot
+            under: scanRoot,
         )
         let result = try Self.runGuard(scanRoot: scanRoot)
         #expect(
             result.exitCode != 0,
-            "\(smuggleCase.rawClass.displayName) smuggled into \(smuggleCase.surface.rawValue) did not trip the guard"
+            "\(smuggleCase.rawClass.displayName) smuggled into \(smuggleCase.surface.rawValue) did not trip the guard",
         )
         #expect(
             result.output.contains(smuggleCase.surface.probePath),
-            "Guard output names the violating surface file:\n\(result.output)"
+            "Guard output names the violating surface file:\n\(result.output)",
         )
     }
 
@@ -110,7 +112,7 @@ struct RawImportGuardTests {
         let entitlements = scanRoot.appending(path: "App/App.entitlements")
         try FileManager.default.createDirectory(
             at: entitlements.deletingLastPathComponent(),
-            withIntermediateDirectories: true
+            withIntermediateDirectories: true,
         )
         let key = "com.apple.security.device." + "camera"
         try """
@@ -130,7 +132,7 @@ struct RawImportGuardTests {
         let plist = scanRoot.appending(path: "App/SmuggleInfo.plist")
         try FileManager.default.createDirectory(
             at: plist.deletingLastPathComponent(),
-            withIntermediateDirectories: true
+            withIntermediateDirectories: true,
         )
         let key = "NS" + "CameraUsageDescription"
         try """
@@ -151,7 +153,7 @@ struct RawImportGuardTests {
             token: "OpportunityEventKind",
             sentinel: "BenignSentinel",
             at: RawSmuggleSurface.domain.probePath,
-            under: scanRoot
+            under: scanRoot,
         )
         let result = try Self.runGuard(scanRoot: scanRoot)
         #expect(result.exitCode == 0, "Clean tree tripped the guard:\n\(result.output)")
@@ -166,7 +168,7 @@ struct RawImportGuardTests {
         // Tooling path referenced without ever spelling it contiguously here.
         #expect(
             script.contains("scripts" + "/" + "support"),
-            "Guard must name the allowlisted tooling path"
+            "Guard must name the allowlisted tooling path",
         )
     }
 }

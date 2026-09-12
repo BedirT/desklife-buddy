@@ -49,6 +49,10 @@ public struct ActivityAssessment: Equatable, Sendable {
     public let didBeginLikelyNaturalInterruption: Bool
     public let didReturnFromLongIdle: Bool
     public let isShortInputPause: Bool
+    /// True when the interruption onset proves at least
+    /// `extendedUnavailableThresholdSeconds` of unavailable elapsed time in the
+    /// same monotonic epoch. Unknown or discontinuous elapsed time never sets it.
+    public let didBeginExtendedUnavailable: Bool
 }
 
 /// Stateful coarse estimator that never observes or retains input content.
@@ -59,6 +63,14 @@ public struct ActivityEstimator: Sendable {
     private var wakeGraceEndsAtUptime: TimeInterval?
     private var returnGraceEndsAtUptime: TimeInterval?
     private var longIdleWasReported = false
+    /// Same-epoch continuous elapsed seconds. Any backward or missing baseline
+    /// re-baselines it to zero, so a fresh long-idle edge after a clock jump
+    /// cannot borrow pre-jump elapsed time as extended-away proof.
+    private var epochContinuousElapsedSeconds: TimeInterval = 0
+    /// Independent extended-away edge: consumed only when input crosses
+    /// `extendedUnavailableThresholdSeconds`, never by the long-idle edge, so
+    /// a divergent long-idle threshold cannot permanently evade the runway.
+    private var extendedIdleWasReported = false
 
     /// Creates an estimator with explicit thresholds from the protocol configuration.
     public init(configuration: ActivityEstimatorConfiguration) {
@@ -82,6 +94,14 @@ public struct ActivityEstimator: Sendable {
         }
 
         let idleTransition = assessLongIdle(for: sample)
+        if let previous = previousUptimeSeconds, sample.uptimeSeconds >= previous {
+            epochContinuousElapsedSeconds += sample.uptimeSeconds - previous
+        } else {
+            epochContinuousElapsedSeconds = 0
+        }
+        let didBeginExtendedUnavailable = idleTransition.didBeginExtended
+            && epochContinuousElapsedSeconds >= configuration.extendedUnavailableThresholdSeconds
+            && sample.secondsSinceInput >= configuration.extendedUnavailableThresholdSeconds
 
         guard let previousUptimeSeconds,
               sample.uptimeSeconds >= previousUptimeSeconds
@@ -108,7 +128,10 @@ public struct ActivityEstimator: Sendable {
         }
 
         guard sample.secondsSinceInput < configuration.longIdleResetSeconds else {
-            return noAccumulation(didBeginLongIdle: idleTransition.didBegin)
+            return noAccumulation(
+                didBeginLongIdle: idleTransition.didBegin,
+                didBeginExtendedUnavailable: didBeginExtendedUnavailable,
+            )
         }
 
         let observedInterval = sample.uptimeSeconds - previousUptimeSeconds
@@ -144,28 +167,38 @@ public struct ActivityEstimator: Sendable {
             didBeginLikelyNaturalInterruption: idleTransition.didBegin,
             didReturnFromLongIdle: idleTransition.didReturn,
             isShortInputPause: isShortInputPause,
+            didBeginExtendedUnavailable: false,
         )
     }
 
     private mutating func assessLongIdle(
         for sample: ActivitySample,
-    ) -> (didBegin: Bool, didReturn: Bool) {
-        guard sample.systemAvailable else { return (false, false) }
+    ) -> (didBegin: Bool, didReturn: Bool, didBeginExtended: Bool) {
+        guard sample.systemAvailable else { return (false, false, false) }
 
         if sample.secondsSinceInput <= configuration.recentInputWindowSeconds {
             let didReturn = longIdleWasReported
             longIdleWasReported = false
-            return (false, didReturn)
+            extendedIdleWasReported = false
+            return (false, didReturn, false)
+        }
+
+        var didBeginExtended = false
+        if sample.secondsSinceInput >= configuration.extendedUnavailableThresholdSeconds,
+           !extendedIdleWasReported
+        {
+            extendedIdleWasReported = true
+            didBeginExtended = true
         }
 
         guard sample.secondsSinceInput >= configuration.longIdleResetSeconds,
               !longIdleWasReported
         else {
-            return (false, false)
+            return (false, false, didBeginExtended)
         }
 
         longIdleWasReported = true
-        return (true, false)
+        return (true, false, didBeginExtended)
     }
 
     private mutating func resetMonotonicBaseline() {
@@ -173,11 +206,13 @@ public struct ActivityEstimator: Sendable {
         previousSystemAvailable = nil
         wakeGraceEndsAtUptime = nil
         returnGraceEndsAtUptime = nil
+        epochContinuousElapsedSeconds = 0
     }
 
     private func noAccumulation(
         didBeginLongIdle: Bool = false,
         didReturnFromLongIdle: Bool = false,
+        didBeginExtendedUnavailable: Bool = false,
     ) -> ActivityAssessment {
         ActivityAssessment(
             visualSessionSeconds: 0,
@@ -185,6 +220,7 @@ public struct ActivityEstimator: Sendable {
             didBeginLikelyNaturalInterruption: didBeginLongIdle,
             didReturnFromLongIdle: didReturnFromLongIdle,
             isShortInputPause: false,
+            didBeginExtendedUnavailable: didBeginExtendedUnavailable,
         )
     }
 }

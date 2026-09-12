@@ -50,8 +50,17 @@ public struct ActivityEstimatorConfiguration: Equatable, Sendable {
     public let lowFrictionInputPauseSeconds: TimeInterval
     public let postInterruptionGraceSeconds: TimeInterval
     public let maximumSampleGapSeconds: TimeInterval
+    public let extendedUnavailableThresholdSeconds: TimeInterval
+    public let extendedVisualCourtesySeconds: TimeInterval
 
     /// Creates estimator thresholds while preserving a distinct long-idle boundary.
+    ///
+    /// `extendedUnavailableThresholdSeconds` is the proven same-epoch unavailable
+    /// elapsed time (normative: 300 s) that earns the fresh visual cycle an
+    /// `extendedVisualCourtesySeconds` runway before it may re-due. Movement and
+    /// recovery accrual are never held back by that runway. The extended edge is
+    /// independent of the long-idle edge but must stay reachable, so the
+    /// extended threshold may not sit below the long-idle reset.
     public init(
         recentInputWindowSeconds: TimeInterval,
         longIdleResetSeconds: TimeInterval,
@@ -59,6 +68,8 @@ public struct ActivityEstimatorConfiguration: Equatable, Sendable {
         lowFrictionInputPauseSeconds: TimeInterval? = nil,
         postInterruptionGraceSeconds: TimeInterval = 60,
         maximumSampleGapSeconds: TimeInterval? = nil,
+        extendedUnavailableThresholdSeconds: TimeInterval = 300,
+        extendedVisualCourtesySeconds: TimeInterval = 300,
     ) throws {
         let lowFrictionInputPauseSeconds = lowFrictionInputPauseSeconds
             ?? min(5, longIdleResetSeconds / 2)
@@ -69,13 +80,16 @@ public struct ActivityEstimatorConfiguration: Equatable, Sendable {
               wakeUnlockGraceSeconds >= 0,
               lowFrictionInputPauseSeconds > 0,
               postInterruptionGraceSeconds >= 0,
-              maximumSampleGapSeconds > 0
+              maximumSampleGapSeconds > 0,
+              extendedUnavailableThresholdSeconds > 0,
+              extendedVisualCourtesySeconds >= 0
         else {
             throw ProtocolConfigurationError.nonPositiveValue
         }
         guard lowFrictionInputPauseSeconds < longIdleResetSeconds,
               recentInputWindowSeconds < longIdleResetSeconds,
-              maximumSampleGapSeconds < longIdleResetSeconds
+              maximumSampleGapSeconds < longIdleResetSeconds,
+              longIdleResetSeconds <= extendedUnavailableThresholdSeconds
         else {
             throw ProtocolConfigurationError.invalidActivityThresholds
         }
@@ -86,6 +100,8 @@ public struct ActivityEstimatorConfiguration: Equatable, Sendable {
         self.lowFrictionInputPauseSeconds = lowFrictionInputPauseSeconds
         self.postInterruptionGraceSeconds = postInterruptionGraceSeconds
         self.maximumSampleGapSeconds = maximumSampleGapSeconds
+        self.extendedUnavailableThresholdSeconds = extendedUnavailableThresholdSeconds
+        self.extendedVisualCourtesySeconds = extendedVisualCourtesySeconds
     }
 }
 

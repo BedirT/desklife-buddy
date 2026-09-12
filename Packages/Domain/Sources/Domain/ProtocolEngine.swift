@@ -83,6 +83,12 @@ public struct ProtocolEngine: Sendable {
     var recoveryLastObservedAt: Date?
     private var visualGraceEndsAtUptime: TimeInterval?
     private var movementGraceEndsAtUptime: TimeInterval?
+    /// End of the extended-away visual courtesy runway, scoped to the visual
+    /// cycle named by `visualCourtesyCycleID`. Any visual reset orphans a stale
+    /// record via the cycle check in `activeVisualCourtesyEnd(at:)`, so
+    /// completion, skip, and timer paths need no explicit cleanup.
+    private var visualCourtesyEndsAtUptime: TimeInterval?
+    private var visualCourtesyCycleID: UInt64?
 
     /// Creates an engine with injected configuration and optional restored clock values.
     public init(
@@ -129,7 +135,10 @@ public struct ProtocolEngine: Sendable {
         }
 
         if assessment.didBeginLikelyNaturalInterruption {
-            applyNaturalInterruption(at: sample.uptimeSeconds)
+            applyNaturalInterruption(
+                at: sample.uptimeSeconds,
+                extendedCourtesy: assessment.didBeginExtendedUnavailable,
+            )
             return ProtocolEngineOutput(
                 events: [OpportunityEventDraft(
                     kind: .likelyNaturalInterruption,
@@ -137,6 +146,15 @@ public struct ProtocolEngine: Sendable {
                 )],
                 presentation: nil,
             )
+        }
+
+        // Independent extended-away edge: the long-idle onset may have fired
+        // long before the unavailable elapsed time crossed the extended
+        // threshold. Arming here grants the runway without manufacturing a
+        // second interruption fact. A suppression arriving on this sample
+        // still wins; the runway is preserved for suppression exit.
+        if assessment.didBeginExtendedUnavailable {
+            armVisualCourtesy(at: sample.uptimeSeconds)
         }
 
         if let reason = suppression.reason {
@@ -180,15 +198,22 @@ public struct ProtocolEngine: Sendable {
     }
 
     /// Ends the explicit post-suppression grace and recomputes each schedulable phase.
+    ///
+    /// An armed extended-away courtesy is time-based, not suppression-based, so
+    /// an explicit resume leaves the visual runway untouched.
     public mutating func resumeAfterSuppressionGrace() {
-        visualGraceEndsAtUptime = nil
         movementGraceEndsAtUptime = nil
-        if visualClock.phase == .gracedAfterSuppression {
-            visualClock.phase = scheduledPhase(
-                for: visualClock,
-                schedule: configuration.visual,
-                isLowFrictionMoment: false,
-            )
+        let visualCourtesyArmed = visualCourtesyEndsAtUptime != nil
+            && visualCourtesyCycleID == visualClock.cycleID
+        if !visualCourtesyArmed {
+            visualGraceEndsAtUptime = nil
+            if visualClock.phase == .gracedAfterSuppression {
+                visualClock.phase = scheduledPhase(
+                    for: visualClock,
+                    schedule: configuration.visual,
+                    isLowFrictionMoment: false,
+                )
+            }
         }
         if movementClock.phase == .gracedAfterSuppression {
             movementClock.phase = scheduledPhase(
@@ -226,9 +251,15 @@ extension ProtocolEngine {
         }
     }
 
-    mutating func applyNaturalInterruption(at uptimeSeconds: TimeInterval) {
+    mutating func applyNaturalInterruption(at uptimeSeconds: TimeInterval, extendedCourtesy: Bool = false) {
         if visualClock.phase != .running {
             reset(.visual)
+            // The reset fenced the previous cycle, so any pending visual grace
+            // belonged to it; the arm below recomputes from this onset.
+            visualGraceEndsAtUptime = nil
+            if extendedCourtesy {
+                armVisualCourtesy(at: uptimeSeconds)
+            }
         }
         if movementClock.phase != .running {
             movementClock.phase = .gracedAfterSuppression
@@ -238,14 +269,69 @@ extension ProtocolEngine {
         rotateSessionScopedState()
     }
 
+    mutating func armVisualCourtesy(at uptimeSeconds: TimeInterval) {
+        guard visualClock.phase != .running, visualClock.phase != .snoozed else { return }
+        if case .suppressed = visualClock.phase {
+            // A suppressed clock records the runway and picks it up on
+            // suppression exit; its phase and deadline stay untouched here.
+            let courtesySeconds = configuration.activityEstimator.extendedVisualCourtesySeconds
+            guard courtesySeconds > 0 else { return }
+            visualCourtesyEndsAtUptime = uptimeSeconds + courtesySeconds
+            visualCourtesyCycleID = visualClock.cycleID
+            return
+        }
+        let courtesySeconds = configuration.activityEstimator.extendedVisualCourtesySeconds
+        guard courtesySeconds > 0 else { return }
+        let courtesyEnd = uptimeSeconds + courtesySeconds
+        visualCourtesyEndsAtUptime = courtesyEnd
+        visualCourtesyCycleID = visualClock.cycleID
+        visualClock.phase = .gracedAfterSuppression
+        visualGraceEndsAtUptime = max(
+            visualGraceEndsAtUptime ?? uptimeSeconds
+                + configuration.activityEstimator.postInterruptionGraceSeconds,
+            courtesyEnd,
+        )
+    }
+
+    /// Orphans an armed visual courtesy runway for a retaining legacy path
+    /// that keeps its unfinished cycle. Reset paths orphan via the cycle
+    /// check instead. Only an armed-for-current-cycle runway is dropped, and
+    /// its extended deadline goes with it so normal grace applies.
+    mutating func orphanVisualCourtesyRunway() {
+        guard visualCourtesyCycleID == visualClock.cycleID else { return }
+        visualCourtesyEndsAtUptime = nil
+        visualCourtesyCycleID = nil
+        visualGraceEndsAtUptime = nil
+    }
+
+    /// Returns the armed extended-away courtesy end for the current visual
+    /// cycle, lazily expiring stale records. Visual-cycle-scoped: a reset
+    /// bumps `cycleID`, which orphans any prior runway without explicit cleanup.
+    mutating func activeVisualCourtesyEnd(at uptimeSeconds: TimeInterval) -> TimeInterval? {
+        guard let end = visualCourtesyEndsAtUptime,
+              visualCourtesyCycleID == visualClock.cycleID,
+              uptimeSeconds < end
+        else {
+            visualCourtesyEndsAtUptime = nil
+            visualCourtesyCycleID = nil
+            return nil
+        }
+        return end
+    }
+
     mutating func exitSuppressionOrUpdatePhases(
         at uptimeSeconds: TimeInterval,
         isLowFrictionMoment: Bool,
     ) {
         if case .suppressed = visualClock.phase {
             visualClock.phase = .gracedAfterSuppression
-            visualGraceEndsAtUptime = uptimeSeconds
+            let graceEndsAt = uptimeSeconds
                 + configuration.activityEstimator.postInterruptionGraceSeconds
+            if let courtesyEnd = activeVisualCourtesyEnd(at: uptimeSeconds) {
+                visualGraceEndsAtUptime = max(graceEndsAt, courtesyEnd)
+            } else {
+                visualGraceEndsAtUptime = graceEndsAt
+            }
         }
         if case .suppressed = movementClock.phase {
             movementClock.phase = .gracedAfterSuppression

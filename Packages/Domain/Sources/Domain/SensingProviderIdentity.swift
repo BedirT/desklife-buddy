@@ -23,6 +23,10 @@ public struct SensingProviderID: Equatable, Hashable, Sendable {
     public static let fakeMotion = SensingProviderID("fake-motion")
     /// Fake ambient provider for tests. Synthesizes sanitized state only.
     public static let fakeAmbient = SensingProviderID("fake-ambient")
+    /// Hardware motion provider for the Epic 7 minimized-observation contract.
+    /// Names the outside-Domain adapter's shaped-motion source; synthesizes
+    /// sanitized scalars only, never raw samples.
+    public static let motionHardware = SensingProviderID("motion-hardware")
 }
 
 extension SensingProviderID: Codable {
@@ -118,6 +122,7 @@ public struct SensingProviderRegistry: Sendable {
         SensingProviderDescriptor(id: .fakePresence, displayName: "Fake presence"),
         SensingProviderDescriptor(id: .fakeMotion, displayName: "Fake motion"),
         SensingProviderDescriptor(id: .fakeAmbient, displayName: "Fake ambient"),
+        SensingProviderDescriptor(id: .motionHardware, displayName: "Motion hardware (shaped)"),
     ])
 
     private init(unchecked descriptors: [SensingProviderDescriptor]) {

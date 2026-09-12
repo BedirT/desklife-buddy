@@ -19,6 +19,9 @@ public enum EvidenceSource: String, Equatable, Hashable, Sendable, CaseIterable 
     case fakePresence
     case fakeMotion
     case fakeAmbient
+    /// Minimized hardware-motion source (Epic 7): shaped scalars from the
+    /// outside-Domain adapter only. Sanitized scalars, never raw samples.
+    case motionHardware
 
     /// The registry provider this source claims to be.
     public var providerID: SensingProviderID {
@@ -26,6 +29,7 @@ public enum EvidenceSource: String, Equatable, Hashable, Sendable, CaseIterable 
         case .fakePresence: .fakePresence
         case .fakeMotion: .fakeMotion
         case .fakeAmbient: .fakeAmbient
+        case .motionHardware: .motionHardware
         }
     }
 

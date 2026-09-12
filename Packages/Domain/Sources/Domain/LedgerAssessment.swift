@@ -34,7 +34,7 @@ public struct LedgerAssessmentRecord: Equatable, Hashable, Sendable, Codable {
     ]
     public static let confidences = ["low", "medium", "high"]
     public static let kinds = ["presence", "motion", "ambient"]
-    public static let sources = ["fakePresence", "fakeMotion", "fakeAmbient"]
+    public static let sources = ["fakePresence", "fakeMotion", "fakeAmbient", "motionHardware"]
     public static let qualities = ["full", "degraded", "denied"]
     public static let coverages = ["partial", "full"]
 

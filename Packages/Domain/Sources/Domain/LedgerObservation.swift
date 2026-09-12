@@ -25,9 +25,9 @@ public struct LedgerObservationRecord: Equatable, Hashable, Sendable, Codable {
     public let presentingDeviceID: String
 
     /// Closed code sets admitted to this ledger.
-    public static let providers = ["fake-presence", "fake-motion", "fake-ambient"]
+    public static let providers = ["fake-presence", "fake-motion", "fake-ambient", "motion-hardware"]
     public static let kinds = ["presence", "motion", "ambient"]
-    public static let sources = ["fakePresence", "fakeMotion", "fakeAmbient"]
+    public static let sources = ["fakePresence", "fakeMotion", "fakeAmbient", "motionHardware"]
     public static let qualities = ["full", "degraded", "denied"]
     public static let confidences = ["low", "medium", "high"]
     public static let coverages = ["partial", "full"]

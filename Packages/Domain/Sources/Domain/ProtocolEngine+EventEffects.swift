@@ -59,6 +59,22 @@ extension ProtocolEngine {
         recoveryState.movementDeferralCount += 1
     }
 
+    /// Applies merged Escape-during-visual for the canonical action reducer: a
+    /// fresh visual cycle and a fresh movement cycle with one deferral and one
+    /// skip. Existing merged-Escape callers keep their retaining semantics;
+    /// only the reducer routes through this shared effect.
+    mutating func applyMergedEscapeDuringVisual() -> OpportunityEventDraft {
+        reset(.visual)
+        noteMovementDeferral()
+        resetMovement(clearingRecoveryDebt: false)
+        return OpportunityEventDraft(
+            kind: .skipped,
+            source: .user,
+            opportunity: .visual,
+            selectedDurationSeconds: nil,
+        )
+    }
+
     mutating func setPhase(_ phase: OpportunityPhase, for opportunity: OpportunityType?) {
         switch opportunity {
         case .visual:

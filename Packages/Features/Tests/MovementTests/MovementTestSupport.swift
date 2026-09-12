@@ -10,7 +10,7 @@ func makeModel(
 ) throws -> MovementModel {
     let schedule = try movementSchedule(durations: durations)
     return MovementModel(
-        schedule: schedule,
+        durations: MovementDurations.projected(from: schedule),
         now: { clock.value },
         onAction: onAction,
         onAnnouncement: onAnnouncement,

@@ -146,7 +146,6 @@ final class VisualResetOverlayCoordinator {
         priorProcessIdentifier = captureFrontmostProcessIdentifier()
         let model = VisualResetModel(
             durationSeconds: durationSeconds,
-            countdownStartsOnOpen: false,
             accessibility: accessibilityPreferences.visualResetAccessibility,
             requiresLifecycleConfirmation: true,
             now: now,
@@ -356,7 +355,9 @@ private extension VisualResetOverlayCoordinator {
                     assignment.role,
                     model,
                     accessibilityPreferences,
-                    { [weak model] in model?.startCountdown() },
+                    // D-032: the countdown starts in the committed open
+                    // action; entrance settlement gates nothing.
+                    {},
                 ) { [weak model] in
                     model?.skip()
                 }

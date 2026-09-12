@@ -18,7 +18,6 @@ public final class MovementModel {
     public private(set) var remainingSeconds: Int
     public private(set) var progress: Double = 0
     public private(set) var deadline: TimeInterval?
-    public private(set) var isDeclarationArmed = false
     public private(set) var accessibility: MovementAccessibility
 
     public let recommendedDurationSeconds: TimeInterval
@@ -30,7 +29,6 @@ public final class MovementModel {
         MovementGuidance(choice: selectedChoice)
     }
 
-    @ObservationIgnored private let declarationArmDelay: TimeInterval
     @ObservationIgnored private let requiresLifecycleConfirmation: Bool
     @ObservationIgnored private let now: () -> TimeInterval
     @ObservationIgnored private let onAction: (MovementAction) -> Void
@@ -42,11 +40,13 @@ public final class MovementModel {
     @ObservationIgnored private var pendingTerminalAnnouncement: MovementAnnouncement?
     @ObservationIgnored private var nextAutomaticTimerRetryAt: TimeInterval?
 
+    /// Creates a surface from projected durations (D-032 story 2.7): the
+    /// presenter projects recommended/quick values from the coordinator-owned
+    /// schedule and the surface never reads the engine itself.
     public init(
-        schedule: OpportunitySchedule,
+        durations: MovementDurations,
         initialDurationSeconds: TimeInterval? = nil,
         context: MovementContext = .standalone,
-        declarationArmDelay: TimeInterval = 0.8,
         accessibility: MovementAccessibility = .init(),
         seatedContentFirst: Bool = false,
         requiresLifecycleConfirmation: Bool = false,
@@ -54,23 +54,22 @@ public final class MovementModel {
         onAction: @escaping (MovementAction) -> Void = { _ in },
         onAnnouncement: @escaping (MovementAnnouncement) -> Void = { _ in },
     ) {
-        precondition(schedule.durationOptionsSeconds.count >= 2)
-        precondition(declarationArmDelay.isFinite && declarationArmDelay >= 0)
-        let recommendedDuration = schedule.durationOptionsSeconds[0]
-        let quickDuration = schedule.durationOptionsSeconds[1]
-        precondition(recommendedDuration.isFinite && quickDuration.isFinite)
-        let initialDuration = initialDurationSeconds ?? recommendedDuration
-        precondition(initialDuration == recommendedDuration || initialDuration == quickDuration)
+        precondition(durations.recommendedSeconds.isFinite && durations.recommendedSeconds > 0)
+        precondition(durations.quickSeconds.isFinite && durations.quickSeconds > 0)
+        let initialDuration = initialDurationSeconds ?? durations.recommendedSeconds
+        precondition(
+            initialDuration == durations.recommendedSeconds
+                || initialDuration == durations.quickSeconds,
+        )
 
-        recommendedDurationSeconds = recommendedDuration
-        quickDurationSeconds = quickDuration
+        recommendedDurationSeconds = durations.recommendedSeconds
+        quickDurationSeconds = durations.quickSeconds
         self.context = context
         choiceOrder = seatedContentFirst
             ? [.seated, .walkOrWheel, .smallSpace]
             : [.walkOrWheel, .smallSpace, .seated]
         selectedDurationSeconds = initialDuration
         remainingSeconds = Int(ceil(initialDuration))
-        self.declarationArmDelay = declarationArmDelay
         self.requiresLifecycleConfirmation = requiresLifecycleConfirmation
         self.accessibility = accessibility
         self.now = now
@@ -103,7 +102,6 @@ public final class MovementModel {
 
         remainingSeconds = Int(ceil(max(0, deadline - currentTime)))
         progress = displayedProgress(rawProgress)
-        isDeclarationArmed = currentTime - openedAt >= declarationArmDelay
 
         if remainingSeconds == 0 {
             if let nextAutomaticTimerRetryAt, currentTime < nextAutomaticTimerRetryAt {
@@ -128,9 +126,10 @@ public final class MovementModel {
         onAnnouncement(.selectionChanged(choice))
     }
 
+    /// Keyboard route for printed choices (D-032): active on the first frame.
     public func selectFromKeyboard(_ choice: MovementChoice) {
         refresh()
-        guard phase == .running, isDeclarationArmed else { return }
+        guard phase == .running else { return }
         select(choice)
     }
 
@@ -170,10 +169,10 @@ public final class MovementModel {
         onAction(.selectedDuration(selectedDurationSeconds))
         refresh()
     }
-
+    /// Keyboard route for the quick duration (D-032): active on the first frame.
     public func selectQuickDurationFromKeyboard() {
         refresh()
-        guard phase == .running, isDeclarationArmed else { return }
+        guard phase == .running else { return }
         selectQuickDuration()
     }
 
@@ -239,7 +238,6 @@ public final class MovementModel {
             deadline = nil
             remainingSeconds = Int(ceil(selectedDurationSeconds))
             progress = 0
-            isDeclarationArmed = false
             announcedOneMinute = false
             pendingOpenAnnouncement = nil
             pendingTerminalAnnouncement = nil
@@ -270,7 +268,7 @@ public final class MovementModel {
 
 public extension MovementModel {
     convenience init(
-        schedule: OpportunitySchedule,
+        durations: MovementDurations,
         initialDurationSeconds: TimeInterval? = nil,
         context: MovementContext = .standalone,
         accessibility: MovementAccessibility = .init(),
@@ -281,7 +279,7 @@ public extension MovementModel {
     ) {
         let clock = MovementMonotonicClock()
         self.init(
-            schedule: schedule,
+            durations: durations,
             initialDurationSeconds: initialDurationSeconds,
             context: context,
             accessibility: accessibility,
@@ -302,13 +300,16 @@ public extension MovementModel {
         context: MovementContext = .standalone,
         seatedContentFirst: Bool = false,
     ) -> MovementModel {
-        let schedule = previewSchedule()
-        let duration = schedule.durationOptionsSeconds.contains(selectedDurationSeconds)
+        // Preview fixtures mirror the normative recommended and quick durations.
+        let durations = MovementDurations(recommendedSeconds: 300, quickSeconds: 120)
+        let duration = [durations.recommendedSeconds, durations.quickSeconds].contains(
+            selectedDurationSeconds,
+        )
             ? selectedDurationSeconds
-            : schedule.durationOptionsSeconds[0]
+            : durations.recommendedSeconds
         let elapsed = duration - min(max(TimeInterval(remainingSeconds), 0), duration)
         let model = MovementModel(
-            schedule: schedule,
+            durations: durations,
             context: context,
             accessibility: accessibility,
             seatedContentFirst: seatedContentFirst,
@@ -331,32 +332,19 @@ public extension MovementModel {
             model.phase = phase
             model.remainingSeconds = 0
             model.progress = 1
-            model.isDeclarationArmed = true
         }
         return model
     }
 }
 
 private extension MovementModel {
-    static func previewSchedule() -> OpportunitySchedule {
-        // Preview fixtures mirror the normative recommended and quick durations.
-        guard let schedule = try? OpportunitySchedule(
-            softDueSeconds: 3000,
-            targetSeconds: 3600,
-            latestPreferredSeconds: 4200,
-            durationOptionsSeconds: [300, 120],
-        ) else {
-            preconditionFailure("Static movement preview timing is invalid")
-        }
-        return schedule
-    }
-
+    /// Keyboard route for terminal declarations (D-032): active on the first frame.
     func finishFromKeyboard(
         _ terminal: MovementTerminalAction,
         announcement: MovementAnnouncement,
     ) {
         refresh()
-        guard phase == .running, isDeclarationArmed else { return }
+        guard phase == .running else { return }
         finish(terminal, announcement: announcement)
     }
 

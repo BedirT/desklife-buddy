@@ -207,22 +207,18 @@ struct VisualResetOverlayCoordinatorTests {
         #expect(harness.screenObservationCount == 1)
     }
 
-    @Test("The visual countdown waits for the interactive entrance to settle")
-    func countdownWaitsForEntrance() {
+    @Test("The visual countdown starts in the committed open action")
+    func countdownStartsWithoutEntranceSettlement() {
         let harness = OverlayHarness(displays: [display(1, isMain: true)])
         harness.automaticallySettlesEntrance = false
         let coordinator = harness.makeCoordinator()
         coordinator.present()
 
-        harness.monotonicNow = 3
-        harness.fireRefresh()
-        #expect(harness.panels[0].model.remainingSeconds == 20)
-
-        harness.panels[0].settleEntrance()
-        harness.monotonicNow = 4.1
+        harness.monotonicNow = 1.1
         harness.fireRefresh()
         #expect(harness.panels[0].model.remainingSeconds == 19)
     }
+
 
     @Test("Only the interactive display routes Escape and restores once")
     func onlyInteractiveEscapeClosesAll() {

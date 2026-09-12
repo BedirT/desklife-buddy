@@ -96,6 +96,20 @@ struct MergedOverlayCoordinatorTests {
         #expect(harness.screenObservationCount == 1)
     }
 
+    @Test("The merged visual countdown starts in the committed open action")
+    func mergedCountdownStartsWithoutEntranceSettlement() throws {
+        let harness = try MergedOverlayHarness(
+            displays: [mergedDisplay(1, isMain: true)],
+        )
+        harness.automaticallySettlesEntrance = false
+        let coordinator = harness.makeCoordinator()
+        coordinator.present()
+
+        harness.monotonicNow = 1.1
+        harness.fireRefresh()
+        #expect(harness.visualModel.remainingSeconds == 19)
+    }
+
     @Test("A confirmed visual timer swaps existing panels to one merged movement session")
     func visualTimerAdvancesInPlace() throws {
         let harness = try MergedOverlayHarness(
@@ -398,7 +412,7 @@ struct MergedPanelTests {
         #expect(panel.showsDefaultActionForTesting)
 
         panel.update(content: .movement(MovementModel(
-            schedule: schedule,
+            durations: MovementDurations.projected(from: schedule),
             context: .merged,
             now: { 0 },
         )))
@@ -425,7 +439,7 @@ struct MergedPanelTests {
         #expect(panel.atmosphereKindForTesting == "visual")
 
         try panel.update(content: .movement(MovementModel(
-            schedule: mergedSchedule(),
+            durations: MovementDurations.projected(from: try mergedSchedule()),
             context: .merged,
             now: { 0 },
         )))
@@ -465,6 +479,7 @@ private final class MergedOverlayHarness {
     var displays: [OverlayDisplay]
     var accessibilityPreferences: AccessibilityPreferences
     var monotonicNow: TimeInterval = 0
+    var automaticallySettlesEntrance = true
     var appIsFrontmost = true
     var operations: [String] = []
     var panels: [TestMergedPanel] = []
@@ -526,6 +541,7 @@ private final class MergedOverlayHarness {
                     role: role,
                     accessibilityPreferences: accessibilityPreferences,
                     onEntranceSettled: onEntranceSettled,
+                    automaticallySettlesEntrance: self.automaticallySettlesEntrance,
                     onCancel: onCancel,
                 )
                 self.panels.append(panel)
@@ -581,6 +597,7 @@ private final class TestMergedPanel: MergedPanelPresenting {
     let accessibilityPreferences: AccessibilityPreferences
     private let onCancel: () -> Void
     private let onEntranceSettled: () -> Void
+    private let automaticallySettlesEntrance: Bool
     private(set) var frame: CGRect
     private(set) var wasMadeKey = false
     private(set) var wasClosed = false
@@ -612,6 +629,7 @@ private final class TestMergedPanel: MergedPanelPresenting {
         role: OverlayDisplayRole,
         accessibilityPreferences: AccessibilityPreferences,
         onEntranceSettled: @escaping () -> Void,
+        automaticallySettlesEntrance: Bool,
         onCancel: @escaping () -> Void,
     ) {
         self.displayID = displayID
@@ -619,13 +637,14 @@ private final class TestMergedPanel: MergedPanelPresenting {
         self.role = role
         self.accessibilityPreferences = accessibilityPreferences
         self.onEntranceSettled = onEntranceSettled
+        self.automaticallySettlesEntrance = automaticallySettlesEntrance
         self.onCancel = onCancel
         contentHistory = [content]
     }
 
     func present(makeKey: Bool) {
         wasMadeKey = wasMadeKey || makeKey
-        if makeKey {
+        if makeKey, automaticallySettlesEntrance {
             onEntranceSettled()
         }
     }

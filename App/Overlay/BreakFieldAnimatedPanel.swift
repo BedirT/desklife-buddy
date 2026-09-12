@@ -13,12 +13,16 @@ enum BreakFieldPanelMotionMode: Equatable {
 
     var profile: BreakFieldPanelMotionProfile {
         switch self {
+        // D-032: the accepted checkpoint presents the selected image without
+        // a global tint or compositor transition. Standard is immediate; the
+        // frost path below stays dormant until a replacement animation is
+        // reviewed as a separate change.
         case .standard:
             BreakFieldPanelMotionProfile(
-                enterDuration: DSMotion.breakFieldEnterDuration,
-                exitDuration: DSMotion.breakFieldExitDuration,
+                enterDuration: 0,
+                exitDuration: 0,
                 initialAlpha: 1,
-                transitionStyle: .frostDissolve,
+                transitionStyle: .instant,
             )
         case .reduced:
             BreakFieldPanelMotionProfile(

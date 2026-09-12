@@ -323,7 +323,7 @@ struct MovementPanelTests {
     @Test("Only a key panel presents the initial default focus")
     func keyPanelFocus() throws {
         let schedule = try movementSchedule()
-        let model = MovementModel(schedule: schedule, now: { 0 })
+        let model = MovementModel(durations: MovementDurations.projected(from: schedule), now: { 0 })
         let first = MovementPanel(
             displayID: .direct(1),
             frame: CGRect(x: 0, y: 0, width: 800, height: 600),
@@ -359,7 +359,7 @@ struct MovementPanelTests {
         let panel = try MovementPanel(
             displayID: .direct(1),
             frame: CGRect(x: 0, y: 0, width: 800, height: 600),
-            model: MovementModel(schedule: movementSchedule(), now: { 0 }),
+            model: MovementModel(durations: MovementDurations.projected(from: movementSchedule()), now: { 0 }),
             role: .atmosphere,
             onCancel: {},
         )
@@ -381,7 +381,7 @@ struct MovementPanelTests {
         let panel = try MovementPanel(
             displayID: .direct(1),
             frame: CGRect(x: 0, y: 0, width: 800, height: 600),
-            model: MovementModel(schedule: movementSchedule(), now: { 0 }),
+            model: MovementModel(durations: MovementDurations.projected(from: movementSchedule()), now: { 0 }),
             role: .interactive,
             onCancel: { cancelCount += 1 },
         )
@@ -403,7 +403,7 @@ struct MovementPanelTests {
         let clock = MovementPanelTestClock()
         var actions: [MovementAction] = []
         let model = try MovementModel(
-            schedule: movementSchedule(),
+            durations: MovementDurations.projected(from: movementSchedule()),
             now: { clock.value },
             onAction: { actions.append($0) },
         )
@@ -436,7 +436,7 @@ struct MovementPanelTests {
             ("p", UInt16(35), .positionChanged),
         ] {
             let clock = MovementPanelTestClock()
-            let model = try MovementModel(schedule: movementSchedule(), now: { clock.value })
+            let model = try MovementModel(durations: MovementDurations.projected(from: movementSchedule()), now: { clock.value })
             let panel = MovementPanel(
                 displayID: .direct(1),
                 frame: CGRect(x: 0, y: 0, width: 800, height: 600),
@@ -447,12 +447,14 @@ struct MovementPanelTests {
             defer { panel.close() }
             model.open()
 
-            let guardedEvent = try #require(keyEvent(characters: character, keyCode: keyCode))
-            #expect(panel.performKeyEquivalent(with: guardedEvent))
-            #expect(model.phase == .running)
+            // D-032: terminal keyboard routes are phase-only and active on the
+            // first frame, so the immediate press finishes at once.
+            let immediateEvent = try #require(keyEvent(characters: character, keyCode: keyCode))
+            #expect(panel.performKeyEquivalent(with: immediateEvent))
+            #expect(model.phase == .finished(expected))
 
             clock.value = 0.8
-            #expect(panel.performKeyEquivalent(with: guardedEvent))
+            #expect(panel.performKeyEquivalent(with: immediateEvent))
             #expect(model.phase == .finished(expected))
         }
     }

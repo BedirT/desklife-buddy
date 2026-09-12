@@ -15,10 +15,13 @@ enum ProtocolPersistenceError: Error, Equatable {
     case invalidHeadsUpDeliveryState
     case unsupportedHeadsUpDeliverySchemaVersion(Int)
     case unsupportedSchemaVersion(Int)
+    case unsupportedCoordinatorFenceVersion(Int)
+    case invalidCoordinatorFenceState
+    case illegalCoordinatorRollback
 }
 
 final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
-    private static let schemaVersion = 1
+    private static let schemaVersion = 2
     private static let stateKey = "current"
 
     let container: ModelContainer
@@ -124,7 +127,7 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
 
     func loadState() async throws -> ProtocolState? {
         guard let stored = try fetchState() else { return nil }
-        guard stored.schemaVersion == Self.schemaVersion else {
+        guard stored.schemaVersion == 1 || stored.schemaVersion == Self.schemaVersion else {
             throw ProtocolPersistenceError.unsupportedSchemaVersion(stored.schemaVersion)
         }
         guard let profileID = ProtocolProfileID(rawValue: stored.profileID)
@@ -264,10 +267,63 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
             visualCycleID: state.visualClock.cycleID,
             movementCycleID: state.movementClock.cycleID,
         )
+        let coordinatorFencePayload = try CoordinatorFenceStateCodec.encode(state.coordinatorFence)
         if let stored = try fetchState() {
-            update(stored, from: state, headsUpDeliveryStatePayload: headsUpDeliveryStatePayload)
+            try refuseGenerationRollback(stored: stored, incoming: state.coordinatorFence)
+            stored.schemaVersion = Self.schemaVersion
+            update(
+                stored,
+                from: state,
+                headsUpDeliveryStatePayload: headsUpDeliveryStatePayload,
+                coordinatorFencePayload: coordinatorFencePayload,
+            )
         } else {
-            insertState(state, headsUpDeliveryStatePayload: headsUpDeliveryStatePayload)
+            insertState(
+                state,
+                headsUpDeliveryStatePayload: headsUpDeliveryStatePayload,
+                coordinatorFencePayload: coordinatorFencePayload,
+            )
+        }
+    }
+
+    /// Refuses a regressed causal generation: the generation only advances
+    /// (`noteSessionRotation`), so persisting an older one means a stale
+    /// writer or a rolled-back file. A same-generation write that drops
+    /// retained committed actions is the same hazard: pre-2.6 snapshots
+    /// carry an empty fence, and persisting one over a commit would wipe
+    /// replay authority and let the next resubmission recommit. v1 rows
+    /// carry no generation (implicit zero, never newer). A retained payload
+    /// from a newer binary is authority this binary cannot read, so its
+    /// version error is rethrown rather than overwritten; only a genuinely
+    /// corrupt payload cannot anchor a comparison, and overwriting it with
+    /// a good snapshot is recovery, not rollback. The throw precedes any
+    /// mutation, leaving the stored row intact.
+    private func refuseGenerationRollback(
+        stored: StoredProtocolState,
+        incoming: CoordinatorFenceState,
+    ) throws {
+        guard stored.schemaVersion != 1,
+              let payload = stored.coordinatorFencePayload
+        else {
+            return
+        }
+        let retained: CoordinatorFenceState
+        do {
+            retained = try CoordinatorFenceStateCodec.decode(payload)
+        } catch let error as ProtocolPersistenceError {
+            if case .unsupportedCoordinatorFenceVersion = error { throw error }
+            return
+        } catch {
+            return
+        }
+        guard incoming.generation >= retained.generation else {
+            throw ProtocolPersistenceError.illegalCoordinatorRollback
+        }
+        let dropsRetainedCommits = !retained.committedActions.keys.allSatisfy {
+            incoming.committedActions.keys.contains($0)
+        }
+        guard incoming.generation != retained.generation || !dropsRetainedCommits else {
+            throw ProtocolPersistenceError.illegalCoordinatorRollback
         }
     }
 
@@ -275,6 +331,7 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
         _ stored: StoredProtocolState,
         from state: ProtocolState,
         headsUpDeliveryStatePayload: Data,
+        coordinatorFencePayload: Data,
     ) {
         stored.updateClocks(
             profileID: state.profileID.rawValue,
@@ -298,11 +355,13 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
             movement: state.notAppropriateOpportunities.contains(.movement),
         )
         stored.updateHeadsUpDeliveryStatePayload(headsUpDeliveryStatePayload)
+        stored.updateCoordinatorFencePayload(coordinatorFencePayload)
     }
 
     private func insertState(
         _ state: ProtocolState,
         headsUpDeliveryStatePayload: Data,
+        coordinatorFencePayload: Data,
     ) {
         context.insert(StoredProtocolState(
             key: Self.stateKey,
@@ -321,6 +380,7 @@ final class SwiftDataProtocolStore: OpportunityEventStore, ProtocolStateStore {
             visualCycleIDStorage: Int64(bitPattern: state.visualClock.cycleID),
             movementCycleIDStorage: Int64(bitPattern: state.movementClock.cycleID),
             headsUpDeliveryStatePayload: headsUpDeliveryStatePayload,
+            coordinatorFencePayload: coordinatorFencePayload,
         ))
     }
 }
@@ -358,7 +418,19 @@ private extension SwiftDataProtocolStore {
                 visualCycleID: visualCycleID,
                 movementCycleID: movementCycleID,
             ),
+            coordinatorFence: try coordinatorFence(from: stored),
         )
+    }
+
+    private func coordinatorFence(from stored: StoredProtocolState) throws -> CoordinatorFenceState {
+        // v1 rows predate the fence column: they restore with an empty
+        // fence and upgrade on the next save. A v2 row without a decodable
+        // payload is tampered, never silently defaulted.
+        guard stored.schemaVersion != 1 else { return CoordinatorFenceState() }
+        guard let payload = stored.coordinatorFencePayload else {
+            throw ProtocolPersistenceError.invalidCoordinatorFenceState
+        }
+        return try CoordinatorFenceStateCodec.decode(payload)
     }
 
     private func notAppropriateOpportunities(
@@ -375,7 +447,9 @@ private extension SwiftDataProtocolStore {
     }
 
     private func event(from stored: StoredOpportunityEvent) throws -> OpportunityEvent {
-        guard stored.schemaVersion == Self.schemaVersion else {
+        // The event schema is unchanged in v2 (additive-only: the fence
+        // column lives on the state row), so v1 event rows decode as-is.
+        guard stored.schemaVersion == 1 || stored.schemaVersion == Self.schemaVersion else {
             throw ProtocolPersistenceError.unsupportedSchemaVersion(stored.schemaVersion)
         }
         guard let kind = OpportunityEventKind(rawValue: stored.kind) else {

@@ -456,7 +456,7 @@ public enum OpportunityActionOutcome: String, Codable, Hashable, Sendable {
 
 /// The auditable receipt for one reduced action: its outcome, the exact facts
 /// it settled (at most one product fact), and the revisions it left behind.
-public struct OpportunityActionReceipt: Equatable, Sendable {
+public struct OpportunityActionReceipt: Equatable, Sendable, Codable {
     public let actionID: ActionID
     public let outcome: OpportunityActionOutcome
     public let facts: [OpportunityEventDraft]
@@ -478,6 +478,37 @@ public struct OpportunityActionReceipt: Equatable, Sendable {
         self.reason = reason
         self.globalRevision = globalRevision
         self.opportunityRevision = opportunityRevision
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case actionID
+        case outcome
+        case facts
+        case reason
+        case globalRevision
+        case opportunityRevision
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            actionID: try container.decode(ActionID.self, forKey: .actionID),
+            outcome: try container.decode(OpportunityActionOutcome.self, forKey: .outcome),
+            facts: try container.decode([OpportunityEventDraft].self, forKey: .facts),
+            reason: try container.decode(String.self, forKey: .reason),
+            globalRevision: try container.decode(UInt64.self, forKey: .globalRevision),
+            opportunityRevision: try container.decodeIfPresent(UInt64.self, forKey: .opportunityRevision),
+        )
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(actionID, forKey: .actionID)
+        try container.encode(outcome, forKey: .outcome)
+        try container.encode(facts, forKey: .facts)
+        try container.encode(reason, forKey: .reason)
+        try container.encode(globalRevision, forKey: .globalRevision)
+        try container.encodeIfPresent(opportunityRevision, forKey: .opportunityRevision)
     }
 }
 

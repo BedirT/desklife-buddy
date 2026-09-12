@@ -19,7 +19,10 @@ final class StoredProtocolState {
     var visualCycleIDStorage: Int64?
     var movementCycleIDStorage: Int64?
     var headsUpDeliveryStatePayload: Data?
-
+    /// Versioned coordinator fence/dedup snapshot (Story 2.5, row version
+    /// 2+). Additive-only: v1 rows predate this column and restore with an
+    /// empty fence; only the versioned store reads or writes it.
+    var coordinatorFencePayload: Data?
     init(
         key: String,
         schemaVersion: Int,
@@ -37,6 +40,7 @@ final class StoredProtocolState {
         visualCycleIDStorage: Int64? = nil,
         movementCycleIDStorage: Int64? = nil,
         headsUpDeliveryStatePayload: Data? = nil,
+        coordinatorFencePayload: Data? = nil,
     ) {
         self.key = key
         self.schemaVersion = schemaVersion
@@ -54,6 +58,7 @@ final class StoredProtocolState {
         self.visualCycleIDStorage = visualCycleIDStorage
         self.movementCycleIDStorage = movementCycleIDStorage
         self.headsUpDeliveryStatePayload = headsUpDeliveryStatePayload
+        self.coordinatorFencePayload = coordinatorFencePayload
     }
 
     func updateClocks(
@@ -94,5 +99,9 @@ final class StoredProtocolState {
 
     func updateHeadsUpDeliveryStatePayload(_ payload: Data) {
         headsUpDeliveryStatePayload = payload
+    }
+
+    func updateCoordinatorFencePayload(_ payload: Data) {
+        coordinatorFencePayload = payload
     }
 }

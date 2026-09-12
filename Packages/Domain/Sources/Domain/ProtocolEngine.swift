@@ -32,7 +32,7 @@ public struct OpportunityClockState: Equatable, Sendable {
 }
 
 /// One event fact awaiting App-owned identity and wall-clock metadata.
-public struct OpportunityEventDraft: Equatable, Sendable {
+public struct OpportunityEventDraft: Equatable, Sendable, Codable {
     public let kind: OpportunityEventKind
     public let source: OpportunityEventSource
     public let opportunity: OpportunityType?

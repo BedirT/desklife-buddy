@@ -9,6 +9,7 @@ extension SettingsSection {
         case .contextAndExclusions: "moon"
         case .accessibility: "accessibility"
         case .privacyAndData: "hand.raised"
+        case .sensingAndIntelligence: "shield.checkmark"
         case .integrations: "puzzlepiece.extension"
         case .whyTheseDefaults: "info.circle"
         case .safetyAndSupport: "cross.case"
@@ -22,6 +23,7 @@ extension SettingsSection {
         case .contextAndExclusions: [.dsMovementSmallSpaceTileTop, .dsMovementSmallSpaceTileBottom]
         case .accessibility: [.dsMovementSeatedTileTop, .dsMovementSmallSpaceTileBottom]
         case .privacyAndData: [.dsPositive, .dsAccent]
+        case .sensingAndIntelligence: [.dsAccent, .dsPositive]
         case .integrations: [.dsMovementWalkTileTop, .dsMovementSmallSpaceTileBottom]
         case .whyTheseDefaults: [.dsWarning, .dsMovementWalkTileBottom]
         case .safetyAndSupport: [.dsDanger, .dsMovementSmallSpaceTileBottom]

@@ -99,7 +99,7 @@ struct SettingsSceneCompositionTests {
             launchAtLoginStatus: .requiresApproval,
         )
         let model = SettingsFeatureModel.preview(.integrationsAvailable)
-        let scene = SettingsSceneModel(featureModel: model, integrations: integrations.runtime)
+        let scene = SettingsSceneModel(featureModel: model, integrations: integrations.runtime, trustCenter: await SettingsTrustCenterAppRuntime.inMemory())
 
         await scene.loadIntegrations()
 
@@ -119,6 +119,7 @@ struct SettingsSceneCompositionTests {
         let scene = SettingsSceneModel(
             featureModel: .preview(.balanced),
             integrations: integrations.runtime,
+            trustCenter: await SettingsTrustCenterAppRuntime.inMemory(),
         )
 
         await scene.loadIntegrations()
@@ -145,6 +146,7 @@ struct SettingsIntegrationsRefreshTests {
         let scene = SettingsSceneModel(
             featureModel: .preview(.balanced),
             integrations: integrations.runtime,
+            trustCenter: await SettingsTrustCenterAppRuntime.inMemory(),
         )
         await scene.loadIntegrations()
         integrations.launchAtLogin.status = .notRegistered

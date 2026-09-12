@@ -107,6 +107,10 @@ public extension ProtocolEngine {
             return ProtocolEngineOutput(events: [], presentation: OpportunityCoordinator.presentation(for: self))
         }
         if opportunity == .visual {
+            // A stale courtesy runway must not mask the retained due clock:
+            // orphan it (and its extended deadline) so normal grace applies,
+            // consistent with the cycle-bump orphaning on record paths.
+            orphanVisualCourtesyRunway()
             visualClock.phase = .gracedAfterSuppression
             if movementClock.phase.isPresentable {
                 movementClock.phase = .gracedAfterSuppression

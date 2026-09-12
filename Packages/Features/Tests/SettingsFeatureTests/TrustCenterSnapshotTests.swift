@@ -82,8 +82,11 @@
         }
 
         @Test func proposedRulesEmpty() {
+            // Taller exact-size render: the empty rules section sits
+            // below the receipts list. Baselines: proposedRulesEmpty.light/dark.png.
             assertScreenSnapshot(
-                of: screen(.trustCenterReceipts, .receipts, rules: .empty),
+                of: screen(.trustCenterReceipts, .receipts, height: 2000, rules: .empty),
+                layout: .fixed(width: 1000, height: 2000),
             )
         }
 

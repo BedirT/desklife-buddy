@@ -276,7 +276,7 @@ public struct WeeklyRhythmView: View {
                 .monospacedDigit()
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(label), \(WeeklyRhythmL10n.count(count))")
+        .accessibilityLabel(WeeklyRhythmL10n.auditRowAccessibility(label: label, count: count))
     }
 
     @ViewBuilder

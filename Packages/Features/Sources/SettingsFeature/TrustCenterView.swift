@@ -471,18 +471,22 @@ private struct TrustCenterRulesSectionView: View {
                 cap: cap,
             ))
             HStack(spacing: DSSpacing.sm) {
-                DSButton(TrustCenterRulesL10n.add, style: .primary) {
-                    Task { await actions.decide(row.ruleKey, .add) }
+                // Never is a permanent decline the engine refuses to leave:
+                // Reset stays the only control on declined rows.
+                if row.status != .never {
+                    DSButton(TrustCenterRulesL10n.add, style: .primary) {
+                        Task { await actions.decide(row.ruleKey, .add) }
+                    }
+                    .accessibilityIdentifier("\(row.rowIdentifier).add")
+                    DSButton(TrustCenterRulesL10n.notNow, style: .secondary) {
+                        Task { await actions.decide(row.ruleKey, .notNow) }
+                    }
+                    .accessibilityIdentifier("\(row.rowIdentifier).notNow")
+                    DSButton(TrustCenterRulesL10n.never, style: .secondary) {
+                        Task { await actions.decide(row.ruleKey, .never) }
+                    }
+                    .accessibilityIdentifier("\(row.rowIdentifier).never")
                 }
-                .accessibilityIdentifier("\(row.rowIdentifier).add")
-                DSButton(TrustCenterRulesL10n.notNow, style: .secondary) {
-                    Task { await actions.decide(row.ruleKey, .notNow) }
-                }
-                .accessibilityIdentifier("\(row.rowIdentifier).notNow")
-                DSButton(TrustCenterRulesL10n.never, style: .secondary) {
-                    Task { await actions.decide(row.ruleKey, .never) }
-                }
-                .accessibilityIdentifier("\(row.rowIdentifier).never")
                 if row.canUndo {
                     DSButton(TrustCenterRulesL10n.undo, style: .secondary) {
                         Task { await actions.undo(row.ruleKey) }

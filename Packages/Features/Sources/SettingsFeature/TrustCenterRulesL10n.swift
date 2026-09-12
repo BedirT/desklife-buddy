@@ -103,13 +103,23 @@ enum TrustCenterRulesL10n {
         let seconds = Int(ticks.rounded())
         if seconds % 3600 == 0, seconds >= 3600 {
             let hours = seconds / 3600
+            if hours == 1 {
+                return string("settings.trust.rules.cooldown.hour", default: "1 hour")
+            }
             return format("settings.trust.rules.cooldown.hours", default: "%d hours", hours)
         }
         if seconds % 60 == 0 {
             let minutes = max(1, seconds / 60)
+            if minutes == 1 {
+                return string("settings.trust.rules.cooldown.minute", default: "1 minute")
+            }
             return format("settings.trust.rules.cooldown.minutes", default: "%d minutes", minutes)
         }
-        return format("settings.trust.rules.cooldown.seconds", default: "%d seconds", max(1, seconds))
+        let clamped = max(1, seconds)
+        if clamped == 1 {
+            return string("settings.trust.rules.cooldown.second", default: "1 second")
+        }
+        return format("settings.trust.rules.cooldown.seconds", default: "%d seconds", clamped)
     }
 
     private static func string(_ key: String, default value: String) -> String {

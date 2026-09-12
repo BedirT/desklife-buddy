@@ -198,6 +198,15 @@ enum WeeklyRhythmL10n {
         }
     }
 
+    static func auditRowAccessibility(label: String, count: Int) -> String {
+        format(
+            "weekly.assistant_audit.row.accessibility",
+            default: "%@, %d",
+            label,
+            count,
+        )
+    }
+
     static func contextDetail(_ fact: WeeklyContextFact) -> String {
         let source: String = switch fact.source {
         case .calendarBusyFree:

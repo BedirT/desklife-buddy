@@ -112,7 +112,7 @@ struct HeadsUpModelTests {
             "5 minutes",
             "10 minutes",
             "15 minutes",
-            "After this meeting",
+            "After this busy time",
             "Presenting for 1 hour",
             "More options",
         ])

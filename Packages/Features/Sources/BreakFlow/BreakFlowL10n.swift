@@ -34,7 +34,7 @@ enum BreakFlowL10n {
     )
     static let afterMeeting = FeatureL10n.string(
         "breakFlow.snooze.after_meeting",
-        default: "After this meeting",
+        default: "After this busy time",
     )
     static let pauseForOneHour = FeatureL10n.string(
         "breakFlow.snooze.pause_for_one_hour",

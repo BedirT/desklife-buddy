@@ -54,6 +54,22 @@
             assertScreenSnapshot(of: menu(.headsUp), layout: .sizeThatFits)
         }
 
+        @Test func held() {
+            assertScreenSnapshot(of: menu(.held), layout: .sizeThatFits)
+        }
+
+        @Test func protected() {
+            assertScreenSnapshot(of: menu(.protected), layout: .sizeThatFits)
+        }
+
+        @Test func acceptedRitual() {
+            assertScreenSnapshot(of: menu(.acceptedRitual), layout: .sizeThatFits)
+        }
+
+        @Test func headsUpOff() {
+            assertScreenSnapshot(of: menu(.headsUpOff), layout: .sizeThatFits)
+        }
+
         @Test func normalAtAccessibilitySize() {
             assertDynamicTypeSnapshot(
                 of: menu(.normal, width: 421.2, menuTextPointSize: 17.55),

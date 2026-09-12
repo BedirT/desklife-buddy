@@ -2,12 +2,28 @@ import Domain
 import Foundation
 import Observation
 
+/// Truthful menu-bar states. Buckets are text-distinct by design (region
+/// headline, VoiceOver value, Dock line) and never color-only: the 18px menu
+/// mark stays on the five monochrome DSProtocolMark shapes, with every quiet
+/// bucket sharing the dashed quiet mark and every active bucket the plain mark.
 public enum StatusMenuGlyph: Equatable, Sendable {
     case operating
     case visualDue
     case movementDue
     case bothDue
     case paused
+    /// User-declared holds and waits: quiet, but counting continues and
+    /// reminders resume on their own. Shares the quiet mark with paused.
+    case held
+    /// Protected contexts (presenting, Focus, Calendar, excluded app,
+    /// inactive Mac): quiet to protect the current context. Quiet mark.
+    case protected
+    /// An accepted ritual is running: a break the user started is in
+    /// progress. Plain mark; the region names the ritual in text.
+    case acceptedRitual
+    /// Heads-up is off: reminders stay in the menu. Plain mark; the region
+    /// names the off state and its Settings way back in text.
+    case degraded
 }
 
 public enum StatusClockTiming: Equatable, Sendable {
@@ -19,15 +35,23 @@ public struct StatusClockSummary: Equatable, Sendable {
     public let opportunity: OpportunityType
     public let progress: Double
     public let timing: StatusClockTiming
+    /// Whole counted minutes behind this clock, feeding the Why-now line.
+    public let activeUseMinutes: Int
+    /// Whether this clock's ritual is currently running (accepted).
+    public let isRunning: Bool
 
     public init(
         opportunity: OpportunityType,
         progress: Double,
         timing: StatusClockTiming,
+        activeUseMinutes: Int = 0,
+        isRunning: Bool = false,
     ) {
         self.opportunity = opportunity
         self.progress = progress
         self.timing = timing
+        self.activeUseMinutes = activeUseMinutes
+        self.isRunning = isRunning
     }
 }
 
@@ -163,9 +187,11 @@ private extension StatusMenuModel {
         )
         return StatusMenuSnapshot(
             glyph: glyph(
+                state: state,
                 visualDue: visual.timing == .due,
                 movementDue: movement.timing == .due,
-                isPaused: context.activeSuppression != nil,
+                suppression: context.activeSuppression,
+                headsUpOff: !configuration.delivery.headsUpDefault,
             ),
             visual: visual,
             movement: movement,
@@ -189,6 +215,8 @@ private extension StatusMenuModel {
             opportunity: opportunity,
             progress: min(1, max(0, elapsed / schedule.targetSeconds)),
             timing: isDue ? .due : .next(aboutMinutes: roundedUpMinutes(remaining)),
+            activeUseMinutes: wholeMinutes(elapsed),
+            isRunning: clock.phase == .running,
         )
     }
 
@@ -201,12 +229,35 @@ private extension StatusMenuModel {
         }
     }
 
+    /// Bucket precedence: quiet first (paused, then protected, then held),
+    /// then an accepted ritual in progress, then heads-up off, then due.
+    /// Every SuppressionReason maps to exactly one quiet bucket; the switch
+    /// is exhaustive so a new reason fails to compile here, not silently.
     static func glyph(
+        state: ProtocolState,
         visualDue: Bool,
         movementDue: Bool,
-        isPaused: Bool,
+        suppression: SuppressionReason?,
+        headsUpOff: Bool,
     ) -> StatusMenuGlyph {
-        if isPaused { return .paused }
+        if let suppression {
+            switch suppression {
+            case .manualPause, .outsideWorkingHours:
+                return .paused
+            case .systemInactiveOrLocked, .explicitPresentationMode, .focusFilter,
+                 .calendarBusy, .excludedApplication:
+                return .protected
+            case .userDeclaredMeetingOrCall, .userDeclaredScreenSharingOrPresentation,
+                 .userSelectedTimedTask, .snooze, .lowFrictionWait:
+                return .held
+            }
+        }
+        if state.visualClock.phase == .running || state.movementClock.phase == .running {
+            return .acceptedRitual
+        }
+        if headsUpOff {
+            return .degraded
+        }
         return switch (visualDue, movementDue) {
         case (true, true): .bothDue
         case (true, false): .visualDue
@@ -236,6 +287,10 @@ public extension StatusMenuModel {
         case timedPause
         case calendarBusy
         case headsUp
+        case held
+        case protected
+        case acceptedRitual
+        case headsUpOff
     }
 
     static func preview(_ state: PreviewState = .normal) -> StatusMenuModel {
@@ -249,29 +304,36 @@ private extension StatusMenuModel {
         let movementDue = state == .movementDue || state == .bothDue
         let suppression: SuppressionReason? = switch state {
         case .paused, .timedPause: .manualPause
-        case .calendarBusy: .calendarBusy
-        case .normal, .visualDue, .movementDue, .bothDue, .headsUp: nil
+        case .calendarBusy, .protected: .calendarBusy
+        case .held: .userDeclaredMeetingOrCall
+        case .normal, .visualDue, .movementDue, .bothDue, .headsUp, .acceptedRitual, .headsUpOff: nil
         }
         let manualPause: StatusMenuManualPause? = switch state {
         case .paused: .untilResume
         case .timedPause: .until(Date(timeIntervalSince1970: 1_787_686_800))
-        case .normal, .visualDue, .movementDue, .bothDue, .calendarBusy, .headsUp: nil
+        case .normal, .visualDue, .movementDue, .bothDue, .calendarBusy, .headsUp,
+             .held, .protected, .acceptedRitual, .headsUpOff: nil
         }
+        let visualRunning = state == .acceptedRitual
         return StatusMenuSnapshot(
-            glyph: glyph(
+            glyph: previewGlyph(
+                state,
                 visualDue: visualDue,
                 movementDue: movementDue,
-                isPaused: suppression != nil,
+                suppression: suppression,
             ),
             visual: StatusClockSummary(
                 opportunity: .visual,
-                progress: visualDue ? 1 : 0.64,
-                timing: visualDue ? .due : .next(aboutMinutes: 9),
+                progress: visualDue || visualRunning ? 1 : 0.64,
+                timing: visualDue || visualRunning ? .due : .next(aboutMinutes: 9),
+                activeUseMinutes: visualDue || visualRunning ? 47 : 12,
+                isRunning: visualRunning,
             ),
             movement: StatusClockSummary(
                 opportunity: .movement,
                 progress: movementDue ? 1 : 0.43,
                 timing: movementDue ? .due : .next(aboutMinutes: 34),
+                activeUseMinutes: movementDue ? 34 : 8,
             ),
             estimatedActiveUseMinutes: 63,
             activeSuppression: suppression,
@@ -279,5 +341,36 @@ private extension StatusMenuModel {
             liveHeadsUp: state == .headsUp ? .visual : nil,
             workingHoursOnly: true,
         )
+    }
+
+    /// Preview glyphs mirror makeSnapshot precedence without a full engine:
+    /// quiet buckets first, then the accepted ritual, then heads-up off.
+    static func previewGlyph(
+        _ state: PreviewState,
+        visualDue: Bool,
+        movementDue: Bool,
+        suppression: SuppressionReason?,
+    ) -> StatusMenuGlyph {
+        if suppression != nil {
+            switch state {
+            case .held: return .held
+            case .protected, .calendarBusy: return .protected
+            case .paused, .timedPause: return .paused
+            case .normal, .visualDue, .movementDue, .bothDue, .headsUp, .acceptedRitual, .headsUpOff:
+                return .paused
+            }
+        }
+        if state == .acceptedRitual {
+            return .acceptedRitual
+        }
+        if state == .headsUpOff {
+            return .degraded
+        }
+        return switch (visualDue, movementDue) {
+        case (true, true): .bothDue
+        case (true, false): .visualDue
+        case (false, true): .movementDue
+        case (false, false): .operating
+        }
     }
 }

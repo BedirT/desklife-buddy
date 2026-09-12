@@ -393,13 +393,17 @@ private extension StatusItemCoordinator {
         return image
     }
 
+    /// Quiet buckets share the dashed quiet mark; the accepted ritual and
+    /// heads-up-off share the plain active mark. Buckets stay distinct in
+    /// text (region headline, VoiceOver value, Dock line), never color-only.
     var markState: DSProtocolMark.State {
         switch model.snapshot.glyph {
         case .operating: .operating
         case .visualDue: .visualDue
         case .movementDue: .movementDue
         case .bothDue: .bothDue
-        case .paused: .paused
+        case .paused, .held, .protected: .paused
+        case .acceptedRitual, .degraded: .operating
         }
     }
 }

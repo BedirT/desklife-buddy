@@ -277,6 +277,12 @@ struct SettingsHistoryTests {
             "StoredProtocolState",
             "StoredAppPreferences",
             "StoredOnboardingCompletion",
+            "StoredLedgerObservation",
+            "StoredLedgerAssessment",
+            "StoredLedgerPolicyDecision",
+            "StoredLedgerCorrection",
+            "StoredLedgerConsentReceipt",
+            "StoredLedgerCompanionAction",
         ])
     }
 

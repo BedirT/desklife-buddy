@@ -19,6 +19,8 @@ public struct SettingsFeatureView: View {
     private let excludedApplicationPicker: SettingsExcludedApplicationPicker?
     private let integrationsRuntime: SettingsIntegrationsRuntime
     private let integrationsActions: SettingsIntegrationsActions
+    private let trustCenterSnapshot: TrustCenterSnapshot
+    private let trustCenterActions: TrustCenterActions
     private let evidenceTopic: SettingsEvidenceTopic
 
     public init(
@@ -31,6 +33,8 @@ public struct SettingsFeatureView: View {
         excludedApplicationPicker: SettingsExcludedApplicationPicker? = nil,
         integrationsRuntime: SettingsIntegrationsRuntime = .unavailable,
         integrationsActions: SettingsIntegrationsActions = .none,
+        trustCenterSnapshot: TrustCenterSnapshot? = nil,
+        trustCenterActions: TrustCenterActions = .none,
         evidenceTopic: SettingsEvidenceTopic = .visualResets,
     ) {
         _model = State(initialValue: model)
@@ -42,6 +46,8 @@ public struct SettingsFeatureView: View {
         self.excludedApplicationPicker = excludedApplicationPicker
         self.integrationsRuntime = integrationsRuntime
         self.integrationsActions = integrationsActions
+        self.trustCenterSnapshot = trustCenterSnapshot ?? TrustCenterSnapshot.preview(.empty)
+        self.trustCenterActions = trustCenterActions
         self.evidenceTopic = evidenceTopic
     }
 
@@ -144,7 +150,7 @@ public struct SettingsFeatureView: View {
         )
         SettingsSidebarGroup(
             title: SettingsFeatureL10n.dataAndPrivacy,
-            sections: [.privacyAndData],
+            sections: [.privacyAndData, .sensingAndIntelligence],
             model: model,
             focusedSection: $focusedSidebarSection,
             focusedSectionOverride: focusedSidebarSectionOverride,
@@ -225,6 +231,12 @@ public struct SettingsFeatureView: View {
                         model: model,
                         runtime: integrationsRuntime,
                         actions: integrationsActions,
+                        increaseContrast: increaseContrast,
+                    )
+                case .ready where model.selectedSection == .sensingAndIntelligence:
+                    TrustCenterView(
+                        snapshot: trustCenterSnapshot,
+                        actions: trustCenterActions,
                         increaseContrast: increaseContrast,
                     )
                 case .ready where model.selectedSection == .whyTheseDefaults:

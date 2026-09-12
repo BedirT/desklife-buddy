@@ -27,6 +27,7 @@ enum SettingsFeatureL10n {
     )
     static let accessibility = string("settings.section.accessibility", default: "Accessibility")
     static let privacyAndData = string("settings.section.privacy_and_data", default: "Privacy & data")
+    static let sensingAndIntelligence = string("settings.section.sensing_intelligence", default: "Sensing & Intelligence")
     static let integrations = string("settings.section.integrations", default: "Integrations")
     static let whyTheseDefaults = string("settings.section.why_defaults", default: "Why these defaults?")
     static let safetyAndSupport = string("settings.section.safety_support", default: "Safety & support")
@@ -201,6 +202,7 @@ enum SettingsFeatureL10n {
         case .contextAndExclusions: contextAndExclusions
         case .accessibility: accessibility
         case .privacyAndData: privacyAndData
+        case .sensingAndIntelligence: sensingAndIntelligence
         case .integrations: integrations
         case .whyTheseDefaults: whyTheseDefaults
         case .safetyAndSupport: safetyAndSupport

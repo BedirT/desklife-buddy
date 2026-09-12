@@ -61,6 +61,13 @@ public extension SettingsFeatureModel {
         case evidenceVisualResets
         case evidenceStandingAndMoving
         case safetyAndSupport
+        case trustCenterEducating
+        case trustCenterGranted
+        case trustCenterDenied
+        case trustCenterKillSwitch
+        case trustCenterInspector
+        case trustCenterReceipts
+        case trustCenterEmpty
     }
 
     static func preview(_ state: PreviewState = .balanced) -> SettingsFeatureModel {
@@ -90,6 +97,7 @@ public extension SettingsFeatureModel {
         model.applyPreviewAccessibility(state)
         model.applyPreviewPrivacy(state)
         model.applyPreviewInformationRoutes(state)
+        model.applyPreviewTrustCenter(state)
         return model
     }
 
@@ -347,6 +355,17 @@ public extension SettingsFeatureModel {
             selectedSection = .whyTheseDefaults
         case .safetyAndSupport:
             selectedSection = .safetyAndSupport
+        default:
+            break
+        }
+    }
+
+    private func applyPreviewTrustCenter(_ state: PreviewState) {
+        switch state {
+        case .trustCenterEducating, .trustCenterGranted, .trustCenterDenied,
+             .trustCenterKillSwitch, .trustCenterInspector, .trustCenterReceipts,
+             .trustCenterEmpty:
+            selectedSection = .sensingAndIntelligence
         default:
             break
         }

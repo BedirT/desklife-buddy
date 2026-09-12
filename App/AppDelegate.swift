@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var runtime: ProtocolRuntime?
     var settingsStore: SwiftDataSettingsStore?
     lazy var settingsIntegrationsRuntime = SettingsIntegrationsAppRuntime.live()
+    lazy var settingsTrustCenterRuntime = SettingsTrustCenterAppRuntime.live()
     lazy var settingsSceneModel = buildSettingsSceneModel()
     var settingsWindowController: NSWindowController?
     lazy var appWindowActivationController = AppWindowActivationController.live()

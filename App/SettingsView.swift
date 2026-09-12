@@ -21,6 +21,8 @@ struct SettingsView: View {
             excludedApplicationPicker: sceneModel.excludedApplicationPicker,
             integrationsRuntime: sceneModel.integrationsRuntime,
             integrationsActions: sceneModel.integrationsActions,
+            trustCenterSnapshot: sceneModel.trustCenterSnapshot,
+            trustCenterActions: sceneModel.trustCenterActions,
         )
         .task {
             await sceneModel.load()
@@ -30,9 +32,11 @@ struct SettingsView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             Task { await sceneModel.refreshIntegrations() }
+            Task { await sceneModel.refreshTrustCenter() }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
             Task { await sceneModel.refreshIntegrations() }
+            Task { await sceneModel.refreshTrustCenter() }
         }
     }
 }

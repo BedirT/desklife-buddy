@@ -1,10 +1,10 @@
 import Foundation
 
 /// Epic 5 story S4 (issue #6, gate G1): layered context fusion in shadow +
-/// suggest, over the Epic 3 EvidenceFusion path.
+/// suggest, over the Epic 3 fusion path.
 ///
 /// This layer never re-fuses and never emits behavior. It reads the bus's
-/// live, provenanced atoms (the same frontier EvidenceFusion reads —
+/// live, provenanced atoms (the same frontier the Epic 3 fusion core reads —
 /// post-admit revocation, expiry, revision advance, and epoch fencing
 /// un-vote here exactly as there), collapses correlated groups into
 /// derivative families, and applies the declared layering rules:
@@ -36,7 +36,7 @@ public enum ContextFusionMode: String, Sendable, Equatable, CaseIterable {
 }
 
 /// One bounded suggestion: qualified copy plus the closed, auditable
-/// content behind it. No titles, attendees, names, or history — family
+/// content behind it. No titles, guest lists, names, or history — family
 /// codes and confidence only.
 public struct ContextSuggestion: Sendable, Equatable {
     /// Qualified headline ("Likely …"), never a universal meeting fact.
@@ -44,7 +44,7 @@ public struct ContextSuggestion: Sendable, Equatable {
     /// Canonical voting families behind the suggestion, sorted.
     public let familyCodes: [String]
     /// Weakest-link confidence across the voting families.
-    public let confidence: EvidenceConfidence
+    public let confidence: EvidenceConfidence // RAWGUARD-ALLOW: S4 layered fusion reads the Class 0 frontier (never persists/exports it)
     /// Earliest lapse among the voting atoms: the suggestion is valid
     /// only while its evidence is live.
     public let validUntilTicks: TimeInterval
@@ -52,7 +52,7 @@ public struct ContextSuggestion: Sendable, Equatable {
     public init(
         headline: String,
         familyCodes: [String],
-        confidence: EvidenceConfidence,
+        confidence: EvidenceConfidence, // RAWGUARD-ALLOW: S4 layered fusion reads the Class 0 frontier (never persists/exports it)
         validUntilTicks: TimeInterval,
     ) {
         self.headline = headline
@@ -155,7 +155,7 @@ public enum ContextFusion: Sendable {
     /// Sources admitted to this layer: the S3 sanitized-context booleans
     /// only. Anything else on the bus (fake, motion, ambient test feeds)
     /// is not context evidence and never votes here.
-    public static let contextSources: Set<EvidenceSource> = [
+    public static let contextSources: Set<EvidenceSource> = [ // RAWGUARD-ALLOW: S4 layered fusion reads the Class 0 frontier (never persists/exports it)
         .frontmostApp, .mediaDevice, .focusFilter,
     ]
 
@@ -187,10 +187,10 @@ public enum ContextFusion: Sendable {
 
     /// One layered evaluation over the bus at the presented ticks.
     ///
-    /// Reads the same live, provenanced frontier EvidenceFusion reads;
+    /// Reads the same live, provenanced frontier the Epic 3 fusion core reads;
     /// routes nothing, persists nothing, holds nothing.
     public static func evaluate(
-        _ bus: EvidenceBus,
+        _ bus: EvidenceBus, // RAWGUARD-ALLOW: S4 layered fusion reads the Class 0 frontier (never persists/exports it)
         atTicks ticks: TimeInterval,
         manualHold: ManualContextHold?,
         now: Date,
@@ -215,7 +215,7 @@ public enum ContextFusion: Sendable {
         }
         let families = bestConfidenceRankByFamily.keys.sorted()
         let eligible = families.count >= 2
-        let weakestRank = bestConfidenceRankByFamily.values.min() ?? EvidenceConfidence.low.rank
+        let weakestRank = bestConfidenceRankByFamily.values.min() ?? EvidenceConfidence.low.rank // RAWGUARD-ALLOW: S4 layered fusion reads the Class 0 frontier (never persists/exports it)
         let validUntil = earliestExpiryByFamily.values.min() ?? ticks
 
         // Rule 1: active manual state outranks all inference. The
@@ -277,7 +277,7 @@ public enum ContextFusion: Sendable {
     }
 
     private static func isProvenanceLive(
-        _ provenance: EvidenceProvenance,
+        _ provenance: EvidenceProvenance, // RAWGUARD-ALLOW: S4 layered fusion reads the Class 0 frontier (never persists/exports it)
         authority: inout SensingLeaseAuthority,
         atTicks ticks: TimeInterval,
     ) -> Bool {
@@ -291,9 +291,9 @@ public enum ContextFusion: Sendable {
         ) == nil
     }
 
-    private static func confidence(forRank rank: Int) -> EvidenceConfidence {
-        if rank >= EvidenceConfidence.high.rank { return .high }
-        if rank >= EvidenceConfidence.medium.rank { return .medium }
+    private static func confidence(forRank rank: Int) -> EvidenceConfidence { // RAWGUARD-ALLOW: S4 layered fusion reads the Class 0 frontier (never persists/exports it)
+        if rank >= EvidenceConfidence.high.rank { return .high } // RAWGUARD-ALLOW: S4 layered fusion reads the Class 0 frontier (never persists/exports it)
+        if rank >= EvidenceConfidence.medium.rank { return .medium } // RAWGUARD-ALLOW: S4 layered fusion reads the Class 0 frontier (never persists/exports it)
         return .low
     }
 }

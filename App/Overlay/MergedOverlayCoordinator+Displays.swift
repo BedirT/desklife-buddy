@@ -23,7 +23,9 @@ extension MergedOverlayCoordinator {
                     assignment.role,
                     content,
                     accessibilityPreferences,
-                    { [weak self] in self?.startVisualCountdownIfNeeded() },
+                    // D-032: the visual countdown starts in the committed open
+                    // action; entrance settlement gates nothing.
+                    {},
                 ) { [weak self] in
                     self?.cancelActiveSegment()
                 }

@@ -104,7 +104,7 @@ struct MovementMergedModelTests {
             durationOptionsSeconds: [300, 120],
         )
         return MovementModel(
-            schedule: schedule,
+            durations: MovementDurations.projected(from: schedule),
             context: context,
             requiresLifecycleConfirmation: requiresLifecycleConfirmation,
             now: { 0 },

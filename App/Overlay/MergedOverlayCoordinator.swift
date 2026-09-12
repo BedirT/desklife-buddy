@@ -102,7 +102,6 @@ final class MergedOverlayCoordinator {
         priorProcessIdentifier = captureFrontmostProcessIdentifier()
         let model = VisualResetModel(
             durationSeconds: visualDurationSeconds,
-            countdownStartsOnOpen: false,
             accessibility: accessibilityPreferences.visualResetAccessibility,
             requiresLifecycleConfirmation: true,
             now: now,
@@ -264,7 +263,7 @@ extension MergedOverlayCoordinator {
 
     private func presentMovement() {
         let model = MovementModel(
-            schedule: movementSchedule,
+            durations: MovementDurations.projected(from: movementSchedule),
             context: .merged,
             accessibility: accessibilityPreferences.movementAccessibility,
             seatedContentFirst: accessibilityPreferences.seatedContentFirst,
@@ -286,10 +285,12 @@ extension MergedOverlayCoordinator {
     }
 
     private func presentAcknowledgement() {
+        // Surfaces render projected values only; the schedule never crosses the facade.
+        let durations = MovementDurations.projected(from: movementSchedule)
         let model = BreakFlowModel(
             surface: .visualOnlyAcknowledgement,
-            snoozeDurationsSeconds: [movementSchedule.durationOptionsSeconds[0]],
-            recoveryDurationsSeconds: Array(movementSchedule.durationOptionsSeconds.prefix(2)),
+            snoozeDurationsSeconds: [durations.recommendedSeconds],
+            recoveryDurationsSeconds: [durations.recommendedSeconds, durations.quickSeconds],
             acknowledgementDurationSeconds: acknowledgementDurationSeconds,
             onAction: { [weak self] action in self?.handleAcknowledgement(action) },
         )
@@ -395,10 +396,5 @@ extension MergedOverlayCoordinator {
         case let .acknowledgement(model): .acknowledgement(model)
         case nil: nil
         }
-    }
-
-    func startVisualCountdownIfNeeded() {
-        guard case let .visual(model) = phase else { return }
-        model.startCountdown()
     }
 }

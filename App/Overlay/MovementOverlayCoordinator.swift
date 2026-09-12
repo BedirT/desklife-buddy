@@ -141,7 +141,7 @@ final class MovementOverlayCoordinator {
 
         priorProcessIdentifier = captureFrontmostProcessIdentifier()
         let model = MovementModel(
-            schedule: schedule,
+            durations: MovementDurations.projected(from: schedule),
             initialDurationSeconds: selectedDurationSeconds,
             accessibility: accessibilityPreferences.movementAccessibility,
             seatedContentFirst: accessibilityPreferences.seatedContentFirst,

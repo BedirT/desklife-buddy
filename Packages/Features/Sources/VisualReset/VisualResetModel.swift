@@ -49,19 +49,16 @@ public final class VisualResetModel {
     public private(set) var phase: Phase = .ready
     public private(set) var remainingSeconds: Int
     public private(set) var progress: Double = 0
-    public private(set) var isDeclarationArmed = false
     public private(set) var accessibility: VisualResetAccessibility
 
     @ObservationIgnored private let durationSeconds: TimeInterval
     @ObservationIgnored private let finalSecondsThreshold: TimeInterval
-    @ObservationIgnored private let declarationArmDelay: TimeInterval
-    @ObservationIgnored private let countdownStartsOnOpen: Bool
+
     @ObservationIgnored private let requiresLifecycleConfirmation: Bool
     @ObservationIgnored private let now: () -> TimeInterval
     @ObservationIgnored private let onAction: (VisualResetAction) -> Void
     @ObservationIgnored private let onAnnouncement: (VisualResetAnnouncement) -> Void
     @ObservationIgnored private var openedAt: TimeInterval?
-    @ObservationIgnored private var countdownStartRequested = false
     @ObservationIgnored private var announcedTenSeconds = false
     @ObservationIgnored private var pendingOpenAnnouncement: VisualResetAnnouncement?
     @ObservationIgnored private var pendingTerminalAnnouncement: VisualResetAnnouncement?
@@ -71,8 +68,6 @@ public final class VisualResetModel {
     public init(
         durationSeconds: TimeInterval,
         finalSecondsThreshold: TimeInterval = 3,
-        declarationArmDelay: TimeInterval = 0.8,
-        countdownStartsOnOpen: Bool = true,
         accessibility: VisualResetAccessibility = .init(),
         requiresLifecycleConfirmation: Bool = false,
         now: @escaping () -> TimeInterval,
@@ -81,11 +76,8 @@ public final class VisualResetModel {
     ) {
         precondition(durationSeconds.isFinite && durationSeconds > 0)
         precondition(finalSecondsThreshold.isFinite && finalSecondsThreshold >= 0)
-        precondition(declarationArmDelay.isFinite && declarationArmDelay >= 0)
         self.durationSeconds = durationSeconds
         self.finalSecondsThreshold = min(finalSecondsThreshold, durationSeconds)
-        self.declarationArmDelay = declarationArmDelay
-        self.countdownStartsOnOpen = countdownStartsOnOpen
         self.requiresLifecycleConfirmation = requiresLifecycleConfirmation
         self.accessibility = accessibility
         self.now = now
@@ -112,22 +104,18 @@ public final class VisualResetModel {
         )
     }
 
+    /// Opens the session and anchors the countdown in the same committed
+    /// action (D-032): there is no entrance-settlement gate.
     public func open() {
         guard phase == .ready else { return }
         nextAutomaticTimerRetryAt = nil
-        openedAt = countdownStartsOnOpen || countdownStartRequested ? now() : nil
+        openedAt = now()
         phase = .running
         pendingOpenAnnouncement = .opened(durationSeconds: Int(ceil(durationSeconds)))
         onAction(.opened)
         if !requiresLifecycleConfirmation {
             confirmLifecycle(.opened)
         }
-    }
-
-    public func startCountdown() {
-        countdownStartRequested = true
-        guard isActive, openedAt == nil else { return }
-        openedAt = now()
     }
 
     public func refresh() {
@@ -137,7 +125,6 @@ public final class VisualResetModel {
         let rawProgress = min(1, elapsed / durationSeconds)
         let previousRemainingSeconds = remainingSeconds
         remainingSeconds = Int(ceil(max(0, durationSeconds - elapsed)))
-        isDeclarationArmed = elapsed >= declarationArmDelay
         progress = displayedProgress(rawProgress)
 
         if remainingSeconds == 0 {
@@ -198,7 +185,6 @@ public final class VisualResetModel {
             openedAt = nil
             remainingSeconds = Int(ceil(durationSeconds))
             progress = 0
-            isDeclarationArmed = false
             announcedTenSeconds = false
             pendingOpenAnnouncement = nil
             pendingTerminalAnnouncement = nil
@@ -250,7 +236,6 @@ public extension VisualResetModel {
             model.openedAt = 0
             model.remainingSeconds = 0
             model.progress = 1
-            model.isDeclarationArmed = true
         }
         return model
     }

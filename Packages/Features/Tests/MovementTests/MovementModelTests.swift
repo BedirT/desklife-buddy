@@ -55,7 +55,7 @@ struct MovementModelTests {
         var announcements: [MovementAnnouncement] = []
         let schedule = try movementSchedule(durations: [300, 120])
         let model = MovementModel(
-            schedule: schedule,
+            durations: MovementDurations.projected(from: schedule),
             initialDurationSeconds: 120,
             now: { clock.value },
             onAction: { actions.append($0) },
@@ -103,56 +103,6 @@ struct MovementModelTests {
             .selectionChanged(.seated),
             .selectionChanged(.walkOrWheel),
         ])
-    }
-
-    @Test("Keyboard choices remain inert until the declaration guard arms")
-    func selectionKeyboardGuard() throws {
-        let clock = TestClock()
-        var announcements: [MovementAnnouncement] = []
-        let model = try makeModel(
-            clock: clock,
-            onAnnouncement: { announcements.append($0) },
-        )
-        model.open()
-
-        clock.value = 0.79
-        model.selectFromKeyboard(.smallSpace)
-        #expect(model.selectedChoice == .walkOrWheel)
-
-        clock.value = 0.8
-        model.selectFromKeyboard(.smallSpace)
-
-        #expect(model.selectedChoice == .smallSpace)
-        #expect(announcements == [
-            .opened(durationSeconds: 300),
-            .selectionChanged(.smallSpace),
-        ])
-    }
-
-    @Test("Q switches to quick duration from the original open time after the guard arms")
-    func durationKeyboardSwitch() throws {
-        let clock = TestClock()
-        var actions: [MovementAction] = []
-        let model = try makeModel(clock: clock, onAction: { actions.append($0) })
-        model.open()
-
-        clock.value = 0.79
-        model.selectQuickDurationFromKeyboard()
-        #expect(model.selectedDurationSeconds == 300)
-
-        clock.value = 30
-        model.selectQuickDurationFromKeyboard()
-
-        #expect(model.selectedDurationSeconds == 120)
-        #expect(model.deadline == 120)
-        #expect(model.remainingSeconds == 90)
-        #expect(actions == [.opened, .selectedDuration(120)])
-
-        model.selectQuickDurationFromKeyboard()
-        #expect(model.selectedDurationSeconds == 120)
-        #expect(model.deadline == 120)
-        #expect(model.remainingSeconds == 90)
-        #expect(actions == [.opened, .selectedDuration(120)])
     }
 
     @Test("Pointer duration selection is immediate and does not restart elapsed time")
@@ -209,7 +159,7 @@ struct MovementModelTests {
         var actions: [MovementAction] = []
         let schedule = try movementSchedule(durations: [300, 120])
         let model = MovementModel(
-            schedule: schedule,
+            durations: MovementDurations.projected(from: schedule),
             requiresLifecycleConfirmation: true,
             now: { clock.value },
             onAction: { actions.append($0) },
@@ -228,25 +178,6 @@ struct MovementModelTests {
             .selectedDuration(120),
             .selectedDuration(120),
         ])
-    }
-
-    @Test("Return A and P are guarded while pointer declarations remain immediate")
-    func declarationGuard() throws {
-        let clock = TestClock()
-        var actions: [MovementAction] = []
-        let model = try makeModel(clock: clock, onAction: { actions.append($0) })
-        model.open()
-
-        clock.value = 0.79
-        model.doneEarlyFromKeyboard()
-        model.alreadyMovedFromKeyboard()
-        model.positionChangedFromKeyboard()
-        #expect(model.phase == .running)
-
-        model.doneEarly()
-
-        #expect(model.phase == .finished(.doneEarly))
-        #expect(actions == [.opened, .doneEarly])
     }
 }
 
@@ -318,7 +249,7 @@ extension MovementModelTests {
         var actions: [MovementAction] = []
         let schedule = try movementSchedule(durations: [300, 120])
         let model = MovementModel(
-            schedule: schedule,
+            durations: MovementDurations.projected(from: schedule),
             requiresLifecycleConfirmation: true,
             now: { clock.value },
             onAction: { actions.append($0) },

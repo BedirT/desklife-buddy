@@ -87,7 +87,7 @@ struct ResourceGovernorSafetyTests {
             #expect(governor.admit(work, atTicks: governorT0) == .deferred(.budgetExhausted))
         }
         // Safety work still admits, without bound, and stays observable.
-        for _ in 0..<10 {
+        for _ in 0 ..< 10 {
             #expect(governor.admitSafety(.revocationDrain, atTicks: governorT0) == .admit)
             #expect(governor.admitSafety(.leaseExpiryPurge, atTicks: governorT0) == .admit)
         }
@@ -99,7 +99,7 @@ struct ResourceGovernorSafetyTests {
     @Test("Safety admission never touches budget tokens")
     func safetyNeverConsumesBudget() {
         var governor = smallGovernor()
-        for _ in 0..<10 {
+        for _ in 0 ..< 10 {
             _ = governor.admitSafety(.revocationDrain, atTicks: governorT0)
         }
         #expect(governor.admit(.fusion, atTicks: governorT0) == .admit)

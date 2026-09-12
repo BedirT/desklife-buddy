@@ -487,7 +487,7 @@ private struct TrustCenterDataSectionView: View {
     private var dataFeedback: String? {
         if let deleteResult {
             switch deleteResult {
-            case .deleted(let receiptCount, let decisionCount):
+            case let .deleted(receiptCount, decisionCount):
                 return TrustCenterL10n.deleteDone(receipts: receiptCount, decisions: decisionCount)
             case .failed, .unavailable:
                 return TrustCenterL10n.deleteFailed

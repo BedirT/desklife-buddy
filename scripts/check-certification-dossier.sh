@@ -202,8 +202,9 @@ fi
 # deliberate-absence prose (HelperXPCFeasibilitySeams doc comment) cannot
 # false-positive; real code tokens still trip. The unstripped guard above
 # stays the fail-closed authority.
+build_exclude='/\.build/|/DerivedData/|/checkouts/'
 transport_pattern='URLSession|URLRequest|import[[:space:]]+(Network|CloudKit|WebKit)|NWConnection|NWPathMonitor|NWListener|CK(Container|Record|Database|Query|Asset|Subscription)|WKWebView|import[[:space:]]+MetricKit|MXMetric|NSXPCConnection|XPCService'
-transport_hits="$(grep -rn -E "$transport_pattern" $(swift_roots) --include='*.swift' 2>/dev/null | grep -v '^[^(]*:[0-9]*:[[:space:]]*//' || true)"
+transport_hits="$(grep -rn -E "$transport_pattern" $(swift_roots) --include='*.swift' 2>/dev/null | grep -vE "$build_exclude" | grep -v '^[^(]*:[0-9]*:[[:space:]]*//' || true)"
 if [[ -z "$transport_hits" ]]; then
   record_pass "no-egress-transport-absence (zero transport tokens in product Swift)"
 else
@@ -212,7 +213,7 @@ fi
 
 # 3. ServiceManagement inventory: SMAppService login-item registration only,
 # in exactly these two files. Any new importer fails the run.
-sm_files="$(grep -rln 'import ServiceManagement' $(swift_roots) --include='*.swift' 2>/dev/null | sed "s|^$scan_root/||" | sort | tr '\n' ' ' || true)"
+sm_files="$(grep -rln 'import ServiceManagement' $(swift_roots) --include='*.swift' 2>/dev/null | grep -vE "$build_exclude" | sed "s|^$scan_root/||" | sort | tr '\n' ' ' || true)"
 expected_sm="App/Settings/LaunchAtLoginService.swift App/Settings/SettingsIntegrationsAppRuntime.swift "
 if [[ "$sm_files" == "$expected_sm" ]]; then
   record_pass "no-egress-servicemanagement-inventory (login-item only, 2 files)"

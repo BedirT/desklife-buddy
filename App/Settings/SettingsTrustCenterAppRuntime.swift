@@ -79,8 +79,8 @@ final class SettingsTrustCenterAppRuntime {
     }
 
     func load() async -> TrustCenterSnapshot {
-        let receipts = (try? await consentStore.loadRecords()) ?? []
-        let decisions = (try? await policyStore.loadRecords()) ?? []
+        let receipts = await (try? consentStore.loadRecords()) ?? []
+        let decisions = await (try? policyStore.loadRecords()) ?? []
         return TrustCenterSnapshot(
             broker: broker,
             inspectorStatus: TrustCenterInspectorStatus.make(broker: broker, policyDecisions: decisions),

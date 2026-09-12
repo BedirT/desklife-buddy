@@ -118,6 +118,7 @@ enum TrustCenterL10n {
             decisions,
         )
     }
+
     static let deleteFailed = string(
         "settings.trust.delete.failed",
         default: "Sensing data could not be deleted. Your data is unchanged.",

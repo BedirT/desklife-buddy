@@ -19,7 +19,7 @@ public extension ProtocolEngine {
     ) -> HeadsUpDeliverySnapshot? {
         let opportunity = headsUpDeliveryState.activeDelivery?.opportunity
             ?? headsUpDeliveryState.pendingAction?.opportunity
-            ?? recommendedPresentation().flatMap {
+            ?? OpportunityCoordinator.presentation(for: self).flatMap {
                 HeadsUpOpportunityID(
                     presentation: $0,
                     visualCycleID: visualClock.cycleID,

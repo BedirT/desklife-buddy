@@ -21,7 +21,7 @@ public extension ProtocolEngine {
     /// Accepts an explicit movement path/duration and records the fact that resets its clock.
     mutating func selectMovement(durationSeconds: TimeInterval) -> ProtocolEngineOutput {
         guard isAcceptedMovementDuration(durationSeconds) else {
-            return ProtocolEngineOutput(events: [], presentation: recommendedPresentation())
+            return ProtocolEngineOutput(events: [], presentation: OpportunityCoordinator.presentation(for: self))
         }
         return record(
             .breakStarted,
@@ -51,7 +51,7 @@ public extension ProtocolEngine {
         guard configuration.delivery.snoozeOptionsSeconds.contains(durationSeconds),
               opportunity == .visual || opportunity == .movement
         else {
-            return ProtocolEngineOutput(events: [], presentation: recommendedPresentation())
+            return ProtocolEngineOutput(events: [], presentation: OpportunityCoordinator.presentation(for: self))
         }
         let deadline = date.addingTimeInterval(durationSeconds)
         switch opportunity {
@@ -71,7 +71,7 @@ public extension ProtocolEngine {
             opportunity: opportunity,
             selectedDurationSeconds: durationSeconds,
         )
-        return ProtocolEngineOutput(events: [event], presentation: recommendedPresentation())
+        return ProtocolEngineOutput(events: [event], presentation: OpportunityCoordinator.presentation(for: self))
     }
 
     /// Expires retained snoozes without manufacturing elapsed active use or an event fact.
@@ -92,13 +92,13 @@ public extension ProtocolEngine {
                 isLowFrictionMoment: true,
             )
         }
-        return ProtocolEngineOutput(events: [], presentation: recommendedPresentation())
+        return ProtocolEngineOutput(events: [], presentation: OpportunityCoordinator.presentation(for: self))
     }
 
     /// Applies owner-confirmed merged Escape semantics without resetting the unfinished clock.
     mutating func skipMergedSegment(_ opportunity: OpportunityType) -> ProtocolEngineOutput {
         guard opportunity == .visual || opportunity == .movement else {
-            return ProtocolEngineOutput(events: [], presentation: recommendedPresentation())
+            return ProtocolEngineOutput(events: [], presentation: OpportunityCoordinator.presentation(for: self))
         }
         if opportunity == .visual {
             visualClock.phase = .gracedAfterSuppression
@@ -114,43 +114,11 @@ public extension ProtocolEngine {
             source: .user,
             opportunity: opportunity,
         )
-        return ProtocolEngineOutput(events: [event], presentation: recommendedPresentation())
+        return ProtocolEngineOutput(events: [event], presentation: OpportunityCoordinator.presentation(for: self))
     }
 }
 
 extension ProtocolEngine {
-    func recommendedPresentation() -> OpportunityPresentation? {
-        if recoveryIsEligible { return .recovery }
-        return recommendedActionablePresentation()
-    }
-
-    func recommendedActionablePresentation() -> OpportunityPresentation? {
-        let visualIsAllowed = !notAppropriateOpportunities.contains(.visual)
-        let movementIsAllowed = !notAppropriateOpportunities.contains(.movement)
-        let visualPresentable = visualClock.phase.isPresentable && visualIsAllowed
-        let movementPresentable = movementClock.phase.isPresentable && movementIsAllowed
-        let visualRemaining = max(
-            0,
-            configuration.visual.targetSeconds - visualClock.accumulatedActiveUseSeconds,
-        )
-        let movementRemaining = max(
-            0,
-            configuration.movement.targetSeconds - movementClock.accumulatedActiveUseSeconds,
-        )
-        let mergeEligible = abs(visualRemaining - movementRemaining) <= configuration.delivery.mergeWindowSeconds
-        let mergePhasesEligible = visualClock.phase.isMergeEligible
-            && movementClock.phase.isMergeEligible
-            && visualIsAllowed
-            && movementIsAllowed
-
-        if mergeEligible, mergePhasesEligible, visualPresentable || movementPresentable {
-            return .merged
-        }
-        if movementPresentable { return .movement }
-        if visualPresentable { return .visual }
-        return nil
-    }
-
     func isValidRecord(
         _ kind: OpportunityEventKind,
         opportunity: OpportunityType?,
@@ -160,16 +128,6 @@ extension ProtocolEngine {
         guard kind == .breakStarted, opportunity == .movement else { return true }
         guard let selectedDurationSeconds else { return true }
         return configuration.movement.durationOptionsSeconds.contains(selectedDurationSeconds)
-    }
-
-    private var recoveryIsEligible: Bool {
-        guard let recovery = configuration.recovery else { return false }
-        return !notAppropriateOpportunities.contains(.movement)
-            && movementSnoozeDeadline == nil
-            && movementClock.phase != .snoozed
-            && !recoveryState.wasOfferedThisSession
-            && recoveryState.movementDeferralCount >= recovery.requiredMovementDeferrals
-            && recoveryState.accumulatedEligibleActiveUseSeconds >= recovery.eligibleAfterSeconds
     }
 
     var sessionScopedStateIsEmpty: Bool {

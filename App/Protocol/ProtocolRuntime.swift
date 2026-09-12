@@ -125,10 +125,11 @@ final class ProtocolRuntime {
             }
             let restoreDate = now()
             let retained = engine.state
-            engine.resumeInterruptedBreak()
-            engine.resumeRecoverySession(at: restoreDate)
-            let resumed = engine.resumeExpiredSnoozes(at: restoreDate)
-            var candidate = engine
+            var coordinator = OpportunityCoordinator(engine: engine)
+            coordinator.dispatch(.resumeInterruptedBreak)
+            coordinator.dispatch(.resumeRecoverySession(at: restoreDate))
+            let resumed = coordinator.dispatch(.resumeExpiredSnoozes(at: restoreDate))
+            var candidate = coordinator.engine
             let synchronization = synchronizeHeadsUpCycles(in: &candidate)
             let restoredDelivery = prepareRestoredHeadsUpDelivery(in: &candidate)
             if candidate.state != retained {
@@ -161,22 +162,23 @@ final class ProtocolRuntime {
                 suppressions.insert(suppression)
             }
 
-            var candidate = engine
-            candidate.observeRecoverySession(
+            var coordinator = OpportunityCoordinator(engine: engine)
+            coordinator.dispatch(.observeRecoverySession(
                 at: observationDate,
                 systemAvailable: sample.systemAwake && sample.sessionActive && !sample.screenLocked,
-            )
-            _ = candidate.resumeExpiredSnoozes(at: observationDate)
-            let output = candidate.observe(
-                sample,
+            ))
+            _ = coordinator.dispatch(.resumeExpiredSnoozes(at: observationDate))
+            let output = coordinator.dispatch(.observe(
+                sample: sample,
                 activeSuppressions: suppressions,
                 isLowFrictionMoment: isLowFrictionMoment,
-            )
+            ))
             let estimatedActiveUseRun = estimatedActiveUseRun(
                 from: engine.state,
-                to: candidate.state,
+                to: coordinator.engine.state,
                 endedAt: observationDate,
             )
+            var candidate = coordinator.engine
             let headsUpOutput = reduceHeadsUpObservation(
                 in: &candidate,
                 observedAt: observationDate,
@@ -219,12 +221,14 @@ final class ProtocolRuntime {
             case .skipped:
                 (.skipped, .user)
             }
-            var candidate = engine
-            let output = candidate.record(
-                fact.kind,
+            var coordinator = OpportunityCoordinator(engine: engine)
+            let output = coordinator.dispatch(.record(
+                kind: fact.kind,
                 opportunity: .visual,
+                selectedDurationSeconds: nil,
                 source: fact.source,
-            )
+            ))
+            var candidate = coordinator.engine
             let synchronization = try await persistProtocolMutation(
                 candidate: &candidate,
                 drafts: output.events,
@@ -239,12 +243,14 @@ final class ProtocolRuntime {
         source: OpportunityEventSource = .localTimer,
     ) async throws {
         try await withLifecycleGate {
-            var candidate = engine
-            let output = candidate.record(
-                .promptPresented,
+            var coordinator = OpportunityCoordinator(engine: engine)
+            let output = coordinator.dispatch(.record(
+                kind: .promptPresented,
                 opportunity: .recovery,
+                selectedDurationSeconds: nil,
                 source: source,
-            )
+            ))
+            var candidate = coordinator.engine
             let synchronization = try await persistProtocolMutation(
                 candidate: &candidate,
                 drafts: output.events,
@@ -347,16 +353,17 @@ extension ProtocolRuntime {
         guard configuration.delivery.snoozeOptionsSeconds.contains(duration) else {
             throw ProtocolLifecycleError.invalidSnoozeDuration
         }
-        var candidate = engine
+        var coordinator = OpportunityCoordinator(engine: engine)
         var drafts: [OpportunityEventDraft] = []
         let actionDate = now()
         for opportunity in opportunities {
-            drafts += candidate.snooze(
-                opportunity,
+            drafts += coordinator.dispatch(.snooze(
+                opportunity: opportunity,
                 durationSeconds: duration,
                 at: actionDate,
-            ).events
+            )).events
         }
+        var candidate = coordinator.engine
         guard !drafts.isEmpty else {
             route(.snooze(duration))
             return

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Certification dossier (Epic 3 story 9)",
+  "description": "Machine-readable certification check inventory. Status vocabulary is closed: every check is either pass (collected on this Mac by scripts/check-certification-dossier.sh, which fails closed) or pending-owner (blocked on an owner-gated input named in missingInput; the script reports these and never fails on them).",
+  "dossierSchemaVersion": 1,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "dossierVersion", "generatedNote", "checks"],
+  "properties": {
+    "schemaVersion": {
+      "description": "Must equal the schema file's dossierSchemaVersion.",
+      "type": "integer",
+      "const": 1
+    },
+    "dossierVersion": {
+      "description": "Version of this status file (v1 for the Epic 3 close).",
+      "type": "string",
+      "const": "v1"
+    },
+    "generatedNote": {
+      "description": "How the file is maintained: by hand beside the script that verifies it.",
+      "type": "string",
+      "minLength": 1
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/check" }
+    }
+  },
+  "$defs": {
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "status", "evidence"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pass", "pending-owner"]
+        },
+        "evidence": {
+          "description": "Where the verdict comes from: a collector command, a source anchor, or a run artifact.",
+          "type": "string",
+          "minLength": 1
+        },
+        "missingInput": {
+          "description": "REQUIRED on pending-owner: the exact owner-gated input (hardware run, release signing, real TCC prompt) blocking the check.",
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "pending-owner" } } },
+          "then": { "required": ["id", "title", "status", "evidence", "missingInput"] }
+        }
+      ]
+    }
+  }
+}

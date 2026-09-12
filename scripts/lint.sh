@@ -20,6 +20,7 @@ mise_exec swiftlint --quiet
 "$ROOT/scripts/check-previews.sh"
 "$ROOT/scripts/check-localization.sh"
 "$ROOT/scripts/check-copy-baselines.sh"
+"$ROOT/scripts/check-certification-dossier.sh"
 "$ROOT/scripts/check-motion-contract.sh"
 
 echo "LINT OK"

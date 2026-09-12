@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "dossierVersion": "v1",
+  "generatedNote": "Maintained by hand beside scripts/check-certification-dossier.sh, which re-collects every pass check on each run and fails closed on any mismatch. Pending-owner checks name their exact missing input; the script reports them and never fails on them.",
+  "checks": [
+    {
+      "id": "no-egress-raw-import-guard",
+      "title": "Raw-class import guard green",
+      "status": "pass",
+      "evidence": "scripts/check-raw-imports.sh exit 0 (Epic 3 story 1 guard: 9 raw classes + dynamic lookup over App, Packages, AppTests, entitlements, privacy keys, build config)",
+      "notes": "Adjacent contract: story-3 evidence-confinement rule and Domain HistoryExport vocabulary lock."
+    },
+    {
+      "id": "no-egress-transport-absence",
+      "title": "No network/XPC transport in product sources",
+      "status": "pass",
+      "evidence": "check-certification-dossier.sh transport rescan: zero URLSession/URLRequest/Network-framework/CloudKit/WebKit/MetricKit/NSXPCConnection/XPCService tokens in App, Packages, AppTests Swift (full-line comments stripped; the fail-closed authority stays check-raw-imports.sh)",
+      "notes": "Deliberate-absence prose (HelperXPCFeasibilitySeams doc comment) lives in full-line comments and is excluded from the rescan only; the guard scans it."
+    },
+    {
+      "id": "no-egress-servicemanagement-inventory",
+      "title": "ServiceManagement import inventory closed",
+      "status": "pass",
+      "evidence": "check-certification-dossier.sh: exactly App/Settings/LaunchAtLoginService.swift and App/Settings/SettingsIntegrationsAppRuntime.swift import ServiceManagement (SMAppService login-item registration only; any new importer fails the run)",
+      "notes": "Login-item registration is local-only: no transport, no entitlement, no protected data."
+    },
+    {
+      "id": "no-egress-entitlement-inventory",
+      "title": "Entitlement inventory minimal",
+      "status": "pass",
+      "evidence": "check-certification-dossier.sh decodes App/App.entitlements: exactly com.apple.security.app-sandbox and com.apple.security.files.user-selected.read-write; zero network/camera/mic/health/location keys",
+      "notes": "No Info.plist usage-description strings exist; no PrivacyInfo.xcprivacy is needed or present."
+    },
+    {
+      "id": "no-egress-privacy-manifest-absence",
+      "title": "No privacy manifest (no protected APIs declared)",
+      "status": "pass",
+      "evidence": "check-certification-dossier.sh: no PrivacyInfo.xcprivacy anywhere outside .build (the product declares no protected-API use)",
+      "notes": "Real entitlement strings or privacy-manifest text are an owner stop (Epic 3 non-goals); they land here as a new inventoried check, never silently."
+    },
+    {
+      "id": "tcc-placeholder-capability-inventory",
+      "title": "Permission capabilities are placeholder-declared only",
+      "status": "pass",
+      "evidence": "check-certification-dossier.sh: PermissionCapability declares exactly sensingPresence, sensingMotion, sensingAmbient, effectHold, effectRestart (Packages/Domain/Sources/Domain/PermissionBroker.swift); providers are fake-presence/fake-motion/fake-ambient/fake-coordinator",
+      "notes": "Scope codes are the story-5 closed consent-receipt vocabulary; no real entitlement, privacy key, or sensing framework is named."
+    },
+    {
+      "id": "tcc-broker-deadline",
+      "title": "Revocation deadline pinned",
+      "status": "pass",
+      "evidence": "check-certification-dossier.sh: PermissionBroker.revocationDeadlineTicks == 5 with revocationOverdue(atTicks:) and drainRevocations coverage in PermissionBrokerRevocationTests",
+      "notes": "Tick-injected and unit-pinned; wall-clock completion on device is pending-owner (tcc-revocation-device-timing)."
+    },
+    {
+      "id": "tcc-kill-switch",
+      "title": "Kill switch present with fail-closed engage",
+      "status": "pass",
+      "evidence": "check-certification-dossier.sh: engageKillSwitch, disengageKillSwitch, and isKillSwitchEngaged present in PermissionBroker.swift; engaged flag, epoch fence, and hold-clear land before any per-capability revoke",
+      "notes": "Resume strictly requires post-disengage re-consent; grants while engaged throw."
+    },
+    {
+      "id": "tcc-physical-prompt-evidence",
+      "title": "Physical TCC prompt evidence",
+      "status": "pending-owner",
+      "evidence": "No collector exists: the product requests no protected API, so there is no prompt to exercise on this Mac.",
+      "missingInput": "Owner hardware run: exercise a real TCC prompt on a release-signed build and attach the prompt/receipt evidence; until then no TCC claim is made."
+    },
+    {
+      "id": "tcc-revocation-device-timing",
+      "title": "Wall-clock revocation timing on device",
+      "status": "pending-owner",
+      "evidence": "Tick-injected deadline only (tcc-broker-deadline); no wall-clock measurement exists.",
+      "missingInput": "Owner hardware run: measure revocation drain completion in wall-clock time on a release-signed build and attach the numbers."
+    },
+    {
+      "id": "resource-governor-budgets",
+      "title": "Resource governor budget table pinned",
+      "status": "pass",
+      "evidence": "check-certification-dossier.sh: ResourceGovernor.defaultBudgets == leaseIssuance 4/4/60, busAdmission 16/16/60, fusion 8/8/30, firewallEvaluation 8/8/30 (capacity/refill/cadenceTicks) with ResourceGovernorTests coverage",
+      "notes": "Safety work (revocation drains, lease-expiry purges) bypasses budgets by construction and is counted separately."
+    },
+    {
+      "id": "resource-suite-timings",
+      "title": "Measured suite wall times honestly labeled",
+      "status": "pending-owner",
+      "evidence": "check-certification-dossier.sh collects artifacts/AppTests.xcresult into artifacts/dossier/suite-timings.json per run when present, labeled CI wall-clock timings, never energy claims; no xcresult is committed.",
+      "missingInput": "Run scripts/test.sh App to produce artifacts/AppTests.xcresult on the certifying Mac, then re-run the dossier script so the per-run timings file exists beside this dossier."
+    },
+    {
+      "id": "resource-energy-thermal",
+      "title": "Measured energy/thermal numbers",
+      "status": "pending-owner",
+      "evidence": "No collector exists: zero powermetrics/xctrace/MetricKit automation in product, tests, or scripts by design (manual Instruments per AGENTS.md).",
+      "missingInput": "Owner hardware run: record energy/thermal/CPU on a release-signed build with Instruments or powermetrics and attach before/after numbers; CI suite timings must never be presented as energy claims."
+    },
+    {
+      "id": "sbom-generated",
+      "title": "SBOM generated from dependency-free packages",
+      "status": "pass",
+      "evidence": "check-certification-dossier.sh writes artifacts/sbom/sbom.spdx-lite.json from the 4 Package.swift manifests (Domain, Features, DesignSystem, TestSupport): zero remote dependencies; local path deps only; no invented hashes",
+      "notes": "No Package.resolved exists because there is nothing to resolve; the generator fails closed on any remote .package(url:) dependency."
+    },
+    {
+      "id": "benchmark-harness",
+      "title": "Benchmark scaffolding present for owner hardware runs",
+      "status": "pass",
+      "evidence": "check-certification-dossier.sh owns the harness entry: governor budget table, revocation deadline, and suite-timing collectors this dossier inventories; future benchmark collectors land beside it, never in product code",
+      "notes": "Scaffolding only; measured benchmark numbers are pending-owner (benchmark-owner-hardware-run)."
+    },
+    {
+      "id": "benchmark-owner-hardware-run",
+      "title": "Owner hardware benchmark numbers",
+      "status": "pending-owner",
+      "evidence": "No benchmark automation exists (zero measure()/Benchmark hooks by design); the harness entry above is ready to collect them.",
+      "missingInput": "Owner hardware run: execute the benchmark entry on the certifying Mac and attach the numbers; until then no performance claim is made."
+    }
+  ]
+}

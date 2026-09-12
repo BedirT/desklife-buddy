@@ -66,7 +66,7 @@ func ledgerPolicyDecision(counter: UInt64 = 1, recordedAt: Date = ledgerTestT0) 
     try LedgerPolicyDecisionRecord(
         id: LedgerIdentity.derive(ledger: .policyDecision, seed: ledgerTestSeed, counter: counter),
         recordedAt: recordedAt,
-        actionUUID: LedgerIdentity.derive(ledger: .policyDecision, seed: ledgerTestSeed, counter: counter + 10_000),
+        actionUUID: LedgerIdentity.derive(ledger: .policyDecision, seed: ledgerTestSeed, counter: counter + 10000),
         actionDeviceID: ledgerTestDevice,
         actionCounter: counter,
         holdDecisionUUID: nil,
@@ -153,7 +153,7 @@ struct LedgerPersistenceTests {
         #expect(try await store.loadCompanionActions() == [])
     }
 
-    @Test("Observation rows round-trip in recorded order with an identifier tiebreak")
+    @Test("Observation rows round-trip in recorded order with an insertion-order tiebreak")
     func observationRoundTrip() async throws {
         let store = try SwiftDataLedgerStore(inMemory: true, now: { ledgerTestT0 })
         let second = try ledgerObservation(counter: 2, recordedAt: ledgerTestT0.addingTimeInterval(10))
@@ -258,7 +258,10 @@ struct LedgerPersistenceTests {
     @Test("Writes prune expired rows, an explicit purge clears the window, keep-nothing stores nothing")
     func retentionPrunePurgeKeepNothing() async throws {
         let store = try SwiftDataLedgerStore(inMemory: true, now: { ledgerTestT0 })
-        try await store.appendObservation(ledgerObservation(counter: 1, recordedAt: ledgerTestT0.addingTimeInterval(-31 * ledgerTestDay)))
+        try await store.appendObservation(ledgerObservation(
+            counter: 1,
+            recordedAt: ledgerTestT0.addingTimeInterval(-31 * ledgerTestDay),
+        ))
         #expect(try await store.loadObservations() == [])
         let live = try ledgerObservation(counter: 2, recordedAt: ledgerTestT0)
         try await store.appendObservation(live)
@@ -277,8 +280,8 @@ struct LedgerPersistenceTests {
         try await store.appendObservation(ledgerObservation())
         let selection = try LedgerExportSelection<LedgerObservationExportField>(selected: [.kind, .provider])
         #expect(selection.fields == [.provider, .kind])
-        let text = try #require(String(
-            data: try await store.exportObservations(selected: selection, format: .json),
+        let text = try #require(try await String(
+            data: store.exportObservations(selected: selection, format: .json),
             encoding: .utf8,
         ))
         let providerRange = try #require(text.range(of: "\"provider\""))
@@ -288,8 +291,8 @@ struct LedgerPersistenceTests {
 
         try await store.appendPolicyDecision(ledgerPolicyDecision())
         let decisionSelection = try LedgerExportSelection<LedgerPolicyDecisionExportField>(selected: [.effect, .kind])
-        let csv = try #require(String(
-            data: try await store.exportPolicyDecisions(selected: decisionSelection, format: .csv),
+        let csv = try #require(try await String(
+            data: store.exportPolicyDecisions(selected: decisionSelection, format: .csv),
             encoding: .utf8,
         ))
         #expect(csv.hasPrefix("kind,effect\n"))

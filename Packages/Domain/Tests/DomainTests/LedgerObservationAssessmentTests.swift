@@ -64,7 +64,7 @@ func reversioned(_ data: Data, to version: Int) throws -> Data {
 
 @Suite("Observation ledger")
 struct LedgerObservationTests {
-    @Test("Appends read back in recorded order with an identifier tiebreak")
+    @Test("Appends read back in recorded order with an insertion-order tiebreak")
     func appendReadOrdering() async throws {
         let store = InMemoryLedgerStores.observation(now: { ledgerT0 })
         let second = try makeObservation(counter: 2, recordedAt: ledgerT0.addingTimeInterval(10))
@@ -170,13 +170,16 @@ struct LedgerObservationTests {
         try await store.append(makeObservation())
         let selection = try LedgerExportSelection<LedgerObservationExportField>(selected: [.kind, .provider])
         #expect(selection.fields == [.provider, .kind])
-        let text = try #require(String(data: try await store.export(selected: selection, format: .json), encoding: .utf8))
+        let text = try #require(try await String(
+            data: store.export(selected: selection, format: .json),
+            encoding: .utf8,
+        ))
         let providerRange = try #require(text.range(of: "\"provider\""))
         let kindRange = try #require(text.range(of: "\"kind\""))
         #expect(providerRange.lowerBound < kindRange.lowerBound)
         #expect(!text.contains("confidence"))
         #expect(!text.contains("expiryTicks"))
-        let csv = try #require(String(data: try await store.export(selected: selection, format: .csv), encoding: .utf8))
+        let csv = try #require(try await String(data: store.export(selected: selection, format: .csv), encoding: .utf8))
         #expect(csv.hasPrefix("provider,kind\n"))
         #expect(throws: LedgerStoreError.exportNoFields) {
             try LedgerExportSelection<LedgerObservationExportField>(selected: [])
@@ -217,7 +220,7 @@ struct LedgerObservationTests {
 
 @Suite("Assessment ledger")
 struct LedgerAssessmentTests {
-    @Test("Appends read back in recorded order with an identifier tiebreak")
+    @Test("Appends read back in recorded order with an insertion-order tiebreak")
     func appendReadOrdering() async throws {
         let store = InMemoryLedgerStores.assessment(now: { ledgerT0 })
         let second = try makeAssessment(counter: 2, recordedAt: ledgerT0.addingTimeInterval(10))
@@ -314,7 +317,10 @@ struct LedgerAssessmentTests {
         try await store.append(makeAssessment())
         let selection = try LedgerExportSelection<LedgerAssessmentExportField>(selected: [.assessmentDigest, .reading])
         #expect(selection.fields == [.reading, .assessmentDigest])
-        let text = try #require(String(data: try await store.export(selected: selection, format: .json), encoding: .utf8))
+        let text = try #require(try await String(
+            data: store.export(selected: selection, format: .json),
+            encoding: .utf8,
+        ))
         let readingRange = try #require(text.range(of: "\"reading\""))
         let digestRange = try #require(text.range(of: "\"assessmentDigest\""))
         #expect(readingRange.lowerBound < digestRange.lowerBound)

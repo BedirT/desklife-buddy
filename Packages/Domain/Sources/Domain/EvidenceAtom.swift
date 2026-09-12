@@ -213,7 +213,7 @@ public struct EvidenceProposal: Equatable, Hashable, Sendable {
         coverage: EvidenceCoverage,
         independenceGroup: EvidenceIndependenceGroup,
         observedTicks: TimeInterval,
-        timeToLiveSeconds: TimeInterval
+        timeToLiveSeconds: TimeInterval,
     ) throws {
         guard timeToLiveSeconds.isFinite else {
             throw EvidenceProposalError.nonFiniteTTL
@@ -257,7 +257,7 @@ public struct EvidenceProvenance: Equatable, Hashable, Sendable {
         originRevision: UInt64,
         epoch: ProjectionEpochID,
         presentingDeviceID: DeviceID,
-        admittedTicks: TimeInterval
+        admittedTicks: TimeInterval,
     ) {
         self.lease = lease
         self.provider = provider
@@ -300,7 +300,7 @@ public struct EvidenceAtom: Equatable, Hashable, Sendable {
         independenceGroup: EvidenceIndependenceGroup,
         observedTicks: TimeInterval,
         timeToLiveSeconds: TimeInterval,
-        provenance: EvidenceProvenance
+        provenance: EvidenceProvenance,
     ) {
         self.id = id
         self.kind = kind

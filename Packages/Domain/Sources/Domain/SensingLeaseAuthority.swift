@@ -101,11 +101,11 @@ public struct SensingLeaseAuthority: Sendable {
     }
 
     /// Test-support hooks (in-module only): currently tracked set sizes.
-    internal var issuedCount: Int {
+    var issuedCount: Int {
         issuedLeases.count
     }
 
-    internal var revokedCount: Int {
+    var revokedCount: Int {
         revokedLeases.count
     }
 

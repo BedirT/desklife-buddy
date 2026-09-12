@@ -20,8 +20,8 @@ private func busProposal(
     confidence: EvidenceConfidence = .medium,
     coverage: EvidenceCoverage = .full,
     group: EvidenceIndependenceGroup = .fakeAlpha,
-    observed: TimeInterval = 1_000,
-    ttl: TimeInterval = 60
+    observed: TimeInterval = 1000,
+    ttl: TimeInterval = 60,
 ) throws -> EvidenceProposal {
     try EvidenceProposal(
         kind: kind,
@@ -32,22 +32,22 @@ private func busProposal(
         coverage: coverage,
         independenceGroup: group,
         observedTicks: observed,
-        timeToLiveSeconds: ttl
+        timeToLiveSeconds: ttl,
     )
 }
 
 private func busLease(
     authority: inout SensingLeaseAuthority,
     provider: SensingProviderID = .fakePresence,
-    atTicks ticks: TimeInterval = 1_000,
-    lifetime: TimeInterval = 60
+    atTicks ticks: TimeInterval = 1000,
+    lifetime: TimeInterval = 60,
 ) throws -> SensingProviderLease {
     try authority.issue(
         provider: provider,
         epoch: busEpochA,
         device: busDeviceA,
         lifetimeSeconds: lifetime,
-        atTicks: ticks
+        atTicks: ticks,
     )
 }
 
@@ -62,7 +62,7 @@ private func busAdmit(
     proposal: EvidenceProposal,
     lease: SensingProviderLease,
     provider: SensingProviderID = .fakePresence,
-    atTicks ticks: TimeInterval = 1_010
+    atTicks ticks: TimeInterval = 1010,
 ) -> EvidenceAdmission {
     bus.admit(
         proposal,
@@ -71,7 +71,7 @@ private func busAdmit(
         originRevision: 0,
         epoch: busEpochA,
         presentingDeviceID: busDeviceA,
-        atTicks: ticks
+        atTicks: ticks,
     )
 }
 
@@ -85,52 +85,72 @@ struct EvidenceBusTests {
     func capacityBoundDropsOldest() throws {
         var fixture = try busFixture(capacity: 2)
 
-        #expect(busAdmit(bus: &fixture.bus, proposal: try busProposal(), lease: fixture.lease) == .admitted)
-        #expect(busAdmit(bus: &fixture.bus, proposal: try busProposal(), lease: fixture.lease) == .admitted)
+        #expect(try busAdmit(bus: &fixture.bus, proposal: busProposal(), lease: fixture.lease) == .admitted)
+        #expect(try busAdmit(bus: &fixture.bus, proposal: busProposal(), lease: fixture.lease) == .admitted)
         #expect(fixture.bus.count == 2)
         #expect(fixture.bus.droppedCount == 0)
 
-        #expect(busAdmit(bus: &fixture.bus, proposal: try busProposal(), lease: fixture.lease) == .admitted)
+        #expect(try busAdmit(bus: &fixture.bus, proposal: busProposal(), lease: fixture.lease) == .admitted)
         #expect(fixture.bus.count == 2)
         #expect(fixture.bus.droppedCount == 1)
         // F5: bus-minted sequences mark admission order; the oldest (0) left.
-        #expect(fixture.bus.live(atTicks: 1_010).map(\.id.sequence) == [1, 2])
+        #expect(fixture.bus.live(atTicks: 1010).map(\.id.sequence) == [1, 2])
 
-        #expect(busAdmit(bus: &fixture.bus, proposal: try busProposal(), lease: fixture.lease) == .admitted)
+        #expect(try busAdmit(bus: &fixture.bus, proposal: busProposal(), lease: fixture.lease) == .admitted)
         #expect(fixture.bus.count == 2)
         #expect(fixture.bus.droppedCount == 2)
-        #expect(fixture.bus.live(atTicks: 1_010).map(\.id.sequence) == [2, 3])
+        #expect(fixture.bus.live(atTicks: 1010).map(\.id.sequence) == [2, 3])
     }
 
     @Test("TTL expiry filters lazily and purges explicitly on the half-open edge")
     func ttlExpiryAndPurge() throws {
         var fixture = try busFixture(capacity: 4)
 
-        #expect(busAdmit(bus: &fixture.bus, proposal: try busProposal(observed: 1_000, ttl: 10), lease: fixture.lease, atTicks: 1_005) == .admitted)
-        #expect(busAdmit(bus: &fixture.bus, proposal: try busProposal(observed: 1_000, ttl: 100), lease: fixture.lease, atTicks: 1_005) == .admitted)
+        #expect(try busAdmit(
+            bus: &fixture.bus,
+            proposal: busProposal(observed: 1000, ttl: 10),
+            lease: fixture.lease,
+            atTicks: 1005,
+        ) == .admitted)
+        #expect(try busAdmit(
+            bus: &fixture.bus,
+            proposal: busProposal(observed: 1000, ttl: 100),
+            lease: fixture.lease,
+            atTicks: 1005,
+        ) == .admitted)
 
         // Half-open `[observed, expiry)`: live at 1005, expired at 1010.
-        #expect(fixture.bus.live(atTicks: 1_005).count == 2)
-        #expect(fixture.bus.live(atTicks: 1_010).map(\.id.sequence) == [1])
+        #expect(fixture.bus.live(atTicks: 1005).count == 2)
+        #expect(fixture.bus.live(atTicks: 1010).map(\.id.sequence) == [1])
         // Lazy expiry does not mutate the stored count by itself.
         #expect(fixture.bus.count == 2)
 
-        #expect(fixture.bus.purgeExpired(atTicks: 1_010) == 1)
+        #expect(fixture.bus.purgeExpired(atTicks: 1010) == 1)
         #expect(fixture.bus.count == 1)
-        #expect(fixture.bus.live(atTicks: 1_010).map(\.id.sequence) == [1])
-        #expect(fixture.bus.purgeExpired(atTicks: 1_010) == 0)
+        #expect(fixture.bus.live(atTicks: 1010).map(\.id.sequence) == [1])
+        #expect(fixture.bus.purgeExpired(atTicks: 1010) == 0)
     }
 
     @Test("Expired entries purge before append, so dead atoms never evict live ones")
     func expiredNeverEvictsLive() throws {
         var fixture = try busFixture(capacity: 1)
 
-        #expect(busAdmit(bus: &fixture.bus, proposal: try busProposal(observed: 1_000, ttl: 10), lease: fixture.lease, atTicks: 1_005) == .admitted)
-        #expect(busAdmit(bus: &fixture.bus, proposal: try busProposal(observed: 1_015, ttl: 60), lease: fixture.lease, atTicks: 1_020) == .admitted)
+        #expect(try busAdmit(
+            bus: &fixture.bus,
+            proposal: busProposal(observed: 1000, ttl: 10),
+            lease: fixture.lease,
+            atTicks: 1005,
+        ) == .admitted)
+        #expect(try busAdmit(
+            bus: &fixture.bus,
+            proposal: busProposal(observed: 1015, ttl: 60),
+            lease: fixture.lease,
+            atTicks: 1020,
+        ) == .admitted)
 
         #expect(fixture.bus.count == 1)
         #expect(fixture.bus.droppedCount == 0)
-        #expect(fixture.bus.live(atTicks: 1_020).map(\.id.sequence) == [1])
+        #expect(fixture.bus.live(atTicks: 1020).map(\.id.sequence) == [1])
     }
 
     @Test("Class-0 shape: evidence payloads are never Codable")
@@ -140,9 +160,9 @@ struct EvidenceBusTests {
         #expect(busAdmit(bus: &fixture.bus, proposal: proposal, lease: fixture.lease) == .admitted)
 
         #expect(isCodableValue(proposal) == false)
-        #expect(isCodableValue(fixture.bus.live(atTicks: 1_010)[0]) == false)
+        #expect(isCodableValue(fixture.bus.live(atTicks: 1010)[0]) == false)
         #expect(isCodableValue(fixture.bus) == false)
-        #expect(isCodableValue(EvidenceFusion.fuse(fixture.bus, kind: .presence, atTicks: 1_010)) == false)
+        #expect(isCodableValue(EvidenceFusion.fuse(fixture.bus, kind: .presence, atTicks: 1010)) == false)
         #expect(isCodableValue(EvidenceKind.presence) == false)
         #expect(isCodableValue(EvidenceSource.fakePresence) == false)
         #expect(isCodableValue(EvidenceFailureReason.contradictory) == false)
@@ -165,9 +185,10 @@ struct EvidenceBusTests {
             originRevision: 0,
             epoch: busEpochA,
             presentingDeviceID: busDeviceA,
-            atTicks: 1_010
+            atTicks: 1010,
         ) == nil)
-        #expect(busAdmit(bus: &bus, proposal: try busProposal(), lease: lease) == .rejected(.leaseRejected(.staleRevision)))
+        #expect(try busAdmit(bus: &bus, proposal: busProposal(), lease: lease) ==
+            .rejected(.leaseRejected(.staleRevision)))
         #expect(bus.count == 0)
     }
 
@@ -175,13 +196,14 @@ struct EvidenceBusTests {
     func leaseGatedAdmission() throws {
         var fixture = try busFixture(capacity: 4)
 
-        #expect(busAdmit(bus: &fixture.bus, proposal: try busProposal(), lease: fixture.lease) == .admitted)
+        #expect(try busAdmit(bus: &fixture.bus, proposal: busProposal(), lease: fixture.lease) == .admitted)
         #expect(fixture.bus.count == 1)
 
         // Explicit revocation through the bus takes immediate effect, even
         // mid-lease.
         fixture.bus.revoke(fixture.lease)
-        #expect(busAdmit(bus: &fixture.bus, proposal: try busProposal(), lease: fixture.lease) == .rejected(.leaseRejected(.explicitlyRevoked)))
+        #expect(try busAdmit(bus: &fixture.bus, proposal: busProposal(), lease: fixture.lease) ==
+            .rejected(.leaseRejected(.explicitlyRevoked)))
         #expect(fixture.bus.count == 1)
     }
 
@@ -190,19 +212,20 @@ struct EvidenceBusTests {
         var fixture = try busFixture(capacity: 4)
 
         // An expired lease is rejected as not live, even for a live proposal.
-        let freshProposal = try busProposal(observed: 1_065, ttl: 60)
-        #expect(busAdmit(bus: &fixture.bus, proposal: freshProposal, lease: fixture.lease, atTicks: 1_070) == .rejected(.leaseRejected(.notLive)))
+        let freshProposal = try busProposal(observed: 1065, ttl: 60)
+        #expect(busAdmit(bus: &fixture.bus, proposal: freshProposal, lease: fixture.lease, atTicks: 1070) ==
+            .rejected(.leaseRejected(.notLive)))
         #expect(fixture.bus.count == 0)
 
         // A lease presented by another device is rejected.
-        let wrongDeviceResult = fixture.bus.admit(
-            try busProposal(),
+        let wrongDeviceResult = try fixture.bus.admit(
+            busProposal(),
             lease: fixture.lease,
             for: .fakePresence,
             originRevision: 0,
             epoch: busEpochA,
             presentingDeviceID: busDeviceB,
-            atTicks: 1_010
+            atTicks: 1010,
         )
         #expect(wrongDeviceResult == .rejected(.leaseRejected(.deviceMismatch)))
         #expect(fixture.bus.count == 0)
@@ -221,8 +244,8 @@ struct EvidenceBusTests {
         #expect(busAdmit(bus: &bus, proposal: motionProposal, lease: motionLease, provider: .fakeMotion) == .admitted)
 
         // An already-stale proposal is rejected, never stored.
-        let staleProposal = try busProposal(observed: 1_000, ttl: 10)
-        #expect(busAdmit(bus: &bus, proposal: staleProposal, lease: presenceLease, atTicks: 1_020) == .rejected(.stale))
+        let staleProposal = try busProposal(observed: 1000, ttl: 10)
+        #expect(busAdmit(bus: &bus, proposal: staleProposal, lease: presenceLease, atTicks: 1020) == .rejected(.stale))
         #expect(bus.count == 1)
     }
 
@@ -258,10 +281,13 @@ struct EvidenceBusTests {
     @Test("Debug output is redacted to kind, source, ticks, and counts")
     func debugRedactionPinsExact() throws {
         var fixture = try busFixture(capacity: 2)
-        #expect(busAdmit(bus: &fixture.bus, proposal: try busProposal(reading: .present), lease: fixture.lease) == .admitted)
+        #expect(try busAdmit(bus: &fixture.bus, proposal: busProposal(reading: .present), lease: fixture.lease) ==
+            .admitted)
 
-        let atom = fixture.bus.live(atTicks: 1_010)[0]
-        #expect(atom.debugDescription == "EvidenceAtom(kind: presence, source: fakePresence, observedTicks: 1000.0, expiryTicks: 1060.0)")
+        let atom = fixture.bus.live(atTicks: 1010)[0]
+        #expect(atom
+            .debugDescription ==
+            "EvidenceAtom(kind: presence, source: fakePresence, observedTicks: 1000.0, expiryTicks: 1060.0)")
         #expect(fixture.bus.debugDescription == "EvidenceBus(capacity: 2, stored: 1, dropped: 0)")
     }
 }
@@ -271,7 +297,9 @@ struct EvidenceConfinementTests {
     private static var repositoryRoot: URL {
         var url = URL(fileURLWithPath: #filePath)
         // Packages/Domain/Tests/DomainTests/<this file> -> repository root.
-        for _ in 0 ..< 5 { url.deleteLastPathComponent() }
+        for _ in 0 ..< 5 {
+            url.deleteLastPathComponent()
+        }
         return url
     }
 
@@ -284,7 +312,7 @@ struct EvidenceConfinementTests {
         let script = repositoryRoot.appending(path: "scripts/check-raw-imports.sh")
         #expect(
             FileManager.default.isExecutableFile(atPath: script.path),
-            "Guard script missing: \(script.path)"
+            "Guard script missing: \(script.path)",
         )
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
@@ -300,7 +328,7 @@ struct EvidenceConfinementTests {
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         return ConfinementResult(
             exitCode: process.terminationStatus,
-            output: String(data: data, encoding: .utf8) ?? ""
+            output: String(data: data, encoding: .utf8) ?? "",
         )
     }
 
@@ -316,7 +344,7 @@ struct EvidenceConfinementTests {
         let file = scanRoot.appending(path: relativePath)
         try FileManager.default.createDirectory(
             at: file.deletingLastPathComponent(),
-            withIntermediateDirectories: true
+            withIntermediateDirectories: true,
         )
         try contents.write(to: file, atomically: true, encoding: .utf8)
     }
@@ -328,7 +356,7 @@ struct EvidenceConfinementTests {
         try Self.writeConfinementFile(
             contents: "struct Leak { let atom: EvidenceAtom? }\n",
             at: "App/Leak.swift",
-            under: scanRoot
+            under: scanRoot,
         )
         let result = try Self.runConfinementGuard(scanRoot: scanRoot)
         #expect(result.exitCode != 0, "EvidenceAtom in App did not trip the guard")
@@ -343,7 +371,7 @@ struct EvidenceConfinementTests {
         try Self.writeConfinementFile(
             contents: "struct Store { let assessment: FusedAssessment? }\n",
             at: "Packages/Domain/Sources/Domain/ItemStore.swift",
-            under: scanRoot
+            under: scanRoot,
         )
         let result = try Self.runConfinementGuard(scanRoot: scanRoot)
         #expect(result.exitCode != 0, "FusedAssessment in a Domain store file did not trip the guard")
@@ -357,12 +385,12 @@ struct EvidenceConfinementTests {
         try Self.writeConfinementFile(
             contents: "public struct EvidenceBus: Sendable {}\n",
             at: "Packages/Domain/Sources/Domain/EvidenceBus.swift",
-            under: scanRoot
+            under: scanRoot,
         )
         try Self.writeConfinementFile(
             contents: "func probe() { _ = EvidenceAtomID.self }\n",
             at: "Packages/Domain/Tests/DomainTests/EvidenceBusTests.swift",
-            under: scanRoot
+            under: scanRoot,
         )
         let result = try Self.runConfinementGuard(scanRoot: scanRoot)
         #expect(result.exitCode == 0, "Own definitions must not trip the guard:\n\(result.output)")

@@ -118,7 +118,7 @@ public struct LedgerExportSelection<Field>: Equatable, Sendable
     public let fields: [Field]
 
     /// Creates a selection with fields normalized to canonical order.
-    public init<S: Sequence>(selected: S) throws where S.Element == Field {
+    public init(selected: some Sequence<Field>) throws {
         let wanted = Set(selected.map(\.rawValue))
         guard !wanted.isEmpty else {
             throw LedgerStoreError.exportNoFields

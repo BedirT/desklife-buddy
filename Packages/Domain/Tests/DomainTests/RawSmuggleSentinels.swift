@@ -28,30 +28,30 @@ enum RawSmuggleClass: String, CaseIterable, Sendable {
     /// Human-readable mapping used in failure output and the story 1 report.
     nonisolated var displayName: String {
         switch self {
-        case .camera: return "camera"
-        case .microphone: return "mic/speech"
-        case .health: return "HealthKit"
-        case .location: return "CoreLocation"
-        case .screenCaptureAX: return "ScreenCapture/AX-text"
-        case .vision: return "Vision/OCR"
-        case .motion: return "CoreMotion"
-        case .photos: return "photos/media"
-        case .network: return "network-egress/transport"
+        case .camera: "camera"
+        case .microphone: "mic/speech"
+        case .health: "HealthKit"
+        case .location: "CoreLocation"
+        case .screenCaptureAX: "ScreenCapture/AX-text"
+        case .vision: "Vision/OCR"
+        case .motion: "CoreMotion"
+        case .photos: "photos/media"
+        case .network: "network-egress/transport"
         }
     }
 
     /// TYPE-NAME sentinel carried inside each probe file. Never payload bytes.
     nonisolated var sentinelTypeName: String {
         switch self {
-        case .camera: return "RawCameraSentinel"
-        case .microphone: return "RawMicrophoneSentinel"
-        case .health: return "RawHealthSentinel"
-        case .location: return "RawLocationSentinel"
-        case .screenCaptureAX: return "RawScreenCaptureSentinel"
-        case .vision: return "RawVisionSentinel"
-        case .motion: return "RawMotionSentinel"
-        case .photos: return "RawPhotosSentinel"
-        case .network: return "RawNetworkSentinel"
+        case .camera: "RawCameraSentinel"
+        case .microphone: "RawMicrophoneSentinel"
+        case .health: "RawHealthSentinel"
+        case .location: "RawLocationSentinel"
+        case .screenCaptureAX: "RawScreenCaptureSentinel"
+        case .vision: "RawVisionSentinel"
+        case .motion: "RawMotionSentinel"
+        case .photos: "RawPhotosSentinel"
+        case .network: "RawNetworkSentinel"
         }
     }
 
@@ -59,15 +59,15 @@ enum RawSmuggleClass: String, CaseIterable, Sendable {
     /// literal never appears in product-adjacent test sources.
     nonisolated var probeToken: String {
         switch self {
-        case .camera: return "AV" + "CaptureDevice"
-        case .microphone: return "AV" + "AudioEngine"
-        case .health: return "HK" + "HealthStore"
-        case .location: return "CL" + "LocationManager"
-        case .screenCaptureAX: return "AX" + "UIElement"
-        case .vision: return "VN" + "RecognizeTextRequest"
-        case .motion: return "CM" + "MotionManager"
-        case .photos: return "PH" + "PhotoLibrary"
-        case .network: return "URL" + "Session"
+        case .camera: "AV" + "CaptureDevice"
+        case .microphone: "AV" + "AudioEngine"
+        case .health: "HK" + "HealthStore"
+        case .location: "CL" + "LocationManager"
+        case .screenCaptureAX: "AX" + "UIElement"
+        case .vision: "VN" + "RecognizeTextRequest"
+        case .motion: "CM" + "MotionManager"
+        case .photos: "PH" + "PhotoLibrary"
+        case .network: "URL" + "Session"
         }
     }
 }
@@ -88,12 +88,12 @@ enum RawSmuggleSurface: String, CaseIterable, Sendable {
     /// Overlay-relative probe path mirroring the real surface location.
     nonisolated var probePath: String {
         switch self {
-        case .domain: return "Packages/Domain/Sources/Domain/RawSmuggleProbe.swift"
-        case .persistence: return "App/Persistence/RawSmuggleProbe.swift"
-        case .logs: return "App/System/RawSmuggleProbe.swift"
-        case .export: return "Packages/Domain/Sources/Domain/HistoryExportRawSmuggleProbe.swift"
-        case .transport: return "Packages/Domain/Sources/Domain/HeadsUpDeliveryRawSmuggleProbe.swift"
-        case .prompts: return "App/Notifications/RawSmuggleProbe.swift"
+        case .domain: "Packages/Domain/Sources/Domain/RawSmuggleProbe.swift"
+        case .persistence: "App/Persistence/RawSmuggleProbe.swift"
+        case .logs: "App/System/RawSmuggleProbe.swift"
+        case .export: "Packages/Domain/Sources/Domain/HistoryExportRawSmuggleProbe.swift"
+        case .transport: "Packages/Domain/Sources/Domain/HeadsUpDeliveryRawSmuggleProbe.swift"
+        case .prompts: "App/Notifications/RawSmuggleProbe.swift"
         }
     }
 }
@@ -117,15 +117,15 @@ extension RawSmuggleClass {
     /// fragments at runtime, so the full symbol never appears in sources.
     nonisolated var probeFragments: (prefix: String, suffix: String) {
         switch self {
-        case .camera: return ("AV", "CaptureDevice")
-        case .microphone: return ("AV", "AudioEngine")
-        case .health: return ("HK", "HealthStore")
-        case .location: return ("CL", "LocationManager")
-        case .screenCaptureAX: return ("AX", "UIElement")
-        case .vision: return ("VN", "RecognizeTextRequest")
-        case .motion: return ("CM", "MotionManager")
-        case .photos: return ("PH", "PhotoLibrary")
-        case .network: return ("URL", "Session")
+        case .camera: ("AV", "CaptureDevice")
+        case .microphone: ("AV", "AudioEngine")
+        case .health: ("HK", "HealthStore")
+        case .location: ("CL", "LocationManager")
+        case .screenCaptureAX: ("AX", "UIElement")
+        case .vision: ("VN", "RecognizeTextRequest")
+        case .motion: ("CM", "MotionManager")
+        case .photos: ("PH", "PhotoLibrary")
+        case .network: ("URL", "Session")
         }
     }
 }
@@ -145,20 +145,20 @@ enum RawBypassShape: String, CaseIterable, Sendable {
     nonisolated func probeBody(token: String, prefix: String, suffix: String) -> String {
         switch self {
         case .reexport:
-            return """
+            """
             import Foundation
 
             public typealias RawSmuggleAlias = \(token)
             let witness: RawSmuggleAlias? = nil
             """
         case .selector:
-            return """
+            """
             import Foundation
 
             let witnessSelector = NSSelectorFromString("\(token)")
             """
         case .dynamic:
-            return """
+            """
             import Foundation
 
             let witnessClass: AnyClass? = \("NS" + "ClassFromString")("\(prefix)" + "\(suffix)")
@@ -205,18 +205,18 @@ enum RawHardenedToken: String, CaseIterable, Sendable {
 
     nonisolated var assembled: String {
         switch self {
-        case .pixelWindowImage: return "CGWindowList" + "CreateImage"
-        case .pixelDisplayImage: return "CGDisplay" + "CreateImage"
-        case .pixelDisplayStream: return "CGDisplay" + "Stream"
-        case .pixelCaptureRequest: return "CGRequest" + "ScreenCaptureAccess"
-        case .cloudContainer: return "CK" + "Container"
-        case .cloudRecord: return "CK" + "Record"
-        case .webView: return "WK" + "WebView"
-        case .cloudImport: return "import " + "CloudKit"
-        case .audioImport: return "import " + "AudioUnit"
-        case .audioComponent: return "Audio" + "Component"
-        case .audioRender: return "AudioUnit" + "Render"
-        case .audioHALUnit: return "kAudio" + "UnitSubType_HALOutput"
+        case .pixelWindowImage: "CGWindowList" + "CreateImage"
+        case .pixelDisplayImage: "CGDisplay" + "CreateImage"
+        case .pixelDisplayStream: "CGDisplay" + "Stream"
+        case .pixelCaptureRequest: "CGRequest" + "ScreenCaptureAccess"
+        case .cloudContainer: "CK" + "Container"
+        case .cloudRecord: "CK" + "Record"
+        case .webView: "WK" + "WebView"
+        case .cloudImport: "import " + "CloudKit"
+        case .audioImport: "import " + "AudioUnit"
+        case .audioComponent: "Audio" + "Component"
+        case .audioRender: "AudioUnit" + "Render"
+        case .audioHALUnit: "kAudio" + "UnitSubType_HALOutput"
         }
     }
 }
@@ -236,15 +236,15 @@ enum RawDynamicPrimitive: String, CaseIterable, Sendable {
     nonisolated var probeBody: String {
         switch self {
         case .classFromString:
-            return "import Foundation\n\nlet witness = \("NS" + "ClassFromString")(\"NSObject\")\n"
+            "import Foundation\n\nlet witness = \("NS" + "ClassFromString")(\"NSObject\")\n"
         case .dlOpen:
-            return "import Foundation\n\nlet handle = \("dl" + "open")(\"/usr/lib/libSystem.dylib\", 1)\n"
+            "import Foundation\n\nlet handle = \("dl" + "open")(\"/usr/lib/libSystem.dylib\", 1)\n"
         case .dlSym:
-            return "import Foundation\n\nlet symbol = \("dl" + "sym")(handle, \"x\")\n"
+            "import Foundation\n\nlet symbol = \("dl" + "sym")(handle, \"x\")\n"
         case .bundleLoad:
-            return "import Foundation\n\n_ = Bundle.main.\("load" + "()")\n"
+            "import Foundation\n\n_ = Bundle.main.\("load" + "()")\n"
         case .reexported:
-            return "\("@" + "_exported") import Foundation\n"
+            "\("@" + "_exported") import Foundation\n"
         }
     }
 }

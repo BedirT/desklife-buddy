@@ -10,7 +10,7 @@ func makePolicyDecision(
     try LedgerPolicyDecisionRecord(
         id: LedgerIdentity.derive(ledger: .policyDecision, seed: ledgerSeed, counter: counter),
         recordedAt: recordedAt,
-        actionUUID: LedgerIdentity.derive(ledger: .policyDecision, seed: ledgerSeed, counter: counter + 10_000),
+        actionUUID: LedgerIdentity.derive(ledger: .policyDecision, seed: ledgerSeed, counter: counter + 10000),
         actionDeviceID: ledgerDeviceText,
         actionCounter: counter,
         holdDecisionUUID: nil,
@@ -48,7 +48,7 @@ func makeCorrection(
 
 @Suite("Policy-decision ledger")
 struct LedgerPolicyDecisionTests {
-    @Test("Appends read back in recorded order with an identifier tiebreak")
+    @Test("Appends read back in recorded order with an insertion-order tiebreak")
     func appendReadOrdering() async throws {
         let store = InMemoryLedgerStores.policyDecision(now: { ledgerT0 })
         let second = try makePolicyDecision(counter: 2, recordedAt: ledgerT0.addingTimeInterval(10))
@@ -177,7 +177,10 @@ struct LedgerPolicyDecisionTests {
         try await store.append(makePolicyDecision())
         let selection = try LedgerExportSelection<LedgerPolicyDecisionExportField>(selected: [.effect, .kind])
         #expect(selection.fields == [.kind, .effect])
-        let text = try #require(String(data: try await store.export(selected: selection, format: .json), encoding: .utf8))
+        let text = try #require(try await String(
+            data: store.export(selected: selection, format: .json),
+            encoding: .utf8,
+        ))
         let kindRange = try #require(text.range(of: "\"kind\""))
         let effectRange = try #require(text.range(of: "\"effect\""))
         #expect(kindRange.lowerBound < effectRange.lowerBound)
@@ -215,7 +218,7 @@ struct LedgerPolicyDecisionTests {
 
 @Suite("Correction ledger")
 struct LedgerCorrectionTests {
-    @Test("Appends read back in recorded order with an identifier tiebreak")
+    @Test("Appends read back in recorded order with an insertion-order tiebreak")
     func appendReadOrdering() async throws {
         let store = InMemoryLedgerStores.correction(now: { ledgerT0 })
         let second = try makeCorrection(counter: 2, recordedAt: ledgerT0.addingTimeInterval(10))
@@ -369,7 +372,10 @@ struct LedgerCorrectionTests {
         try await store.append(makeCorrection())
         let selection = try LedgerExportSelection<LedgerCorrectionExportField>(selected: [.generation, .outcome])
         #expect(selection.fields == [.outcome, .generation])
-        let text = try #require(String(data: try await store.export(selected: selection, format: .json), encoding: .utf8))
+        let text = try #require(try await String(
+            data: store.export(selected: selection, format: .json),
+            encoding: .utf8,
+        ))
         let outcomeRange = try #require(text.range(of: "\"outcome\""))
         let generationRange = try #require(text.range(of: "\"generation\""))
         #expect(outcomeRange.lowerBound < generationRange.lowerBound)
@@ -395,7 +401,12 @@ struct LedgerCorrectionTests {
     @Test("Encoded rows replay into a fresh store without loss")
     func replayAcrossRelaunch() async throws {
         let first = try makeCorrection(counter: 1, generation: 3, globalRevision: 7)
-        let second = try makeCorrection(counter: 2, recordedAt: ledgerT0.addingTimeInterval(5), generation: 4, globalRevision: 8)
+        let second = try makeCorrection(
+            counter: 2,
+            recordedAt: ledgerT0.addingTimeInterval(5),
+            generation: 4,
+            globalRevision: 8,
+        )
         let payloads = try [first, second].map { try LedgerCorrectionCodec.encode($0) }
         let reopened = InMemoryLedgerStores.correction(now: { ledgerT0 })
         for payload in payloads {

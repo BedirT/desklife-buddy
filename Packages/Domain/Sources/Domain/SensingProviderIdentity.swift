@@ -78,7 +78,7 @@ public enum SensingProviderRegistryError: Error, Equatable {
     /// member equality: a synthesized `==` for an `Error` enum is checked
     /// in a nonisolated domain, which cannot use the isolated
     /// `SensingProviderID` conformance (Swift 6 `isolated_conformance`).
-    nonisolated public static func == (lhs: SensingProviderRegistryError, rhs: SensingProviderRegistryError) -> Bool {
+    public nonisolated static func == (lhs: SensingProviderRegistryError, rhs: SensingProviderRegistryError) -> Bool {
         switch (lhs, rhs) {
         case let (.duplicateProvider(a), .duplicateProvider(b)):
             a.code == b.code

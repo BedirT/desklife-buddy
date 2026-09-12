@@ -181,7 +181,10 @@ public enum LedgerObservationCodec {
             throw LedgerStoreError.invalidRecord("observation envelope")
         }
         guard probe.schemaVersion == schemaVersion else {
-            throw LedgerStoreError.unknownSchemaVersion(ledger: LedgerKind.observation.code, version: probe.schemaVersion)
+            throw LedgerStoreError.unknownSchemaVersion(
+                ledger: LedgerKind.observation.code,
+                version: probe.schemaVersion,
+            )
         }
         do {
             return try JSONDecoder().decode(Envelope.self, from: data).row
@@ -205,6 +208,9 @@ public protocol LedgerObservationStore {
 /// identifiers with different facts are refused.
 public final class InMemoryLedgerObservationStore: LedgerObservationStore {
     private var records: [UUID: LedgerObservationRecord] = [:]
+    /// Insertion sequence for the recorded-at tiebreak in ordered().
+    /// Fake-local memory only: never a row column, never exported.
+    private var insertionOrder: [UUID] = []
     public var retention: HistoryRetentionPolicy
     public var now: () -> Date
     public var saveHook: (() throws -> Void)?
@@ -225,6 +231,7 @@ public final class InMemoryLedgerObservationStore: LedgerObservationStore {
         guard retention != .keepNothing else { return }
         try saveHook?()
         records[record.id] = record
+        insertionOrder.append(record.id)
         prune(asOf: now())
     }
 
@@ -236,14 +243,16 @@ public final class InMemoryLedgerObservationStore: LedgerObservationStore {
     public func deleteAllRecords() async throws {
         try saveHook?()
         records.removeAll()
+        insertionOrder.removeAll()
     }
 
     @discardableResult
     public func purge(asOf date: Date) async -> Int {
-        let removed = expired(asOf: date)
+        let removed = Set(expired(asOf: date))
         for id in removed {
             records.removeValue(forKey: id)
         }
+        insertionOrder.removeAll { removed.contains($0) }
         return removed.count
     }
 
@@ -264,9 +273,11 @@ public final class InMemoryLedgerObservationStore: LedgerObservationStore {
     }
 
     private func prune(asOf date: Date) {
-        for id in expired(asOf: date) {
+        let removed = Set(expired(asOf: date))
+        for id in removed {
             records.removeValue(forKey: id)
         }
+        insertionOrder.removeAll { removed.contains($0) }
     }
 
     private func expired(asOf date: Date) -> [UUID] {
@@ -278,11 +289,14 @@ public final class InMemoryLedgerObservationStore: LedgerObservationStore {
     }
 
     private func ordered() -> [LedgerObservationRecord] {
-        records.values.sorted {
+        // Recorded-at order; same-timestamp rows read back in insertion
+        // order, never identifier order, so same-moment appends are stable.
+        let insertionIndex = Dictionary(uniqueKeysWithValues: insertionOrder.enumerated().map { ($1, $0) })
+        return records.values.sorted {
             if $0.recordedAt != $1.recordedAt {
                 return $0.recordedAt < $1.recordedAt
             }
-            return $0.id.uuidString < $1.id.uuidString
+            return (insertionIndex[$0.id] ?? Int.max) < (insertionIndex[$1.id] ?? Int.max)
         }
     }
 }

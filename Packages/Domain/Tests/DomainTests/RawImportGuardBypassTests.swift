@@ -11,7 +11,9 @@ import Testing
 struct RawImportGuardBypassTests {
     private static var repositoryRoot: URL {
         var url = URL(fileURLWithPath: #filePath)
-        for _ in 0 ..< 5 { url.deleteLastPathComponent() }
+        for _ in 0 ..< 5 {
+            url.deleteLastPathComponent()
+        }
         return url
     }
 
@@ -37,7 +39,7 @@ struct RawImportGuardBypassTests {
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         return GuardResult(
             exitCode: process.terminationStatus,
-            output: String(data: data, encoding: .utf8) ?? ""
+            output: String(data: data, encoding: .utf8) ?? "",
         )
     }
 
@@ -45,7 +47,7 @@ struct RawImportGuardBypassTests {
         let file = scanRoot.appending(path: relativePath)
         try FileManager.default.createDirectory(
             at: file.deletingLastPathComponent(),
-            withIntermediateDirectories: true
+            withIntermediateDirectories: true,
         )
         try contents.write(to: file, atomically: true, encoding: .utf8)
     }
@@ -67,17 +69,17 @@ struct RawImportGuardBypassTests {
         let body = bypassCase.shape.probeBody(
             token: bypassCase.rawClass.probeToken,
             prefix: bypassCase.rawClass.probeFragments.prefix,
-            suffix: bypassCase.rawClass.probeFragments.suffix
+            suffix: bypassCase.rawClass.probeFragments.suffix,
         )
         try Self.writeFile(
             body,
             at: RawSmuggleSurface.domain.probePath,
-            under: scanRoot
+            under: scanRoot,
         )
         let result = try Self.runGuard(scanRoot: scanRoot)
         #expect(
             result.exitCode != 0,
-            "\(bypassCase.shape.rawValue) evasion for \(bypassCase.rawClass.displayName) did not trip the guard"
+            "\(bypassCase.shape.rawValue) evasion for \(bypassCase.rawClass.displayName) did not trip the guard",
         )
     }
 
@@ -96,12 +98,12 @@ struct RawImportGuardBypassTests {
                 }
                 """,
                 at: RawSmuggleSurface.domain.probePath,
-                under: scanRoot
+                under: scanRoot,
             )
             let result = try Self.runGuard(scanRoot: scanRoot)
             #expect(
                 result.exitCode != 0,
-                "Generated-file probe for \(rawClass.displayName) did not trip the guard"
+                "Generated-file probe for \(rawClass.displayName) did not trip the guard",
             )
         }
     }
@@ -115,12 +117,12 @@ struct RawImportGuardBypassTests {
         try Self.writeFile(
             primitive.probeBody,
             at: RawSmuggleSurface.domain.probePath,
-            under: scanRoot
+            under: scanRoot,
         )
         let result = try Self.runGuard(scanRoot: scanRoot)
         #expect(
             result.exitCode != 0,
-            "Dynamic primitive \(primitive.rawValue) did not trip the guard"
+            "Dynamic primitive \(primitive.rawValue) did not trip the guard",
         )
         #expect(result.output.contains("dynamic-lookup"))
     }
@@ -139,7 +141,7 @@ struct RawImportGuardBypassTests {
         try Self.writeFile(
             "import Foundation\n\nlet witness = \"\(token.assembled)\"\n",
             at: RawSmuggleSurface.domain.probePath,
-            under: scanRoot
+            under: scanRoot,
         )
         let result = try Self.runGuard(scanRoot: scanRoot)
         #expect(result.exitCode != 0, "\(token.rawValue) did not trip the guard")
@@ -157,7 +159,7 @@ struct RawImportGuardBypassTests {
         try Self.writeFile(
             "\(token.assembled)\nlet witness = 1\n",
             at: RawSmuggleSurface.domain.probePath,
-            under: scanRoot
+            under: scanRoot,
         )
         let result = try Self.runGuard(scanRoot: scanRoot)
         #expect(result.exitCode != 0, "\(token.rawValue) did not trip the guard")
@@ -175,7 +177,7 @@ struct RawImportGuardBypassTests {
         try Self.writeFile(
             "\(token.assembled)\nlet witness = 1\n",
             at: RawSmuggleSurface.domain.probePath,
-            under: scanRoot
+            under: scanRoot,
         )
         let result = try Self.runGuard(scanRoot: scanRoot)
         #expect(result.exitCode != 0, "\(token.rawValue) did not trip the guard")
@@ -194,7 +196,7 @@ struct RawImportGuardBypassTests {
             try Self.writeFile(
                 "import Foundation\n\nlet witness = \"\(token)\" // \(marker) test-harness probe\n",
                 at: RawSmuggleSurface.domain.probePath,
-                under: scanRoot
+                under: scanRoot,
             )
             let result = try Self.runGuard(scanRoot: scanRoot)
             #expect(result.exitCode == 0, "Reasoned same-line exemption tripped:\n\(result.output)")
@@ -207,7 +209,7 @@ struct RawImportGuardBypassTests {
             try Self.writeFile(
                 "import Foundation\n\nlet witness = \"\(token)\" // \(marker)\n",
                 at: RawSmuggleSurface.domain.probePath,
-                under: scanRoot
+                under: scanRoot,
             )
             let result = try Self.runGuard(scanRoot: scanRoot)
             #expect(result.exitCode != 0, "Bare exemption marker did not trip the guard")
@@ -219,7 +221,7 @@ struct RawImportGuardBypassTests {
             try Self.writeFile(
                 "import Foundation\n// \(marker) test-harness probe\nlet witness = \"\(token)\"\n",
                 at: RawSmuggleSurface.domain.probePath,
-                under: scanRoot
+                under: scanRoot,
             )
             let result = try Self.runGuard(scanRoot: scanRoot)
             #expect(result.exitCode != 0, "Other-line exemption marker did not trip the guard")
@@ -239,7 +241,7 @@ struct RawImportGuardBypassTests {
             let check = "CHECK"
             """,
             at: RawSmuggleSurface.domain.probePath,
-            under: scanRoot
+            under: scanRoot,
         )
         let result = try Self.runGuard(scanRoot: scanRoot)
         #expect(result.exitCode == 0, "Lookalike tokens tripped the guard:\n\(result.output)")
@@ -254,7 +256,7 @@ struct RawImportGuardBypassTests {
         try Self.writeFile(
             "import Foundation\n\nlet helper = \"" + "scripts" + "/" + "support" + "/dump_ax\"\n",
             at: RawSmuggleSurface.persistence.probePath,
-            under: scanRoot
+            under: scanRoot,
         )
         let result = try Self.runGuard(scanRoot: scanRoot)
         #expect(result.exitCode != 0, "Product reference to tooling did not trip the guard")
@@ -267,7 +269,7 @@ struct RawImportGuardBypassTests {
         try Self.writeFile(
             "#!/usr/bin/swift\nlet witness = \"\(RawSmuggleClass.screenCaptureAX.probeToken)\"\n",
             at: "scripts" + "/" + "support" + "/probe_tool.swift",
-            under: scanRoot
+            under: scanRoot,
         )
         let result = try Self.runGuard(scanRoot: scanRoot)
         #expect(result.exitCode == 0, "Allowlisted tooling tripped the guard:\n\(result.output)")
@@ -283,7 +285,7 @@ struct RawImportGuardBypassTests {
         try Self.writeFile(
             "/* Begin PBXProject section */\n\t\t\t\t\(key) = \"smuggle\";\n/* End PBXProject section */\n",
             at: "App.xcodeproj/project.pbxproj",
-            under: scanRoot
+            under: scanRoot,
         )
         let result = try Self.runGuard(scanRoot: scanRoot)
         #expect(result.exitCode != 0, "INFOPLIST_KEY smuggling did not trip the guard")
@@ -297,7 +299,7 @@ struct RawImportGuardBypassTests {
         try Self.writeFile(
             "// Build settings\n\(key) = smuggle\n",
             at: "App/Config/Smuggle.xcconfig",
-            under: scanRoot
+            under: scanRoot,
         )
         let result = try Self.runGuard(scanRoot: scanRoot)
         #expect(result.exitCode != 0, "xcconfig smuggling did not trip the guard")
@@ -311,7 +313,7 @@ struct RawImportGuardBypassTests {
         let plist = scanRoot.appending(path: "App/SmuggleInfo.plist")
         try FileManager.default.createDirectory(
             at: plist.deletingLastPathComponent(),
-            withIntermediateDirectories: true
+            withIntermediateDirectories: true,
         )
         try """
         <?xml version="1.0" encoding="UTF-8"?>
@@ -342,7 +344,7 @@ struct RawImportGuardBypassTests {
             </dict></plist>
             """,
             at: "App/SmuggleInfo.plist",
-            under: scanRoot
+            under: scanRoot,
         )
         let result = try Self.runGuard(scanRoot: scanRoot)
         #expect(result.exitCode != 0, "Entity-encoded plist smuggling did not trip the guard")
@@ -354,7 +356,7 @@ struct RawImportGuardBypassTests {
     func scopeCoversXcodeProject() throws {
         let script = try String(
             contentsOf: Self.repositoryRoot.appending(path: "scripts/check-raw-imports.sh"),
-            encoding: .utf8
+            encoding: .utf8,
         )
         #expect(script.contains("App.xcodeproj"), "Guard must scan the Xcode project")
         #expect(script.contains("xcconfig"), "Guard must scan build-config files")

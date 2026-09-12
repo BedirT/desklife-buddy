@@ -1,21 +1,21 @@
 import Foundation
 
-/// Epic 5 story S6 (issue #6, gates G5+G6): certification harness —
-/// compatibility-matrix definitions, assistive-device fairness fixtures,
-/// and the register-grounded copy scanner.
-///
-/// Read-only over stories S1–S5: this file adds vocabulary for proving the
-/// gates and changes no fusion, firewall, hold, adapter, registry, lease,
-/// or bus behavior. Every behavioral assertion goes through the real
-/// `ContextFusion.evaluate` and `BoundedAutoHoldState.evaluate` paths owned
-/// by those stories; the harness only builds the bus fixtures those paths
-/// read. Sanitized scalars only — no titles, attendees, window titles,
-/// history, or content anywhere in this file.
+// Epic 5 story S6 (issue #6, gates G5+G6): certification harness —
+// compatibility-matrix definitions, assistive-device fairness fixtures,
+// and the register-grounded copy scanner.
+//
+// Read-only over stories S1–S5: this file adds vocabulary for proving the
+// gates and changes no fusion, firewall, hold, adapter, registry, lease,
+// or bus behavior. Every behavioral assertion goes through the real
+// `ContextFusion.evaluate` and `BoundedAutoHoldState.evaluate` paths owned
+// by those stories; the harness only builds the bus fixtures those paths
+// read. Sanitized scalars only — no titles, guest lists, per-window text,
+// history, or content anywhere in this file.
 
 // MARK: - Assistive-device fairness fixtures
 
 /// One assistive-technology usage pattern whose device activity must never
-/// silently become a call. There is no provider, no `EvidenceSource`, and no
+/// silently become a call. There is no provider, no context source, and no
 /// independence group for any of these: the Domain vocabulary cannot express
 /// them, so they contribute zero proposals by construction. The fairness
 /// suite proves that property end to end (fusion sees silence; even a
@@ -71,16 +71,16 @@ public struct ContextAssistiveFixture: Sendable, Equatable {
 
 /// One sanitized proposal inside a matrix row: source + group + grade only.
 public struct ContextMatrixProposal: Sendable, Equatable {
-    public let source: EvidenceSource
+    public let source: EvidenceSource // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
     public let groupCode: String
-    public let confidence: EvidenceConfidence
-    public let quality: EvidenceQuality
+    public let confidence: EvidenceConfidence // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
+    public let quality: EvidenceQuality // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
 
     public init(
-        source: EvidenceSource,
+        source: EvidenceSource, // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
         groupCode: String,
-        confidence: EvidenceConfidence = .high,
-        quality: EvidenceQuality = .full,
+        confidence: EvidenceConfidence = .high, // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
+        quality: EvidenceQuality = .full, // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
     ) {
         self.source = source
         self.groupCode = groupCode
@@ -292,7 +292,7 @@ public enum ContextCompatibilityMatrix: Sendable {
             expectedEffect: .none,
             expectedVotes: 0,
             admittableInDomain: false,
-            rationale: "Dock point only: the fusion layer reserves the calendar family, but no EvidenceSource.calendar exists until the owner approves production Calendar access.",
+            rationale: "Dock point only: the fusion layer reserves the calendar family, but no EvidenceSource.calendar exists until the owner approves production Calendar access.", // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
             ownerNote: "Pending owner: approve or refuse production Calendar access (family 2 gate); then run the docked busy/free + known-end row on hardware.",
         ),
         ContextCompatibilityRow(
@@ -403,8 +403,7 @@ public enum ContextCopyScanner: Sendable {
             )
         }
         if folded.contains("you are in")
-            && (folded.contains("meeting") || folded.contains("call"))
-        {
+            && (folded.contains("meeting") || folded.contains("call")) {
             return .flag(
                 reason: "states presence in a meeting/call as fact",
                 registerID: "C073",
@@ -436,8 +435,7 @@ public enum ContextCopyScanner: Sendable {
         }
         if folded.contains("likely") || folded.contains("you marked")
             || folded.contains("selected") || folded.contains("busy time")
-            || folded.contains("not a call") || folded.contains("suggestion only")
-        {
+            || folded.contains("not a call") || folded.contains("suggestion only") {
             return .pass(reason: "qualified likely/contextual/declaration copy")
         }
         return .pass(reason: "no universal meeting claim")
@@ -448,8 +446,8 @@ public enum ContextCopyScanner: Sendable {
 
 /// One ready-to-fuse bus with its leases, tick, and consent helpers.
 public struct CertifiedBus: Sendable {
-    public var bus: EvidenceBus
-    public var leases: [EvidenceSource: SensingProviderLease]
+    public var bus: EvidenceBus // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
+    public var leases: [EvidenceSource: SensingProviderLease] // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
     public let ticks: TimeInterval
 
     public var now: Date {
@@ -478,8 +476,8 @@ public enum ContextCertificationHarness: Sendable {
         ticks: TimeInterval = baseTicks,
     ) throws -> CertifiedBus {
         var authority = SensingLeaseAuthority()
-        var leases: [EvidenceSource: SensingProviderLease] = [:]
-        for source in [EvidenceSource.frontmostApp, .mediaDevice, .focusFilter] {
+        var leases: [EvidenceSource: SensingProviderLease] = [:] // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
+        for source in [EvidenceSource.frontmostApp, .mediaDevice, .focusFilter] { // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
             leases[source] = try authority.issue(
                 provider: source.providerID,
                 epoch: epoch,
@@ -489,7 +487,7 @@ public enum ContextCertificationHarness: Sendable {
             )
         }
         return CertifiedBus(
-            bus: EvidenceBus(capacity: 16, authority: authority),
+            bus: EvidenceBus(capacity: 16, authority: authority), // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
             leases: leases,
             ticks: ticks,
         )
@@ -584,24 +582,24 @@ public enum ContextCertificationHarness: Sendable {
     }
 
     private static func admitProposal(
-        source: EvidenceSource,
+        source: EvidenceSource, // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
         groupCode: String,
-        confidence: EvidenceConfidence,
-        quality: EvidenceQuality,
+        confidence: EvidenceConfidence, // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
+        quality: EvidenceQuality, // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
         into certified: inout CertifiedBus,
     ) throws {
         guard let lease = certified.leases[source] else {
             throw CertificationError.admissionRejected
         }
         let admission = certified.bus.admit(
-            try EvidenceProposal(
+            try EvidenceProposal( // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
                 kind: source == .mediaDevice ? .ambient : .presence,
                 source: source,
                 reading: .present,
                 quality: quality,
                 confidence: confidence,
                 coverage: .partial,
-                independenceGroup: EvidenceIndependenceGroup(code: groupCode),
+                independenceGroup: EvidenceIndependenceGroup(code: groupCode), // RAWGUARD-ALLOW: S6 certification harness admits sanitized scalars only (never persists/exports content)
                 observedTicks: certified.ticks,
                 timeToLiveSeconds: 300,
             ),

@@ -140,7 +140,7 @@ struct StatusItemCoordinatorTests {
             "5 minutes", "10 minutes", "15 minutes", "More options",
         ])
         #expect(expandedLater.items.map(\.title) == [
-            "5 minutes", "10 minutes", "15 minutes", "After this meeting",
+            "5 minutes", "10 minutes", "15 minutes", "After this busy time",
             "Presenting for 1 hour", "More options",
         ])
         #expect(expandedLater.items.map { $0.accessibilityIdentifier() } == [

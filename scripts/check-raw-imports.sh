@@ -147,8 +147,11 @@ check_swift "network" 'URLSession|URLRequest|import\s+(Network|CloudKit|WebKit)|
 # never legitimate in this product, so they are banned as a category.
 check_swift "dynamic-lookup" 'NSClassFromString|dlopen|dlsym|@_exported|NSBundle|\bBundle\.[A-Za-z]+\.load\(\)|\bbundle\.load\(\)'
 
-# Entitlements: the sandbox stays network/camera/mic/health/location-free.
-check_config "entitlement" 'com\.apple\.security\.device\.camera|com\.apple\.security\.device\.audio-input|com\.apple\.developer\.healthkit|com\.apple\.security\.personal-information\.location|com\.apple\.security\.network\.(client|server)'
+# Entitlements: the sandbox stays camera/mic/health/location-free, with no
+# network server. The network client key is owner-approved (Epic 4 transport
+# activation, issue #5, 2026-09-13) and admitted by exact match — the pattern
+# below bans only the server half, with no wildcards.
+check_config "entitlement" 'com\.apple\.security\.device\.camera|com\.apple\.security\.device\.audio-input|com\.apple\.developer\.healthkit|com\.apple\.security\.personal-information\.location|com\.apple\.security\.network\.server'
 # Privacy usage-description keys and transport-security exceptions.
 check_config "privacy-key" 'NSCameraUsageDescription|NSMicrophoneUsageDescription|NSSpeechRecognitionUsageDescription|NSHealthShareUsageDescription|NSHealthUpdateUsageDescription|NSLocation(TemporaryUsageDescriptionDictionary|(WhenInUse|Always|AlwaysAndWhenInUse)?UsageDescription)|NSMotionUsageDescription|NSPhotoLibrary(Add)?UsageDescription|NSAppTransportSecurity'
 

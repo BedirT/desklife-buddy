@@ -9,6 +9,11 @@ Inventoried exception outside this diagram: the owner-approved calendars
 entitlement plus its usage description (Epic 5 Calendar adapter, issue #6,
 owner approval 2026-09-12 — fail-closed, busy/free plus known end only, no
 content) is pinned by the dossier's no-egress-entitlement-inventory check.
+Inventoried exception outside this diagram: the owner-approved network
+client entitlement plus the local-network usage description and Bonjour
+service declaration (Epic 4 transport activation, issue #5, owner approval
+2026-09-13 — MCP browse/advertise/connect only, unpaired peers rejected,
+no server half) is pinned by the same check.
 
 ## Diagram
 

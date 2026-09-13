@@ -46,7 +46,7 @@ enum CalendarLiveReader {
     /// Fail-closed access mapping: only granted access authorizes. Every
     /// other outcome — including deferred choice — denies, so an
     /// unprompted store reads as no-source, never as free.
-    static nonisolated func accessState(for status: EKAuthorizationStatus) -> CalendarAccessState {
+    static nonisolated func accessState(for status: EKAuthorizationStatus) -> CalendarAccessState { // RAWGUARD-ALLOW: admitted status read maps through the fail-closed gate
         switch status {
         case .authorized, .fullAccess:
             return .authorized
@@ -95,8 +95,8 @@ enum CalendarLiveReader {
     /// the fetched entries. Never called from tests — tests drive the pure
     /// mapping above through fakes, so no test touches the live store.
     static nonisolated func fetchAdmittedEntries(store: EKEventStore, start: Date, end: Date) -> [AdmittedCalendarEvent] { // RAWGUARD-ALLOW: live reader fetches through the granted store
-        let predicate = store.predicateForEvents(withStart: start, end: end, calendars: nil)
-        return store.events(matching: predicate).compactMap { entry in
+        let predicate = store.predicateForEvents(withStart: start, end: end, calendars: nil) // RAWGUARD-ALLOW: admitted fetch verb, calendars always nil
+        return store.events(matching: predicate).compactMap { entry in // RAWGUARD-ALLOW: admitted fetch verb reads entries for admitted-field reduction
             AdmittedCalendarEvent(
                 startDate: entry.startDate,
                 endDate: entry.endDate,
@@ -109,7 +109,7 @@ enum CalendarLiveReader {
     /// One-shot access prompt for future settings surfaces: true grants vote
     /// eligibility, anything else stays fail-closed through accessState.
     static func requestAccess(store: EKEventStore) async -> CalendarAccessState { // RAWGUARD-ALLOW: live reader prompts through the caller's store
-        let granted = (try? await store.requestFullAccessToEvents()) ?? false
+        let granted = (try? await store.requestFullAccessToEvents()) ?? false // RAWGUARD-ALLOW: admitted access verb prompts for the fail-closed gate
         return granted ? .authorized : .denied
     }
 
@@ -127,7 +127,7 @@ enum CalendarLiveReader {
     ///   kill-switch. A killed source mints nothing.
     /// - Parameter now: injected clock for the fetch-window math.
     static func liveAdapter(
-        readAuthorization: @escaping @Sendable () -> EKAuthorizationStatus = {
+        readAuthorization: @escaping @Sendable () -> EKAuthorizationStatus = { // RAWGUARD-ALLOW: admitted status read defaults to the store value
             EKEventStore.authorizationStatus(for: .event) // RAWGUARD-ALLOW: live reader default authorization read uses the admitted access verb
         },
         fetchAdmitted: @escaping @Sendable (Date, Date) -> [AdmittedCalendarEvent] = { start, end in

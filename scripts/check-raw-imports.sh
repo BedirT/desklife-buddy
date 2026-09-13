@@ -74,7 +74,7 @@ collect() {
     else
       kept+=("$line")
     fi
-  done <<<"$hits"
+  done < <(printf '%s\n' "$hits")
   if ((${#kept[@]})); then
     violations+=("[$label]")
     for line in "${kept[@]}"; do
@@ -118,7 +118,7 @@ check_config() {
       if match="$(printf '%s' "$decoded" | rg -n -e "$pattern" 2>/dev/null)"; then
         while IFS= read -r line; do
           decoded_hits+="$rel:$line"$'\n'
-        done <<<"$match"
+        done < <(printf '%s\n' "$match")
       fi
     elif hits="$(rg -n --no-heading -e "$pattern" "$file" 2>/dev/null)"; then
       decoded_hits+="$hits"$'\n'
@@ -206,16 +206,26 @@ fi
 # calendar guest lists, and device identity must never appear in product code.
 #
 # CLOSED EventKit admission — the ONLY store-framework symbols product code
-# may name, each use on a same-line-exempted line (12c confines the files):
+# may name, each use on a same-line-exempted line (12c confines the files).
+# Identity and transport (each use individually auditable via its marker):
 # import EventKit; EKEventStore; EKEntityType (the .event access request
-# only); EKEvent (fetch-result element only); EKEventAvailability; the fetch
-# verbs predicateForEvents(withStart:end:calendars:) (always with
-# calendars: nil — calendar identities are never named, so EKCalendar stays
-# banned) and events(matching:); the access verbs authorizationStatus(for:),
-# requestFullAccessToEvents, and requestAccess(to:completion:); and the four
-# admitted field reads .startDate, .endDate, .isAllDay, .availability
-# (busy/tentative/unavailable vote busy-like; free/notSupported never do;
-# all-day events never vote).
+# only); EKEvent (fetch-result element only); EKEventAvailability;
+# EKAuthorizationStatus (the gate's status read only); EKSource (named only
+# to forbid it — see 12b). Fetch and access verbs (admitted calls only):
+# predicateForEvents(withStart:end:calendars:) (always with calendars: nil —
+# calendar identities are never named, so EKCalendar stays banned),
+# events(matching:), authorizationStatus(for:), requestFullAccessToEvents,
+# and requestAccess(to:completion:). Named-calendar constructors
+# (calendarsForEntityType, calendarWithIdentifier, defaultCalendarForNewEvents,
+# calendars(for:)) are named only to confine them: the ONLY legal fetch is
+# calendars: nil, and with every constructor confined a named list is
+# unconstructible in product code. The four admitted field reads .startDate,
+# .endDate, .isAllDay, .availability (busy/tentative/unavailable vote
+# busy-like; free/notSupported never do; all-day events never vote).
+# The .event entity is the sole legal entity (documented, not pattern-banned:
+# a bare .event ban would false-positive on sanitized vocabulary like
+# previousFailure.event). Its illegal alternative .reminder IS pattern-banned
+# below and in 12b/12c, so switching entities trips the build.
 #
 # EXPLICITLY BANNED content — never admitted on any line, exemption or not
 # (12b enforces this even where a marker is present): event-content reads
@@ -225,18 +235,35 @@ fi
 # (creationDate, lastModifiedDate, structuredLocation, birthday, url). A
 # same-line RAWGUARD-ALLOW excuses an admitted-symbol line only; it never
 # excuses a banned-content line.
-check_swift "content-retention" 'windowTitle|localizedName|uniqueID|manufacturer|[Aa]ttendee|EventKit|EKEvent|EKEntityType|EKParticipant|EKCalendar'
+check_swift "content-retention" 'windowTitle|localizedName|uniqueID|manufacturer|[Aa]ttendee|EventKit|EKEvent|EKEntityType|EKParticipant|EKCalendar|EKAuthorizationStatus|predicateForEvents|events\(matching|authorizationStatus\(for|requestFullAccessToEvents|requestAccess\(to:|EKSource|calendarsForEntityType|calendarWithIdentifier|defaultCalendarForNewEvents|calendars\(for|\.reminder'
 
-# 12b. Calendar content confinement (amendment, issue #6): inside the calendar
-# seam files (Calendar*.swift under App/ and AppTests/) the banned content
-# tokens fail the build EVEN when their line carries RAWGUARD-ALLOW —
-# exemptions excuse admitted-symbol lines only, never content lines. Scoped to
-# the seam because bare words like title/notes are legitimate elsewhere
-# (window titles, notification content); inside the seam they have no
-# legitimate use, and the seam's prose already says "event names" /
-# "guest lists" / "other details". Bare-word bans are singular-only
+# 12b. Calendar content confinement (amendment, issue #6; repair: adversarial
+# findings F1-F3): inside the calendar seam files (Calendar*.swift under App/
+# and AppTests/) the banned content tokens fail the build EVEN when their line
+# carries RAWGUARD-ALLOW — exemptions excuse admitted-symbol lines only, never
+# content lines. Scoped to the seam because bare words like title/notes are
+# legitimate elsewhere (window titles, notification content); inside the seam
+# they have no legitimate use, and the seam's prose already says "event names"
+# / "guest lists" / "other details". Bare-word bans are singular-only
 # (property reads are singular); dotted plurals (.attendees, .alarms) stay
 # banned as the store's actual plural members.
+# F1: receiver-prefixed .calendar (entry.calendar yields calendar identity
+# without the EK prefix) is banned; BARE .calendar stays legal because the
+# sanitized vocabulary itself votes .calendar (EvidenceSource.calendar case:
+# `== .calendar`, `for: .calendar`) — the receiver character before the dot
+# is what distinguishes an identity read from a sanitized enum case.
+# F2: presence oracles (hasNotes/hasAttendees/hasRecurrenceRules), stable
+# identifiers (eventIdentifier/calendarItemIdentifier/
+# calendarItemExternalIdentifier), and out-of-scope metadata (timeZone,
+# recurrenceRules, .status, occurrenceDate, isDetached) are banned: each leaks
+# a content-presence bit, a stable fingerprint, or timestamps beyond the four
+# admitted fields. (hasAttendees also trips check 12's boundary-free
+# [Aa]ttendee; listed here for explicitness.)
+# F3: the .reminder entity and every named-calendar constructor
+# (calendarsForEntityType/calendarWithIdentifier/defaultCalendarForNewEvents/
+# calendars(for:)/.sources) are banned: with these unusable in the seam, the
+# fetch cannot name anything but calendars: nil and the entity cannot switch
+# off .event without tripping.
 check_calendar_strict() {
   local label="$1" pattern="$2"
   local files=()
@@ -254,22 +281,28 @@ check_calendar_strict() {
     while IFS= read -r line; do
       [[ -z "$line" ]] && continue
       violations+=("  $line")
-    done <<<"$hits"
+    done < <(printf '%s\n' "$hits")
   fi
 }
-check_calendar_strict "content-retention-calendar-content" '\.title|\btitle\b|\.notes|\bnotes\b|\.attendees|\battendee\b|\.location|\blocation\b|\.organizer|\borganizer\b|\.alarms|\balarm\b|hasAlarms|EKAlarm|EKStructuredLocation|EKParticipant|creationDate|lastModifiedDate|structuredLocation|\.birthday|\bbirthday\b|\.url'
+check_calendar_strict "content-retention-calendar-content" '\.title|\btitle\b|\.notes|\bnotes\b|\.attendees|\battendee\b|\.location|\blocation\b|\.organizer|\borganizer\b|\.alarms|\balarm\b|hasAlarms|EKAlarm|EKStructuredLocation|EKParticipant|creationDate|lastModifiedDate|structuredLocation|\.birthday|\bbirthday\b|\.url|[A-Za-z0-9_)\]]\.calendar|hasNotes|hasAttendees|hasRecurrenceRules|eventIdentifier|calendarItemIdentifier|calendarItemExternalIdentifier|timeZone|recurrenceRules|\.status|occurrenceDate|isDetached|\.reminder|calendarsForEntityType|calendarWithIdentifier|defaultCalendarForNewEvents|calendars\(for|\.sources'
 
-# 12c. Calendar file confinement (amendment, issue #6): store-framework
-# symbols may appear ONLY in the two allowlisted calendar files below. Any hit
-# elsewhere fails outright, marker or not. Within the allowlisted files each
-# hit still needs its own same-line RAWGUARD-ALLOW (check 12 enforces that),
-# so every admitted use stays individually auditable.
+# 12c. Calendar file confinement (amendment, issue #6; repair: adversarial
+# findings F1-F3): store-framework symbols may appear ONLY in the two
+# allowlisted calendar files below. Any hit elsewhere fails outright, marker
+# or not. Within the allowlisted files each hit still needs its own same-line
+# RAWGUARD-ALLOW (check 12 enforces that), so every admitted use stays
+# individually auditable. The confined set now covers the status type, the
+# fetch/access verbs, and the named-calendar constructors alongside the
+# framework import and EK-prefixed identity types — plus the .reminder entity
+# literal, so entity-switch and named-list attempts outside the seam trip.
+# (.event itself is documented-not-banned in check 12: the sanitized
+# vocabulary collides on it; its replacement .reminder is what trips.)
 calendar_reader_allowlist=(
   "App/ContextAdapters/CalendarLiveReader.swift"
   "AppTests/CalendarLiveReaderTests.swift"
 )
 confined_hits=""
-if confined_hits="$(rg -n --with-filename --no-heading -e 'import\s+EventKit|EKEventStore|EKEvent|EKEntityType|EKParticipant|EKCalendar' --glob '*.swift' "${swift_roots[@]}" 2>/dev/null)"; then
+if confined_hits="$(rg -n --with-filename --no-heading -e 'import\s+EventKit|EKEventStore|EKEvent|EKEntityType|EKParticipant|EKCalendar|EKAuthorizationStatus|predicateForEvents|events\(matching|authorizationStatus\(for|requestFullAccessToEvents|requestAccess\(to:|EKSource|calendarsForEntityType|calendarWithIdentifier|defaultCalendarForNewEvents|calendars\(for|\.reminder' --glob '*.swift' "${swift_roots[@]}" 2>/dev/null)"; then
   while IFS= read -r line; do
     [[ -z "$line" ]] && continue
     allowed_file=false
@@ -280,7 +313,7 @@ if confined_hits="$(rg -n --with-filename --no-heading -e 'import\s+EventKit|EKE
       violations+=("[content-retention-confinement]")
       violations+=("  $line")
     fi
-  done <<<"$confined_hits"
+  done < <(printf '%s\n' "$confined_hits")
 fi
 
 if ((${#violations[@]})); then

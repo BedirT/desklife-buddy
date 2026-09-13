@@ -192,7 +192,7 @@ struct CalendarLiveReaderTests {
 
     @Test("restricted and write-only fail closed")
     func restrictedAndWriteOnlyFailClosed() throws {
-        for status in [EKAuthorizationStatus.restricted, .writeOnly] {
+        for status in [EKAuthorizationStatus.restricted, .writeOnly] { // RAWGUARD-ALLOW: live-reader tests exercise the real authorization values, never content
             let adapter = CalendarLiveReader.liveAdapter(
                 readAuthorization: { status },
                 fetchAdmitted: { start, end in
@@ -463,5 +463,122 @@ struct CalendarLiveReaderGuardTests {
         )
         let result = try Self.runGuard(scanRoot: scanRoot)
         #expect(result.exitCode != 0, "Out-of-allowlist store symbols did not trip the guard")
+    }
+
+    @Test("guard trips on calendar identity reads inside the seam")
+    func guardTripsOnCalendarIdentityReadInSeam() throws {
+        let scanRoot = try Self.freshScanRoot()
+        defer { try? FileManager.default.removeItem(at: scanRoot) }
+        // A receiver-prefixed .calendar read yields calendar identity without
+        // the EK prefix. Fragments keep this file from spelling it; the probe
+        // file below carries the contiguous read. Bare .calendar enum cases
+        // (the sanitized vocabulary) stay legal — only the receiver form trips.
+        let identRead = "entry" + ".calendar"
+        try Self.writeFile(
+            """
+            import Foundation
+            struct IdentityProbe {
+                func ident(entry: AnyObject) -> Any {
+                    \(identRead)
+                }
+            }
+            """,
+            at: "App/ContextAdapters/CalendarProbe.swift",
+            under: scanRoot,
+        )
+        let result = try Self.runGuard(scanRoot: scanRoot)
+        #expect(result.exitCode != 0, "Seam identity reads did not trip the guard")
+        #expect(
+            result.output.contains("App/ContextAdapters/CalendarProbe.swift"),
+            "Guard output names the violating seam file:\n\(result.output)",
+        )
+    }
+
+    @Test("guard trips on presence oracles and identifiers inside the seam")
+    func guardTripsOnPresenceOraclesAndIdentifiersInSeam() throws {
+        let scanRoot = try Self.freshScanRoot()
+        defer { try? FileManager.default.removeItem(at: scanRoot) }
+        // Presence bits, stable fingerprints, and out-of-scope metadata.
+        // Fragments keep this file clean; the probe spells them contiguously.
+        let hasAtt = "entry.hasAttend" + "ees"
+        let evIdent = "entry.event" + "Identifier"
+        let zone = "entry.time" + "Zone"
+        let detached = "entry.is" + "Detached"
+        let statusRead = "entry" + ".stat" + "us"
+        try Self.writeFile(
+            """
+            import Foundation
+            struct OracleProbe {
+                func bits(entry: AnyObject) -> String {
+                    "\(hasAtt)-\(evIdent)-\(zone)-\(detached)-\(statusRead)"
+                }
+            }
+            """,
+            at: "App/ContextAdapters/CalendarProbe.swift",
+            under: scanRoot,
+        )
+        let result = try Self.runGuard(scanRoot: scanRoot)
+        #expect(result.exitCode != 0, "Seam oracle reads did not trip the guard")
+        #expect(
+            result.output.contains("App/ContextAdapters/CalendarProbe.swift"),
+            "Guard output names the violating seam file:\n\(result.output)",
+        )
+    }
+
+    @Test("guard trips on the reminder entity inside the seam")
+    func guardTripsOnReminderEntityInSeam() throws {
+        let scanRoot = try Self.freshScanRoot()
+        defer { try? FileManager.default.removeItem(at: scanRoot) }
+        // .event is the sole legal entity; the reminder replacement must trip even with a
+        // marker. The named-calendar constructor trips alongside it.
+        let ekStore = "EK" + "EventStore"
+        let ekStatus = "EK" + "AuthorizationStatus"
+        let reminderEntity = ".rem" + "inder"
+        let namedCtor = "calendar" + "WithIdentifier"
+        try Self.writeFile(
+            """
+            import EventKit // RAWGUARD-ALLOW: bogus excuse
+            struct EntityProbe {
+                func current(store: \(ekStore)) -> \(ekStatus) { // RAWGUARD-ALLOW: bogus excuse
+                    \(ekStore).authorizationStatus(for: \(reminderEntity)) // RAWGUARD-ALLOW: bogus excuse
+                }
+                func named(store: \(ekStore), id: String) -> Any? { // RAWGUARD-ALLOW: bogus excuse
+                    store.\(namedCtor)(id) // RAWGUARD-ALLOW: bogus excuse
+                }
+            }
+            """,
+            at: "App/ContextAdapters/CalendarProbe.swift",
+            under: scanRoot,
+        )
+        let result = try Self.runGuard(scanRoot: scanRoot)
+        #expect(result.exitCode != 0, "Seam reminder-entity use did not trip the guard")
+        #expect(
+            result.output.contains("App/ContextAdapters/CalendarProbe.swift"),
+            "Guard output names the violating seam file:\n\(result.output)",
+        )
+    }
+
+    @Test("guard trips on store verbs outside the allowlisted files")
+    func guardTripsOnStoreVerbsOutsideAllowlist() throws {
+        let scanRoot = try Self.freshScanRoot()
+        defer { try? FileManager.default.removeItem(at: scanRoot) }
+        // Admitted verbs still need confinement: exempted uses outside the
+        // allowlisted files must trip via 12c.
+        let ekStatus = "EK" + "AuthorizationStatus"
+        let fetchVerb = "predicate" + "ForEvents"
+        try Self.writeFile(
+            """
+            import EventKit // RAWGUARD-ALLOW: bogus excuse
+            struct VerbProbe {
+                func current(store: NSObject) -> String { // RAWGUARD-ALLOW: bogus excuse
+                    "\(ekStatus)-\(fetchVerb)"
+                }
+            }
+            """,
+            at: "App/ContextAdapters/S3Probe.swift",
+            under: scanRoot,
+        )
+        let result = try Self.runGuard(scanRoot: scanRoot)
+        #expect(result.exitCode != 0, "Out-of-allowlist store verbs did not trip the guard")
     }
 }

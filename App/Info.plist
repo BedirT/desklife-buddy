@@ -18,7 +18,7 @@
 	<string>DeskLife finds your paired iPhone on the local network to keep a break timer running when you step away from the Mac. Only break-timer session bytes move between your two paired devices; nothing is sent to a server, and unpaired devices are ignored.</string>
 	<key>NSBonjourServices</key>
 	<array>
-		<string>desklife-cmp</string>
+		<string>_desklife-cmp._tcp</string>
 	</array>
 </dict>
 </plist>

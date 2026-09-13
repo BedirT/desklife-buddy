@@ -4,8 +4,10 @@ import MultipeerConnectivity
 /// Owner-approved Bonjour rendezvous strings for the companion transport.
 ///
 /// Approved by the owner (Epic 4 issue #5, gate Q1 sign-off 2026-09-13):
-/// these exact strings are quoted in the wave-1 PR #70 body and mirrored
-/// byte-identically in the app Info.plist `NSBonjourServices` entry.
+/// these exact strings are quoted in the wave-1 PR #70 body. The app
+/// Info.plist `NSBonjourServices` entry carries the same approved service
+/// in legal Bonjour plist formation (`_desklife-cmp._tcp`) — a mechanical
+/// encoding of `serviceType`, not a new string.
 ///
 /// - `serviceType` follows the Bonjour 1–15 lowercase alnum-plus-hyphen rule
 ///   (`desklife-cmp` is 12 characters).

@@ -143,6 +143,9 @@ struct CompanionTransportActivationTests {
         let usage = try #require(info["NSLocalNetworkUsageDescription"] as? String)
         #expect(usage.isEmpty == false)
         let services = try #require(info["NSBonjourServices"] as? [String])
-        #expect(services.contains("desklife-cmp"))
+        // Legal Bonjour plist formation of the approved service type: the MC
+        // serviceType API value stays bare `desklife-cmp` (pinned above), so
+        // derive the expected entry from it — the two cannot drift apart.
+        #expect(services == ["_" + CompanionServiceStrings.serviceType + "._tcp"])
     }
 }

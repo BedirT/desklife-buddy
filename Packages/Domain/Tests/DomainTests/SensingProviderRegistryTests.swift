@@ -23,8 +23,9 @@ struct SensingProviderRegistryTests {
         #expect(registry.contains(.frontmostApp))
         #expect(registry.contains(.mediaDevice))
         #expect(registry.contains(.focusFilter))
-        #expect(registry.providerCount == 7)
-        for id in [SensingProviderID.fakePresence, .fakeMotion, .fakeAmbient, .motionHardware, .frontmostApp, .mediaDevice, .focusFilter] {
+        #expect(registry.contains(.calendar))
+        #expect(registry.providerCount == 8)
+        for id in [SensingProviderID.fakePresence, .fakeMotion, .fakeAmbient, .motionHardware, .frontmostApp, .mediaDevice, .focusFilter, .calendar] {
             let descriptor = try registry.descriptor(for: id)
             #expect(descriptor.id == id)
         }

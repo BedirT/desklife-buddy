@@ -5,6 +5,10 @@ Collector anchor: trust-data-flow-doc v1.
 Scope: the permission-free Mac core. Every stage below names its Domain
 source; nothing in this diagram requires an entitlement, a privacy key,
 a network, or a permission prompt.
+Inventoried exception outside this diagram: the owner-approved calendars
+entitlement plus its usage description (Epic 5 Calendar adapter, issue #6,
+owner approval 2026-09-12 — fail-closed, busy/free plus known end only, no
+content) is pinned by the dossier's no-egress-entitlement-inventory check.
 
 ## Diagram
 

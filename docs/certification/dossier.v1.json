@@ -28,8 +28,8 @@
       "id": "no-egress-entitlement-inventory",
       "title": "Entitlement inventory minimal",
       "status": "pass",
-      "evidence": "check-certification-dossier.sh decodes App/App.entitlements: exactly com.apple.security.app-sandbox and com.apple.security.files.user-selected.read-write; zero network/camera/mic/health/location keys",
-      "notes": "No Info.plist usage-description strings exist; no PrivacyInfo.xcprivacy is needed or present."
+      "evidence": "check-certification-dossier.sh decodes App/App.entitlements: exactly com.apple.security.app-sandbox, com.apple.security.files.user-selected.read-write, and the owner-approved com.apple.security.personal-information.calendars (Epic 5 Calendar adapter, issue #6, owner approval 2026-09-12); zero network/camera/mic/health/location keys",
+      "notes": "The calendars key's prompt text is the one generated-plist usage description (NSCalendarsUsageDescription, draft copy in PR #68 awaiting owner sign-off); no PrivacyInfo.xcprivacy is needed or present."
     },
     {
       "id": "no-egress-privacy-manifest-absence",

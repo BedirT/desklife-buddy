@@ -31,6 +31,15 @@
 set -euo pipefail
 
 . "$(dirname "$0")/lib.sh"
+
+# Fail closed when the scanner is absent (amendment, issue #6): every check
+# below is an `rg` scan, so a missing `rg` must fail the build — never pass
+# it silently. (Xcode test hosts run with a stripped PATH that lacks the
+# homebrew prefix; callers there must extend PATH, not weaken this gate.)
+command -v rg >/dev/null 2>&1 || {
+  printf 'check-raw-imports: FAIL (rg not found on PATH — refusing to pass blind)\n' >&2
+  exit 2
+}
 cd "$ROOT"
 
 # Tests point the guard at a scratch tree via RAW_IMPORTS_SCAN_ROOT.
@@ -191,13 +200,88 @@ if ((${#evidence_files[@]})); then
   fi
 fi
 
-# 12. Content retention (Epic 5 story S3): sanitized adapters retain
-# booleans + ticks only. Per-window text, app display names, calendar guest
-# lists, device identity, and calendar-store framework symbols must never
-# appear in product code. No exemptions by construction: the S3 adapters
-# take bare booleans in and emit booleans + ticks out, so these tokens have
-# no legitimate product use; a hit means content crossed the boundary.
+# 12. Content retention (Epic 5 story S3, amended for the owner-approved live
+# calendar reader, issue #6, owner sign-offs 2026-09-12/13): sanitized
+# adapters retain booleans + ticks only. Per-window text, app display names,
+# calendar guest lists, and device identity must never appear in product code.
+#
+# CLOSED EventKit admission — the ONLY store-framework symbols product code
+# may name, each use on a same-line-exempted line (12c confines the files):
+# import EventKit; EKEventStore; EKEntityType (the .event access request
+# only); EKEvent (fetch-result element only); EKEventAvailability; the fetch
+# verbs predicateForEvents(withStart:end:calendars:) (always with
+# calendars: nil — calendar identities are never named, so EKCalendar stays
+# banned) and events(matching:); the access verbs authorizationStatus(for:),
+# requestFullAccessToEvents, and requestAccess(to:completion:); and the four
+# admitted field reads .startDate, .endDate, .isAllDay, .availability
+# (busy/tentative/unavailable vote busy-like; free/notSupported never do;
+# all-day events never vote).
+#
+# EXPLICITLY BANNED content — never admitted on any line, exemption or not
+# (12b enforces this even where a marker is present): event-content reads
+# title, notes, attendees, location, alarms (including hasAlarms, EKAlarm),
+# organizer (including EKParticipant, EKStructuredLocation), calendar identity
+# EKCalendar, and event metadata beyond the four admitted fields
+# (creationDate, lastModifiedDate, structuredLocation, birthday, url). A
+# same-line RAWGUARD-ALLOW excuses an admitted-symbol line only; it never
+# excuses a banned-content line.
 check_swift "content-retention" 'windowTitle|localizedName|uniqueID|manufacturer|[Aa]ttendee|EventKit|EKEvent|EKEntityType|EKParticipant|EKCalendar'
+
+# 12b. Calendar content confinement (amendment, issue #6): inside the calendar
+# seam files (Calendar*.swift under App/ and AppTests/) the banned content
+# tokens fail the build EVEN when their line carries RAWGUARD-ALLOW —
+# exemptions excuse admitted-symbol lines only, never content lines. Scoped to
+# the seam because bare words like title/notes are legitimate elsewhere
+# (window titles, notification content); inside the seam they have no
+# legitimate use, and the seam's prose already says "event names" /
+# "guest lists" / "other details". Bare-word bans are singular-only
+# (property reads are singular); dotted plurals (.attendees, .alarms) stay
+# banned as the store's actual plural members.
+check_calendar_strict() {
+  local label="$1" pattern="$2"
+  local files=()
+  for dir in App AppTests; do
+    [[ -d "$scan_root/$dir" ]] || continue
+    while IFS= read -r found; do
+      files+=("$found")
+    done < <(find "$scan_root/$dir" -type f -name 'Calendar*.swift' \
+      -not -path '*/.build/*' -not -path '*/DerivedData/*' 2>/dev/null)
+  done
+  (( ${#files[@]} )) || return 0
+  local hits
+  if hits="$(rg -n --with-filename --no-heading -i -e "$pattern" "${files[@]}" 2>/dev/null)"; then
+    violations+=("[$label]")
+    while IFS= read -r line; do
+      [[ -z "$line" ]] && continue
+      violations+=("  $line")
+    done <<<"$hits"
+  fi
+}
+check_calendar_strict "content-retention-calendar-content" '\.title|\btitle\b|\.notes|\bnotes\b|\.attendees|\battendee\b|\.location|\blocation\b|\.organizer|\borganizer\b|\.alarms|\balarm\b|hasAlarms|EKAlarm|EKStructuredLocation|EKParticipant|creationDate|lastModifiedDate|structuredLocation|\.birthday|\bbirthday\b|\.url'
+
+# 12c. Calendar file confinement (amendment, issue #6): store-framework
+# symbols may appear ONLY in the two allowlisted calendar files below. Any hit
+# elsewhere fails outright, marker or not. Within the allowlisted files each
+# hit still needs its own same-line RAWGUARD-ALLOW (check 12 enforces that),
+# so every admitted use stays individually auditable.
+calendar_reader_allowlist=(
+  "App/ContextAdapters/CalendarLiveReader.swift"
+  "AppTests/CalendarLiveReaderTests.swift"
+)
+confined_hits=""
+if confined_hits="$(rg -n --with-filename --no-heading -e 'import\s+EventKit|EKEventStore|EKEvent|EKEntityType|EKParticipant|EKCalendar' --glob '*.swift' "${swift_roots[@]}" 2>/dev/null)"; then
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    allowed_file=false
+    for allowlisted in "${calendar_reader_allowlist[@]}"; do
+      if [[ "$line" == *"$allowlisted"* ]]; then allowed_file=true; break; fi
+    done
+    if [[ "$allowed_file" == false ]]; then
+      violations+=("[content-retention-confinement]")
+      violations+=("  $line")
+    fi
+  done <<<"$confined_hits"
+fi
 
 if ((${#violations[@]})); then
   printf 'Raw import guard violations:\n' >&2

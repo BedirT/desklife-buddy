@@ -469,10 +469,10 @@ struct CalendarLiveReaderGuardTests {
     func guardTripsOnCalendarIdentityReadInSeam() throws {
         let scanRoot = try Self.freshScanRoot()
         defer { try? FileManager.default.removeItem(at: scanRoot) }
-        // A receiver-prefixed .calendar read yields calendar identity without
+        // An entry-owned identity read yields calendar identity without
         // the EK prefix. Fragments keep this file from spelling it; the probe
-        // file below carries the contiguous read. Bare .calendar enum cases
-        // (the sanitized vocabulary) stay legal — only the receiver form trips.
+        // file below carries the contiguous read. Plain enum cases
+        // (the sanitized vocabulary) stay legal — only the owned form trips.
         let identRead = "entry" + ".calendar"
         try Self.writeFile(
             """
@@ -580,5 +580,86 @@ struct CalendarLiveReaderGuardTests {
         )
         let result = try Self.runGuard(scanRoot: scanRoot)
         #expect(result.exitCode != 0, "Out-of-allowlist store verbs did not trip the guard")
+    }
+
+    @Test("guard trips on optional-chained identity reads inside the seam")
+    func guardTripsOnOptionalChainedIdentityReadInSeam() throws {
+        let scanRoot = try Self.freshScanRoot()
+        defer { try? FileManager.default.removeItem(at: scanRoot) }
+        // The chain spelling reads the same identity without the EK prefix.
+        // Fragments keep this file clean; the probe spells it contiguously.
+        let chainRead = "entry?" + ".calendar"
+        try Self.writeFile(
+            """
+            import Foundation
+            struct ChainProbe {
+                func ident(entry: AnyObject) -> Any {
+                    \(chainRead)
+                }
+            }
+            """,
+            at: "App/ContextAdapters/CalendarProbe.swift",
+            under: scanRoot,
+        )
+        let result = try Self.runGuard(scanRoot: scanRoot)
+        #expect(result.exitCode != 0, "Seam chained identity reads did not trip the guard")
+        #expect(
+            result.output.contains("App/ContextAdapters/CalendarProbe.swift"),
+            "Guard output names the violating seam file:\n\(result.output)",
+        )
+    }
+
+    @Test("guard trips on force-unwrapped identity reads inside the seam")
+    func guardTripsOnForceUnwrappedIdentityReadInSeam() throws {
+        let scanRoot = try Self.freshScanRoot()
+        defer { try? FileManager.default.removeItem(at: scanRoot) }
+        // The unwrap spelling reads the same identity without the EK prefix.
+        // Fragments keep this file clean; the probe spells it contiguously.
+        let unwrapRead = "entry!" + ".calendar"
+        try Self.writeFile(
+            """
+            import Foundation
+            struct UnwrapProbe {
+                func ident(entry: AnyObject) -> Any {
+                    \(unwrapRead)
+                }
+            }
+            """,
+            at: "App/ContextAdapters/CalendarProbe.swift",
+            under: scanRoot,
+        )
+        let result = try Self.runGuard(scanRoot: scanRoot)
+        #expect(result.exitCode != 0, "Seam unwrapped identity reads did not trip the guard")
+        #expect(
+            result.output.contains("App/ContextAdapters/CalendarProbe.swift"),
+            "Guard output names the violating seam file:\n\(result.output)",
+        )
+    }
+
+    @Test("guard trips on spaced-dot identity reads inside the seam")
+    func guardTripsOnSpacedDotIdentityReadInSeam() throws {
+        let scanRoot = try Self.freshScanRoot()
+        defer { try? FileManager.default.removeItem(at: scanRoot) }
+        // Whitespace before the dot is still the same identity read.
+        // Fragments keep this file clean; the probe spells it contiguously.
+        let spacedRead = "entry " + ".calendar"
+        try Self.writeFile(
+            """
+            import Foundation
+            struct SpacedProbe {
+                func ident(entry: AnyObject) -> Any {
+                    \(spacedRead)
+                }
+            }
+            """,
+            at: "App/ContextAdapters/CalendarProbe.swift",
+            under: scanRoot,
+        )
+        let result = try Self.runGuard(scanRoot: scanRoot)
+        #expect(result.exitCode != 0, "Seam spaced identity reads did not trip the guard")
+        #expect(
+            result.output.contains("App/ContextAdapters/CalendarProbe.swift"),
+            "Guard output names the violating seam file:\n\(result.output)",
+        )
     }
 }

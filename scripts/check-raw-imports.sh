@@ -247,11 +247,14 @@ check_swift "content-retention" 'windowTitle|localizedName|uniqueID|manufacturer
 # / "guest lists" / "other details". Bare-word bans are singular-only
 # (property reads are singular); dotted plurals (.attendees, .alarms) stay
 # banned as the store's actual plural members.
-# F1: receiver-prefixed .calendar (entry.calendar yields calendar identity
-# without the EK prefix) is banned; BARE .calendar stays legal because the
-# sanitized vocabulary itself votes .calendar (EvidenceSource.calendar case:
-# `== .calendar`, `for: .calendar`) — the receiver character before the dot
-# is what distinguishes an identity read from a sanitized enum case.
+# F1: receiver-owned member reads (entry.calendar and its optional-chain,
+# force-unwrap, and spaced-dot spellings entry?.calendar / entry!.calendar /
+# entry .calendar — all valid identity reads without the EK prefix) are
+# banned; BARE enum cases stay legal because the sanitized vocabulary itself
+# votes .calendar (EvidenceSource.calendar case: `== .calendar`,
+# `for: .calendar`, where the dot follows `=`/`:`/space with no receiver
+# word) — the receiver word before the (optionally spaced/chained) dot is
+# what distinguishes an identity read from a sanitized enum case.
 # F2: presence oracles (hasNotes/hasAttendees/hasRecurrenceRules), stable
 # identifiers (eventIdentifier/calendarItemIdentifier/
 # calendarItemExternalIdentifier), and out-of-scope metadata (timeZone,
@@ -284,7 +287,7 @@ check_calendar_strict() {
     done < <(printf '%s\n' "$hits")
   fi
 }
-check_calendar_strict "content-retention-calendar-content" '\.title|\btitle\b|\.notes|\bnotes\b|\.attendees|\battendee\b|\.location|\blocation\b|\.organizer|\borganizer\b|\.alarms|\balarm\b|hasAlarms|EKAlarm|EKStructuredLocation|EKParticipant|creationDate|lastModifiedDate|structuredLocation|\.birthday|\bbirthday\b|\.url|[A-Za-z0-9_)\]]\.calendar|hasNotes|hasAttendees|hasRecurrenceRules|eventIdentifier|calendarItemIdentifier|calendarItemExternalIdentifier|timeZone|recurrenceRules|\.status|occurrenceDate|isDetached|\.reminder|calendarsForEntityType|calendarWithIdentifier|defaultCalendarForNewEvents|calendars\(for|\.sources'
+check_calendar_strict "content-retention-calendar-content" '\.title|\btitle\b|\.notes|\bnotes\b|\.attendees|\battendee\b|\.location|\blocation\b|\.organizer|\borganizer\b|\.alarms|\balarm\b|hasAlarms|EKAlarm|EKStructuredLocation|EKParticipant|creationDate|lastModifiedDate|structuredLocation|\.birthday|\bbirthday\b|\.url|[A-Za-z0-9_)\]]\s*[?!]?\s*\.calendar|hasNotes|hasAttendees|hasRecurrenceRules|eventIdentifier|calendarItemIdentifier|calendarItemExternalIdentifier|timeZone|recurrenceRules|\.status|occurrenceDate|isDetached|\.reminder|calendarsForEntityType|calendarWithIdentifier|defaultCalendarForNewEvents|calendars\(for|\.sources'
 
 # 12c. Calendar file confinement (amendment, issue #6; repair: adversarial
 # findings F1-F3): store-framework symbols may appear ONLY in the two

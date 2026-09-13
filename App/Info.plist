@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>Base Mac App</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2026</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>DeskLife reads whether a selected calendar is busy right now, on this Mac only, to hold reminders during likely calls. Only busy-or-free plus the current busy time's end is used; event names, guest lists, locations, and other details are never kept.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>DeskLife finds your paired iPhone on the local network to keep a break timer running when you step away from the Mac. Only break-timer session bytes move between your two paired devices; nothing is sent to a server, and unpaired devices are ignored.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>desklife-cmp</string>
+	</array>
+</dict>
+</plist>

@@ -8,9 +8,10 @@ import Testing
 // Boundary tests proving zero content retention per source (booleans +
 // ticks only — never titles, guest lists, content, URLs, device identity,
 // or history) plus bus-path tests proving the Epic 3 registry/leases/bus
-// admission route. Calendar is EXCLUDED (owner approval pending): only a
-// documented dock point with no calendar-store import and no authorization
-// request. The S3 raw-guard trip tests live in the Domain guard suite
+// admission route. Calendar graduated from its dock point to the
+// owner-approved adapter (CalendarContextAdapterTests): the dock-point
+// tests below still pin the sanitize boundary, including denial staying
+// out of the bus path. The S3 raw-guard trip tests live in the Domain
 // (RawImportGuardTests, unsandboxed) — this host runs sandboxed, so it
 // cannot exec the guard scanner.
 //
@@ -217,8 +218,7 @@ struct SanitizedContextAdapterTests {
         #expect(try unknown.proposal(observedTicks: s3now) == nil)
         #expect(SensingProviderRegistry.compiled.contains(.focusFilter))
     }
-
-    // MARK: - Calendar dock point (EXCLUDED: no production access)
+    // MARK: - Calendar dock point (sanitize boundary; adapter in CalendarContextAdapterTests)
 
     @Test("calendar dock sanitizes to busy plus known end only")
     func calendarDockSanitizesToBusyAndEnd() throws {
@@ -253,11 +253,10 @@ struct SanitizedContextAdapterTests {
             accessDenied: true,
         )
         #expect(snapshot.isBusy == false)
-        #expect(snapshot.accessDenied == true)
-        // No calendar vocabulary exists anywhere: the dock point mints
-        // nothing and admits nothing — the compiled set holds exactly the
-        // three approved S3 providers plus the pre-existing four.
-        #expect(SensingProviderRegistry.compiled.providerCount == 7)
+        // The calendar vocabulary now exists (owner-approved adapter): the
+        // dock point still mints nothing itself — the compiled set holds
+        // the four S3-plus-calendar providers plus the pre-existing four.
+        #expect(SensingProviderRegistry.compiled.providerCount == 8)
     }
 }
 

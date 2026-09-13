@@ -368,6 +368,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "DeskLife reads whether a selected calendar is busy right now, on this Mac only, to hold reminders during likely calls. Only busy-or-free plus the current busy time's end is used; event names, guest lists, locations, and other details are never kept.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -393,6 +394,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "DeskLife reads whether a selected calendar is busy right now, on this Mac only, to hold reminders during likely calls. Only busy-or-free plus the current busy time's end is used; event names, guest lists, locations, and other details are never kept.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

@@ -18,9 +18,8 @@ import Testing
 // meeting-style literals that must not survive into snapshots.
 
 private let calNow: TimeInterval = 1_786_000_000
-private let calDevice = DeviceID(uuid: UUID(uuidString: "00000000-0000-0000-0000-00000000ca1")!)
-private let calEpoch = ProjectionEpochID(uuid: UUID(uuidString: "00000000-0000-0000-0000-00000ca1ca1")!)
-
+private let calDevice = DeviceID(uuid: UUID(uuidString: "00000000-0000-0000-0000-0000000ca1ca")!)
+private let calEpoch = ProjectionEpochID(uuid: UUID(uuidString: "00000000-0000-0000-0000-000000e5ca1a")!)
 private func calIssueLease(
     authority: inout SensingLeaseAuthority,
     at ticks: TimeInterval,
@@ -68,11 +67,12 @@ private func calBusyAdapter(
     access: CalendarAccessState = .authorized,
     enabled: Bool = true,
 ) -> CalendarContextAdapter {
-    CalendarContextAdapter(
+    let start = calNow - 300
+    return CalendarContextAdapter(
         readAccess: { access },
         readBusyIntervals: {
             [CalendarContextDockPoint.BusyInterval(
-                startEpochSeconds: calNow - 300,
+                startEpochSeconds: start,
                 endEpochSeconds: end,
                 isBusyLike: true,
             )]
@@ -131,12 +131,14 @@ struct CalendarContextAdapterTests {
 
     @Test("free window carries no end")
     func freeWindowCarriesNoEnd() throws {
+        let pastStart = calNow - 900
+        let pastEnd = calNow - 300
         let adapter = CalendarContextAdapter(
             readAccess: { .authorized },
             readBusyIntervals: {
                 [CalendarContextDockPoint.BusyInterval(
-                    startEpochSeconds: calNow - 900,
-                    endEpochSeconds: calNow - 300,
+                    startEpochSeconds: pastStart,
+                    endEpochSeconds: pastEnd,
                     isBusyLike: true,
                 )]
             },

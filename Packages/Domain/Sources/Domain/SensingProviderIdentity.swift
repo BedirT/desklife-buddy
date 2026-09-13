@@ -39,6 +39,11 @@ public struct SensingProviderID: Equatable, Hashable, Sendable {
     /// Focus adapter: user-declared filter-active boolean only, backed by
     /// declaration (no public sensor API), never deep-work claims.
     public static let focusFilter = SensingProviderID("focus-filter")
+    /// Selected-calendar-busy provider (Epic 5 Calendar adapter, issue #6;
+    /// owner-approved production access). Names the outside-Domain calendar
+    /// adapter: busy/free boolean plus known end only, never names, guest
+    /// lists, locations, links, or history.
+    public static let calendar = SensingProviderID("calendar")
 }
 
 extension SensingProviderID: Codable {
@@ -129,9 +134,10 @@ public struct SensingProviderRegistry: Sendable {
         descriptorsByID = map
     }
     /// The closed compile-time set: test/fake providers plus the Epic 5 S3
-    /// sanitized-context providers (frontmost-app, media-device, Focus) and
-    /// the Epic 7 shaped-motion provider. Additive only: existing members
-    /// keep their codes.
+    /// sanitized-context providers (frontmost-app, media-device, Focus),
+    /// the owner-approved selected-calendar provider, and the Epic 7
+    /// shaped-motion provider. Additive only: existing members keep their
+    /// codes.
     public static let compiled = SensingProviderRegistry(unchecked: [
         SensingProviderDescriptor(id: .fakePresence, displayName: "Fake presence"),
         SensingProviderDescriptor(id: .fakeMotion, displayName: "Fake motion"),
@@ -140,6 +146,7 @@ public struct SensingProviderRegistry: Sendable {
         SensingProviderDescriptor(id: .frontmostApp, displayName: "Frontmost app (selected boolean)"),
         SensingProviderDescriptor(id: .mediaDevice, displayName: "Media device (any-busy boolean)"),
         SensingProviderDescriptor(id: .focusFilter, displayName: "Focus filter (declared boolean)"),
+        SensingProviderDescriptor(id: .calendar, displayName: "Calendar (selected busy boolean)"),
     ])
 
     private init(unchecked descriptors: [SensingProviderDescriptor]) {

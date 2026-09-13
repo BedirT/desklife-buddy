@@ -33,6 +33,11 @@ public enum EvidenceSource: String, Equatable, Hashable, Sendable, CaseIterable 
     /// outside-Domain Focus adapter, backed by user declaration. No
     /// content and no depth claims cross the boundary.
     case focusFilter
+    /// Selected-calendar-busy source (Epic 5 Calendar adapter, issue #6;
+    /// owner-approved production access): busy/free boolean plus known end
+    /// from the outside-Domain calendar adapter. No names, guest lists,
+    /// locations, links, or history cross the boundary.
+    case calendar
 
     /// The registry provider this source claims to be.
     public var providerID: SensingProviderID {
@@ -44,6 +49,7 @@ public enum EvidenceSource: String, Equatable, Hashable, Sendable, CaseIterable 
         case .frontmostApp: .frontmostApp
         case .mediaDevice: .mediaDevice
         case .focusFilter: .focusFilter
+        case .calendar: .calendar
         }
     }
 

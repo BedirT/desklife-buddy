@@ -232,7 +232,11 @@ fi
 
 # 4. Entitlement inventory: exactly sandbox + user-selected read-write +
 # the owner-approved calendars key (Epic 5 Calendar adapter, issue #6;
-# owner approval 2026-09-12: fail-closed, busy/free+end only, no content).
+# owner approval 2026-09-12: fail-closed, busy/free+end only, no content) +
+# the owner-approved network client key (Epic 4 transport activation,
+# issue #5; owner approval 2026-09-13: MCP browse/advertise/connect only,
+# no server half, unpaired peers rejected). Closed four-key allowlist,
+# exact match, no wildcards.
 entitlement_keys="$(/usr/bin/python3 -I - "$scan_root/App/App.entitlements" <<'PY'
 from __future__ import annotations
 
@@ -248,9 +252,9 @@ except OSError as error:
 print(" ".join(sorted(entitlements)))
 PY
 )" || true
-expected_keys="com.apple.security.app-sandbox com.apple.security.files.user-selected.read-write com.apple.security.personal-information.calendars"
+expected_keys="com.apple.security.app-sandbox com.apple.security.files.user-selected.read-write com.apple.security.network.client com.apple.security.personal-information.calendars"
 if [[ "$entitlement_keys" == "$expected_keys" ]]; then
-  record_pass "no-egress-entitlement-inventory (sandbox + user-selected read-write + owner-approved calendars only)"
+  record_pass "no-egress-entitlement-inventory (sandbox + user-selected read-write + owner-approved calendars + owner-approved network client only)"
 else
   failures+=("no-egress-entitlement-inventory: unexpected keys: ${entitlement_keys:-<unreadable>}")
 fi

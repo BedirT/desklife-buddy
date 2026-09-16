@@ -117,7 +117,7 @@ final class SettingsSceneModel {
     }
 
     var trustCenterRulesActions: TrustCenterRulesActions {
-        guard let ruleManagement else { return .none }
+        guard ruleManagement != nil else { return .none }
         return TrustCenterRulesActions(
             decide: { [weak self] ruleKey, decision in
                 guard let self, let model = self.ruleManagement else { return }

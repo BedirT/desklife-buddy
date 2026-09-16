@@ -29,18 +29,21 @@ public final class CompanionPairingSheetModel {
     public private(set) var boundDeviceID: String?
 
     private var pairing: CompanionPairingState?
-    private let keyGenerator: @Sendable () throws -> Data
-    private let now: @Sendable () -> Date
-    private let pairingIDGenerator: @Sendable () -> UUID
-    private let onPersist: @Sendable (CompanionPairingState) throws -> Void
-    private let onRevoke: @Sendable (CompanionPairingState) throws -> Void
+    /// MainActor-bound: the model is MainActor-isolated, so its dependencies
+    /// run in the same domain and may touch MainActor-isolated stores (e.g.
+    /// the Keychain adapter) without crossing isolation in Sendable closures.
+    private let keyGenerator: @MainActor @Sendable () throws -> Data
+    private let now: @MainActor @Sendable () -> Date
+    private let pairingIDGenerator: @MainActor @Sendable () -> UUID
+    private let onPersist: @MainActor @Sendable (CompanionPairingState) throws -> Void
+    private let onRevoke: @MainActor @Sendable (CompanionPairingState) throws -> Void
 
     public init(
-        keyGenerator: @escaping @Sendable () throws -> Data,
-        now: @escaping @Sendable () -> Date,
-        pairingIDGenerator: @escaping @Sendable () -> UUID,
-        onPersist: @escaping @Sendable (CompanionPairingState) throws -> Void,
-        onRevoke: @escaping @Sendable (CompanionPairingState) throws -> Void,
+        keyGenerator: @escaping @MainActor @Sendable () throws -> Data,
+        now: @escaping @MainActor @Sendable () -> Date,
+        pairingIDGenerator: @escaping @MainActor @Sendable () -> UUID,
+        onPersist: @escaping @MainActor @Sendable (CompanionPairingState) throws -> Void,
+        onRevoke: @escaping @MainActor @Sendable (CompanionPairingState) throws -> Void,
     ) {
         self.keyGenerator = keyGenerator
         self.now = now

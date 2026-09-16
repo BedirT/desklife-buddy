@@ -4,8 +4,7 @@ import PackageDescription
 let settings: [SwiftSetting] = [.defaultIsolation(MainActor.self)]
 
 let package = Package(
-    name: "Domain",
-    platforms: [.macOS(.v26)],
+    platforms: [.macOS(.v26), .iOS(.v18)],
     products: [
         .library(name: "Domain", targets: ["Domain"]),
     ],

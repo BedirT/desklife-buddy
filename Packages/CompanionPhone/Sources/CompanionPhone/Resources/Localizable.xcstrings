@@ -1,0 +1,236 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "phone.certainty.acknowledged": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Mac confirmed it."
+          }
+        }
+      }
+    },
+    "phone.certainty.local": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On this phone only — your Mac has not heard back yet."
+          }
+        }
+      }
+    },
+    "phone.certainty.remote": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sent — waiting for your Mac to confirm."
+          }
+        }
+      }
+    },
+    "phone.countdown.remaining_accessibility": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d minutes %d seconds left"
+          }
+        }
+      }
+    },
+    "phone.countdown.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Break in progress"
+          }
+        }
+      }
+    },
+    "phone.finish.already_moved": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Already moved"
+          }
+        }
+      }
+    },
+    "phone.finish.completed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finished the break"
+          }
+        }
+      }
+    },
+    "phone.finish.not_appropriate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not a good moment"
+          }
+        }
+      }
+    },
+    "phone.finish.pending": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting to send: %d"
+          }
+        }
+      }
+    },
+    "phone.finish.position_changed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changed position"
+          }
+        }
+      }
+    },
+    "phone.finish.skipped": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skipped"
+          }
+        }
+      }
+    },
+    "phone.finish.snoozed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snoozed"
+          }
+        }
+      }
+    },
+    "phone.finish.timer_finished": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timer ran out"
+          }
+        }
+      }
+    },
+    "phone.finish.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How did the break end?"
+          }
+        }
+      }
+    },
+    "phone.live_activity.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Break"
+          }
+        }
+      }
+    },
+    "phone.scan.camera_denied": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera access is off, so the code cannot be scanned. Turn it on in Settings to pair."
+          }
+        }
+      }
+    },
+    "phone.scan.error_invalid": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That code is not a DeskLife pairing code."
+          }
+        }
+      }
+    },
+    "phone.scan.error_version": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That code uses a newer format this version cannot read."
+          }
+        }
+      }
+    },
+    "phone.scan.error_storage": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The pairing key could not be saved on this phone."
+          }
+        }
+      }
+    },
+    "phone.scan.hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point the camera at the code on your Mac. The code carries only a pairing key — no break content."
+          }
+        }
+      }
+    },
+    "phone.scan.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Take this break with you"
+          }
+        }
+      }
+    },
+    "phone.waiting.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The countdown starts here when your Mac begins a break. Nothing leaves this phone except your finished-break note."
+          }
+        }
+      }
+    },
+    "phone.waiting.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paired with your Mac"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

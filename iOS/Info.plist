@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>DeskLife</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>NSCameraUsageDescription</key>
+	<string>DeskLife uses the camera only to scan the pairing code shown on your Mac. The code carries a pairing key — no photos are taken or kept.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>DeskLife finds your paired Mac on the local network to keep a break timer running when you step away. Only break-timer session bytes move between your two paired devices; nothing is sent to a server.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_desklife-cmp._tcp</string>
+	</array>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+</dict>
+</plist>

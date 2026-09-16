@@ -29,7 +29,7 @@ struct CompanionPairingSheetModelTests {
             keyGenerator: { box.next() },
             now: { Self.now },
             pairingIDGenerator: { Self.pairingID },
-            onPersist: { events.didPersist($0) },
+            onPersist: { try events.didPersist($0) },
             onRevoke: { events.didRevoke($0) },
         )
         return (model, box)

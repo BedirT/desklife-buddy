@@ -218,9 +218,11 @@ struct CompanionPairingSheetModelTests {
     }
 }
 
-/// Sink for the model's persistence side effects. A class (not captured
-/// locals) so `@Sendable` closures stay legal under Swift 6 isolation.
-private final class PairingEvents: @unchecked Sendable {
+/// Sink for the model's persistence side effects. MainActor-bound like the
+/// model and its `@MainActor @Sendable` closures: everything provably runs
+/// in one isolation domain, so no unchecked Sendable is needed.
+@MainActor
+private final class PairingEvents {
     var saved: [CompanionPairingState] = []
     var revoked: [CompanionPairingState] = []
     var shouldThrowOnPersist = false
@@ -246,14 +248,15 @@ private final class PairingEvents: @unchecked Sendable {
     }
 }
 
-private final class KeyBox: @unchecked Sendable {
+@MainActor
+private final class KeyBox {
     var keys: [Data]
     private let fallback: Data?
     private let keyLength: Int
     private(set) var issuedCount = 0
 
     /// The default key length reads the ceremony constant at the (MainActor)
-    /// call site, keeping the nonisolated methods below isolation-clean.
+    /// call site.
     init(keys: [Data], fallback: Data? = nil, keyLength: Int = CompanionPairingCeremony.keyLength) {
         self.keys = keys
         self.fallback = fallback

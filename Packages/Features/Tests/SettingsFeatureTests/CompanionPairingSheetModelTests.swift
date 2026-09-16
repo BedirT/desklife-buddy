@@ -216,15 +216,18 @@ private final class PairingEvents: @unchecked Sendable {
     }
 }
 
-/// Mutable key source for deterministic sheet-model tests.
 private final class KeyBox: @unchecked Sendable {
     var keys: [Data]
     private let fallback: Data?
+    private let keyLength: Int
     private(set) var issuedCount = 0
 
-    init(keys: [Data], fallback: Data? = nil) {
+    /// The default key length reads the ceremony constant at the (MainActor)
+    /// call site, keeping the nonisolated methods below isolation-clean.
+    init(keys: [Data], fallback: Data? = nil, keyLength: Int = CompanionPairingCeremony.keyLength) {
         self.keys = keys
         self.fallback = fallback
+        self.keyLength = keyLength
     }
 
     func next() -> Data {
@@ -232,7 +235,7 @@ private final class KeyBox: @unchecked Sendable {
         if !keys.isEmpty {
             return keys.removeFirst()
         }
-        return fallback ?? Data(repeating: 0xA5, count: CompanionPairingCeremony.keyLength)
+        return fallback ?? Data(repeating: 0xA5, count: keyLength)
     }
 
     struct KeyExhausted: Error {}

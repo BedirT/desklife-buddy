@@ -155,12 +155,13 @@ public extension CompanionPairingSheetModel {
     private static func previewBase(throwing: Bool) -> CompanionPairingSheetModel {
         let fixedID = UUID(uuidString: "11111111-2222-3333-4444-555555555555") ?? UUID()
         let fixedDate = Date(timeIntervalSince1970: 1_786_000_000)
+        let keyLength = CompanionPairingCeremony.keyLength
         return CompanionPairingSheetModel(
             keyGenerator: {
                 if throwing {
                     throw CompanionPreviewError.unavailable
                 }
-                return Data(repeating: 0xA5, count: CompanionPairingCeremony.keyLength)
+                return Data(repeating: 0xA5, count: keyLength)
             },
             now: { fixedDate },
             pairingIDGenerator: { fixedID },

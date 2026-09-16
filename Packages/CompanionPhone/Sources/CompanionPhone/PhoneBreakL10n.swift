@@ -64,6 +64,7 @@ public enum PhoneBreakL10n {
         "phone.live_activity.title",
         default: "Break",
     )
+    public static let retrySending = PhoneL10n.string("phone.finish.retry", default: "Try sending again")
 
     /// Localized finish-button title for one terminal claim.
     public static func claimTitle(_ claim: CompanionTerminalClaim) -> String {
@@ -75,6 +76,34 @@ public enum PhoneBreakL10n {
         case .positionChanged: PhoneL10n.string("phone.finish.position_changed", default: "Changed position")
         case .alreadyMoved: PhoneL10n.string("phone.finish.already_moved", default: "Already moved")
         case .timerFinished: PhoneL10n.string("phone.finish.timer_finished", default: "Timer ran out")
+        }
+    }
+
+    /// Accessibility label for the remaining countdown.
+    public static func remainingAccessibility(minutes: Int, seconds: Int) -> String {
+        PhoneL10n.format(
+            "phone.countdown.remaining_accessibility",
+            default: "%d minutes %d seconds left",
+            minutes,
+            seconds,
+        )
+    }
+
+    /// Accessibility description of one pairing failure.
+    public static func pairingErrorAccessibility(_ error: PhonePairingError) -> String {
+        switch error {
+        case .invalidQR: PhoneL10n.string(
+                "phone.scan.error_invalid",
+                default: "That code is not a DeskLife pairing code.",
+            )
+        case .unsupportedVersion: PhoneL10n.string(
+                "phone.scan.error_version",
+                default: "That code uses a newer format this version cannot read.",
+            )
+        case .storageFailed: PhoneL10n.string(
+                "phone.scan.error_storage",
+                default: "The pairing key could not be saved on this phone.",
+            )
         }
     }
 }

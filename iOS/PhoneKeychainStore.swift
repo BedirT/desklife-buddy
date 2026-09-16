@@ -28,7 +28,12 @@ public struct PhoneKeychainStore: PhoneKeyStoring {
         ]
         let status = SecItemAdd(query.merging(attributes) { _, new in new } as CFDictionary, nil)
         if status == errSecDuplicateItem {
-            let updateStatus = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+            // Update carries only the value: accessibility is create-only and
+            // the OS may reject it on update, which used to break key rotation.
+            let updateStatus = SecItemUpdate(
+                query as CFDictionary,
+                [kSecValueData as String: key] as CFDictionary,
+            )
             guard updateStatus == errSecSuccess else {
                 throw PhoneKeychainError.keychainFailure(updateStatus)
             }

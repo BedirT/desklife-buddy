@@ -1,6 +1,6 @@
 import Foundation
 
-#if canImport(ActivityKit)
+#if canImport(ActivityKit) && !os(macOS)
     import ActivityKit
 #endif
 
@@ -38,6 +38,6 @@ public struct BreakCountdownAttributes: Codable, Hashable, Sendable {
     }
 }
 
-#if canImport(ActivityKit)
+#if canImport(ActivityKit) && !os(macOS)
     extension BreakCountdownAttributes: ActivityAttributes {}
 #endif

@@ -31,6 +31,14 @@ public enum PhoneTransportError: Error, Equatable, Hashable, Sendable {
 public final class PhoneCompanionTransport: NSObject, CompanionTransport, Sendable {
     /// Codec-encoded session bytes arrived from a peer.
     public var onReceive: (@Sendable (Data) -> Void)?
+    /// Connectivity changed: true while at least one peer is connected.
+    /// Drives outbox retry — the finished pane flushes again on reconnect.
+    public var onConnectionChanged: (@Sendable (Bool) -> Void)?
+    /// True while at least one peer is connected. Read for Live Activity
+    /// sync and retry decisions at the call site.
+    public var isConnected: Bool {
+        session?.connectedPeers.isEmpty == false
+    }
 
     private let peerID = MCPeerID(displayName: "desklife-phone")
     private var session: MCSession?
@@ -82,7 +90,12 @@ extension PhoneCompanionTransport: MCSessionDelegate {
         _ session: MCSession,
         peer peerID: MCPeerID,
         didChangeState state: MCSessionState,
-    ) {}
+    ) {
+        let connected = !session.connectedPeers.isEmpty
+        Task { @MainActor [weak self] in
+            self?.onConnectionChanged?(connected)
+        }
+    }
 
     public nonisolated func session(
         _ session: MCSession,

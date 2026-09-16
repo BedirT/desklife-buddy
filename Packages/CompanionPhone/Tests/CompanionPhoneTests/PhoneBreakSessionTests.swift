@@ -16,8 +16,26 @@ struct PhoneBreakSessionTests {
     private static let keyA = Data(repeating: 0xA5, count: CompanionPairingCeremony.keyLength)
     private static let now = Date(timeIntervalSince1970: 1_786_000_000)
 
-    private func makeModel() -> (PhoneBreakSession, InMemoryPhoneKeyStore) {
-        let store = InMemoryPhoneKeyStore()
+    /// Reference-shared wrapper: the in-memory key store is a struct, so a
+    /// bare copy would hide the session's saves from the test's handle.
+    @MainActor private final class SharedKeyStore: PhoneKeyStoring {
+        var backing = InMemoryPhoneKeyStore()
+
+        func save(_ key: Data, pairingID: UUID) throws {
+            try backing.save(key, pairingID: pairingID)
+        }
+
+        func load(pairingID: UUID) throws -> Data {
+            try backing.load(pairingID: pairingID)
+        }
+
+        func delete(pairingID: UUID) throws {
+            try backing.delete(pairingID: pairingID)
+        }
+    }
+
+    private func makeModel() -> (PhoneBreakSession, SharedKeyStore) {
+        let store = SharedKeyStore()
         let model = PhoneBreakSession(
             deviceID: Self.phoneID,
             keyStore: store,
@@ -127,7 +145,7 @@ struct PhoneBreakSessionTests {
     }
 
     @Test("A failed flush keeps every entry in order for retry")
-    func outboxKeepsOrderAcrossFailedFlush() throws {
+    func outboxKeepsOrderAcrossFailedFlush() async throws {
         let (model, _) = makeModel()
         try pair(model)
         try model.receive(countdownData())
@@ -135,12 +153,12 @@ struct PhoneBreakSessionTests {
 
         let failing = InMemoryFakeTransport()
         failing.failNextSends = 10
-        let blocked = await model.flush(transport: failing)
+        let blocked = try await model.flush(transport: failing)
         #expect(blocked.delivered == 0)
         #expect(blocked.remaining == 1)
         #expect(model.pendingSends == 1)
 
-        let retry = await model.flush(transport: InMemoryFakeTransport())
+        let retry = try await model.flush(transport: InMemoryFakeTransport())
         #expect(retry.delivered == 1)
         #expect(retry.remaining == 0)
         #expect(model.pendingSends == 0)

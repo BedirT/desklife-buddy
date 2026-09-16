@@ -91,6 +91,16 @@
         }
       }
     },
+    "phone.finish.retry": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try sending again"
+          }
+        }
+      }
+    },
     "phone.finish.position_changed": {
       "localizations": {
         "en": {

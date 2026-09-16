@@ -10,6 +10,8 @@ import SwiftUI
 struct PhoneSessionView: View {
     @Bindable var session: PhoneBreakSession
     @State private var cameraDenied = false
+    /// User-triggered outbox retry for offline finishes.
+    var onRetry: () -> Void = {}
 
     var body: some View {
         switch session.phase {
@@ -112,6 +114,8 @@ struct PhoneSessionView: View {
                 ))
                 .font(.footnote)
                 .accessibilityIdentifier("phone.pending")
+                Button(PhoneBreakL10n.retrySending, action: onRetry)
+                    .accessibilityIdentifier("phone.retry")
             }
         }
         .padding()
@@ -124,6 +128,10 @@ struct PhoneSessionView: View {
         case .acknowledged: PhoneBreakL10n.certaintyAcknowledged
         }
     }
+}
+
+#Preview("Unpaired") {
+    PhoneSessionView(session: .previewUnpaired())
 }
 
 #Preview("Paired") {

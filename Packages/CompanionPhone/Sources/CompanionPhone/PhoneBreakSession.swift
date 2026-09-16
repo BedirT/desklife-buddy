@@ -9,11 +9,26 @@ import Observation
 /// `CompanionSessionReducer` for observations, `CompanionPortableDeadline`
 /// for the monotonic countdown, `CompanionCertainty` for truthful pending
 /// states, `CompanionTerminalReconciliation` for the exactly-one-fact preview,
-/// and `CompanionOutbox` for FIFO delivery. Time, IDs, key storage, and the
-/// sender enter through injected closures and seams, so tested logic never
-/// touches the clock, randomness, UUIDs, the Keychain, or the network.
+/// and `CompanionOutbox` for FIFO delivery. Time, IDs, key storage, pending
+/// storage, and the sender enter through injected closures and seams, so
+/// tested logic never touches the clock, randomness, UUIDs, the Keychain,
+/// shared defaults, or the network.
+///
+/// Delivery is at-least-once with Mac-side dedup: the unsent intent persists
+/// in `PhonePendingStore`, so kill between `finish` and `flush` loses
+/// nothing; replays carry the same message ID the reducer already merged.
+/// `finish` is idempotent and the terminal deadline latches, so the wire
+/// carries exactly one intent per pairing session.
+///
+/// Trust boundary (explicit): transport bytes are unauthenticated on the
+/// wire, so `receive` only runs while paired, QR keys must be full-length,
+/// and wire countdowns are range-clamped. Matching Mac-side envelope
+/// authentication does not exist — see the Story B decision log.
 @Observable
 public final class PhoneBreakSession {
+    /// Upper bound for wire countdowns: a day. Anything larger is corrupt.
+    public static let maximumTotalTicks: TimeInterval = 86400
+
     /// Phone flow phases: unpaired, paired-and-waiting, counting down, finished.
     public enum Phase: Equatable, Sendable {
         case unpaired
@@ -34,6 +49,7 @@ public final class PhoneBreakSession {
     public private(set) var lastSettlement: CompanionTerminalSettlement?
     public private(set) var lastIntentMessageID: UUID?
 
+    private var deviceID: UUID
     private var localElapsedTicks: TimeInterval = 0
     private var knownRevision: UInt64?
     private var session = CompanionSessionState()
@@ -42,21 +58,32 @@ public final class PhoneBreakSession {
     private var nextSequence: UInt64 = 1
     private var nextCounter: UInt64 = 1
 
-    private let deviceID: UUID
     private var keyStore: any PhoneKeyStoring
+    private var pendingStore: any PhonePendingStore
     private let now: @MainActor @Sendable () -> Date
     private let uuid: @MainActor @Sendable () -> UUID
 
     public init(
         deviceID: UUID = UUID(),
         keyStore: any PhoneKeyStoring = InMemoryPhoneKeyStore(),
+        pendingStore: any PhonePendingStore = InMemoryPendingStore(),
         now: @escaping @MainActor @Sendable () -> Date = { Date() },
         uuid: @escaping @MainActor @Sendable () -> UUID = { UUID() },
     ) {
         self.deviceID = deviceID
         self.keyStore = keyStore
+        self.pendingStore = pendingStore
         self.now = now
         self.uuid = uuid
+        restorePending()
+    }
+
+    /// Whether the terminal claim already latched: further `finish` calls are no-ops.
+    public var isFinished: Bool {
+        if case .finished = phase {
+            return true
+        }
+        return false
     }
 
     /// Ticks left on the portable countdown, derived from this phone's own
@@ -85,9 +112,12 @@ public final class PhoneBreakSession {
         )
     }
 
-    /// Scans Mac QR text: decodes the ceremony payload, stores the key, pairs.
-    /// Unknown versions and undecodable text surface as `pairingError` and
-    /// never half-pair: a failed scan keeps the previous pairing untouched.
+    /// Scans Mac QR text: decodes the ceremony payload, checks the key
+    /// length, stores the key, pairs. Unknown versions, undecodable text, and
+    /// short keys surface as `pairingError` and never half-pair: a failed
+    /// scan keeps the previous pairing untouched. A different pairing ID
+    /// resets the session (including durable pending state) and lands on
+    /// `.paired`; re-scanning the live pairing changes nothing.
     public func scan(_ text: String) {
         let payload: CompanionQRPayload
         do {
@@ -102,6 +132,10 @@ public final class PhoneBreakSession {
             pairingError = .invalidQR
             return
         }
+        guard payload.symmetricKey.count == CompanionPairingCeremony.keyLength else {
+            pairingError = .invalidQR
+            return
+        }
         do {
             var store = keyStore
             try store.save(payload.symmetricKey, pairingID: payload.pairingID)
@@ -111,21 +145,37 @@ public final class PhoneBreakSession {
             return
         }
         if pairingID != payload.pairingID {
+            do {
+                var store = pendingStore
+                try store.clear()
+                pendingStore = store
+            } catch {
+                pairingError = .storageFailed
+                return
+            }
             resetSession()
+            phase = .paired
+        } else if phase == .unpaired {
+            phase = .paired
         }
         pairingID = payload.pairingID
         generation = payload.generation
         pairingError = nil
-        if phase == .unpaired {
-            phase = .paired
-        }
     }
 
-    /// Merges one transport payload: countdown snapshots project to the
-    /// portable deadline (stale revisions ignored), receipts ack the matching
-    /// intent, and undecodable bytes are dropped without moving state.
+    /// Merges one transport payload. Gated on paired state: pre-pair bytes
+    /// (spoofed or stray) are dropped without seeding revision or deadline.
+    /// Countdown snapshots project to the portable deadline — strictly-greater
+    /// revisions reset the monotonic elapsed count, equal revisions preserve
+    /// it, and post-finish snapshots never overwrite the latched deadline.
+    /// Receipts ack only the matching intent. Undecodable bytes and
+    /// out-of-range countdowns are dropped without moving state.
     public func receive(_ data: Data) {
         guard let envelope = try? CompanionSessionCodec.decode(data) else {
+            droppedEnvelopes += 1
+            return
+        }
+        guard pairingID != nil else {
             droppedEnvelopes += 1
             return
         }
@@ -136,7 +186,23 @@ public final class PhoneBreakSession {
                 droppedEnvelopes += 1
                 return
             }
-            guard knownRevision == nil || snapshot.originRevision >= knownRevision! else { return }
+            guard snapshot.totalTicks > 0, snapshot.totalTicks <= Self.maximumTotalTicks else {
+                droppedEnvelopes += 1
+                return
+            }
+            guard !isFinished else { return }
+            if let known = knownRevision {
+                guard snapshot.originRevision >= known else { return }
+                if snapshot.originRevision == known {
+                    deadline = CompanionPortableDeadline(
+                        totalTicks: snapshot.totalTicks,
+                        originWall: snapshot.originWall,
+                        originRevision: snapshot.originRevision,
+                    )
+                    phaseHint = snapshot.phaseHint
+                    return
+                }
+            }
             knownRevision = snapshot.originRevision
             deadline = CompanionPortableDeadline(
                 totalTicks: snapshot.totalTicks,
@@ -153,9 +219,15 @@ public final class PhoneBreakSession {
                 droppedEnvelopes += 1
                 return
             }
-            if receipt.messageID == lastIntentMessageID {
-                certainty = .acknowledged
+            guard receipt.messageID == lastIntentMessageID else { return }
+            do {
+                var store = pendingStore
+                try store.clear()
+                pendingStore = store
+            } catch {
+                return
             }
+            certainty = .acknowledged
         case .phase, .intent:
             break
         }
@@ -169,10 +241,12 @@ public final class PhoneBreakSession {
     }
 
     /// Settles the break with one terminal claim: reconciles over known
-    /// actions (one winner, losers audit-only) and enqueues exactly one
-    /// `.intent` envelope. A no-op while unpaired.
+    /// actions (one winner, losers audit-only), enqueues exactly one
+    /// `.intent` envelope, and persists it for kill-safe redelivery. A no-op
+    /// while unpaired, and idempotent once finished: the wire carries exactly
+    /// one intent per pairing session.
     public func finish(_ claim: CompanionTerminalClaim) throws {
-        guard pairingID != nil else { return }
+        guard pairingID != nil, !isFinished else { return }
         let action = CompanionTerminalAction(
             id: uuid(),
             deviceID: deviceID.uuidString,
@@ -194,6 +268,7 @@ public final class PhoneBreakSession {
         nextSequence += 1
         lastIntentMessageID = envelope.messageID
         try outbox.enqueue(envelope)
+        try persistPending(claim: claim, envelope: envelope)
         pendingSends = outbox.count
         certainty = .remotePending
         phase = .finished(claim)
@@ -201,10 +276,69 @@ public final class PhoneBreakSession {
 
     /// Flushes the outbox head-first through the transport. A failed flush
     /// keeps every entry in order for retry; nothing is lost or reordered.
-    public func flush(transport: some CompanionTransport) async -> CompanionFlushResult {
-        let result = await outbox.flush(transport: transport)
+    /// When the queue drains, the durable snapshot clears — and if that clear
+    /// fails, the intent re-queues in memory and the failure throws, so a
+    /// delivered-but-uncleared intent replays (Mac dedups) instead of
+    /// vanishing.
+    public func flush(transport: some CompanionTransport) async throws -> CompanionFlushResult {
+        var pending = outbox
+        let result = await pending.flush(transport: transport)
+        outbox = pending
+        if outbox.isEmpty, (try? pendingStore.load()) != nil {
+            do {
+                var store = pendingStore
+                try store.clear()
+                pendingStore = store
+            } catch {
+                if let snapshot = try? pendingStore.load() {
+                    outbox.enqueue(snapshot.intentEnvelope, to: snapshot.recipientDeviceID)
+                }
+                pendingSends = outbox.count
+                throw error
+            }
+        }
         pendingSends = outbox.count
         return result
+    }
+
+    private func persistPending(claim: CompanionTerminalClaim, envelope: CompanionSessionEnvelope) throws {
+        guard let pairingID, let generation else { return }
+        var store = pendingStore
+        try store.save(PhonePendingSnapshot(
+            pairingID: pairingID,
+            generation: generation,
+            deviceID: deviceID,
+            knownRevision: knownRevision,
+            claimRaw: claim.rawValue,
+            intentMessageID: envelope.messageID,
+            intentEnvelope: CompanionSessionCodec.encode(envelope),
+            recipientDeviceID: envelope.recipientDeviceID,
+            nextSequence: nextSequence,
+            nextCounter: nextCounter,
+        ))
+        pendingStore = store
+    }
+
+    private func restorePending() {
+        guard let snapshot = try? pendingStore.load() else { return }
+        guard let claim = CompanionTerminalClaim(rawValue: snapshot.claimRaw) else { return }
+        deviceID = snapshot.deviceID
+        pairingID = snapshot.pairingID
+        generation = snapshot.generation
+        knownRevision = snapshot.knownRevision
+        nextSequence = snapshot.nextSequence
+        nextCounter = snapshot.nextCounter
+        outbox.enqueue(snapshot.intentEnvelope, to: snapshot.recipientDeviceID)
+        pendingSends = outbox.count
+        lastIntentMessageID = snapshot.intentMessageID
+        if let envelope = try? CompanionSessionCodec.decode(snapshot.intentEnvelope),
+           let action = try? TerminalIntentPayload.decode(envelope.payload).toAction()
+        {
+            knownActions = [action]
+            lastSettlement = CompanionTerminalReconciliation.reconcile(knownActions)
+        }
+        certainty = .remotePending
+        phase = .finished(claim)
     }
 
     private func resetSession() {

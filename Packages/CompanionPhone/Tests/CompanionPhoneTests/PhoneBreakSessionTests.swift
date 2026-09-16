@@ -43,7 +43,7 @@ struct PhoneBreakSessionTests {
             senderSequence: sequence,
             issuedAt: Self.now,
             kind: .countdown,
-            payload: try snapshot.encode(),
+            payload: snapshot.encode(),
         )
         return try CompanionSessionCodec.encode(envelope)
     }
@@ -87,7 +87,7 @@ struct PhoneBreakSessionTests {
     func countdownIsMonotonicAndClamped() throws {
         let (model, _) = makeModel()
         try pair(model)
-        model.receive(try countdownData())
+        try model.receive(countdownData())
 
         #expect(model.phase == .countingDown)
         #expect(model.remaining == 300)
@@ -103,9 +103,9 @@ struct PhoneBreakSessionTests {
     func staleRevisionIgnored() throws {
         let (model, _) = makeModel()
         try pair(model)
-        model.receive(try countdownData(originRevision: 7, sequence: 1))
+        try model.receive(countdownData(originRevision: 7, sequence: 1))
         model.advance(by: 60)
-        model.receive(try countdownData(originRevision: 5, sequence: 2))
+        try model.receive(countdownData(originRevision: 5, sequence: 2))
 
         #expect(model.remaining == 240)
     }
@@ -114,7 +114,7 @@ struct PhoneBreakSessionTests {
     func reconcileYieldsExactlyOneFact() throws {
         let (model, _) = makeModel()
         try pair(model)
-        model.receive(try countdownData())
+        try model.receive(countdownData())
 
         try model.finish(.completed)
 
@@ -130,7 +130,7 @@ struct PhoneBreakSessionTests {
     func outboxKeepsOrderAcrossFailedFlush() throws {
         let (model, _) = makeModel()
         try pair(model)
-        model.receive(try countdownData())
+        try model.receive(countdownData())
         try model.finish(.completed)
 
         let failing = InMemoryFakeTransport()
@@ -151,7 +151,7 @@ struct PhoneBreakSessionTests {
         let (model, _) = makeModel()
         try pair(model)
         #expect(model.certainty == .localPending)
-        model.receive(try countdownData())
+        try model.receive(countdownData())
         #expect(model.certainty == .localPending)
         try model.finish(.skipped)
         #expect(model.certainty == .remotePending)
@@ -162,9 +162,9 @@ struct PhoneBreakSessionTests {
             senderSequence: 9,
             issuedAt: Self.now,
             kind: .receipt,
-            payload: try PhoneReceiptPayload(messageID: UUID()).encode(),
+            payload: PhoneReceiptPayload(messageID: UUID()).encode(),
         )
-        model.receive(try CompanionSessionCodec.encode(stranger))
+        try model.receive(CompanionSessionCodec.encode(stranger))
         #expect(model.certainty == .remotePending)
 
         let ackedID = try #require(model.lastIntentMessageID)
@@ -173,9 +173,9 @@ struct PhoneBreakSessionTests {
             senderSequence: 10,
             issuedAt: Self.now,
             kind: .receipt,
-            payload: try PhoneReceiptPayload(messageID: ackedID).encode(),
+            payload: PhoneReceiptPayload(messageID: ackedID).encode(),
         )
-        model.receive(try CompanionSessionCodec.encode(ack))
+        try model.receive(CompanionSessionCodec.encode(ack))
         #expect(model.certainty == .acknowledged)
         #expect(model.certainty.claimsReceipt)
     }

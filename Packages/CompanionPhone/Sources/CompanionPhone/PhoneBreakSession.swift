@@ -189,7 +189,7 @@ public final class PhoneBreakSession {
             senderSequence: nextSequence,
             issuedAt: now(),
             kind: .intent,
-            payload: try TerminalIntentPayload(action: action).encode(),
+            payload: TerminalIntentPayload(action: action).encode(),
         )
         nextSequence += 1
         lastIntentMessageID = envelope.messageID

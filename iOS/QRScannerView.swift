@@ -114,9 +114,9 @@ final class ScannerViewController: UIViewController, AVCaptureMetadataOutputObje
             let code = (metadataObjects.first as? AVMetadataMachineReadableCodeObject)?.stringValue
         else { return }
         Task { @MainActor [weak self] in
-            guard let self, code != self.lastFiredCode else { return }
-            self.lastFiredCode = code
-            self.coordinator.onCode(code)
+            guard let self, code != lastFiredCode else { return }
+            lastFiredCode = code
+            coordinator.onCode(code)
         }
     }
 }

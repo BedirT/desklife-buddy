@@ -51,6 +51,7 @@ public struct PortableCountdownSnapshot: Codable, Hashable, Sendable {
         return try decoder.decode(PortableCountdownSnapshot.self, from: data)
     }
 }
+
 /// Wire errors the phone refuses to default past.
 public enum PhoneWireError: Error, Equatable, Hashable, Sendable {
     /// A terminal intent carrying a claim outside the closed set.
@@ -71,11 +72,11 @@ public struct TerminalIntentPayload: Codable, Hashable, Sendable {
     public let originRevision: UInt64
 
     public init(action: CompanionTerminalAction) {
-        self.actionID = action.id
-        self.deviceID = action.deviceID
-        self.counter = action.counter
-        self.claimRaw = action.claim.rawValue
-        self.originRevision = action.originRevision
+        actionID = action.id
+        deviceID = action.deviceID
+        counter = action.counter
+        claimRaw = action.claim.rawValue
+        originRevision = action.originRevision
     }
 
     /// Builds the action this payload carries, refusing open claims.

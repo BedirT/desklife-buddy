@@ -37,7 +37,7 @@ public final class PhoneCompanionTransport: NSObject, CompanionTransport, Sendab
     private var browser: MCNearbyServiceBrowser?
     private var advertiser: MCNearbyServiceAdvertiser?
 
-    public override init() {
+    override public init() {
         super.init()
     }
 
@@ -78,13 +78,13 @@ public final class PhoneCompanionTransport: NSObject, CompanionTransport, Sendab
 }
 
 extension PhoneCompanionTransport: MCSessionDelegate {
-    nonisolated public func session(
+    public nonisolated func session(
         _ session: MCSession,
         peer peerID: MCPeerID,
         didChangeState state: MCSessionState,
     ) {}
 
-    nonisolated public func session(
+    public nonisolated func session(
         _ session: MCSession,
         didReceive data: Data,
         fromPeer peerID: MCPeerID,
@@ -94,21 +94,21 @@ extension PhoneCompanionTransport: MCSessionDelegate {
         }
     }
 
-    nonisolated public func session(
+    public nonisolated func session(
         _ session: MCSession,
         didReceive stream: InputStream,
         withName streamName: String,
         fromPeer peerID: MCPeerID,
     ) {}
 
-    nonisolated public func session(
+    public nonisolated func session(
         _ session: MCSession,
         didStartReceivingResourceWithName resourceName: String,
         fromPeer peerID: MCPeerID,
         with progress: Progress,
     ) {}
 
-    nonisolated public func session(
+    public nonisolated func session(
         _ session: MCSession,
         didFinishReceivingResourceWithName resourceName: String,
         fromPeer peerID: MCPeerID,
@@ -118,7 +118,7 @@ extension PhoneCompanionTransport: MCSessionDelegate {
 }
 
 extension PhoneCompanionTransport: MCNearbyServiceBrowserDelegate {
-    nonisolated public func browser(
+    public nonisolated func browser(
         _ browser: MCNearbyServiceBrowser,
         foundPeer peerID: MCPeerID,
         withDiscoveryInfo info: [String: String]?,
@@ -129,11 +129,11 @@ extension PhoneCompanionTransport: MCNearbyServiceBrowserDelegate {
         }
     }
 
-    nonisolated public func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {}
+    public nonisolated func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {}
 }
 
 extension PhoneCompanionTransport: MCNearbyServiceAdvertiserDelegate {
-    nonisolated public func advertiser(
+    public nonisolated func advertiser(
         _ advertiser: MCNearbyServiceAdvertiser,
         didReceiveInvitationFromPeer peerID: MCPeerID,
         withContext context: Data?,

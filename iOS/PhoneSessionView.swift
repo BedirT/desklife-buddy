@@ -22,7 +22,7 @@ struct PhoneSessionView: View {
         case .countingDown:
             countdownPane
                 .accessibilityIdentifier("phone.countdownView")
-        case .finished(let claim):
+        case let .finished(claim):
             resultPane(claim: claim)
                 .accessibilityIdentifier("phone.resultView")
         }

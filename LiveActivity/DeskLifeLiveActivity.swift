@@ -1,6 +1,6 @@
-import Foundation
 import ActivityKit
 import CompanionPhone
+import Foundation
 import SwiftUI
 import WidgetKit
 
@@ -54,7 +54,6 @@ struct DeskLifeLiveActivity: Widget {
         }
     }
 }
-
 
 #Preview("Live Activity", as: .content, using: BreakCountdownAttributes(
     pairingID: UUID(uuidString: "11111111-2222-3333-4444-555555555555")!,

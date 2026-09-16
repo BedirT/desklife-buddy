@@ -6,6 +6,9 @@ import SettingsFeature
 @Observable
 final class SettingsSceneModel {
     let featureModel: SettingsFeatureModel
+    /// Live pairing sheet model: ceremony transitions persist the QR-shared
+    /// key to the Keychain. Nil wherever the seam is unwired (previews).
+    let companionPairingModel: CompanionPairingSheetModel?
     private(set) var integrationsRuntime: SettingsIntegrationsRuntime
     private(set) var trustCenterSnapshot: TrustCenterSnapshot
     /// Trust Center rules rows over the R1 proposal store. Nil (not empty)
@@ -23,8 +26,10 @@ final class SettingsSceneModel {
         trustCenter: SettingsTrustCenterAppRuntime,
         excludedApplications: SettingsExcludedApplicationsAppAdapter = .init(),
         ruleManagement: RuleManagementModel? = nil,
+        companionPairing: CompanionPairingSheetModel? = nil,
     ) {
         self.featureModel = featureModel
+        companionPairingModel = companionPairing
         self.integrations = integrations
         self.trustCenter = trustCenter
         self.ruleManagement = ruleManagement
@@ -39,8 +44,10 @@ final class SettingsSceneModel {
         previewModel: SettingsFeatureModel,
         integrationsRuntime: SettingsIntegrationsRuntime = .unavailable,
         trustCenterSnapshot: TrustCenterSnapshot = .preview(.empty),
+        companionPairing: CompanionPairingSheetModel? = nil,
     ) {
         featureModel = previewModel
+        companionPairingModel = companionPairing
         integrations = nil
         trustCenter = nil
         ruleManagement = nil
@@ -110,22 +117,22 @@ final class SettingsSceneModel {
     }
 
     var trustCenterRulesActions: TrustCenterRulesActions {
-        guard let ruleManagement else { return .none }
+        guard ruleManagement != nil else { return .none }
         return TrustCenterRulesActions(
             decide: { [weak self] ruleKey, decision in
-                guard let self, let model = self.ruleManagement else { return }
+                guard let self, let model = ruleManagement else { return }
                 _ = try? await model.decide(ruleKey: ruleKey, decision: decision)
-                await self.publishTrustCenterRules()
+                await publishTrustCenterRules()
             },
             undo: { [weak self] ruleKey in
-                guard let self, let model = self.ruleManagement else { return }
+                guard let self, let model = ruleManagement else { return }
                 _ = try? await model.undo(ruleKey: ruleKey)
-                await self.publishTrustCenterRules()
+                await publishTrustCenterRules()
             },
             reset: { [weak self] ruleKey in
-                guard let self, let model = self.ruleManagement else { return }
+                guard let self, let model = ruleManagement else { return }
                 try? await model.reset(ruleKey: ruleKey)
-                await self.publishTrustCenterRules()
+                await publishTrustCenterRules()
             },
         )
     }
@@ -237,11 +244,27 @@ extension AppDelegate {
             } else {
                 nil
             }
+            // Live ceremony backing for the pairing QR-sheet: transitions mint
+            // keys via the Keychain store and persist them there. No new
+            // identity strings: the service string lives in
+            // CompanionKeychainStore from wave 1.
+            let companionPairing = CompanionPairingSheetModel(
+                keyGenerator: { try CompanionKeychainStore.makeKey() },
+                now: { Date() },
+                pairingIDGenerator: { UUID() },
+                onPersist: { state in
+                    try CompanionKeychainStore.saveKey(state.key, pairingID: state.pairingID)
+                },
+                onRevoke: { state in
+                    try CompanionKeychainStore.deleteKey(pairingID: state.pairingID)
+                },
+            )
             return SettingsSceneModel(
                 featureModel: featureModel,
                 integrations: settingsIntegrationsRuntime,
                 trustCenter: settingsTrustCenterRuntime,
                 ruleManagement: ruleManagement,
+                companionPairing: companionPairing,
             )
         } catch {
             preconditionFailure("Generated Settings schedule catalog is invalid: \(error)")

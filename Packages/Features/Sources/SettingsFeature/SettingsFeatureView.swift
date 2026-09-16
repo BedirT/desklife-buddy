@@ -19,6 +19,9 @@ public struct SettingsFeatureView: View {
     private let excludedApplicationPicker: SettingsExcludedApplicationPicker?
     private let integrationsRuntime: SettingsIntegrationsRuntime
     private let integrationsActions: SettingsIntegrationsActions
+    /// Live pairing sheet model from the App composition root. Nil hides the
+    /// pairing row wherever the seam is unwired.
+    private let companionPairingModel: CompanionPairingSheetModel?
     private let trustCenterSnapshot: TrustCenterSnapshot
     private let trustCenterActions: TrustCenterActions
     private let trustCenterRulesSnapshot: TrustCenterRulesSnapshot?
@@ -35,6 +38,7 @@ public struct SettingsFeatureView: View {
         excludedApplicationPicker: SettingsExcludedApplicationPicker? = nil,
         integrationsRuntime: SettingsIntegrationsRuntime = .unavailable,
         integrationsActions: SettingsIntegrationsActions = .none,
+        companionPairingModel: CompanionPairingSheetModel? = nil,
         trustCenterSnapshot: TrustCenterSnapshot? = nil,
         trustCenterActions: TrustCenterActions = .none,
         trustCenterRulesSnapshot: TrustCenterRulesSnapshot? = nil,
@@ -50,6 +54,7 @@ public struct SettingsFeatureView: View {
         self.excludedApplicationPicker = excludedApplicationPicker
         self.integrationsRuntime = integrationsRuntime
         self.integrationsActions = integrationsActions
+        self.companionPairingModel = companionPairingModel
         self.trustCenterSnapshot = trustCenterSnapshot ?? TrustCenterSnapshot.preview(.empty)
         self.trustCenterActions = trustCenterActions
         self.trustCenterRulesSnapshot = trustCenterRulesSnapshot
@@ -238,6 +243,7 @@ public struct SettingsFeatureView: View {
                         runtime: integrationsRuntime,
                         actions: integrationsActions,
                         increaseContrast: increaseContrast,
+                        companionPairing: companionPairingModel,
                     )
                 case .ready where model.selectedSection == .sensingAndIntelligence:
                     TrustCenterView(

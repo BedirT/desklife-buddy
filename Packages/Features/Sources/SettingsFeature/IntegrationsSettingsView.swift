@@ -8,6 +8,10 @@ struct IntegrationsSettingsView: View {
     let runtime: SettingsIntegrationsRuntime
     let actions: SettingsIntegrationsActions
     let increaseContrast: Bool
+    /// Live pairing sheet model from the App composition root. Nil keeps the
+    /// row hidden wherever the seam is unwired (previews without a model).
+    let companionPairing: CompanionPairingSheetModel?
+    @State private var isPairingPresented = false
 
     var body: some View {
         ScrollView {
@@ -35,6 +39,15 @@ struct IntegrationsSettingsView: View {
                     notificationRow
                     Divider().overlay(Color.dsSeparator)
                     launchAtLoginRow
+                    if companionPairing != nil {
+                        Divider().overlay(Color.dsSeparator)
+                        pairingRow
+                    }
+                }
+            }
+            .sheet(isPresented: $isPairingPresented) {
+                if let companionPairing {
+                    CompanionPairingSheet(model: companionPairing)
                 }
             }
         }
@@ -167,6 +180,22 @@ struct IntegrationsSettingsView: View {
         }
     }
 
+    private var pairingRow: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.md) {
+            IntegrationInformationLabel(
+                title: CompanionPairingSheetL10n.rowTitle,
+                detail: CompanionPairingSheetL10n.rowDetail,
+                systemImage: "iphone",
+            )
+            Button(CompanionPairingSheetL10n.rowAction) {
+                isPairingPresented = true
+            }
+            .accessibilityIdentifier("settings.integrations.pairing.show")
+            .padding(.leading, SettingsPageLayout.rowIconWidth + SettingsPageLayout.rowGap)
+        }
+        .accessibilityIdentifier("settings.integrations.pairing")
+    }
+
     private var unavailableSection: some View {
         VStack(alignment: .leading, spacing: DSSpacing.md) {
             sectionHeading(
@@ -273,6 +302,7 @@ private struct IntegrationInformationLabel: View {
         ),
         actions: .none,
         increaseContrast: false,
+        companionPairing: .preview(.showingCode),
     )
     .frame(width: 700, height: 620)
 }

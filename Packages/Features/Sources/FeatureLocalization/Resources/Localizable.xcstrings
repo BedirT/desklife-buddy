@@ -1881,6 +1881,206 @@
         }
       }
     },
+    "settings.companion.row.action": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show pairing code…"
+          }
+        }
+      }
+    },
+    "settings.companion.row.detail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show a pairing code on this Mac, then scan it with the phone to keep a break timer running when you step away."
+          }
+        }
+      }
+    },
+    "settings.companion.row.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pair iPhone"
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.close": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.code_instructions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan this code with the phone to pair. The code carries one pairing key and nothing else."
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.code_regenerate_note": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If the code will not scan, generate a new one. The old code stops working right away."
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.done": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.failed_message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong while preparing the code. Try again."
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.failed_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pairing code unavailable"
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.generate_fresh": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pair a new phone"
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.loading": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing a pairing code…"
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.paired_message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac and the phone share a pairing key. Only break-timer session bytes move between the two paired devices, and unpaired devices are ignored."
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.paired_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Phone paired"
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.qr_code_label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pairing QR code"
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.regenerate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate a new code"
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.retry": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pair iPhone"
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.unpaired_message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac no longer shares a pairing key with the phone."
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.unpaired_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unpaired"
+          }
+        }
+      }
+    },
+    "settings.companion.sheet.unpair": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unpair"
+          }
+        }
+      }
+    },
     "settings.accessibility.background_brightness": {
       "localizations": {
         "en": {

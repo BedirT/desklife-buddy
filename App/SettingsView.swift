@@ -21,8 +21,8 @@ struct SettingsView: View {
             excludedApplicationPicker: sceneModel.excludedApplicationPicker,
             integrationsRuntime: sceneModel.integrationsRuntime,
             integrationsActions: sceneModel.integrationsActions,
+            companionPairingModel: sceneModel.companionPairingModel,
             trustCenterSnapshot: sceneModel.trustCenterSnapshot,
-            trustCenterActions: sceneModel.trustCenterActions,
             trustCenterRulesSnapshot: sceneModel.trustCenterRulesSnapshot,
             trustCenterRulesActions: sceneModel.trustCenterRulesActions,
         )

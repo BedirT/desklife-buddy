@@ -30,7 +30,7 @@ struct CompanionPairingSheetModelTests {
             now: { Self.now },
             pairingIDGenerator: { Self.pairingID },
             onPersist: { try events.didPersist($0) },
-            onRevoke: { events.didRevoke($0) },
+            onRevoke: { try events.didRevoke($0) },
         )
         return (model, box)
     }

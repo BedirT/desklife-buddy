@@ -70,3 +70,10 @@ physical Mac+iPhone+Watch proof wait for explicit owner approval with a ready ha
   their hit lines and tripping the line-anchored guard — so the format was reverted
   on all non-story files. Story scope stays 1 edited + 5 new Domain files (format
   clean) + this plan. Format-vs-guard anchoring is a repo-level follow-up.
+- 2026-09-16: Owner decisions (issue #5 finish): iPhone target approved as the
+  next story (needs Team ID, bundle-ID prefix, App Group name, Live Activity
+  confirm); Watch stays forwarding-only, no watchOS app; owner will run the
+  hardware pass from a checklist. Finding: no pairing trigger exists yet in App
+  (ceremony + keychain landed, QR sheet is a later story) — end-to-end transport
+  proof needs a small Mac QR-sheet story first, then the approved iPhone target,
+  then hardware runs. Protocol PR #73 merges now; #5 stays open.

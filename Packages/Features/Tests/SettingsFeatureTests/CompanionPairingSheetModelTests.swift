@@ -193,6 +193,29 @@ struct CompanionPairingSheetModelTests {
         #expect(model.qrText == firstQR)
         #expect(try CompanionQRPayload.decode(#require(model.qrText)).symmetricKey == Self.keyA)
     }
+
+    @Test("Unpair failure retries the revoke instead of re-pairing")
+    func unpairFailureRetriesRevoke() throws {
+        let events = PairingEvents()
+        events.revokeFailuresRemaining = 1
+        let (model, box) = makeModel(events: events)
+        model.prepare()
+        let issuedCount = box.issuedCount
+
+        model.unpair()
+        #expect(model.phase == .failed)
+        #expect(model.qrText != nil)
+        #expect(events.revoked.isEmpty)
+
+        model.retry()
+
+        #expect(model.phase == .unpaired)
+        #expect(model.qrText == nil)
+        #expect(events.revoked.count == 1)
+        #expect(events.revoked[0].revoked)
+        #expect(!CompanionPairingCeremony.verifies(events.revoked[0], key: Self.keyA))
+        #expect(box.issuedCount == issuedCount)
+    }
 }
 
 /// Sink for the model's persistence side effects. A class (not captured
@@ -201,8 +224,11 @@ private final class PairingEvents: @unchecked Sendable {
     var saved: [CompanionPairingState] = []
     var revoked: [CompanionPairingState] = []
     var shouldThrowOnPersist = false
+    var revokeFailuresRemaining = 0
 
     struct PersistFailed: Error {}
+
+    struct RevokeFailed: Error {}
 
     func didPersist(_ state: CompanionPairingState) throws {
         if shouldThrowOnPersist {
@@ -211,7 +237,11 @@ private final class PairingEvents: @unchecked Sendable {
         saved.append(state)
     }
 
-    func didRevoke(_ state: CompanionPairingState) {
+    func didRevoke(_ state: CompanionPairingState) throws {
+        if revokeFailuresRemaining > 0 {
+            revokeFailuresRemaining -= 1
+            throw RevokeFailed()
+        }
         revoked.append(state)
     }
 }

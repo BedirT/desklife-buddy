@@ -29,6 +29,10 @@ public final class CompanionPairingSheetModel {
     public private(set) var boundDeviceID: String?
 
     private var pairing: CompanionPairingState?
+    /// Set when `unpair` fails: the pairing is still live but the user's
+    /// intent is revocation, so `retry` re-attempts the revoke instead of
+    /// minting a new key (which would silently convert unpair into re-pair).
+    private var pendingRevoke = false
     /// MainActor-bound: the model is MainActor-isolated, so its dependencies
     /// run in the same domain and may touch MainActor-isolated stores (e.g.
     /// the Keychain adapter) without crossing isolation in Sendable closures.
@@ -74,6 +78,7 @@ public final class CompanionPairingSheetModel {
             pairing = rotated.state
             qrText = rotated.qrText
             boundDeviceID = nil
+            pendingRevoke = false
             phase = .showingCode
         } catch {
             phase = .failed
@@ -84,6 +89,7 @@ public final class CompanionPairingSheetModel {
     /// root deletes the persisted key, completing revocation on this Mac.
     public func unpair() {
         guard let live = pairing else {
+            pendingRevoke = false
             phase = .unpaired
             return
         }
@@ -92,8 +98,10 @@ public final class CompanionPairingSheetModel {
             pairing = nil
             qrText = nil
             boundDeviceID = nil
+            pendingRevoke = false
             phase = .unpaired
         } catch {
+            pendingRevoke = true
             phase = .failed
         }
     }
@@ -106,10 +114,13 @@ public final class CompanionPairingSheetModel {
         phase = .paired
     }
 
-    /// Re-attempts after a failure: a fresh issue when no code is live,
-    /// otherwise a rotation of the retained pairing.
+    /// Re-attempts after a failure: a pending revoke re-attempts the revoke,
+    /// otherwise a fresh issue when no code is live, else a rotation of the
+    /// retained pairing.
     public func retry() {
-        if pairing == nil {
+        if pendingRevoke {
+            unpair()
+        } else if pairing == nil {
             issueFreshCode()
         } else {
             regenerate()
@@ -128,6 +139,7 @@ public final class CompanionPairingSheetModel {
             pairing = issued.state
             qrText = issued.qrText
             boundDeviceID = nil
+            pendingRevoke = false
             phase = .showingCode
         } catch {
             phase = .failed

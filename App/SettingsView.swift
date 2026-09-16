@@ -23,6 +23,7 @@ struct SettingsView: View {
             integrationsActions: sceneModel.integrationsActions,
             companionPairingModel: sceneModel.companionPairingModel,
             trustCenterSnapshot: sceneModel.trustCenterSnapshot,
+            trustCenterActions: sceneModel.trustCenterActions,
             trustCenterRulesSnapshot: sceneModel.trustCenterRulesSnapshot,
             trustCenterRulesActions: sceneModel.trustCenterRulesActions,
         )

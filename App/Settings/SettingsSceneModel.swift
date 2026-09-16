@@ -10,6 +10,7 @@ final class SettingsSceneModel {
     /// key to the Keychain. Nil wherever the seam is unwired (previews).
     let companionPairingModel: CompanionPairingSheetModel?
     private(set) var integrationsRuntime: SettingsIntegrationsRuntime
+    private(set) var trustCenterSnapshot: TrustCenterSnapshot
     /// Trust Center rules rows over the R1 proposal store. Nil (not empty)
     /// means the seam is unwired and the R2 section stays hidden.
     private(set) var trustCenterRulesSnapshot: TrustCenterRulesSnapshot?

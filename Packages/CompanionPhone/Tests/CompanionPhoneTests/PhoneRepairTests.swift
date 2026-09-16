@@ -290,6 +290,25 @@ struct PhoneRepairTests {
         #expect(throws: FailingPendingStore.StoreFailure.self) {
             try model.finish(.completed)
         }
+        // Persist runs before enqueue: the throw left no orphaned intent
+        // behind and no half-finished state, so a later retry cannot duplicate.
+        #expect(model.pendingSends == 0)
+        #expect(model.lastIntentMessageID == nil)
+        #expect(model.phase == .countingDown)
+        #expect(model.certainty == .localPending)
+    }
+
+    @Test("A nil App Group suite fails loud instead of running non-durable")
+    func nilSuiteThrowsSuiteUnavailable() {
+        #expect(throws: PhonePendingStoreError.suiteUnavailable) {
+            _ = try PhonePendingStoreError.requireSuite(nil)
+        }
+    }
+
+    @Test("A resolved suite passes the fail-loud guard through")
+    func resolvedSuitePassesGuard() throws {
+        let defaults = try PhonePendingStoreError.requireSuite(.standard)
+        #expect(defaults == .standard)
     }
 
     @Test("A clear failure on drain re-queues instead of vanishing the intent")

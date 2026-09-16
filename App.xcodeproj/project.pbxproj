@@ -266,6 +266,7 @@
 					CreatedOnToolsVersion = 26.5;
 				};
 			};
+			};
 			buildConfigurationList = BA5E00000000000000000090 /* Build configuration list for PBXProject "App" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;

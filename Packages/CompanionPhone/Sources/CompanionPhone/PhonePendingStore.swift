@@ -57,6 +57,22 @@ public protocol PhonePendingStore: Sendable {
     mutating func clear() throws
 }
 
+/// Fail-loud durable-pending errors: the App Group suite missing means the
+/// intent is NOT durable, so production throws instead of pretending.
+public enum PhonePendingStoreError: Error, Equatable, Sendable {
+    /// `UserDefaults(suiteName:)` returned nil: the group is missing or the
+    /// app is not entitled to it. Saving or loading against `nil` would
+    /// silently drop the exactly-one terminal intent.
+    case suiteUnavailable
+
+    /// The guard every durable store calls: nil suite throws, a resolved
+    /// suite passes through. Pure so the phone test suite pins it directly.
+    public static func requireSuite(_ defaults: UserDefaults?) throws -> UserDefaults {
+        guard let defaults else { throw suiteUnavailable }
+        return defaults
+    }
+}
+
 /// The in-memory pending store: previews and tests, never production state.
 public struct InMemoryPendingStore: PhonePendingStore {
     private var snapshot: PhonePendingSnapshot?

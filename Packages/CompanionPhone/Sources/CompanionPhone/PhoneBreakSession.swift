@@ -23,7 +23,8 @@ import Observation
 /// Trust boundary (explicit): transport bytes are unauthenticated on the
 /// wire, so `receive` only runs while paired, QR keys must be full-length,
 /// and wire countdowns are range-clamped. Matching Mac-side envelope
-/// authentication does not exist — see the Story B decision log.
+/// authentication does not exist — residual risk and the auth follow-up are
+/// logged in `docs/plans/2026-09-16-storyb-iphone-target.md` ("Decision log").
 @Observable
 public final class PhoneBreakSession {
     /// Upper bound for wire countdowns: a day. Anything larger is corrupt.
@@ -241,10 +242,11 @@ public final class PhoneBreakSession {
     }
 
     /// Settles the break with one terminal claim: reconciles over known
-    /// actions (one winner, losers audit-only), enqueues exactly one
-    /// `.intent` envelope, and persists it for kill-safe redelivery. A no-op
-    /// while unpaired, and idempotent once finished: the wire carries exactly
-    /// one intent per pairing session.
+    /// actions (one winner, losers audit-only), persists the `.intent`
+    /// envelope for kill-safe redelivery, then enqueues exactly one copy —
+    /// persist-before-enqueue keeps finish all-or-nothing. A no-op while
+    /// unpaired, and idempotent once finished: the wire carries exactly one
+    /// intent per pairing session.
     public func finish(_ claim: CompanionTerminalClaim) throws {
         guard pairingID != nil, !isFinished else { return }
         let action = CompanionTerminalAction(
@@ -266,9 +268,12 @@ public final class PhoneBreakSession {
             payload: TerminalIntentPayload(action: action).encode(),
         )
         nextSequence += 1
+        // Durability first: if the snapshot cannot persist, nothing is
+        // enqueued, so a persist throw can neither orphan an in-memory intent
+        // nor duplicate it on retry — finish stays all-or-nothing.
+        try persistPending(claim: claim, envelope: envelope)
         lastIntentMessageID = envelope.messageID
         try outbox.enqueue(envelope)
-        try persistPending(claim: claim, envelope: envelope)
         pendingSends = outbox.count
         certainty = .remotePending
         phase = .finished(claim)

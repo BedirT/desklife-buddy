@@ -166,3 +166,28 @@ Why, after reading `App.xcodeproj/project.pbxproj` + `Packages/Features/Package.
   so host Swift Testing runs on the build Mac; the shipped product links it
   from the iOS target only. Sources stay UIKit/ActivityKit-free
   (`ActivityAttributes` is `canImport`-gated) so both closures compile.
+- 2026-09-16 (round-3 security review): TRUE trust basis. The QR-shared key
+  is never transmitted and never verified on the wire by either end — the
+  phone sends codec envelopes only, and `PhoneBreakSession.receive`
+  additionally gates on paired state with strict codec + key-length +
+  tick-range clamps. What protects the Mac is its pairing-bound admission
+  gate (`App/Companion/CompanionSessionGate.swift`):
+  `MultipeerCompanionTransport` consults `admitsPeer` on every invitation,
+  acceptance, and received payload, and binding requires presenting the live
+  key (`establish`). Verified this date: NO caller of
+  `activate`/`establish`/`startAdvertising`/`startBrowsing` exists in `App/`
+  — the gate is permanently empty and rendezvous never starts, so TODAY a
+  proximity peer can do nothing (no live endpoint; the Bonjour service
+  string is public in the bundle but nothing answers it), and the paired
+  phone cannot connect either until composition-root wiring lands. Two gaps
+  that wiring must close (NOT this story; Mac untouched): (a) `establish` as
+  designed takes the RAW key — the follow-up must use a challenge-response
+  (or equivalent) that never sends the key, and must close the identity
+  mismatch (phone advertises MCPeerID `"desklife-phone"` while the gate
+  matches device-UUID display names); (b) wire bytes remain unauthenticated
+  (no HMAC/challenge), so until (a) lands, proximity safety rests SOLELY on
+  default-deny admission. Residual risk accepted for Story B: a nearby
+  attacker can at most observe the public service string; no state-injection
+  path exists while the gate admits nothing. Comments corrected in the same
+  commit: `iOS/PhoneTransport.swift` no longer claims key-based wire trust;
+  `PhoneBreakSession`'s trust-boundary note points here.

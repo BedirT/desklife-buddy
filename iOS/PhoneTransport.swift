@@ -6,9 +6,15 @@ import MultipeerConnectivity
 ///
 /// Moves opaque codec bytes only: the composition root encodes envelopes
 /// before `send` and decodes bytes delivered to `onReceive`. Connectivity is
-/// open rendezvous; TRUST comes from the QR-shared pairing key — bytes are
-/// only handed to the session after pairing binds, and the codec refuses
-/// unknown versions and open kinds.
+/// open rendezvous and OUR bytes carry no authentication — the QR-shared key
+/// is never transmitted and never verified on the wire. What actually
+/// protects the Mac side is its pairing-bound admission gate
+/// (`App/Companion/CompanionSessionGate`): every invitation, acceptance, and
+/// received payload is dropped unless the peer is bound to the live pairing,
+/// and the gate starts empty (admits nothing). This phone additionally hands
+/// bytes to the session only after pairing binds, and the codec refuses
+/// unknown versions and open kinds. Residual risk and the auth follow-up are
+/// logged in `docs/plans/2026-09-16-storyb-iphone-target.md` ("Decision log").
 ///
 /// Service strings are mechanical copies of the canonical
 /// `App/Companion/MultipeerCompanionTransport.swift`

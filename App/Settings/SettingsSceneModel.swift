@@ -29,7 +29,7 @@ final class SettingsSceneModel {
         companionPairing: CompanionPairingSheetModel? = nil,
     ) {
         self.featureModel = featureModel
-        self.companionPairingModel = companionPairing
+        companionPairingModel = companionPairing
         self.integrations = integrations
         self.trustCenter = trustCenter
         self.ruleManagement = ruleManagement
@@ -120,19 +120,19 @@ final class SettingsSceneModel {
         guard ruleManagement != nil else { return .none }
         return TrustCenterRulesActions(
             decide: { [weak self] ruleKey, decision in
-                guard let self, let model = self.ruleManagement else { return }
+                guard let self, let model = ruleManagement else { return }
                 _ = try? await model.decide(ruleKey: ruleKey, decision: decision)
-                await self.publishTrustCenterRules()
+                await publishTrustCenterRules()
             },
             undo: { [weak self] ruleKey in
-                guard let self, let model = self.ruleManagement else { return }
+                guard let self, let model = ruleManagement else { return }
                 _ = try? await model.undo(ruleKey: ruleKey)
-                await self.publishTrustCenterRules()
+                await publishTrustCenterRules()
             },
             reset: { [weak self] ruleKey in
-                guard let self, let model = self.ruleManagement else { return }
+                guard let self, let model = ruleManagement else { return }
                 try? await model.reset(ruleKey: ruleKey)
-                await self.publishTrustCenterRules()
+                await publishTrustCenterRules()
             },
         )
     }

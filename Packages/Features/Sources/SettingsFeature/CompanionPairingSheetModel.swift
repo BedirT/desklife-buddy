@@ -69,7 +69,7 @@ public final class CompanionPairingSheetModel {
         }
         phase = .loading
         do {
-            let rotated = try CompanionPairingCeremony.rotate(live, key: try keyGenerator(), now: now())
+            let rotated = try CompanionPairingCeremony.rotate(live, key: keyGenerator(), now: now())
             try onPersist(rotated.state)
             pairing = rotated.state
             qrText = rotated.qrText
@@ -121,7 +121,7 @@ public final class CompanionPairingSheetModel {
         do {
             let issued = try CompanionPairingCeremony.issue(
                 pairingID: pairingIDGenerator(),
-                key: try keyGenerator(),
+                key: keyGenerator(),
                 now: now(),
             )
             try onPersist(issued.state)

@@ -94,7 +94,7 @@ struct CompanionPairingSheetModelTests {
         let (model, _) = makeModel()
         model.regenerate()
         #expect(model.phase == .showingCode)
-        let payload = try CompanionQRPayload.decode(try #require(model.qrText))
+        let payload = try CompanionQRPayload.decode(#require(model.qrText))
         #expect(payload.generation == 0)
     }
 
@@ -123,7 +123,7 @@ struct CompanionPairingSheetModelTests {
         model.prepare()
 
         #expect(model.phase == .showingCode)
-        #expect(try CompanionQRPayload.decode(try #require(model.qrText)).generation == 0)
+        #expect(try CompanionQRPayload.decode(#require(model.qrText)).generation == 0)
         #expect(box.issuedCount == 2)
     }
 
@@ -171,7 +171,7 @@ struct CompanionPairingSheetModelTests {
         events.shouldThrowOnPersist = false
         model.retry()
         #expect(model.phase == .showingCode)
-        #expect(try CompanionQRPayload.decode(try #require(model.qrText)).generation == 0)
+        #expect(try CompanionQRPayload.decode(#require(model.qrText)).generation == 0)
     }
 
     @Test("Regenerate failure keeps the previous live code")
@@ -191,7 +191,7 @@ struct CompanionPairingSheetModelTests {
 
         #expect(model.phase == .failed)
         #expect(model.qrText == firstQR)
-        #expect(try CompanionQRPayload.decode(try #require(model.qrText)).symmetricKey == Self.keyA)
+        #expect(try CompanionQRPayload.decode(#require(model.qrText)).symmetricKey == Self.keyA)
     }
 }
 

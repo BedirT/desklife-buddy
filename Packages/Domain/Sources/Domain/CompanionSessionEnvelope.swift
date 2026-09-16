@@ -10,11 +10,14 @@ public enum CompanionSessionError: Error, Equatable, Hashable, Sendable {
     case invalidSenderDevice(String)
     /// A pairing key with an unexpected length.
     case invalidKeyLength(Int)
+    /// A relay hop without the recipient it must address (watch relays phone-bound only).
+    case invalidRelay(String)
     /// A session payload over the wire cap.
     case payloadTooLarge(Int)
     /// QR text that is not decodable UTF-8.
     case invalidQRText
 }
+
 ///
 /// The envelope is association metadata only: identity (message, sender,
 /// per-sender sequence), a closed kind, an optional direct recipient, an
@@ -43,7 +46,7 @@ public struct CompanionSessionEnvelope: Equatable, Hashable, Sendable, Codable {
         kind: CompanionMessageKind,
         recipientDeviceID: String? = nil,
         relay: CompanionRelayHop? = nil,
-        payload: Data = Data()
+        payload: Data = Data(),
     ) throws {
         guard UUID(uuidString: senderDeviceID) != nil else {
             throw CompanionSessionError.invalidSenderDevice(senderDeviceID)
@@ -53,10 +56,13 @@ public struct CompanionSessionEnvelope: Equatable, Hashable, Sendable, Codable {
                 throw CompanionSessionError.invalidSenderDevice(recipientDeviceID)
             }
         }
+        if relay == .watchViaPhone, recipientDeviceID == nil {
+            throw CompanionSessionError.invalidRelay("watchViaPhone needs a phone recipient")
+        }
         guard payload.count <= Self.maximumPayloadBytes else {
             throw CompanionSessionError.payloadTooLarge(payload.count)
         }
-        self.schemaVersion = CompanionSessionCodec.schemaVersion
+        schemaVersion = CompanionSessionCodec.schemaVersion
         self.messageID = messageID
         self.senderDeviceID = senderDeviceID
         self.senderSequence = senderSequence
@@ -98,7 +104,7 @@ public struct CompanionSessionEnvelope: Equatable, Hashable, Sendable, Codable {
             kind: kind,
             recipientDeviceID: container.decodeIfPresent(String.self, forKey: .recipientDeviceID),
             relay: container.decodeIfPresent(CompanionRelayHop.self, forKey: .relay),
-            payload: container.decode(Data.self, forKey: .payload)
+            payload: container.decode(Data.self, forKey: .payload),
         )
     }
 
